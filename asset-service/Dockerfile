@@ -1,5 +1,8 @@
 FROM maven:3.9.9-eclipse-temurin-17 AS build
 WORKDIR /app
+# Bound Maven JVM heap and disable C2 compiler tier to avoid SIGSEGV / OOM
+# on small CI builders. Matches task-service / project-service Dockerfile.
+ENV MAVEN_OPTS="-Xmx512m -XX:TieredStopAtLevel=1 -XX:-UsePerfData"
 COPY pom.xml .
 RUN mvn dependency:go-offline -q
 COPY src ./src
