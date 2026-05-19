@@ -33,6 +33,10 @@ public class AssetAccessService {
         ensureAny("purchase_request_approve", "asset_finance_manage", "asset_manage");
     }
 
+    public void ensureContractManage() {
+        ensureAny("contract_manage", "asset_finance_manage", "asset_manage");
+    }
+
     public void ensureReportView() {
         ensureAny("asset_report_view", "asset_view_all", "asset_manage", "asset_finance_manage");
     }

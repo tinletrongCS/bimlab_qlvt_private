@@ -1,5 +1,5 @@
 import axios from 'axios'
-import type { AssetItem, AssetPayload, AuthUser, DashboardSummary, DepartmentLite, EmployeeLite, ProjectLite, PurchaseRequest, PurchaseRequestPayload, Subscription, SubscriptionPayload, Vendor, VendorPayload, WorkSiteLite } from './types'
+import type { AssetItem, AssetPayload, AuthUser, Contract, ContractPayload, DashboardSummary, DepartmentLite, EmployeeLite, ProjectLite, PurchaseRequest, PurchaseRequestPayload, Subscription, SubscriptionPayload, Vendor, VendorPayload, WorkSiteLite } from './types'
 
 export const api = axios.create({
   baseURL: '/api',
@@ -108,6 +108,30 @@ export async function updatePurchaseRequestStatus(id: number, status: string): P
 
 export async function deletePurchaseRequest(id: number): Promise<void> {
   await api.delete(`/asset/purchase-requests/${id}`)
+}
+
+export async function loadContracts(): Promise<Contract[]> {
+  const response = await api.get<Contract[]>('/asset/contracts')
+  return response.data
+}
+
+export async function createContract(payload: ContractPayload): Promise<Contract> {
+  const response = await api.post<Contract>('/asset/contracts', payload)
+  return response.data
+}
+
+export async function updateContract(id: number, payload: ContractPayload): Promise<Contract> {
+  const response = await api.put<Contract>(`/asset/contracts/${id}`, payload)
+  return response.data
+}
+
+export async function updateContractStatus(id: number, status: string): Promise<Contract> {
+  const response = await api.patch<Contract>(`/asset/contracts/${id}/status`, { status })
+  return response.data
+}
+
+export async function deleteContract(id: number): Promise<void> {
+  await api.delete(`/asset/contracts/${id}`)
 }
 
 export async function loadEmployees(): Promise<EmployeeLite[]> {

@@ -1,6 +1,7 @@
 package com.bimlab.asset.controller;
 
 import com.bimlab.asset.repository.AssetItemRepository;
+import com.bimlab.asset.repository.ContractRepository;
 import com.bimlab.asset.repository.PurchaseRequestRepository;
 import com.bimlab.asset.repository.SubscriptionRepository;
 import com.bimlab.asset.repository.VendorRepository;
@@ -20,6 +21,7 @@ public class AssetDashboardController {
     private final SubscriptionRepository subscriptions;
     private final VendorRepository vendors;
     private final PurchaseRequestRepository purchaseRequests;
+    private final ContractRepository contracts;
     private final AssetAccessService access;
 
     @GetMapping
@@ -29,7 +31,8 @@ public class AssetDashboardController {
                 "assets", assets.count(),
                 "subscriptions", subscriptions.count(),
                 "vendors", vendors.count(),
-                "purchaseRequests", purchaseRequests.count()
+                "purchaseRequests", purchaseRequests.count(),
+                "contracts", contracts.count()
         );
     }
 }
