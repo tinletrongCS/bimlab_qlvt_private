@@ -12,8 +12,10 @@ import {
   FiLogOut,
   FiPlus,
   FiRefreshCw,
+  FiRepeat,
   FiShield,
   FiShoppingCart,
+  FiTool,
   FiTrash2,
   FiTrendingUp,
   FiUsers,
@@ -25,13 +27,17 @@ import { StatusBadge } from './components/StatusBadge'
 import {
   createAsset,
   createContract,
+  createMaintenanceRecord,
   createPurchaseRequest,
   createSubscription,
+  createTransfer,
   createVendor,
   deleteAsset,
   deleteContract,
+  deleteMaintenanceRecord,
   deletePurchaseRequest,
   deleteSubscription,
+  deleteTransfer,
   deleteVendor,
   disposeAsset,
   loadAssets,
@@ -40,15 +46,19 @@ import {
   loadDashboard,
   loadDepartments,
   loadEmployees,
+  loadMaintenanceRecords,
   loadPurchaseRequests,
   loadProjects,
   loadSubscriptions,
+  loadTransfers,
+  loadUtilization,
   loadVendors,
   loadWorkSites,
   login,
   logout,
   updateAsset,
   updateContract,
+  updateMaintenanceRecord,
   updatePurchaseRequest,
   updatePurchaseRequestStatus,
   updateSubscription,
@@ -57,24 +67,29 @@ import {
 import type {
   AssetItem,
   AssetPayload,
+  AssetTransfer,
+  AssetTransferPayload,
   AuthUser,
   Contract,
   ContractPayload,
   DashboardSummary,
   DepartmentLite,
   EmployeeLite,
+  MaintenanceRecord,
+  MaintenanceRecordPayload,
   Permission,
   ProjectLite,
   PurchaseRequest,
   PurchaseRequestPayload,
   Subscription,
   SubscriptionPayload,
+  UtilizationReport,
   Vendor,
   VendorPayload,
   WorkSiteLite,
 } from './services/types'
 
-type TabKey = 'dashboard' | 'assets' | 'subscriptions' | 'vendors' | 'requests' | 'contracts'
+type TabKey = 'dashboard' | 'assets' | 'subscriptions' | 'vendors' | 'requests' | 'contracts' | 'maintenance' | 'transfers'
 type ModalState =
   | { type: 'vendor'; mode: 'create'; item?: undefined }
   | { type: 'vendor'; mode: 'edit'; item: Vendor }
@@ -86,6 +101,9 @@ type ModalState =
   | { type: 'request'; mode: 'edit'; item: PurchaseRequest }
   | { type: 'contract'; mode: 'create'; item?: undefined }
   | { type: 'contract'; mode: 'edit'; item: Contract }
+  | { type: 'maintenance'; mode: 'create'; item?: undefined }
+  | { type: 'maintenance'; mode: 'edit'; item: MaintenanceRecord }
+  | { type: 'transfer'; mode: 'create'; item?: undefined }
   | null
 
 const tabs: Array<{ key: TabKey; label: string; icon: ReactElement; permission?: Permission }> = [
@@ -95,6 +113,8 @@ const tabs: Array<{ key: TabKey; label: string; icon: ReactElement; permission?:
   { key: 'vendors', label: 'Nhà cung cấp', icon: <FiBriefcase />, permission: 'vendor_manage' },
   { key: 'requests', label: 'Đề nghị mua sắm', icon: <FiShoppingCart />, permission: 'purchase_request_create' },
   { key: 'contracts', label: 'Hợp đồng', icon: <FiFileText />, permission: 'contract_manage' },
+  { key: 'maintenance', label: 'Bảo trì', icon: <FiTool />, permission: 'maintenance_manage' },
+  { key: 'transfers', label: 'Luân chuyển', icon: <FiRepeat />, permission: 'asset_manage' },
 ]
 
 const money = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 })
@@ -121,6 +141,9 @@ function App() {
   const [vendors, setVendors] = useState<Vendor[]>([])
   const [requests, setRequests] = useState<PurchaseRequest[]>([])
   const [contracts, setContracts] = useState<Contract[]>([])
+  const [maintenanceRecords, setMaintenanceRecords] = useState<MaintenanceRecord[]>([])
+  const [transfers, setTransfers] = useState<AssetTransfer[]>([])
+  const [utilization, setUtilization] = useState<UtilizationReport | null>(null)
   const [employees, setEmployees] = useState<EmployeeLite[]>([])
   const [departments, setDepartments] = useState<DepartmentLite[]>([])
   const [workSites, setWorkSites] = useState<WorkSiteLite[]>([])
@@ -145,13 +168,16 @@ function App() {
   }
 
   async function refreshData() {
-    const [dashboardData, vendorData, assetData, subscriptionData, requestData, contractData, employeeData, departmentData, siteData, projectData] = await Promise.all([
+    const [dashboardData, vendorData, assetData, subscriptionData, requestData, contractData, maintenanceData, transferData, utilizationData, employeeData, departmentData, siteData, projectData] = await Promise.all([
       loadDashboard().catch(() => ({ assets: 0, subscriptions: 0, vendors: 0, purchaseRequests: 0, contracts: 0 })),
       loadVendors().catch(() => []),
       loadAssets().catch(() => []),
       loadSubscriptions().catch(() => []),
       loadPurchaseRequests().catch(() => []),
       loadContracts().catch(() => []),
+      loadMaintenanceRecords().catch(() => []),
+      loadTransfers().catch(() => []),
+      loadUtilization().catch(() => null),
       loadEmployees().catch(() => []),
       loadDepartments().catch(() => []),
       loadWorkSites().catch(() => []),
@@ -163,6 +189,9 @@ function App() {
     setSubscriptions(subscriptionData)
     setRequests(requestData)
     setContracts(contractData)
+    setMaintenanceRecords(maintenanceData)
+    setTransfers(transferData)
+    setUtilization(utilizationData)
     setEmployees(employeeData)
     setDepartments(departmentData)
     setWorkSites(siteData)
@@ -199,6 +228,8 @@ function App() {
       setVendors([])
       setRequests([])
       setContracts([])
+      setMaintenanceRecords([])
+      setTransfers([])
       setSubmitting(false)
     }
   }
@@ -213,6 +244,8 @@ function App() {
       if (type === 'subscriptions') await deleteSubscription(id)
       if (type === 'requests') await deletePurchaseRequest(id)
       if (type === 'contracts') await deleteContract(id)
+      if (type === 'maintenance') await deleteMaintenanceRecord(id)
+      if (type === 'transfers') await deleteTransfer(id)
       await refreshData()
     } catch (err) {
       setError(readError(err))
@@ -384,6 +417,7 @@ function App() {
           departments={departments}
           workSites={workSites}
           projects={projects}
+          assets={assets}
           submitting={submitting}
           onClose={() => setModal(null)}
           onSubmit={submitModal}
@@ -392,7 +426,7 @@ function App() {
     </main>
   )
 
-  async function submitModal(payload: VendorPayload | AssetPayload | SubscriptionPayload | PurchaseRequestPayload | ContractPayload) {
+  async function submitModal(payload: VendorPayload | AssetPayload | SubscriptionPayload | PurchaseRequestPayload | ContractPayload | MaintenanceRecordPayload | AssetTransferPayload) {
     if (!modal) return
     setSubmitting(true)
     setError('')
@@ -422,6 +456,14 @@ function App() {
           ? await createContract(payload as ContractPayload)
           : await updateContract(modal.item.id, payload as ContractPayload)
       }
+      if (modal.type === 'maintenance') {
+        modal.mode === 'create'
+          ? await createMaintenanceRecord(payload as MaintenanceRecordPayload)
+          : await updateMaintenanceRecord(modal.item.id, payload as MaintenanceRecordPayload)
+      }
+      if (modal.type === 'transfer') {
+        await createTransfer(payload as AssetTransferPayload)
+      }
       setModal(null)
       await refreshData()
     } catch (err) {
@@ -437,6 +479,8 @@ function App() {
     if (tab === 'subscriptions') return renderSubscriptions()
     if (tab === 'vendors') return renderVendors()
     if (tab === 'contracts') return renderContracts()
+    if (tab === 'maintenance') return renderMaintenance()
+    if (tab === 'transfers') return renderTransfers()
     return renderRequests()
   }
 
@@ -473,6 +517,30 @@ function App() {
             <Operation icon={<FiCreditCard />} label="Chi phí subscription" value={money.format(subscriptions.reduce((sum, item) => sum + Number(item.cost || 0), 0))} />
           </div>
         </section>
+        {utilization && (
+          <section className="panel overview-panel">
+            <div className="panel-title">
+              <div>
+                <h2>Hiệu quả sử dụng tài sản</h2>
+                <p>Tỷ lệ tài sản đang được cấp phát so với tổng tài sản đang hoạt động.</p>
+              </div>
+              <strong style={{ fontSize: '1.8rem' }}>{utilization.utilizationRate}%</strong>
+            </div>
+            <div className="operations-grid">
+              <Operation icon={<FiCheckCircle />} label="Đang cấp phát" value={utilization.assignedAssets} />
+              <Operation icon={<FiBox />} label="Đang trong kho (idle)" value={utilization.idleAssets} />
+              <Operation icon={<FiTool />} label="Đang bảo trì" value={utilization.maintenanceAssets} />
+              <Operation icon={<FiTrash2 />} label="Đã thanh lý" value={utilization.disposedAssets} />
+              <Operation icon={<FiCreditCard />} label="Tổng giá trị (active)" value={money.format(Number(utilization.totalPurchaseValue || 0))} />
+              <Operation icon={<FiBriefcase />} label="Giá trị idle" value={money.format(Number(utilization.totalIdleValue || 0))} />
+            </div>
+            <div className="operations-grid">
+              {Object.entries(utilization.byCategory).map(([category, count]) => (
+                <Operation key={category} icon={<FiBox />} label={category} value={count} />
+              ))}
+            </div>
+          </section>
+        )}
       </div>
     )
   }
@@ -614,6 +682,67 @@ function App() {
     )
   }
 
+  function renderMaintenance() {
+    const canManage = hasPermission(user, 'maintenance_manage')
+    return (
+      <section className="panel">
+        <PanelHeader title="Bảo trì / Sửa chữa" action={canManage} onAdd={() => setModal({ type: 'maintenance', mode: 'create' })} />
+        <DataTable
+          data={maintenanceRecords}
+          getRowKey={(item) => item.id}
+          emptyText="Chưa có bản ghi bảo trì"
+          columns={[
+            { key: 'asset', title: 'Tài sản', render: (item) => <strong>{item.asset?.assetCode} · {item.asset?.name}</strong> },
+            { key: 'type', title: 'Loại', render: (item) => item.maintenanceType },
+            { key: 'date', title: 'Ngày bảo trì', render: (item) => item.maintenanceDate },
+            { key: 'cost', title: 'Chi phí', render: (item) => money.format(Number(item.cost || 0)) },
+            { key: 'vendor', title: 'Nhà cung cấp', render: (item) => item.vendor?.name || item.performedBy || '—' },
+            { key: 'next', title: 'Lần tiếp theo', render: (item) => item.nextMaintenanceDate || '—' },
+            { key: 'status', title: 'Trạng thái', render: (item) => <StatusBadge value={item.status} /> },
+            {
+              key: 'actions',
+              title: '',
+              render: (item) => canManage ? (
+                <RowActions onEdit={() => setModal({ type: 'maintenance', mode: 'edit', item })} onDelete={() => handleDelete('maintenance', item.id)} />
+              ) : null,
+            },
+          ]}
+        />
+      </section>
+    )
+  }
+
+  function renderTransfers() {
+    const canManage = hasPermission(user, 'asset_manage')
+    const empLabel = (id?: number) => id ? employeeLabel(employees.find((e) => e.id === id)) : '—'
+    return (
+      <section className="panel">
+        <PanelHeader title="Lịch sử luân chuyển tài sản" action={canManage} onAdd={() => setModal({ type: 'transfer', mode: 'create' })} />
+        <DataTable
+          data={transfers}
+          getRowKey={(item) => item.id}
+          emptyText="Chưa có bản ghi luân chuyển"
+          columns={[
+            { key: 'date', title: 'Ngày', render: (item) => item.transferDate },
+            { key: 'asset', title: 'Tài sản', render: (item) => <strong>{item.asset?.assetCode} · {item.asset?.name}</strong> },
+            { key: 'type', title: 'Loại', render: (item) => item.transferType },
+            { key: 'from', title: 'Từ', render: (item) => <span className="muted-cell">{empLabel(item.fromEmployeeId)}</span> },
+            { key: 'to', title: 'Đến', render: (item) => <span className="muted-cell">{empLabel(item.toEmployeeId)}</span> },
+            { key: 'reason', title: 'Lý do', render: (item) => item.reason || '—' },
+            { key: 'by', title: 'Người ghi', render: (item) => item.performedBy || '—' },
+            {
+              key: 'actions',
+              title: '',
+              render: (item) => canManage ? (
+                <button className="mini danger" onClick={() => handleDelete('transfers', item.id)}><FiTrash2 /> Xóa</button>
+              ) : null,
+            },
+          ]}
+        />
+      </section>
+    )
+  }
+
   async function revokeAsset(item: AssetItem) {
     setSubmitting(true)
     setError('')
@@ -685,6 +814,7 @@ function CrudForm({
   departments,
   workSites,
   projects,
+  assets,
   submitting,
   onClose,
   onSubmit,
@@ -695,9 +825,10 @@ function CrudForm({
   departments: DepartmentLite[]
   workSites: WorkSiteLite[]
   projects: ProjectLite[]
+  assets: AssetItem[]
   submitting: boolean
   onClose: () => void
-  onSubmit: (payload: VendorPayload | AssetPayload | SubscriptionPayload | PurchaseRequestPayload | ContractPayload) => void
+  onSubmit: (payload: VendorPayload | AssetPayload | SubscriptionPayload | PurchaseRequestPayload | ContractPayload | MaintenanceRecordPayload | AssetTransferPayload) => void
 }) {
   const [form, setForm] = useState<Record<string, string>>(() => initialForm(modal))
   const setField = (key: string, value: string) => setForm((prev) => ({ ...prev, [key]: value }))
@@ -774,6 +905,32 @@ function CrudForm({
       attachmentUrl: empty(form.attachmentUrl),
       notes: empty(form.notes),
     })
+    if (modal.type === 'maintenance') onSubmit({
+      assetId: Number(form.assetId),
+      maintenanceType: form.maintenanceType,
+      maintenanceDate: form.maintenanceDate,
+      cost: num(form.cost),
+      vendorId: num(form.vendorId),
+      performedBy: empty(form.performedBy),
+      description: empty(form.description),
+      nextMaintenanceDate: empty(form.nextMaintenanceDate),
+      status: form.status || 'COMPLETED',
+    })
+    if (modal.type === 'transfer') onSubmit({
+      assetId: Number(form.assetId),
+      transferType: form.transferType,
+      fromEmployeeId: num(form.fromEmployeeId),
+      toEmployeeId: num(form.toEmployeeId),
+      fromDepartmentId: num(form.fromDepartmentId),
+      toDepartmentId: num(form.toDepartmentId),
+      fromSiteId: num(form.fromSiteId),
+      toSiteId: num(form.toSiteId),
+      transferDate: form.transferDate,
+      reason: empty(form.reason),
+      performedBy: empty(form.performedBy),
+      handoverDocumentUrl: empty(form.handoverDocumentUrl),
+      applyToAsset: form.applyToAsset === 'true',
+    })
   }
 
   return (
@@ -848,6 +1005,39 @@ function CrudForm({
         <Field label="URL file đính kèm" value={form.attachmentUrl} onChange={(value) => setField('attachmentUrl', value)} />
         <Select label="Trạng thái" value={form.status} onChange={(value) => setField('status', value)} options={[['DRAFT', 'Bản nháp'], ['ACTIVE', 'Đang hiệu lực'], ['EXPIRED', 'Hết hạn'], ['TERMINATED', 'Đã hủy'], ['COMPLETED', 'Hoàn thành']]} />
         <Field label="Ghi chú" value={form.notes} onChange={(value) => setField('notes', value)} />
+      </>}
+      {modal.type === 'maintenance' && <>
+        <label>Tài sản<select value={form.assetId} onChange={(event) => setField('assetId', event.target.value)} required>
+          <option value="">Chọn tài sản</option>
+          {assets.map((asset) => <option key={asset.id} value={asset.id}>{asset.assetCode} · {asset.name}</option>)}
+        </select></label>
+        <Select label="Loại bảo trì" value={form.maintenanceType} onChange={(value) => setField('maintenanceType', value)} options={[['PREVENTIVE', 'Bảo trì định kỳ'], ['REPAIR', 'Sửa chữa'], ['INSPECTION', 'Kiểm tra'], ['CALIBRATION', 'Hiệu chuẩn']]} />
+        <Field label="Ngày bảo trì" value={form.maintenanceDate} onChange={(value) => setField('maintenanceDate', value)} type="date" required />
+        <Field label="Chi phí" value={form.cost} onChange={(value) => setField('cost', value)} type="number" />
+        <VendorSelect vendors={vendors} value={form.vendorId} onChange={(value) => setField('vendorId', value)} />
+        <Field label="Người thực hiện" value={form.performedBy} onChange={(value) => setField('performedBy', value)} />
+        <Field label="Mô tả" value={form.description} onChange={(value) => setField('description', value)} />
+        <Field label="Lần bảo trì kế tiếp" value={form.nextMaintenanceDate} onChange={(value) => setField('nextMaintenanceDate', value)} type="date" />
+        <Select label="Trạng thái" value={form.status} onChange={(value) => setField('status', value)} options={[['COMPLETED', 'Đã hoàn thành'], ['SCHEDULED', 'Đã lên lịch'], ['CANCELED', 'Đã hủy']]} />
+      </>}
+      {modal.type === 'transfer' && <>
+        <label>Tài sản<select value={form.assetId} onChange={(event) => setField('assetId', event.target.value)} required>
+          <option value="">Chọn tài sản</option>
+          {assets.map((asset) => <option key={asset.id} value={asset.id}>{asset.assetCode} · {asset.name}</option>)}
+        </select></label>
+        <Select label="Loại luân chuyển" value={form.transferType} onChange={(value) => setField('transferType', value)} options={[['ASSIGN', 'Cấp phát'], ['REVOKE', 'Thu hồi'], ['REASSIGN', 'Cấp lại'], ['DEPARTMENT_CHANGE', 'Chuyển phòng ban'], ['SITE_CHANGE', 'Chuyển site']]} />
+        <EmployeeSelect employees={employees} value={form.fromEmployeeId} onChange={(value) => setField('fromEmployeeId', value)} />
+        <label>Nhân viên nhận<select value={form.toEmployeeId} onChange={(event) => setField('toEmployeeId', event.target.value)}>
+          <option value="">Không gán</option>
+          {employees.map((employee) => <option key={employee.id} value={employee.id}>{employeeLabel(employee)}</option>)}
+        </select></label>
+        <DepartmentSelect departments={departments} value={form.toDepartmentId} onChange={(value) => setField('toDepartmentId', value)} />
+        <WorkSiteSelect workSites={workSites} value={form.toSiteId} onChange={(value) => setField('toSiteId', value)} />
+        <Field label="Ngày luân chuyển" value={form.transferDate} onChange={(value) => setField('transferDate', value)} type="date" required />
+        <Field label="Lý do" value={form.reason} onChange={(value) => setField('reason', value)} />
+        <Field label="Người ghi" value={form.performedBy} onChange={(value) => setField('performedBy', value)} />
+        <Field label="URL biên bản bàn giao" value={form.handoverDocumentUrl} onChange={(value) => setField('handoverDocumentUrl', value)} />
+        <Select label="Cập nhật tài sản?" value={form.applyToAsset} onChange={(value) => setField('applyToAsset', value)} options={[['true', 'Có — đồng bộ người dùng/phòng ban lên tài sản'], ['false', 'Không — chỉ ghi nhận lịch sử']]} />
       </>}
     </CrudModal>
   )
@@ -937,7 +1127,7 @@ function initialForm(modal: NonNullable<ModalState>): Record<string, string> {
     status: modal.item?.status || 'PENDING',
     notes: '',
   }
-  return {
+  if (modal.type === 'contract') return {
     contractNumber: modal.item?.contractNumber || '',
     title: modal.item?.title || '',
     vendorId: modal.item?.vendor?.id ? String(modal.item.vendor.id) : '',
@@ -951,10 +1141,36 @@ function initialForm(modal: NonNullable<ModalState>): Record<string, string> {
     status: modal.item?.status || 'DRAFT',
     notes: modal.item?.notes || '',
   }
+  if (modal.type === 'maintenance') return {
+    assetId: modal.item?.asset?.id ? String(modal.item.asset.id) : '',
+    maintenanceType: modal.item?.maintenanceType || 'PREVENTIVE',
+    maintenanceDate: modal.item?.maintenanceDate || new Date().toISOString().slice(0, 10),
+    cost: val(modal.item?.cost),
+    vendorId: modal.item?.vendor?.id ? String(modal.item.vendor.id) : '',
+    performedBy: modal.item?.performedBy || '',
+    description: modal.item?.description || '',
+    nextMaintenanceDate: modal.item?.nextMaintenanceDate || '',
+    status: modal.item?.status || 'COMPLETED',
+  }
+  return {
+    assetId: '',
+    transferType: 'ASSIGN',
+    fromEmployeeId: '',
+    toEmployeeId: '',
+    fromDepartmentId: '',
+    toDepartmentId: '',
+    fromSiteId: '',
+    toSiteId: '',
+    transferDate: new Date().toISOString().slice(0, 10),
+    reason: '',
+    performedBy: '',
+    handoverDocumentUrl: '',
+    applyToAsset: 'true',
+  }
 }
 
 function modalLabel(type: NonNullable<ModalState>['type']) {
-  return ({ vendor: 'nhà cung cấp', asset: 'tài sản', subscription: 'subscription', request: 'đề nghị mua sắm', contract: 'hợp đồng' })[type]
+  return ({ vendor: 'nhà cung cấp', asset: 'tài sản', subscription: 'subscription', request: 'đề nghị mua sắm', contract: 'hợp đồng', maintenance: 'bản ghi bảo trì', transfer: 'lệnh luân chuyển' })[type]
 }
 
 function empty(value?: string) {

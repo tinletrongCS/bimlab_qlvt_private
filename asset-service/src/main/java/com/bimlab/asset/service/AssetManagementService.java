@@ -12,7 +12,9 @@ import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.Period;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -22,6 +24,8 @@ public class AssetManagementService {
     private final SubscriptionRepository subscriptions;
     private final PurchaseRequestRepository purchaseRequests;
     private final ContractRepository contracts;
+    private final MaintenanceRecordRepository maintenanceRecords;
+    private final AssetTransferRepository assetTransfers;
 
     public List<Vendor> listVendors() { return vendors.findAll(); }
     public Vendor getVendor(Long id) { return vendors.findById(id).orElseThrow(() -> new NoSuchElementException("Nhà cung cấp không tồn tại")); }
@@ -272,5 +276,118 @@ public class AssetManagementService {
         if (req.status() != null) c.setStatus(req.status());
         c.setAttachmentUrl(req.attachmentUrl());
         c.setNotes(req.notes());
+    }
+
+    public List<MaintenanceRecord> listMaintenanceRecords() { return maintenanceRecords.findAll(); }
+    public List<MaintenanceRecord> listMaintenanceByAsset(Long assetId) { return maintenanceRecords.findByAssetIdOrderByMaintenanceDateDesc(assetId); }
+    public MaintenanceRecord getMaintenanceRecord(Long id) { return maintenanceRecords.findById(id).orElseThrow(() -> new NoSuchElementException("Bản ghi bảo trì không tồn tại")); }
+
+    @Transactional
+    public MaintenanceRecord createMaintenanceRecord(MaintenanceRecordRequest req) {
+        MaintenanceRecord m = new MaintenanceRecord();
+        applyMaintenanceRecord(m, req);
+        return maintenanceRecords.save(m);
+    }
+
+    @Transactional
+    public MaintenanceRecord updateMaintenanceRecord(Long id, MaintenanceRecordRequest req) {
+        MaintenanceRecord m = getMaintenanceRecord(id);
+        applyMaintenanceRecord(m, req);
+        return maintenanceRecords.save(m);
+    }
+
+    @Transactional
+    public void deleteMaintenanceRecord(Long id) { maintenanceRecords.delete(getMaintenanceRecord(id)); }
+
+    private void applyMaintenanceRecord(MaintenanceRecord m, MaintenanceRecordRequest req) {
+        m.setAsset(getAsset(req.assetId()));
+        m.setMaintenanceType(req.maintenanceType());
+        m.setMaintenanceDate(req.maintenanceDate());
+        m.setCost(req.cost());
+        m.setVendor(req.vendorId() == null ? null : getVendor(req.vendorId()));
+        m.setPerformedBy(req.performedBy());
+        m.setDescription(req.description());
+        m.setNextMaintenanceDate(req.nextMaintenanceDate());
+        if (req.status() != null) m.setStatus(req.status());
+    }
+
+    public List<AssetItem> listAssetsWithWarrantyExpiringWithin(int days) {
+        LocalDate cutoff = LocalDate.now().plusDays(days);
+        LocalDate today = LocalDate.now();
+        return assets.findAll().stream()
+                .filter(a -> a.getWarrantyUntil() != null)
+                .filter(a -> !a.getWarrantyUntil().isBefore(today))
+                .filter(a -> !a.getWarrantyUntil().isAfter(cutoff))
+                .filter(a -> !"DISPOSED".equals(a.getStatus()))
+                .toList();
+    }
+
+    public List<AssetTransfer> listTransfers() { return assetTransfers.findAllSortedByDateDesc(); }
+    public List<AssetTransfer> listTransfersByAsset(Long assetId) { return assetTransfers.findByAssetIdOrderByTransferDateDesc(assetId); }
+    public AssetTransfer getTransfer(Long id) { return assetTransfers.findById(id).orElseThrow(() -> new NoSuchElementException("Bản ghi luân chuyển không tồn tại")); }
+
+    @Transactional
+    public AssetTransfer createTransfer(AssetTransferRequest req) {
+        AssetItem asset = getAsset(req.assetId());
+        AssetTransfer transfer = AssetTransfer.builder()
+                .asset(asset)
+                .transferType(req.transferType())
+                .fromEmployeeId(req.fromEmployeeId())
+                .toEmployeeId(req.toEmployeeId())
+                .fromDepartmentId(req.fromDepartmentId())
+                .toDepartmentId(req.toDepartmentId())
+                .fromSiteId(req.fromSiteId())
+                .toSiteId(req.toSiteId())
+                .transferDate(req.transferDate())
+                .reason(req.reason())
+                .performedBy(req.performedBy())
+                .handoverDocumentUrl(req.handoverDocumentUrl())
+                .build();
+        AssetTransfer saved = assetTransfers.save(transfer);
+
+        if (Boolean.TRUE.equals(req.applyToAsset())) {
+            asset.setAssignedEmployeeId(req.toEmployeeId());
+            if (req.toDepartmentId() != null) asset.setDepartmentId(req.toDepartmentId());
+            if (req.toSiteId() != null) asset.setSiteId(req.toSiteId());
+            if (req.toEmployeeId() != null) asset.setStatus("ASSIGNED");
+            else if ("REVOKE".equals(req.transferType())) asset.setStatus("IN_STOCK");
+            assets.save(asset);
+        }
+        return saved;
+    }
+
+    @Transactional
+    public void deleteTransfer(Long id) { assetTransfers.delete(getTransfer(id)); }
+
+    public UtilizationReport getUtilizationReport() {
+        List<AssetItem> all = assets.findAll();
+        long total = all.size();
+        long assigned = all.stream().filter(a -> "ASSIGNED".equals(a.getStatus())).count();
+        long inStock = all.stream().filter(a -> "IN_STOCK".equals(a.getStatus())).count();
+        long maintenance = all.stream().filter(a -> "MAINTENANCE".equals(a.getStatus())).count();
+        long disposed = all.stream().filter(a -> "DISPOSED".equals(a.getStatus())).count();
+        long active = total - disposed;
+        double rate = active > 0 ? (double) assigned * 100.0 / active : 0.0;
+
+        BigDecimal totalValue = all.stream()
+                .filter(a -> !"DISPOSED".equals(a.getStatus()))
+                .map(a -> a.getPurchaseCost() == null ? BigDecimal.ZERO : a.getPurchaseCost())
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal idleValue = all.stream()
+                .filter(a -> "IN_STOCK".equals(a.getStatus()))
+                .map(a -> a.getPurchaseCost() == null ? BigDecimal.ZERO : a.getPurchaseCost())
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        Map<String, Long> byStatus = all.stream()
+                .collect(Collectors.groupingBy(AssetItem::getStatus, Collectors.counting()));
+        Map<String, Long> byCategory = all.stream()
+                .filter(a -> !"DISPOSED".equals(a.getStatus()))
+                .collect(Collectors.groupingBy(AssetItem::getCategory, Collectors.counting()));
+
+        return new UtilizationReport(
+                total, assigned, inStock, maintenance, disposed,
+                Math.round(rate * 100.0) / 100.0,
+                totalValue, idleValue, byStatus, byCategory
+        );
     }
 }

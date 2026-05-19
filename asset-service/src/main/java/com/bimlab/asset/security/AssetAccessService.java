@@ -37,6 +37,10 @@ public class AssetAccessService {
         ensureAny("contract_manage", "asset_finance_manage", "asset_manage");
     }
 
+    public void ensureMaintenanceManage() {
+        ensureAny("maintenance_manage", "asset_manage");
+    }
+
     public void ensureReportView() {
         ensureAny("asset_report_view", "asset_view_all", "asset_manage", "asset_finance_manage");
     }

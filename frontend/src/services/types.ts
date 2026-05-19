@@ -10,6 +10,7 @@ export type Permission =
   | 'purchase_request_create'
   | 'purchase_request_approve'
   | 'contract_manage'
+  | 'maintenance_manage'
   | 'asset_finance_manage'
   | 'asset_report_view'
 
@@ -217,4 +218,75 @@ export interface ProjectLite {
   name: string
   code?: string
   status?: string
+}
+
+export interface MaintenanceRecord {
+  id: number
+  asset: AssetItem
+  maintenanceType: string
+  maintenanceDate: string
+  cost?: number
+  vendor?: Vendor
+  performedBy?: string
+  description?: string
+  nextMaintenanceDate?: string
+  status: string
+}
+
+export interface MaintenanceRecordPayload {
+  assetId: number
+  maintenanceType: string
+  maintenanceDate: string
+  cost?: number | null
+  vendorId?: number | null
+  performedBy?: string
+  description?: string
+  nextMaintenanceDate?: string
+  status?: string
+}
+
+export interface AssetTransfer {
+  id: number
+  asset: AssetItem
+  transferType: string
+  fromEmployeeId?: number
+  toEmployeeId?: number
+  fromDepartmentId?: number
+  toDepartmentId?: number
+  fromSiteId?: number
+  toSiteId?: number
+  transferDate: string
+  reason?: string
+  performedBy?: string
+  handoverDocumentUrl?: string
+  createdAt?: string
+}
+
+export interface AssetTransferPayload {
+  assetId: number
+  transferType: string
+  fromEmployeeId?: number | null
+  toEmployeeId?: number | null
+  fromDepartmentId?: number | null
+  toDepartmentId?: number | null
+  fromSiteId?: number | null
+  toSiteId?: number | null
+  transferDate: string
+  reason?: string
+  performedBy?: string
+  handoverDocumentUrl?: string
+  applyToAsset?: boolean
+}
+
+export interface UtilizationReport {
+  totalAssets: number
+  assignedAssets: number
+  idleAssets: number
+  maintenanceAssets: number
+  disposedAssets: number
+  utilizationRate: number
+  totalPurchaseValue: number
+  totalIdleValue: number
+  byStatus: Record<string, number>
+  byCategory: Record<string, number>
 }

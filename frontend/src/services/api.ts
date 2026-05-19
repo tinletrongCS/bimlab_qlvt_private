@@ -1,5 +1,5 @@
 import axios from 'axios'
-import type { AssetItem, AssetPayload, AuthUser, Contract, ContractPayload, DashboardSummary, DepartmentLite, DepreciationSnapshot, DisposeAssetPayload, EmployeeLite, ProjectLite, PurchaseRequest, PurchaseRequestPayload, Subscription, SubscriptionPayload, Vendor, VendorPayload, WorkSiteLite } from './types'
+import type { AssetItem, AssetPayload, AssetTransfer, AssetTransferPayload, AuthUser, Contract, ContractPayload, DashboardSummary, DepartmentLite, DepreciationSnapshot, DisposeAssetPayload, EmployeeLite, MaintenanceRecord, MaintenanceRecordPayload, ProjectLite, PurchaseRequest, PurchaseRequestPayload, Subscription, SubscriptionPayload, UtilizationReport, Vendor, VendorPayload, WorkSiteLite } from './types'
 
 export const api = axios.create({
   baseURL: '/api',
@@ -26,6 +26,11 @@ export async function loadCurrentUser(): Promise<AuthUser | null> {
 
 export async function loadDashboard(): Promise<DashboardSummary> {
   const response = await api.get<DashboardSummary>('/asset/dashboard')
+  return response.data
+}
+
+export async function loadUtilization(): Promise<UtilizationReport> {
+  const response = await api.get<UtilizationReport>('/asset/dashboard/utilization')
   return response.data
 }
 
@@ -142,6 +147,44 @@ export async function updateContractStatus(id: number, status: string): Promise<
 
 export async function deleteContract(id: number): Promise<void> {
   await api.delete(`/asset/contracts/${id}`)
+}
+
+export async function loadMaintenanceRecords(): Promise<MaintenanceRecord[]> {
+  const response = await api.get<MaintenanceRecord[]>('/asset/maintenance')
+  return response.data
+}
+
+export async function createMaintenanceRecord(payload: MaintenanceRecordPayload): Promise<MaintenanceRecord> {
+  const response = await api.post<MaintenanceRecord>('/asset/maintenance', payload)
+  return response.data
+}
+
+export async function updateMaintenanceRecord(id: number, payload: MaintenanceRecordPayload): Promise<MaintenanceRecord> {
+  const response = await api.put<MaintenanceRecord>(`/asset/maintenance/${id}`, payload)
+  return response.data
+}
+
+export async function deleteMaintenanceRecord(id: number): Promise<void> {
+  await api.delete(`/asset/maintenance/${id}`)
+}
+
+export async function loadWarrantyExpiring(days: number = 30): Promise<AssetItem[]> {
+  const response = await api.get<AssetItem[]>(`/asset/maintenance/warranty-expiring`, { params: { days } })
+  return response.data
+}
+
+export async function loadTransfers(): Promise<AssetTransfer[]> {
+  const response = await api.get<AssetTransfer[]>('/asset/transfers')
+  return response.data
+}
+
+export async function createTransfer(payload: AssetTransferPayload): Promise<AssetTransfer> {
+  const response = await api.post<AssetTransfer>('/asset/transfers', payload)
+  return response.data
+}
+
+export async function deleteTransfer(id: number): Promise<void> {
+  await api.delete(`/asset/transfers/${id}`)
 }
 
 export async function loadEmployees(): Promise<EmployeeLite[]> {
