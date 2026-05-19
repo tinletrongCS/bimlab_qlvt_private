@@ -51,6 +51,11 @@ export interface AssetItem {
   purchaseDate?: string
   warrantyUntil?: string
   status: string
+  depreciationMethod?: string
+  usefulLifeYears?: number
+  disposalDate?: string
+  disposalPrice?: number
+  disposalReason?: string
 }
 
 export interface AssetPayload {
@@ -69,7 +74,27 @@ export interface AssetPayload {
   purchaseDate?: string
   warrantyUntil?: string
   status?: string
+  depreciationMethod?: string
+  usefulLifeYears?: number | null
   notes?: string
+}
+
+export interface DepreciationSnapshot {
+  assetId: number
+  method: string
+  usefulLifeYears?: number
+  purchaseCost: number
+  residualValue: number
+  annualDepreciation: number
+  accumulatedDepreciation: number
+  bookValue: number
+  yearsElapsed: number
+}
+
+export interface DisposeAssetPayload {
+  disposalDate: string
+  disposalPrice?: number | null
+  disposalReason?: string
 }
 
 export interface Subscription {

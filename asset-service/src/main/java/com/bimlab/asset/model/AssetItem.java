@@ -43,6 +43,17 @@ public class AssetItem {
     private LocalDate warrantyUntil;
     @Column(length = 30, nullable = false)
     private String status;
+
+    @Column(length = 30)
+    private String depreciationMethod;
+    private Integer usefulLifeYears;
+
+    private LocalDate disposalDate;
+    @Column(precision = 16, scale = 2)
+    private BigDecimal disposalPrice;
+    @Column(length = 500)
+    private String disposalReason;
+
     @Column(length = 500)
     private String notes;
     @Column(nullable = false)

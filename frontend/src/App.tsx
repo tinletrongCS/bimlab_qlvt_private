@@ -33,6 +33,7 @@ import {
   deletePurchaseRequest,
   deleteSubscription,
   deleteVendor,
+  disposeAsset,
   loadAssets,
   loadContracts,
   loadCurrentUser,
@@ -225,6 +226,27 @@ function App() {
     setError('')
     try {
       await updatePurchaseRequestStatus(id, status)
+      await refreshData()
+    } catch (err) {
+      setError(readError(err))
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  async function handleDispose(item: AssetItem) {
+    const dateStr = window.prompt(`Thanh lý tài sản "${item.name}"\n\nNgày thanh lý (YYYY-MM-DD):`, new Date().toISOString().slice(0, 10))
+    if (!dateStr) return
+    const priceStr = window.prompt('Giá thanh lý (VND, để trống nếu không có):', '')
+    const reason = window.prompt('Lý do thanh lý:', '') || ''
+    setSubmitting(true)
+    setError('')
+    try {
+      await disposeAsset(item.id, {
+        disposalDate: dateStr,
+        disposalPrice: priceStr ? Number(priceStr) : null,
+        disposalReason: reason,
+      })
       await refreshData()
     } catch (err) {
       setError(readError(err))
@@ -477,7 +499,7 @@ function App() {
             { key: 'scope', title: 'Liên kết', render: (item) => <span className="muted-cell">{departmentName(item.departmentId)} · {siteName(item.siteId)} · {projectName(item.projectId)}</span> },
             { key: 'value', title: 'Giá trị', render: (item) => money.format(Number(item.purchaseCost || 0)) },
             { key: 'status', title: 'Trạng thái', render: (item) => <StatusBadge value={item.status} /> },
-            { key: 'actions', title: '', render: (item) => canManage && <AssetActions item={item} onEdit={() => setModal({ type: 'asset', mode: 'edit', item })} onDelete={() => handleDelete('assets', item.id)} onRevoke={() => revokeAsset(item)} /> },
+            { key: 'actions', title: '', render: (item) => canManage && <AssetActions item={item} onEdit={() => setModal({ type: 'asset', mode: 'edit', item })} onDelete={() => handleDelete('assets', item.id)} onRevoke={() => revokeAsset(item)} onDispose={() => handleDispose(item)} /> },
           ]}
         />
       </section>
@@ -632,10 +654,12 @@ function RowActions({ onEdit, onDelete }: { onEdit: () => void; onDelete: () => 
   )
 }
 
-function AssetActions({ item, onEdit, onDelete, onRevoke }: { item: AssetItem; onEdit: () => void; onDelete: () => void; onRevoke: () => void }) {
+function AssetActions({ item, onEdit, onDelete, onRevoke, onDispose }: { item: AssetItem; onEdit: () => void; onDelete: () => void; onRevoke: () => void; onDispose: () => void }) {
+  const isDisposed = item.status === 'DISPOSED'
   return (
     <div className="row-actions">
-      {item.assignedEmployeeId && <button className="mini success" onClick={onRevoke}>Thu hồi</button>}
+      {!isDisposed && item.assignedEmployeeId && <button className="mini success" onClick={onRevoke}>Thu hồi</button>}
+      {!isDisposed && <button className="mini" onClick={onDispose}>Thanh lý</button>}
       <button className="mini" onClick={onEdit}><FiEdit2 /> Sửa</button>
       <button className="mini danger" onClick={onDelete}><FiTrash2 /> Xóa</button>
     </div>
@@ -706,6 +730,8 @@ function CrudForm({
       purchaseDate: empty(form.purchaseDate),
       warrantyUntil: empty(form.warrantyUntil),
       status: form.status || 'IN_STOCK',
+      depreciationMethod: empty(form.depreciationMethod) || 'NONE',
+      usefulLifeYears: num(form.usefulLifeYears),
       notes: empty(form.notes),
     })
     if (modal.type === 'subscription') onSubmit({
@@ -778,7 +804,9 @@ function CrudForm({
         <Field label="Giá trị còn lại" value={form.residualValue} onChange={(value) => setField('residualValue', value)} type="number" />
         <Field label="Ngày mua" value={form.purchaseDate} onChange={(value) => setField('purchaseDate', value)} type="date" />
         <Field label="Bảo hành đến" value={form.warrantyUntil} onChange={(value) => setField('warrantyUntil', value)} type="date" />
-        <Select label="Trạng thái" value={form.status} onChange={(value) => setField('status', value)} options={[['IN_STOCK', 'Trong kho'], ['ASSIGNED', 'Đã cấp phát'], ['MAINTENANCE', 'Bảo trì'], ['LIQUIDATED', 'Đã thanh lý']]} />
+        <Select label="Phương pháp khấu hao" value={form.depreciationMethod} onChange={(value) => setField('depreciationMethod', value)} options={[['NONE', 'Không khấu hao'], ['STRAIGHT_LINE', 'Đường thẳng'], ['DECLINING_BALANCE', 'Số dư giảm dần']]} />
+        <Field label="Thời gian sử dụng (năm)" value={form.usefulLifeYears} onChange={(value) => setField('usefulLifeYears', value)} type="number" />
+        <Select label="Trạng thái" value={form.status} onChange={(value) => setField('status', value)} options={[['IN_STOCK', 'Trong kho'], ['ASSIGNED', 'Đã cấp phát'], ['MAINTENANCE', 'Bảo trì'], ['DISPOSED', 'Đã thanh lý']]} />
         <Field label="Ghi chú" value={form.notes} onChange={(value) => setField('notes', value)} />
       </>}
       {modal.type === 'subscription' && <>
@@ -879,6 +907,8 @@ function initialForm(modal: NonNullable<ModalState>): Record<string, string> {
     purchaseDate: modal.item?.purchaseDate || '',
     warrantyUntil: modal.item?.warrantyUntil || '',
     status: modal.item?.status || 'IN_STOCK',
+    depreciationMethod: modal.item?.depreciationMethod || 'NONE',
+    usefulLifeYears: val(modal.item?.usefulLifeYears),
     notes: '',
   }
   if (modal.type === 'subscription') return {
@@ -969,6 +999,8 @@ function assetToPayload(item: AssetItem): AssetPayload {
     purchaseDate: item.purchaseDate,
     warrantyUntil: item.warrantyUntil,
     status: item.status,
+    depreciationMethod: item.depreciationMethod,
+    usefulLifeYears: item.usefulLifeYears || null,
   }
 }
 

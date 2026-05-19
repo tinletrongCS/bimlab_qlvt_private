@@ -20,5 +20,7 @@ public record AssetRequest(
         LocalDate purchaseDate,
         LocalDate warrantyUntil,
         String status,
+        String depreciationMethod,
+        Integer usefulLifeYears,
         String notes
 ) {}

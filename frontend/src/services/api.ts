@@ -1,5 +1,5 @@
 import axios from 'axios'
-import type { AssetItem, AssetPayload, AuthUser, Contract, ContractPayload, DashboardSummary, DepartmentLite, EmployeeLite, ProjectLite, PurchaseRequest, PurchaseRequestPayload, Subscription, SubscriptionPayload, Vendor, VendorPayload, WorkSiteLite } from './types'
+import type { AssetItem, AssetPayload, AuthUser, Contract, ContractPayload, DashboardSummary, DepartmentLite, DepreciationSnapshot, DisposeAssetPayload, EmployeeLite, ProjectLite, PurchaseRequest, PurchaseRequestPayload, Subscription, SubscriptionPayload, Vendor, VendorPayload, WorkSiteLite } from './types'
 
 export const api = axios.create({
   baseURL: '/api',
@@ -65,6 +65,16 @@ export async function updateAsset(id: number, payload: AssetPayload): Promise<As
 
 export async function deleteAsset(id: number): Promise<void> {
   await api.delete(`/asset/assets/${id}`)
+}
+
+export async function loadDepreciation(id: number): Promise<DepreciationSnapshot> {
+  const response = await api.get<DepreciationSnapshot>(`/asset/assets/${id}/depreciation`)
+  return response.data
+}
+
+export async function disposeAsset(id: number, payload: DisposeAssetPayload): Promise<AssetItem> {
+  const response = await api.post<AssetItem>(`/asset/assets/${id}/dispose`, payload)
+  return response.data
 }
 
 export async function loadSubscriptions(): Promise<Subscription[]> {
