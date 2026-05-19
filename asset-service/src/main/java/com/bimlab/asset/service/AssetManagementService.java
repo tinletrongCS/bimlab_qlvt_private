@@ -7,6 +7,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.LocalDate;
+import java.time.Period;
 import java.util.List;
 import java.util.NoSuchElementException;
 
@@ -81,7 +85,68 @@ public class AssetManagementService {
         item.setPurchaseDate(req.purchaseDate());
         item.setWarrantyUntil(req.warrantyUntil());
         if (req.status() != null) item.setStatus(req.status());
+        item.setDepreciationMethod(req.depreciationMethod());
+        item.setUsefulLifeYears(req.usefulLifeYears());
         item.setNotes(req.notes());
+    }
+
+    @Transactional
+    public AssetItem disposeAsset(Long id, DisposeAssetRequest req) {
+        AssetItem item = getAsset(id);
+        if ("DISPOSED".equals(item.getStatus())) {
+            throw new IllegalStateException("Tài sản đã được thanh lý");
+        }
+        item.setStatus("DISPOSED");
+        item.setDisposalDate(req.disposalDate());
+        item.setDisposalPrice(req.disposalPrice());
+        item.setDisposalReason(req.disposalReason());
+        item.setAssignedEmployeeId(null);
+        return assets.save(item);
+    }
+
+    public DepreciationSnapshot calculateDepreciation(Long id) {
+        AssetItem item = getAsset(id);
+        BigDecimal cost = item.getPurchaseCost() == null ? BigDecimal.ZERO : item.getPurchaseCost();
+        BigDecimal residual = item.getResidualValue() == null ? cost : item.getResidualValue();
+        Integer life = item.getUsefulLifeYears();
+        String method = item.getDepreciationMethod() == null ? "NONE" : item.getDepreciationMethod();
+
+        if (life == null || life <= 0 || "NONE".equals(method) || item.getPurchaseDate() == null) {
+            return new DepreciationSnapshot(id, method, life, cost, residual,
+                    BigDecimal.ZERO, BigDecimal.ZERO, cost, 0);
+        }
+
+        int yearsElapsed = Math.max(0, Period.between(item.getPurchaseDate(), LocalDate.now()).getYears());
+        BigDecimal depreciable = cost.subtract(residual);
+        BigDecimal annual;
+        BigDecimal accumulated;
+        BigDecimal bookValue;
+
+        if ("DECLINING_BALANCE".equals(method)) {
+            BigDecimal rate = BigDecimal.valueOf(2).divide(BigDecimal.valueOf(life), 8, RoundingMode.HALF_UP);
+            BigDecimal current = cost;
+            int years = Math.min(yearsElapsed, life);
+            for (int i = 0; i < years; i++) {
+                BigDecimal step = current.multiply(rate).setScale(2, RoundingMode.HALF_UP);
+                BigDecimal next = current.subtract(step);
+                if (next.compareTo(residual) < 0) {
+                    step = current.subtract(residual);
+                    next = residual;
+                }
+                current = next;
+            }
+            bookValue = current;
+            accumulated = cost.subtract(bookValue);
+            annual = cost.multiply(rate).setScale(2, RoundingMode.HALF_UP);
+        } else {
+            annual = depreciable.divide(BigDecimal.valueOf(life), 2, RoundingMode.HALF_UP);
+            int years = Math.min(yearsElapsed, life);
+            accumulated = annual.multiply(BigDecimal.valueOf(years));
+            bookValue = cost.subtract(accumulated);
+            if (bookValue.compareTo(residual) < 0) bookValue = residual;
+        }
+
+        return new DepreciationSnapshot(id, method, life, cost, residual, annual, accumulated, bookValue, yearsElapsed);
     }
 
     public List<Subscription> listSubscriptions() { return subscriptions.findAll(); }
