@@ -7,6 +7,7 @@ import {
   FiCheckCircle,
   FiCreditCard,
   FiEdit2,
+  FiFileText,
   FiLogIn,
   FiLogOut,
   FiPlus,
@@ -23,14 +24,17 @@ import { StatCard } from './components/StatCard'
 import { StatusBadge } from './components/StatusBadge'
 import {
   createAsset,
+  createContract,
   createPurchaseRequest,
   createSubscription,
   createVendor,
   deleteAsset,
+  deleteContract,
   deletePurchaseRequest,
   deleteSubscription,
   deleteVendor,
   loadAssets,
+  loadContracts,
   loadCurrentUser,
   loadDashboard,
   loadDepartments,
@@ -43,6 +47,7 @@ import {
   login,
   logout,
   updateAsset,
+  updateContract,
   updatePurchaseRequest,
   updatePurchaseRequestStatus,
   updateSubscription,
@@ -52,6 +57,8 @@ import type {
   AssetItem,
   AssetPayload,
   AuthUser,
+  Contract,
+  ContractPayload,
   DashboardSummary,
   DepartmentLite,
   EmployeeLite,
@@ -66,7 +73,7 @@ import type {
   WorkSiteLite,
 } from './services/types'
 
-type TabKey = 'dashboard' | 'assets' | 'subscriptions' | 'vendors' | 'requests'
+type TabKey = 'dashboard' | 'assets' | 'subscriptions' | 'vendors' | 'requests' | 'contracts'
 type ModalState =
   | { type: 'vendor'; mode: 'create'; item?: undefined }
   | { type: 'vendor'; mode: 'edit'; item: Vendor }
@@ -76,6 +83,8 @@ type ModalState =
   | { type: 'subscription'; mode: 'edit'; item: Subscription }
   | { type: 'request'; mode: 'create'; item?: undefined }
   | { type: 'request'; mode: 'edit'; item: PurchaseRequest }
+  | { type: 'contract'; mode: 'create'; item?: undefined }
+  | { type: 'contract'; mode: 'edit'; item: Contract }
   | null
 
 const tabs: Array<{ key: TabKey; label: string; icon: ReactElement; permission?: Permission }> = [
@@ -84,6 +93,7 @@ const tabs: Array<{ key: TabKey; label: string; icon: ReactElement; permission?:
   { key: 'subscriptions', label: 'Subscription', icon: <FiCreditCard />, permission: 'subscription_manage' },
   { key: 'vendors', label: 'Nhà cung cấp', icon: <FiBriefcase />, permission: 'vendor_manage' },
   { key: 'requests', label: 'Đề nghị mua sắm', icon: <FiShoppingCart />, permission: 'purchase_request_create' },
+  { key: 'contracts', label: 'Hợp đồng', icon: <FiFileText />, permission: 'contract_manage' },
 ]
 
 const money = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 })
@@ -104,11 +114,12 @@ function App() {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
   const [modal, setModal] = useState<ModalState>(null)
-  const [summary, setSummary] = useState<DashboardSummary>({ assets: 0, subscriptions: 0, vendors: 0, purchaseRequests: 0 })
+  const [summary, setSummary] = useState<DashboardSummary>({ assets: 0, subscriptions: 0, vendors: 0, purchaseRequests: 0, contracts: 0 })
   const [assets, setAssets] = useState<AssetItem[]>([])
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([])
   const [vendors, setVendors] = useState<Vendor[]>([])
   const [requests, setRequests] = useState<PurchaseRequest[]>([])
+  const [contracts, setContracts] = useState<Contract[]>([])
   const [employees, setEmployees] = useState<EmployeeLite[]>([])
   const [departments, setDepartments] = useState<DepartmentLite[]>([])
   const [workSites, setWorkSites] = useState<WorkSiteLite[]>([])
@@ -133,12 +144,13 @@ function App() {
   }
 
   async function refreshData() {
-    const [dashboardData, vendorData, assetData, subscriptionData, requestData, employeeData, departmentData, siteData, projectData] = await Promise.all([
-      loadDashboard().catch(() => ({ assets: 0, subscriptions: 0, vendors: 0, purchaseRequests: 0 })),
+    const [dashboardData, vendorData, assetData, subscriptionData, requestData, contractData, employeeData, departmentData, siteData, projectData] = await Promise.all([
+      loadDashboard().catch(() => ({ assets: 0, subscriptions: 0, vendors: 0, purchaseRequests: 0, contracts: 0 })),
       loadVendors().catch(() => []),
       loadAssets().catch(() => []),
       loadSubscriptions().catch(() => []),
       loadPurchaseRequests().catch(() => []),
+      loadContracts().catch(() => []),
       loadEmployees().catch(() => []),
       loadDepartments().catch(() => []),
       loadWorkSites().catch(() => []),
@@ -149,6 +161,7 @@ function App() {
     setAssets(assetData)
     setSubscriptions(subscriptionData)
     setRequests(requestData)
+    setContracts(contractData)
     setEmployees(employeeData)
     setDepartments(departmentData)
     setWorkSites(siteData)
@@ -184,6 +197,7 @@ function App() {
       setSubscriptions([])
       setVendors([])
       setRequests([])
+      setContracts([])
       setSubmitting(false)
     }
   }
@@ -197,6 +211,7 @@ function App() {
       if (type === 'assets') await deleteAsset(id)
       if (type === 'subscriptions') await deleteSubscription(id)
       if (type === 'requests') await deletePurchaseRequest(id)
+      if (type === 'contracts') await deleteContract(id)
       await refreshData()
     } catch (err) {
       setError(readError(err))
@@ -355,7 +370,7 @@ function App() {
     </main>
   )
 
-  async function submitModal(payload: VendorPayload | AssetPayload | SubscriptionPayload | PurchaseRequestPayload) {
+  async function submitModal(payload: VendorPayload | AssetPayload | SubscriptionPayload | PurchaseRequestPayload | ContractPayload) {
     if (!modal) return
     setSubmitting(true)
     setError('')
@@ -380,6 +395,11 @@ function App() {
           ? await createPurchaseRequest(payload as PurchaseRequestPayload)
           : await updatePurchaseRequest(modal.item.id, payload as PurchaseRequestPayload)
       }
+      if (modal.type === 'contract') {
+        modal.mode === 'create'
+          ? await createContract(payload as ContractPayload)
+          : await updateContract(modal.item.id, payload as ContractPayload)
+      }
       setModal(null)
       await refreshData()
     } catch (err) {
@@ -394,6 +414,7 @@ function App() {
     if (tab === 'assets') return renderAssets()
     if (tab === 'subscriptions') return renderSubscriptions()
     if (tab === 'vendors') return renderVendors()
+    if (tab === 'contracts') return renderContracts()
     return renderRequests()
   }
 
@@ -541,6 +562,36 @@ function App() {
     )
   }
 
+  function renderContracts() {
+    const canManage = hasPermission(user, 'contract_manage')
+    return (
+      <section className="panel">
+        <PanelHeader title="Hợp đồng mua sắm" action={canManage} onAdd={() => setModal({ type: 'contract', mode: 'create' })} />
+        <DataTable
+          data={contracts}
+          getRowKey={(item) => item.id}
+          emptyText="Chưa có hợp đồng nào"
+          columns={[
+            { key: 'number', title: 'Số HĐ', render: (item) => <strong>{item.contractNumber}</strong> },
+            { key: 'title', title: 'Tiêu đề', render: (item) => item.title },
+            { key: 'vendor', title: 'Nhà cung cấp', render: (item) => item.vendor?.name || '—' },
+            { key: 'value', title: 'Giá trị', render: (item) => money.format(Number(item.contractValue || 0)) },
+            { key: 'signDate', title: 'Ngày ký', render: (item) => item.signDate || '—' },
+            { key: 'effectiveTo', title: 'Hiệu lực đến', render: (item) => item.effectiveTo || '—' },
+            { key: 'status', title: 'Trạng thái', render: (item) => <StatusBadge value={item.status} /> },
+            {
+              key: 'actions',
+              title: '',
+              render: (item) => canManage ? (
+                <RowActions onEdit={() => setModal({ type: 'contract', mode: 'edit', item })} onDelete={() => handleDelete('contracts', item.id)} />
+              ) : null,
+            },
+          ]}
+        />
+      </section>
+    )
+  }
+
   async function revokeAsset(item: AssetItem) {
     setSubmitting(true)
     setError('')
@@ -622,7 +673,7 @@ function CrudForm({
   projects: ProjectLite[]
   submitting: boolean
   onClose: () => void
-  onSubmit: (payload: VendorPayload | AssetPayload | SubscriptionPayload | PurchaseRequestPayload) => void
+  onSubmit: (payload: VendorPayload | AssetPayload | SubscriptionPayload | PurchaseRequestPayload | ContractPayload) => void
 }) {
   const [form, setForm] = useState<Record<string, string>>(() => initialForm(modal))
   const setField = (key: string, value: string) => setForm((prev) => ({ ...prev, [key]: value }))
@@ -683,6 +734,20 @@ function CrudForm({
       status: form.status || 'PENDING',
       notes: empty(form.notes),
     })
+    if (modal.type === 'contract') onSubmit({
+      contractNumber: form.contractNumber,
+      title: form.title,
+      vendorId: num(form.vendorId),
+      signDate: empty(form.signDate),
+      effectiveFrom: empty(form.effectiveFrom),
+      effectiveTo: empty(form.effectiveTo),
+      contractValue: num(form.contractValue),
+      currency: form.currency || 'VND',
+      paymentTerms: empty(form.paymentTerms),
+      status: form.status || 'DRAFT',
+      attachmentUrl: empty(form.attachmentUrl),
+      notes: empty(form.notes),
+    })
   }
 
   return (
@@ -740,6 +805,20 @@ function CrudForm({
         <ProjectSelect projects={projects} value={form.projectId} onChange={(value) => setField('projectId', value)} />
         <Field label="Ngày cần" value={form.neededDate} onChange={(value) => setField('neededDate', value)} type="date" />
         <Select label="Trạng thái" value={form.status} onChange={(value) => setField('status', value)} options={[['PENDING', 'Chờ duyệt'], ['APPROVED', 'Đã duyệt'], ['REJECTED', 'Từ chối'], ['DRAFT', 'Bản nháp']]} />
+        <Field label="Ghi chú" value={form.notes} onChange={(value) => setField('notes', value)} />
+      </>}
+      {modal.type === 'contract' && <>
+        <Field label="Số hợp đồng" value={form.contractNumber} onChange={(value) => setField('contractNumber', value)} required />
+        <Field label="Tiêu đề" value={form.title} onChange={(value) => setField('title', value)} required />
+        <VendorSelect vendors={vendors} value={form.vendorId} onChange={(value) => setField('vendorId', value)} />
+        <Field label="Giá trị hợp đồng" value={form.contractValue} onChange={(value) => setField('contractValue', value)} type="number" />
+        <Select label="Tiền tệ" value={form.currency} onChange={(value) => setField('currency', value)} options={[['VND', 'VND'], ['USD', 'USD'], ['EUR', 'EUR']]} />
+        <Field label="Ngày ký" value={form.signDate} onChange={(value) => setField('signDate', value)} type="date" />
+        <Field label="Hiệu lực từ" value={form.effectiveFrom} onChange={(value) => setField('effectiveFrom', value)} type="date" />
+        <Field label="Hiệu lực đến" value={form.effectiveTo} onChange={(value) => setField('effectiveTo', value)} type="date" />
+        <Field label="Điều khoản thanh toán" value={form.paymentTerms} onChange={(value) => setField('paymentTerms', value)} />
+        <Field label="URL file đính kèm" value={form.attachmentUrl} onChange={(value) => setField('attachmentUrl', value)} />
+        <Select label="Trạng thái" value={form.status} onChange={(value) => setField('status', value)} options={[['DRAFT', 'Bản nháp'], ['ACTIVE', 'Đang hiệu lực'], ['EXPIRED', 'Hết hạn'], ['TERMINATED', 'Đã hủy'], ['COMPLETED', 'Hoàn thành']]} />
         <Field label="Ghi chú" value={form.notes} onChange={(value) => setField('notes', value)} />
       </>}
     </CrudModal>
@@ -815,7 +894,7 @@ function initialForm(modal: NonNullable<ModalState>): Record<string, string> {
     status: modal.item?.status || 'ACTIVE',
     notes: '',
   }
-  return {
+  if (modal.type === 'request') return {
     requestType: modal.item?.requestType || 'DEVICE',
     title: modal.item?.title || '',
     reason: modal.item?.reason || '',
@@ -828,10 +907,24 @@ function initialForm(modal: NonNullable<ModalState>): Record<string, string> {
     status: modal.item?.status || 'PENDING',
     notes: '',
   }
+  return {
+    contractNumber: modal.item?.contractNumber || '',
+    title: modal.item?.title || '',
+    vendorId: modal.item?.vendor?.id ? String(modal.item.vendor.id) : '',
+    contractValue: val(modal.item?.contractValue),
+    currency: modal.item?.currency || 'VND',
+    signDate: modal.item?.signDate || '',
+    effectiveFrom: modal.item?.effectiveFrom || '',
+    effectiveTo: modal.item?.effectiveTo || '',
+    paymentTerms: modal.item?.paymentTerms || '',
+    attachmentUrl: modal.item?.attachmentUrl || '',
+    status: modal.item?.status || 'DRAFT',
+    notes: modal.item?.notes || '',
+  }
 }
 
 function modalLabel(type: NonNullable<ModalState>['type']) {
-  return ({ vendor: 'nhà cung cấp', asset: 'tài sản', subscription: 'subscription', request: 'đề nghị mua sắm' })[type]
+  return ({ vendor: 'nhà cung cấp', asset: 'tài sản', subscription: 'subscription', request: 'đề nghị mua sắm', contract: 'hợp đồng' })[type]
 }
 
 function empty(value?: string) {

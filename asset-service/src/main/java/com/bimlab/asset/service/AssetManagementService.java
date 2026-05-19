@@ -17,6 +17,7 @@ public class AssetManagementService {
     private final AssetItemRepository assets;
     private final SubscriptionRepository subscriptions;
     private final PurchaseRequestRepository purchaseRequests;
+    private final ContractRepository contracts;
 
     public List<Vendor> listVendors() { return vendors.findAll(); }
     public Vendor getVendor(Long id) { return vendors.findById(id).orElseThrow(() -> new NoSuchElementException("Nhà cung cấp không tồn tại")); }
@@ -157,5 +158,54 @@ public class AssetManagementService {
         pr.setNeededDate(req.neededDate());
         if (req.status() != null) pr.setStatus(req.status());
         pr.setNotes(req.notes());
+    }
+
+    public List<Contract> listContracts() { return contracts.findAll(); }
+    public Contract getContract(Long id) { return contracts.findById(id).orElseThrow(() -> new NoSuchElementException("Hợp đồng không tồn tại")); }
+
+    @Transactional
+    public Contract createContract(ContractRequest req) {
+        if (contracts.existsByContractNumber(req.contractNumber())) {
+            throw new IllegalArgumentException("Số hợp đồng đã tồn tại: " + req.contractNumber());
+        }
+        Contract c = new Contract();
+        applyContract(c, req);
+        return contracts.save(c);
+    }
+
+    @Transactional
+    public Contract updateContract(Long id, ContractRequest req) {
+        Contract c = getContract(id);
+        if (!c.getContractNumber().equals(req.contractNumber()) && contracts.existsByContractNumber(req.contractNumber())) {
+            throw new IllegalArgumentException("Số hợp đồng đã tồn tại: " + req.contractNumber());
+        }
+        applyContract(c, req);
+        return contracts.save(c);
+    }
+
+    @Transactional
+    public Contract updateContractStatus(Long id, String status) {
+        Contract c = getContract(id);
+        c.setStatus(status);
+        return contracts.save(c);
+    }
+
+    @Transactional
+    public void deleteContract(Long id) { contracts.delete(getContract(id)); }
+
+    private void applyContract(Contract c, ContractRequest req) {
+        c.setContractNumber(req.contractNumber());
+        c.setTitle(req.title());
+        c.setVendor(req.vendorId() == null ? null : getVendor(req.vendorId()));
+        c.setPurchaseRequest(req.purchaseRequestId() == null ? null : getPurchaseRequest(req.purchaseRequestId()));
+        c.setSignDate(req.signDate());
+        c.setEffectiveFrom(req.effectiveFrom());
+        c.setEffectiveTo(req.effectiveTo());
+        c.setContractValue(req.contractValue());
+        if (req.currency() != null) c.setCurrency(req.currency());
+        c.setPaymentTerms(req.paymentTerms());
+        if (req.status() != null) c.setStatus(req.status());
+        c.setAttachmentUrl(req.attachmentUrl());
+        c.setNotes(req.notes());
     }
 }

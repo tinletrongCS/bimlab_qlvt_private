@@ -9,6 +9,7 @@ export type Permission =
   | 'subscription_manage'
   | 'purchase_request_create'
   | 'purchase_request_approve'
+  | 'contract_manage'
   | 'asset_finance_manage'
   | 'asset_report_view'
 
@@ -123,11 +124,47 @@ export interface PurchaseRequestPayload {
   notes?: string
 }
 
+export interface Contract {
+  id: number
+  contractNumber: string
+  title: string
+  vendor?: Vendor
+  purchaseRequest?: PurchaseRequest
+  signDate?: string
+  effectiveFrom?: string
+  effectiveTo?: string
+  contractValue?: number
+  currency?: string
+  paymentTerms?: string
+  status: string
+  attachmentUrl?: string
+  notes?: string
+  createdAt?: string
+  updatedAt?: string
+}
+
+export interface ContractPayload {
+  contractNumber: string
+  title: string
+  vendorId?: number | null
+  purchaseRequestId?: number | null
+  signDate?: string
+  effectiveFrom?: string
+  effectiveTo?: string
+  contractValue?: number | null
+  currency?: string
+  paymentTerms?: string
+  status?: string
+  attachmentUrl?: string
+  notes?: string
+}
+
 export interface DashboardSummary {
   assets: number
   subscriptions: number
   vendors: number
   purchaseRequests: number
+  contracts: number
 }
 
 export interface EmployeeLite {
