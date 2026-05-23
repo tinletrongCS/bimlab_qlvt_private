@@ -6,6 +6,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
 import java.util.Arrays;
+import java.util.Objects;
 
 @Component
 public class AssetAccessService {
@@ -43,6 +44,56 @@ public class AssetAccessService {
 
     public void ensureReportView() {
         ensureAny("asset_report_view", "asset_view_all", "asset_manage", "asset_finance_manage");
+    }
+
+    // ── F1 object-level scoping ────────────────────────────────────────────
+
+    /**
+     * F1: returns the caller's employeeId from the JWT-bound AssetPrincipal,
+     * or null if the token has no employeeId claim (legacy session). Callers
+     * must treat null as "cannot satisfy self-scope" — fall back to admin
+     * permission check.
+     */
+    public Long getCurrentEmployeeId() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null) return null;
+        Object principal = authentication.getPrincipal();
+        if (principal instanceof AssetPrincipal p) return p.employeeId();
+        return null;
+    }
+
+    public boolean hasAnyPermission(String... permissions) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) return false;
+        return Arrays.stream(permissions).anyMatch(permission ->
+                authentication.getAuthorities().stream().anyMatch(authority -> permission.equals(authority.getAuthority()))
+        );
+    }
+
+    /**
+     * F1: pass if caller has any of {@code adminPermissions}, OR if
+     * {@code ownerEmployeeId} matches the caller's employeeId from the JWT.
+     * If {@code ownerEmployeeId} is null (resource has no owner — e.g.
+     * Contract/Vendor/Subscription master data), only admin permissions allow
+     * access.
+     */
+    public void ensureSelfOrAny(Long ownerEmployeeId, String... adminPermissions) {
+        if (hasAnyPermission(adminPermissions)) return;
+        Long current = getCurrentEmployeeId();
+        if (ownerEmployeeId != null && Objects.equals(ownerEmployeeId, current)) return;
+        throw new AccessDeniedException("Không có quyền truy cập tài nguyên này");
+    }
+
+    /**
+     * F1 variant for AssetTransfer where the caller may be either the
+     * from-party or the to-party of the transfer. Pass if admin perm, or if
+     * caller's employeeId matches either side.
+     */
+    public void ensurePartyOrAny(Long fromEmployeeId, Long toEmployeeId, String... adminPermissions) {
+        if (hasAnyPermission(adminPermissions)) return;
+        Long current = getCurrentEmployeeId();
+        if (current != null && (Objects.equals(current, fromEmployeeId) || Objects.equals(current, toEmployeeId))) return;
+        throw new AccessDeniedException("Không có quyền truy cập tài nguyên này");
     }
 
     private void ensureAny(String... permissions) {

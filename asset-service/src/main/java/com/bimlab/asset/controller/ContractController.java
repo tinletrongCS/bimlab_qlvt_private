@@ -19,7 +19,15 @@ public class ContractController {
     private final AssetAccessService access;
 
     @GetMapping public List<Contract> list() { access.ensureAccess(); return service.listContracts(); }
-    @GetMapping("/{id}") public Contract get(@PathVariable Long id) { access.ensureAccess(); return service.getContract(id); }
+
+    // F1: Contract has no employee owner — admin perms only.
+    @GetMapping("/{id}") public Contract get(@PathVariable Long id) {
+        access.ensureAccess();
+        Contract c = service.getContract(id);
+        access.ensureSelfOrAny(null,
+                "contract_manage", "asset_finance_manage", "asset_manage", "asset_view_all");
+        return c;
+    }
     @PostMapping public Contract create(@Valid @RequestBody ContractRequest req) { access.ensureContractManage(); return service.createContract(req); }
     @PutMapping("/{id}") public Contract update(@PathVariable Long id, @Valid @RequestBody ContractRequest req) { access.ensureContractManage(); return service.updateContract(id, req); }
     @PatchMapping("/{id}/status") public Contract status(@PathVariable Long id, @RequestBody Map<String, String> body) { access.ensureContractManage(); return service.updateContractStatus(id, body.get("status")); }

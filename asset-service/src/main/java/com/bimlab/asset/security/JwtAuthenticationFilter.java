@@ -29,11 +29,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String username = tokenProvider.getUsername(token);
             String role = tokenProvider.getRole(token);
             List<String> permissions = tokenProvider.getPermissions(token);
+            Long employeeId = tokenProvider.getEmployeeId(token); // F1: carry into principal
             List<org.springframework.security.core.GrantedAuthority> authorities = new ArrayList<>();
             if (role != null && !role.isBlank()) authorities.add(new SimpleGrantedAuthority("ROLE_" + role));
             permissions.forEach(permission -> authorities.add(new SimpleGrantedAuthority(permission)));
+            AssetPrincipal principal = new AssetPrincipal(username, employeeId);
             SecurityContextHolder.getContext().setAuthentication(
-                    new UsernamePasswordAuthenticationToken(username, null, authorities));
+                    new UsernamePasswordAuthenticationToken(principal, null, authorities));
         }
         chain.doFilter(request, response);
     }

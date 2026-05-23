@@ -193,15 +193,29 @@ public class AssetManagementService {
 
     @Transactional
     public PurchaseRequest createPurchaseRequest(PurchaseRequestPayload req) {
+        // Back-compat overload for callers that do not stamp the requester.
+        return createPurchaseRequest(req, null);
+    }
+
+    /**
+     * F4: server stamps requesterEmployeeId from the JWT principal and forces
+     * status=PENDING on create — previously the approver-supplied payload could
+     * impersonate any requesterEmployeeId, corrupting the audit trail, and a
+     * regular user could submit a PR pre-approved by passing status=APPROVED.
+     */
+    @Transactional
+    public PurchaseRequest createPurchaseRequest(PurchaseRequestPayload req, Long callerEmployeeId) {
         PurchaseRequest pr = new PurchaseRequest();
-        applyPurchaseRequest(pr, req);
+        applyPurchaseRequest(pr, req, false);
+        pr.setRequesterEmployeeId(callerEmployeeId);
+        pr.setStatus("PENDING");
         return purchaseRequests.save(pr);
     }
 
     @Transactional
     public PurchaseRequest updatePurchaseRequest(Long id, PurchaseRequestPayload req) {
         PurchaseRequest pr = getPurchaseRequest(id);
-        applyPurchaseRequest(pr, req);
+        applyPurchaseRequest(pr, req, true);
         return purchaseRequests.save(pr);
     }
 
@@ -215,17 +229,25 @@ public class AssetManagementService {
     @Transactional
     public void deletePurchaseRequest(Long id) { purchaseRequests.delete(getPurchaseRequest(id)); }
 
-    private void applyPurchaseRequest(PurchaseRequest pr, PurchaseRequestPayload req) {
+    private void applyPurchaseRequest(PurchaseRequest pr, PurchaseRequestPayload req, boolean isUpdate) {
         pr.setRequestType(req.requestType());
         pr.setTitle(req.title());
         pr.setReason(req.reason());
         pr.setEstimatedCost(req.estimatedCost());
-        pr.setRequesterEmployeeId(req.requesterEmployeeId());
+        // F4: NEVER apply caller-supplied requesterEmployeeId. On create the
+        // service stamps it from JWT principal; on update we keep the stored
+        // value so an approver cannot rewrite who requested.
+        if (!isUpdate) {
+            // create path — caller (createPurchaseRequest overload) overrides
+            // requesterEmployeeId after this method returns; nothing to do here.
+        }
         pr.setDepartmentId(req.departmentId());
         pr.setSiteId(req.siteId());
         pr.setProjectId(req.projectId());
         pr.setNeededDate(req.neededDate());
-        if (req.status() != null) pr.setStatus(req.status());
+        // F4: status flow restricted — create forces PENDING (post-call); update
+        // uses /status PATCH endpoint or the explicit approve flow, not body.
+        if (isUpdate && req.status() != null) pr.setStatus(req.status());
         pr.setNotes(req.notes());
     }
 
