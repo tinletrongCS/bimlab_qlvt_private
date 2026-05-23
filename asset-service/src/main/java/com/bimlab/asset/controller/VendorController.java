@@ -2,10 +2,10 @@ package com.bimlab.asset.controller;
 
 import com.bimlab.asset.dto.VendorRequest;
 import com.bimlab.asset.model.Vendor;
-import com.bimlab.asset.security.AssetAccessService;
 import com.bimlab.asset.service.AssetManagementService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -15,19 +15,37 @@ import java.util.List;
 @RequiredArgsConstructor
 public class VendorController {
     private final AssetManagementService service;
-    private final AssetAccessService access;
 
-    @GetMapping public List<Vendor> list() { access.ensureAccess(); return service.listVendors(); }
-
-    // F1: Vendor is master data — admin perms only.
-    @GetMapping("/{id}") public Vendor get(@PathVariable Long id) {
-        access.ensureAccess();
-        Vendor v = service.getVendor(id);
-        access.ensureSelfOrAny(null,
-                "vendor_manage", "asset_manage", "asset_view_all");
-        return v;
+    @GetMapping
+    @PreAuthorize("hasAnyAuthority('asset_access','asset_view_self','asset_view_team','asset_view_all','asset_manage','asset_finance_manage')")
+    public List<Vendor> list() {
+        return service.listVendors();
     }
-    @PostMapping public Vendor create(@Valid @RequestBody VendorRequest req) { access.ensureVendorManage(); return service.createVendor(req); }
-    @PutMapping("/{id}") public Vendor update(@PathVariable Long id, @Valid @RequestBody VendorRequest req) { access.ensureVendorManage(); return service.updateVendor(id, req); }
-    @DeleteMapping("/{id}") public void delete(@PathVariable Long id) { access.ensureVendorManage(); service.deleteVendor(id); }
+
+    // F1: Vendor is master data — admin perms only. Q1 flattens wave-1's
+    // broad-read + imperative-admin layering into one declarative gate
+    // matching VENDOR_ADMIN exactly.
+    @GetMapping("/{id}")
+    @PreAuthorize("hasAnyAuthority('vendor_manage','asset_manage','asset_view_all')")
+    public Vendor get(@PathVariable Long id) {
+        return service.getVendor(id);
+    }
+
+    @PostMapping
+    @PreAuthorize("hasAnyAuthority('vendor_manage','asset_manage')")
+    public Vendor create(@Valid @RequestBody VendorRequest req) {
+        return service.createVendor(req);
+    }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasAnyAuthority('vendor_manage','asset_manage')")
+    public Vendor update(@PathVariable Long id, @Valid @RequestBody VendorRequest req) {
+        return service.updateVendor(id, req);
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyAuthority('vendor_manage','asset_manage')")
+    public void delete(@PathVariable Long id) {
+        service.deleteVendor(id);
+    }
 }

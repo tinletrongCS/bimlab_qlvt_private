@@ -2,10 +2,10 @@ package com.bimlab.asset.controller;
 
 import com.bimlab.asset.dto.SubscriptionRequest;
 import com.bimlab.asset.model.Subscription;
-import com.bimlab.asset.security.AssetAccessService;
 import com.bimlab.asset.service.AssetManagementService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -15,19 +15,37 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SubscriptionController {
     private final AssetManagementService service;
-    private final AssetAccessService access;
 
-    @GetMapping public List<Subscription> list() { access.ensureAccess(); return service.listSubscriptions(); }
-
-    // F1: Subscription is master data — admin perms only.
-    @GetMapping("/{id}") public Subscription get(@PathVariable Long id) {
-        access.ensureAccess();
-        Subscription s = service.getSubscription(id);
-        access.ensureSelfOrAny(null,
-                "subscription_manage", "asset_manage", "asset_view_all");
-        return s;
+    @GetMapping
+    @PreAuthorize("hasAnyAuthority('asset_access','asset_view_self','asset_view_team','asset_view_all','asset_manage','asset_finance_manage')")
+    public List<Subscription> list() {
+        return service.listSubscriptions();
     }
-    @PostMapping public Subscription create(@Valid @RequestBody SubscriptionRequest req) { access.ensureSubscriptionManage(); return service.createSubscription(req); }
-    @PutMapping("/{id}") public Subscription update(@PathVariable Long id, @Valid @RequestBody SubscriptionRequest req) { access.ensureSubscriptionManage(); return service.updateSubscription(id, req); }
-    @DeleteMapping("/{id}") public void delete(@PathVariable Long id) { access.ensureSubscriptionManage(); service.deleteSubscription(id); }
+
+    // F1: Subscription is master data — admin perms only. Q1 flattens wave-1's
+    // broad-read + imperative-admin layering into one declarative gate
+    // matching SUBSCRIPTION_ADMIN exactly.
+    @GetMapping("/{id}")
+    @PreAuthorize("hasAnyAuthority('subscription_manage','asset_manage','asset_view_all')")
+    public Subscription get(@PathVariable Long id) {
+        return service.getSubscription(id);
+    }
+
+    @PostMapping
+    @PreAuthorize("hasAnyAuthority('subscription_manage','asset_manage')")
+    public Subscription create(@Valid @RequestBody SubscriptionRequest req) {
+        return service.createSubscription(req);
+    }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasAnyAuthority('subscription_manage','asset_manage')")
+    public Subscription update(@PathVariable Long id, @Valid @RequestBody SubscriptionRequest req) {
+        return service.updateSubscription(id, req);
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyAuthority('subscription_manage','asset_manage')")
+    public void delete(@PathVariable Long id) {
+        service.deleteSubscription(id);
+    }
 }

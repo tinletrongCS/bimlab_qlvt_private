@@ -4,9 +4,11 @@ import com.bimlab.asset.dto.AssetTransferRequest;
 import com.bimlab.asset.model.AssetItem;
 import com.bimlab.asset.model.AssetTransfer;
 import com.bimlab.asset.security.AssetAccessService;
+import com.bimlab.asset.security.Permission;
 import com.bimlab.asset.service.AssetManagementService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,28 +20,39 @@ public class AssetTransferController {
     private final AssetManagementService service;
     private final AssetAccessService access;
 
-    @GetMapping public List<AssetTransfer> list() { access.ensureAccess(); return service.listTransfers(); }
+    @GetMapping
+    @PreAuthorize("hasAnyAuthority('asset_access','asset_view_self','asset_view_team','asset_view_all','asset_manage','asset_finance_manage')")
+    public List<AssetTransfer> list() {
+        return service.listTransfers();
+    }
 
     // F1: scope by parent asset's owner.
-    @GetMapping("/asset/{assetId}") public List<AssetTransfer> byAsset(@PathVariable Long assetId) {
-        access.ensureAccess();
+    @GetMapping("/asset/{assetId}")
+    @PreAuthorize("hasAnyAuthority('asset_access','asset_view_self','asset_view_team','asset_view_all','asset_manage','asset_finance_manage')")
+    public List<AssetTransfer> byAsset(@PathVariable Long assetId) {
         AssetItem parent = service.getAsset(assetId);
-        access.ensureSelfOrAny(parent.getAssignedEmployeeId(), TRANSFER_ADMIN_PERMS);
+        access.ensureSelfOrAny(parent.getAssignedEmployeeId(), Permission.Sets.TRANSFER_ADMIN);
         return service.listTransfersByAsset(assetId);
     }
 
     // F1: caller may be either party of the transfer, or admin.
-    @GetMapping("/{id}") public AssetTransfer get(@PathVariable Long id) {
-        access.ensureAccess();
+    @GetMapping("/{id}")
+    @PreAuthorize("hasAnyAuthority('asset_access','asset_view_self','asset_view_team','asset_view_all','asset_manage','asset_finance_manage')")
+    public AssetTransfer get(@PathVariable Long id) {
         AssetTransfer t = service.getTransfer(id);
-        access.ensurePartyOrAny(t.getFromEmployeeId(), t.getToEmployeeId(), TRANSFER_ADMIN_PERMS);
+        access.ensurePartyOrAny(t.getFromEmployeeId(), t.getToEmployeeId(), Permission.Sets.TRANSFER_ADMIN);
         return t;
     }
 
-    @PostMapping public AssetTransfer create(@Valid @RequestBody AssetTransferRequest req) { access.ensureAssetManage(); return service.createTransfer(req); }
-    @DeleteMapping("/{id}") public void delete(@PathVariable Long id) { access.ensureAssetManage(); service.deleteTransfer(id); }
+    @PostMapping
+    @PreAuthorize("hasAuthority('asset_manage')")
+    public AssetTransfer create(@Valid @RequestBody AssetTransferRequest req) {
+        return service.createTransfer(req);
+    }
 
-    private static final String[] TRANSFER_ADMIN_PERMS = {
-            "asset_view_team", "asset_view_all", "asset_manage", "asset_finance_manage"
-    };
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('asset_manage')")
+    public void delete(@PathVariable Long id) {
+        service.deleteTransfer(id);
+    }
 }

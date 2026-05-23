@@ -1,3 +1,7 @@
+// TODO(Q1.5): sync this union with the backend `Permission` enum
+// (QLVT/asset-service/.../security/Permission.java). `asset_assign` is
+// FE-only — no backend endpoint enforces it today. Decide whether to wire
+// it up or drop it; do not silently leave drift.
 export type Permission =
   | 'asset_access'
   | 'asset_view_self'

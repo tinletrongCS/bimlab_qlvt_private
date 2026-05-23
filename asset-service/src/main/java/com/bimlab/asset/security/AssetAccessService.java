@@ -7,43 +7,62 @@ import org.springframework.stereotype.Component;
 
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.Set;
 
+/**
+ * Imperative authorization helper for QLVT endpoints.
+ *
+ * <p>Q1: non-object-context gates (POST/PUT/DELETE/PATCH and the list/report
+ * endpoints) are now expressed declaratively via {@code @PreAuthorize} on
+ * controller methods. The {@code ensureSelfOrAny} / {@code ensurePartyOrAny}
+ * helpers stay imperative because they need the domain object loaded from
+ * the DB before the ownership check can run.
+ *
+ * <p>{@link #ensureAccess()} remains imperative too — it gates the broad
+ * read scope and runs <em>before</em> {@code ensureSelfOrAny}.
+ */
 @Component
 public class AssetAccessService {
+
     public void ensureAccess() {
-        ensureAny("asset_access", "asset_view_self", "asset_view_team", "asset_view_all", "asset_manage", "asset_finance_manage");
+        ensureAny(Permission.ASSET_ACCESS, Permission.ASSET_VIEW_SELF,
+                Permission.ASSET_VIEW_TEAM, Permission.ASSET_VIEW_ALL,
+                Permission.ASSET_MANAGE, Permission.ASSET_FINANCE_MANAGE);
     }
 
     public void ensureAssetManage() {
-        ensureAny("asset_manage");
+        ensureAny(Permission.ASSET_MANAGE);
     }
 
     public void ensureVendorManage() {
-        ensureAny("vendor_manage", "asset_manage");
+        ensureAny(Permission.VENDOR_MANAGE, Permission.ASSET_MANAGE);
     }
 
     public void ensureSubscriptionManage() {
-        ensureAny("subscription_manage", "asset_manage");
+        ensureAny(Permission.SUBSCRIPTION_MANAGE, Permission.ASSET_MANAGE);
     }
 
     public void ensurePurchaseCreate() {
-        ensureAny("purchase_request_create", "asset_manage");
+        ensureAny(Permission.PURCHASE_REQUEST_CREATE, Permission.ASSET_MANAGE);
     }
 
     public void ensurePurchaseApprove() {
-        ensureAny("purchase_request_approve", "asset_finance_manage", "asset_manage");
+        ensureAny(Permission.PURCHASE_REQUEST_APPROVE,
+                Permission.ASSET_FINANCE_MANAGE, Permission.ASSET_MANAGE);
     }
 
     public void ensureContractManage() {
-        ensureAny("contract_manage", "asset_finance_manage", "asset_manage");
+        ensureAny(Permission.CONTRACT_MANAGE,
+                Permission.ASSET_FINANCE_MANAGE, Permission.ASSET_MANAGE);
     }
 
     public void ensureMaintenanceManage() {
-        ensureAny("maintenance_manage", "asset_manage");
+        ensureAny(Permission.MAINTENANCE_MANAGE, Permission.ASSET_MANAGE);
     }
 
     public void ensureReportView() {
-        ensureAny("asset_report_view", "asset_view_all", "asset_manage", "asset_finance_manage");
+        ensureAny(Permission.ASSET_REPORT_VIEW, Permission.ASSET_VIEW_ALL,
+                Permission.ASSET_MANAGE, Permission.ASSET_FINANCE_MANAGE);
     }
 
     // ── F1 object-level scoping ────────────────────────────────────────────
@@ -62,12 +81,10 @@ public class AssetAccessService {
         return null;
     }
 
-    public boolean hasAnyPermission(String... permissions) {
+    public boolean hasAnyPermission(Permission... permissions) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated()) return false;
-        return Arrays.stream(permissions).anyMatch(permission ->
-                authentication.getAuthorities().stream().anyMatch(authority -> permission.equals(authority.getAuthority()))
-        );
+        return matchesAny(authentication, permissions);
     }
 
     /**
@@ -77,8 +94,8 @@ public class AssetAccessService {
      * Contract/Vendor/Subscription master data), only admin permissions allow
      * access.
      */
-    public void ensureSelfOrAny(Long ownerEmployeeId, String... adminPermissions) {
-        if (hasAnyPermission(adminPermissions)) return;
+    public void ensureSelfOrAny(Long ownerEmployeeId, Set<Permission> adminPermissions) {
+        if (hasAnyPermission(adminPermissions.toArray(Permission[]::new))) return;
         Long current = getCurrentEmployeeId();
         if (ownerEmployeeId != null && Objects.equals(ownerEmployeeId, current)) return;
         throw new AccessDeniedException("Không có quyền truy cập tài nguyên này");
@@ -89,23 +106,27 @@ public class AssetAccessService {
      * from-party or the to-party of the transfer. Pass if admin perm, or if
      * caller's employeeId matches either side.
      */
-    public void ensurePartyOrAny(Long fromEmployeeId, Long toEmployeeId, String... adminPermissions) {
-        if (hasAnyPermission(adminPermissions)) return;
+    public void ensurePartyOrAny(Long fromEmployeeId, Long toEmployeeId, Set<Permission> adminPermissions) {
+        if (hasAnyPermission(adminPermissions.toArray(Permission[]::new))) return;
         Long current = getCurrentEmployeeId();
         if (current != null && (Objects.equals(current, fromEmployeeId) || Objects.equals(current, toEmployeeId))) return;
         throw new AccessDeniedException("Không có quyền truy cập tài nguyên này");
     }
 
-    private void ensureAny(String... permissions) {
+    private void ensureAny(Permission... permissions) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated()) {
             throw new AccessDeniedException("Chưa đăng nhập");
         }
-        boolean ok = Arrays.stream(permissions).anyMatch(permission ->
-                authentication.getAuthorities().stream().anyMatch(authority -> permission.equals(authority.getAuthority()))
-        );
-        if (!ok) {
+        if (!matchesAny(authentication, permissions)) {
             throw new AccessDeniedException("Tài khoản chưa được cấp quyền QLVT");
         }
+    }
+
+    private static boolean matchesAny(Authentication authentication, Permission... permissions) {
+        return Arrays.stream(permissions).anyMatch(permission ->
+                authentication.getAuthorities().stream()
+                        .anyMatch(authority -> permission.code().equals(authority.getAuthority()))
+        );
     }
 }
