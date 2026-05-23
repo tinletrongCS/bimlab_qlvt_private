@@ -3,11 +3,7 @@ package com.bimlab.asset.service;
 import com.bimlab.asset.dto.ContractRequest;
 import com.bimlab.asset.model.Contract;
 import com.bimlab.asset.model.Vendor;
-import com.bimlab.asset.repository.AssetItemRepository;
 import com.bimlab.asset.repository.ContractRepository;
-import com.bimlab.asset.repository.PurchaseRequestRepository;
-import com.bimlab.asset.repository.SubscriptionRepository;
-import com.bimlab.asset.repository.VendorRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -19,20 +15,26 @@ import java.time.LocalDate;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
+/**
+ * Q2: targets {@link ContractService}. Cross-domain Vendor and
+ * PurchaseRequest lookups route through their respective service mocks.
+ */
 @ExtendWith(MockitoExtension.class)
 class ContractServiceTest {
 
-    @Mock VendorRepository vendors;
-    @Mock AssetItemRepository assets;
-    @Mock SubscriptionRepository subscriptions;
-    @Mock PurchaseRequestRepository purchaseRequests;
     @Mock ContractRepository contracts;
+    @Mock VendorService vendorService;
+    @Mock PurchaseRequestService purchaseRequestService;
 
-    @InjectMocks AssetManagementService service;
+    @InjectMocks ContractService service;
 
     @Test
     void createContract_savesWithDefaults() {
@@ -59,7 +61,8 @@ class ContractServiceTest {
         );
         when(contracts.existsByContractNumber("HD-DUP")).thenReturn(true);
 
-        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> service.createContract(req));
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> service.createContract(req));
         assertTrue(ex.getMessage().contains("HD-DUP"));
         verify(contracts, never()).save(any());
     }
@@ -69,7 +72,7 @@ class ContractServiceTest {
         Contract existing = Contract.builder().id(1L).contractNumber("HD-A").title("x").status("DRAFT").build();
         Vendor vendor = Vendor.builder().id(7L).name("V").status("ACTIVE").build();
         when(contracts.findById(1L)).thenReturn(Optional.of(existing));
-        when(vendors.findById(7L)).thenReturn(Optional.of(vendor));
+        when(vendorService.getVendor(7L)).thenReturn(vendor);
         when(contracts.save(any(Contract.class))).thenAnswer(inv -> inv.getArgument(0));
 
         ContractRequest req = new ContractRequest(

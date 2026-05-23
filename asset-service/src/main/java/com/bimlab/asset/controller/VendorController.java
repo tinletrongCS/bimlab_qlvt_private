@@ -2,7 +2,7 @@ package com.bimlab.asset.controller;
 
 import com.bimlab.asset.dto.VendorRequest;
 import com.bimlab.asset.model.Vendor;
-import com.bimlab.asset.service.AssetManagementService;
+import com.bimlab.asset.service.VendorService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -14,7 +14,7 @@ import java.util.List;
 @RequestMapping("/api/asset/vendors")
 @RequiredArgsConstructor
 public class VendorController {
-    private final AssetManagementService service;
+    private final VendorService service;
 
     @GetMapping
     @PreAuthorize("hasAnyAuthority('asset_access','asset_view_self','asset_view_team','asset_view_all','asset_manage','asset_finance_manage')")
@@ -22,9 +22,7 @@ public class VendorController {
         return service.listVendors();
     }
 
-    // F1: Vendor is master data — admin perms only. Q1 flattens wave-1's
-    // broad-read + imperative-admin layering into one declarative gate
-    // matching VENDOR_ADMIN exactly.
+    // F1: Vendor is master data — admin perms only (Q1 flattened gate).
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyAuthority('vendor_manage','asset_manage','asset_view_all')")
     public Vendor get(@PathVariable Long id) {

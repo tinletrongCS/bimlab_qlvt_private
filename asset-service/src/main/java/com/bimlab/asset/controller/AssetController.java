@@ -6,7 +6,7 @@ import com.bimlab.asset.dto.DisposeAssetRequest;
 import com.bimlab.asset.model.AssetItem;
 import com.bimlab.asset.security.AssetAccessService;
 import com.bimlab.asset.security.Permission;
-import com.bimlab.asset.service.AssetManagementService;
+import com.bimlab.asset.service.AssetService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -15,20 +15,15 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 /**
- * Q1: non-object-context gates are declarative via {@code @PreAuthorize}.
- * Object-context endpoints (GET /{id}, GET /{id}/depreciation) keep the
- * declarative broad-read gate plus an imperative {@code ensureSelfOrAny}
- * check after loading the entity — SpEL cannot reach
- * {@code item.assignedEmployeeId} before the method body executes.
- *
- * <p>Authority strings in {@code @PreAuthorize} are locked against the
- * {@link Permission} enum by {@code PermissionTest}.
+ * Q1: declarative permissions via {@code @PreAuthorize}; object-context
+ * endpoints retain imperative {@code ensureSelfOrAny} after entity load.
+ * Q2: depends on {@link AssetService} only (was the monolith).
  */
 @RestController
 @RequestMapping("/api/asset/assets")
 @RequiredArgsConstructor
 public class AssetController {
-    private final AssetManagementService service;
+    private final AssetService service;
     private final AssetAccessService access;
 
     @GetMapping
@@ -64,7 +59,7 @@ public class AssetController {
         service.deleteAsset(id);
     }
 
-    // F1: same scoping for depreciation snapshot (also exposes asset internals).
+    // F1: same scoping for depreciation snapshot.
     @GetMapping("/{id}/depreciation")
     @PreAuthorize("hasAnyAuthority('asset_access','asset_view_self','asset_view_team','asset_view_all','asset_manage','asset_finance_manage')")
     public DepreciationSnapshot depreciation(@PathVariable Long id) {

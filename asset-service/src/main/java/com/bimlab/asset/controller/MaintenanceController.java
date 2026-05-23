@@ -5,7 +5,8 @@ import com.bimlab.asset.model.AssetItem;
 import com.bimlab.asset.model.MaintenanceRecord;
 import com.bimlab.asset.security.AssetAccessService;
 import com.bimlab.asset.security.Permission;
-import com.bimlab.asset.service.AssetManagementService;
+import com.bimlab.asset.service.AssetService;
+import com.bimlab.asset.service.MaintenanceService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -21,7 +22,9 @@ import java.util.List;
 @RequiredArgsConstructor
 @Validated
 public class MaintenanceController {
-    private final AssetManagementService service;
+    private final MaintenanceService service;
+    // Q2: AssetService for F1 parent-asset lookup + warranty-expiring (asset-domain query).
+    private final AssetService assetService;
     private final AssetAccessService access;
 
     @GetMapping
@@ -34,7 +37,7 @@ public class MaintenanceController {
     @GetMapping("/asset/{assetId}")
     @PreAuthorize("hasAnyAuthority('asset_access','asset_view_self','asset_view_team','asset_view_all','asset_manage','asset_finance_manage')")
     public List<MaintenanceRecord> byAsset(@PathVariable Long assetId) {
-        AssetItem parent = service.getAsset(assetId);
+        AssetItem parent = assetService.getAsset(assetId);
         access.ensureSelfOrAny(parent.getAssignedEmployeeId(), Permission.Sets.MAINT_ADMIN);
         return service.listMaintenanceByAsset(assetId);
     }
@@ -66,11 +69,11 @@ public class MaintenanceController {
         service.deleteMaintenanceRecord(id);
     }
 
-    // F2: cap days to a sane range. Without this, days=Integer.MAX_VALUE triggers
-    // assets.findAll() + in-JVM filter — trivial authenticated DoS at scale.
+    // F2: cap days to a sane range. Warranty-expiring is an asset-domain query
+    // exposed via the maintenance controller for FE convenience.
     @GetMapping("/warranty-expiring")
     @PreAuthorize("hasAnyAuthority('asset_access','asset_view_self','asset_view_team','asset_view_all','asset_manage','asset_finance_manage')")
     public List<AssetItem> warrantyExpiring(@RequestParam(defaultValue = "30") @Min(1) @Max(365) int days) {
-        return service.listAssetsWithWarrantyExpiringWithin(days);
+        return assetService.listAssetsWithWarrantyExpiringWithin(days);
     }
 }

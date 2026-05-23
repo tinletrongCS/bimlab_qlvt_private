@@ -3,11 +3,7 @@ package com.bimlab.asset.service;
 import com.bimlab.asset.dto.MaintenanceRecordRequest;
 import com.bimlab.asset.model.AssetItem;
 import com.bimlab.asset.model.MaintenanceRecord;
-import com.bimlab.asset.repository.AssetItemRepository;
 import com.bimlab.asset.repository.MaintenanceRecordRepository;
-import com.bimlab.asset.repository.PurchaseRequestRepository;
-import com.bimlab.asset.repository.SubscriptionRepository;
-import com.bimlab.asset.repository.VendorRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -17,27 +13,29 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
+/**
+ * Q2: targets {@link MaintenanceService}. Parent-asset resolution mocked
+ * through {@link AssetService}. Warranty-window filter moved to
+ * {@code AssetServiceTest} since it is an asset-domain query.
+ */
 @ExtendWith(MockitoExtension.class)
 class MaintenanceServiceTest {
 
-    @Mock VendorRepository vendors;
-    @Mock AssetItemRepository assets;
-    @Mock SubscriptionRepository subscriptions;
-    @Mock PurchaseRequestRepository purchaseRequests;
     @Mock MaintenanceRecordRepository maintenanceRecords;
+    @Mock AssetService assetService;
+    @Mock VendorService vendorService;
 
-    @InjectMocks AssetManagementService service;
+    @InjectMocks MaintenanceService service;
 
     @Test
     void createMaintenanceRecord_attachesAsset() {
         AssetItem asset = AssetItem.builder().id(1L).assetCode("LAP-1").name("X").category("IT").status("ASSIGNED").build();
-        when(assets.findById(1L)).thenReturn(Optional.of(asset));
+        when(assetService.getAsset(1L)).thenReturn(asset);
         when(maintenanceRecords.save(any(MaintenanceRecord.class))).thenAnswer(inv -> inv.getArgument(0));
 
         MaintenanceRecordRequest req = new MaintenanceRecordRequest(
@@ -49,21 +47,6 @@ class MaintenanceServiceTest {
         assertEquals(asset, saved.getAsset());
         assertEquals("REPAIR", saved.getMaintenanceType());
         assertEquals(new BigDecimal("500000"), saved.getCost());
-    }
-
-    @Test
-    void warrantyExpiring_filtersAssetsInWindow() {
-        AssetItem inWindow = AssetItem.builder().id(1L).warrantyUntil(LocalDate.now().plusDays(10)).status("ASSIGNED").build();
-        AssetItem expired = AssetItem.builder().id(2L).warrantyUntil(LocalDate.now().minusDays(5)).status("ASSIGNED").build();
-        AssetItem far = AssetItem.builder().id(3L).warrantyUntil(LocalDate.now().plusDays(60)).status("ASSIGNED").build();
-        AssetItem disposed = AssetItem.builder().id(4L).warrantyUntil(LocalDate.now().plusDays(10)).status("DISPOSED").build();
-        AssetItem noWarranty = AssetItem.builder().id(5L).status("ASSIGNED").build();
-        when(assets.findAll()).thenReturn(List.of(inWindow, expired, far, disposed, noWarranty));
-
-        List<AssetItem> expiring = service.listAssetsWithWarrantyExpiringWithin(30);
-
-        assertEquals(1, expiring.size());
-        assertEquals(1L, expiring.get(0).getId());
     }
 
     @Test

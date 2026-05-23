@@ -5,9 +5,6 @@ import com.bimlab.asset.model.AssetItem;
 import com.bimlab.asset.model.AssetTransfer;
 import com.bimlab.asset.repository.AssetItemRepository;
 import com.bimlab.asset.repository.AssetTransferRepository;
-import com.bimlab.asset.repository.PurchaseRequestRepository;
-import com.bimlab.asset.repository.SubscriptionRepository;
-import com.bimlab.asset.repository.VendorRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -16,30 +13,34 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
-import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+/**
+ * Q2: targets {@link AssetTransferService}. Asset resolution routes through
+ * the injected {@link AssetService} mock; the cross-repo asset write
+ * under {@code @Transactional} still hits {@link AssetItemRepository}
+ * directly (see Q2 R1).
+ */
 @ExtendWith(MockitoExtension.class)
 class AssetTransferServiceTest {
 
-    @Mock VendorRepository vendors;
-    @Mock AssetItemRepository assets;
-    @Mock SubscriptionRepository subscriptions;
-    @Mock PurchaseRequestRepository purchaseRequests;
     @Mock AssetTransferRepository assetTransfers;
+    @Mock AssetItemRepository assets;
+    @Mock AssetService assetService;
 
-    @InjectMocks AssetManagementService service;
+    @InjectMocks AssetTransferService service;
 
     @Test
     void createTransfer_appliesToAssetWhenFlagSet() {
         AssetItem asset = AssetItem.builder().id(1L).assetCode("X").name("X").category("IT")
                 .status("IN_STOCK").assignedEmployeeId(null).build();
-        when(assets.findById(1L)).thenReturn(Optional.of(asset));
+        when(assetService.getAsset(1L)).thenReturn(asset);
         when(assetTransfers.save(any(AssetTransfer.class))).thenAnswer(inv -> inv.getArgument(0));
 
         AssetTransferRequest req = new AssetTransferRequest(
@@ -60,7 +61,7 @@ class AssetTransferServiceTest {
     @Test
     void createTransfer_doesNotTouchAssetWhenFlagFalse() {
         AssetItem asset = AssetItem.builder().id(1L).status("ASSIGNED").assignedEmployeeId(10L).build();
-        when(assets.findById(1L)).thenReturn(Optional.of(asset));
+        when(assetService.getAsset(1L)).thenReturn(asset);
         when(assetTransfers.save(any(AssetTransfer.class))).thenAnswer(inv -> inv.getArgument(0));
 
         AssetTransferRequest req = new AssetTransferRequest(
@@ -75,7 +76,7 @@ class AssetTransferServiceTest {
     @Test
     void revokeTransfer_setsStatusInStock() {
         AssetItem asset = AssetItem.builder().id(1L).status("ASSIGNED").assignedEmployeeId(42L).build();
-        when(assets.findById(1L)).thenReturn(Optional.of(asset));
+        when(assetService.getAsset(1L)).thenReturn(asset);
         when(assetTransfers.save(any(AssetTransfer.class))).thenAnswer(inv -> inv.getArgument(0));
 
         AssetTransferRequest req = new AssetTransferRequest(

@@ -4,7 +4,7 @@ import com.bimlab.asset.dto.PurchaseRequestPayload;
 import com.bimlab.asset.model.PurchaseRequest;
 import com.bimlab.asset.security.AssetAccessService;
 import com.bimlab.asset.security.Permission;
-import com.bimlab.asset.service.AssetManagementService;
+import com.bimlab.asset.service.PurchaseRequestService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -17,7 +17,7 @@ import java.util.Map;
 @RequestMapping("/api/asset/purchase-requests")
 @RequiredArgsConstructor
 public class PurchaseRequestController {
-    private final AssetManagementService service;
+    private final PurchaseRequestService service;
     private final AssetAccessService access;
 
     @GetMapping
@@ -36,6 +36,8 @@ public class PurchaseRequestController {
     }
 
     // F4: server stamps requesterEmployeeId from the JWT principal; status forced PENDING.
+    // Q2: always call the 2-arg form — the 1-arg overload is deprecated to avoid
+    // accidental null-requester writes that would corrupt the audit trail.
     @PostMapping
     @PreAuthorize("hasAnyAuthority('purchase_request_create','asset_manage')")
     public PurchaseRequest create(@Valid @RequestBody PurchaseRequestPayload req) {
