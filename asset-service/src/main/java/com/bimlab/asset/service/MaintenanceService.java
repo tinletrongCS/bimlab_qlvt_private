@@ -1,0 +1,72 @@
+package com.bimlab.asset.service;
+
+import com.bimlab.asset.dto.MaintenanceRecordRequest;
+import com.bimlab.asset.model.MaintenanceRecord;
+import com.bimlab.asset.repository.MaintenanceRecordRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.NoSuchElementException;
+
+/**
+ * Q2: Maintenance domain split from the original {@code AssetManagementService}.
+ * Owns MaintenanceRecord CRUD. Depends on:
+ * <ul>
+ *   <li>{@link AssetService} for the parent-asset resolution required by every
+ *       maintenance record</li>
+ *   <li>{@link VendorService} for optional service-vendor attachment</li>
+ * </ul>
+ */
+@Service
+@RequiredArgsConstructor
+public class MaintenanceService {
+    private final MaintenanceRecordRepository maintenanceRecords;
+    private final AssetService assetService;
+    private final VendorService vendorService;
+
+    public List<MaintenanceRecord> listMaintenanceRecords() {
+        return maintenanceRecords.findAll();
+    }
+
+    public List<MaintenanceRecord> listMaintenanceByAsset(Long assetId) {
+        return maintenanceRecords.findByAssetIdOrderByMaintenanceDateDesc(assetId);
+    }
+
+    public MaintenanceRecord getMaintenanceRecord(Long id) {
+        return maintenanceRecords.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Bản ghi bảo trì không tồn tại"));
+    }
+
+    @Transactional
+    public MaintenanceRecord createMaintenanceRecord(MaintenanceRecordRequest req) {
+        MaintenanceRecord m = new MaintenanceRecord();
+        applyMaintenanceRecord(m, req);
+        return maintenanceRecords.save(m);
+    }
+
+    @Transactional
+    public MaintenanceRecord updateMaintenanceRecord(Long id, MaintenanceRecordRequest req) {
+        MaintenanceRecord m = getMaintenanceRecord(id);
+        applyMaintenanceRecord(m, req);
+        return maintenanceRecords.save(m);
+    }
+
+    @Transactional
+    public void deleteMaintenanceRecord(Long id) {
+        maintenanceRecords.delete(getMaintenanceRecord(id));
+    }
+
+    private void applyMaintenanceRecord(MaintenanceRecord m, MaintenanceRecordRequest req) {
+        m.setAsset(assetService.getAsset(req.assetId()));
+        m.setMaintenanceType(req.maintenanceType());
+        m.setMaintenanceDate(req.maintenanceDate());
+        m.setCost(req.cost());
+        m.setVendor(req.vendorId() == null ? null : vendorService.getVendor(req.vendorId()));
+        m.setPerformedBy(req.performedBy());
+        m.setDescription(req.description());
+        m.setNextMaintenanceDate(req.nextMaintenanceDate());
+        if (req.status() != null) m.setStatus(req.status());
+    }
+}

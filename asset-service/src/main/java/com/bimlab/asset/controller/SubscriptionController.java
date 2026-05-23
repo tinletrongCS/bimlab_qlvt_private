@@ -2,7 +2,7 @@ package com.bimlab.asset.controller;
 
 import com.bimlab.asset.dto.SubscriptionRequest;
 import com.bimlab.asset.model.Subscription;
-import com.bimlab.asset.service.AssetManagementService;
+import com.bimlab.asset.service.SubscriptionService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -14,7 +14,7 @@ import java.util.List;
 @RequestMapping("/api/asset/subscriptions")
 @RequiredArgsConstructor
 public class SubscriptionController {
-    private final AssetManagementService service;
+    private final SubscriptionService service;
 
     @GetMapping
     @PreAuthorize("hasAnyAuthority('asset_access','asset_view_self','asset_view_team','asset_view_all','asset_manage','asset_finance_manage')")
@@ -22,9 +22,7 @@ public class SubscriptionController {
         return service.listSubscriptions();
     }
 
-    // F1: Subscription is master data — admin perms only. Q1 flattens wave-1's
-    // broad-read + imperative-admin layering into one declarative gate
-    // matching SUBSCRIPTION_ADMIN exactly.
+    // F1: Subscription is master data — admin perms only (Q1 flattened gate).
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyAuthority('subscription_manage','asset_manage','asset_view_all')")
     public Subscription get(@PathVariable Long id) {

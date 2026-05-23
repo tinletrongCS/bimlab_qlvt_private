@@ -2,7 +2,7 @@ package com.bimlab.asset.controller;
 
 import com.bimlab.asset.dto.ContractRequest;
 import com.bimlab.asset.model.Contract;
-import com.bimlab.asset.service.AssetManagementService;
+import com.bimlab.asset.service.ContractService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -15,7 +15,7 @@ import java.util.Map;
 @RequestMapping("/api/asset/contracts")
 @RequiredArgsConstructor
 public class ContractController {
-    private final AssetManagementService service;
+    private final ContractService service;
 
     @GetMapping
     @PreAuthorize("hasAnyAuthority('asset_access','asset_view_self','asset_view_team','asset_view_all','asset_manage','asset_finance_manage')")
@@ -23,11 +23,7 @@ public class ContractController {
         return service.listContracts();
     }
 
-    // F1: Contract has no employee owner — admin perms only. The previous
-    // wave-1 layering (broad-read @PreAuthorize + imperative ensureSelfOrAny(null,…))
-    // produced a confusing intersection that denied legitimate
-    // {@code contract_manage}-only users. Q1 flattens to a single declarative
-    // gate matching CONTRACT_ADMIN exactly.
+    // F1: Contract has no employee owner — admin perms only (Q1 flattened gate).
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyAuthority('contract_manage','asset_finance_manage','asset_manage','asset_view_all')")
     public Contract get(@PathVariable Long id) {

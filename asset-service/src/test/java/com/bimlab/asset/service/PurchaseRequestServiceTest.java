@@ -2,13 +2,7 @@ package com.bimlab.asset.service;
 
 import com.bimlab.asset.dto.PurchaseRequestPayload;
 import com.bimlab.asset.model.PurchaseRequest;
-import com.bimlab.asset.repository.AssetItemRepository;
-import com.bimlab.asset.repository.AssetTransferRepository;
-import com.bimlab.asset.repository.ContractRepository;
-import com.bimlab.asset.repository.MaintenanceRecordRepository;
 import com.bimlab.asset.repository.PurchaseRequestRepository;
-import com.bimlab.asset.repository.SubscriptionRepository;
-import com.bimlab.asset.repository.VendorRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -27,23 +21,17 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * F4: server-side stamping of requesterEmployeeId + status forcing on
- * PurchaseRequest create/update. Previously the approver could rewrite the
- * audit trail by passing requesterEmployeeId in the request body, and any
- * employee could submit a PR pre-approved by passing status="APPROVED".
+ * F4 (preserved through Q2): server-side stamping of requesterEmployeeId +
+ * status forcing on PurchaseRequest create/update. Previously the approver
+ * could rewrite the audit trail by passing requesterEmployeeId in the body,
+ * and any employee could submit a PR pre-approved by passing status=APPROVED.
  */
 @ExtendWith(MockitoExtension.class)
 class PurchaseRequestServiceTest {
 
-    @Mock VendorRepository vendors;
-    @Mock AssetItemRepository assets;
-    @Mock SubscriptionRepository subscriptions;
     @Mock PurchaseRequestRepository purchaseRequests;
-    @Mock ContractRepository contracts;
-    @Mock MaintenanceRecordRepository maintenanceRecords;
-    @Mock AssetTransferRepository assetTransfers;
 
-    @InjectMocks AssetManagementService service;
+    @InjectMocks PurchaseRequestService service;
 
     private static PurchaseRequestPayload payload(Long requesterFromBody, String status) {
         return new PurchaseRequestPayload(
@@ -80,7 +68,11 @@ class PurchaseRequestServiceTest {
     }
 
     @Test
-    void createPurchaseRequest_acceptsNullCaller_forBackcompat() {
+    void createPurchaseRequest_acceptsNullCaller_butStampsNull() {
+        // Edge case: caller resolution returns null (legacy/missing JWT
+        // employeeId claim). Service still produces a PR with PENDING status
+        // and null requester — the audit hole is closed at the controller
+        // by access.getCurrentEmployeeId() but the service must not crash.
         when(purchaseRequests.save(any(PurchaseRequest.class))).thenAnswer(inv -> inv.getArgument(0));
 
         service.createPurchaseRequest(payload(99L, null), null);

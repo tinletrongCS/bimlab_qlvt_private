@@ -5,7 +5,8 @@ import com.bimlab.asset.model.AssetItem;
 import com.bimlab.asset.model.AssetTransfer;
 import com.bimlab.asset.security.AssetAccessService;
 import com.bimlab.asset.security.Permission;
-import com.bimlab.asset.service.AssetManagementService;
+import com.bimlab.asset.service.AssetService;
+import com.bimlab.asset.service.AssetTransferService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -17,7 +18,9 @@ import java.util.List;
 @RequestMapping("/api/asset/transfers")
 @RequiredArgsConstructor
 public class AssetTransferController {
-    private final AssetManagementService service;
+    private final AssetTransferService service;
+    // Q2: AssetService injected for F1 parent-asset resolution on GET /asset/{assetId}.
+    private final AssetService assetService;
     private final AssetAccessService access;
 
     @GetMapping
@@ -30,7 +33,7 @@ public class AssetTransferController {
     @GetMapping("/asset/{assetId}")
     @PreAuthorize("hasAnyAuthority('asset_access','asset_view_self','asset_view_team','asset_view_all','asset_manage','asset_finance_manage')")
     public List<AssetTransfer> byAsset(@PathVariable Long assetId) {
-        AssetItem parent = service.getAsset(assetId);
+        AssetItem parent = assetService.getAsset(assetId);
         access.ensureSelfOrAny(parent.getAssignedEmployeeId(), Permission.Sets.TRANSFER_ADMIN);
         return service.listTransfersByAsset(assetId);
     }
