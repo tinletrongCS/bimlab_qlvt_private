@@ -18,7 +18,15 @@ public class SubscriptionController {
     private final AssetAccessService access;
 
     @GetMapping public List<Subscription> list() { access.ensureAccess(); return service.listSubscriptions(); }
-    @GetMapping("/{id}") public Subscription get(@PathVariable Long id) { access.ensureAccess(); return service.getSubscription(id); }
+
+    // F1: Subscription is master data — admin perms only.
+    @GetMapping("/{id}") public Subscription get(@PathVariable Long id) {
+        access.ensureAccess();
+        Subscription s = service.getSubscription(id);
+        access.ensureSelfOrAny(null,
+                "subscription_manage", "asset_manage", "asset_view_all");
+        return s;
+    }
     @PostMapping public Subscription create(@Valid @RequestBody SubscriptionRequest req) { access.ensureSubscriptionManage(); return service.createSubscription(req); }
     @PutMapping("/{id}") public Subscription update(@PathVariable Long id, @Valid @RequestBody SubscriptionRequest req) { access.ensureSubscriptionManage(); return service.updateSubscription(id, req); }
     @DeleteMapping("/{id}") public void delete(@PathVariable Long id) { access.ensureSubscriptionManage(); service.deleteSubscription(id); }

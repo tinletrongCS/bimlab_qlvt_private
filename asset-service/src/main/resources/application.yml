@@ -27,7 +27,9 @@ spring:
 server:
   port: 8086
   error:
-    include-message: always
+    # F3: never leak exception messages via Spring default /error endpoint.
+    # GlobalExceptionHandler returns explicit safe Vietnamese messages.
+    include-message: never
     include-binding-errors: never
     include-stacktrace: never
 

@@ -43,6 +43,21 @@ public class JwtTokenProvider {
         return type == null ? "access" : type;
     }
 
+    /**
+     * F1: HRM auth-service binds the caller's employeeId into the JWT (HRM
+     * Phase 2). QLVT needs it for object-level scoping in
+     * AssetAccessService.ensureSelfOrAny(...). Returns null if the token has
+     * no employeeId claim (legacy tokens, or sessions for non-staff).
+     */
+    public Long getEmployeeId(String token) {
+        Object value = parse(token).getPayload().get("employeeId");
+        if (value instanceof Number n) return n.longValue();
+        if (value instanceof String s && !s.isBlank()) {
+            try { return Long.parseLong(s); } catch (NumberFormatException ignored) { return null; }
+        }
+        return null;
+    }
+
     @SuppressWarnings("unchecked")
     public List<String> getPermissions(String token) {
         Object value = parse(token).getPayload().get("permissions");
