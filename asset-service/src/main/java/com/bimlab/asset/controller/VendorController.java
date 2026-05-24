@@ -1,5 +1,9 @@
 package com.bimlab.asset.controller;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
+
 import com.bimlab.asset.dto.VendorRequest;
 import com.bimlab.asset.model.Vendor;
 import com.bimlab.asset.service.VendorService;
@@ -21,6 +25,14 @@ public class VendorController {
     public List<Vendor> list() {
         return service.listVendors();
     }
+
+    // N4: paginated list — backward-compatible with legacy GET (no /paged) which still returns List<Vendor>.
+    @GetMapping("/paged")
+    @PreAuthorize("hasAnyAuthority('asset_access','asset_view_self','asset_view_team','asset_view_all','asset_manage','asset_finance_manage')")
+    public Page<Vendor> listPaged(@PageableDefault(size = 20) Pageable pageable) {
+        return service.listVendorsPaged(pageable);
+    }
+
 
     // F1: Vendor is master data — admin perms only (Q1 flattened gate).
     @GetMapping("/{id}")

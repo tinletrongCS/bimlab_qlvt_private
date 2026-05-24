@@ -6,6 +6,8 @@ import com.bimlab.asset.model.status.StatusParser;
 import com.bimlab.asset.model.status.SubscriptionStatus;
 import com.bimlab.asset.repository.SubscriptionRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,6 +30,11 @@ public class SubscriptionService {
         return subscriptions.findAll();
     }
 
+
+    @Transactional(readOnly = true)
+    public Page<Subscription> listSubscriptionsPaged(Pageable pageable) {
+        return subscriptions.findAll(pageable);
+    }
     @Transactional(readOnly = true)
     public Subscription getSubscription(Long id) {
         return subscriptions.findById(id)

@@ -6,6 +6,8 @@ import com.bimlab.asset.model.status.StatusParser;
 import com.bimlab.asset.model.status.VendorStatus;
 import com.bimlab.asset.repository.VendorRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,6 +24,11 @@ public class VendorService {
         return vendors.findAll();
     }
 
+
+    @Transactional(readOnly = true)
+    public Page<Vendor> listVendorsPaged(Pageable pageable) {
+        return vendors.findAll(pageable);
+    }
     @Transactional(readOnly = true)
     public Vendor getVendor(Long id) {
         return vendors.findById(id)

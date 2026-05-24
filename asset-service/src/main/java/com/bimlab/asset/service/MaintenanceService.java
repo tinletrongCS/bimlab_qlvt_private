@@ -6,6 +6,8 @@ import com.bimlab.asset.model.status.MaintenanceStatus;
 import com.bimlab.asset.model.status.StatusParser;
 import com.bimlab.asset.repository.MaintenanceRecordRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,6 +35,11 @@ public class MaintenanceService {
         return maintenanceRecords.findAll();
     }
 
+
+    @Transactional(readOnly = true)
+    public Page<MaintenanceRecord> listMaintenanceRecordsPaged(Pageable pageable) {
+        return maintenanceRecords.findAll(pageable);
+    }
     @Transactional(readOnly = true)
     public List<MaintenanceRecord> listMaintenanceByAsset(Long assetId) {
         return maintenanceRecords.findByAssetIdOrderByMaintenanceDateDesc(assetId);

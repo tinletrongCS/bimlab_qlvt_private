@@ -7,6 +7,8 @@ import com.bimlab.asset.model.status.AssetStatus;
 import com.bimlab.asset.repository.AssetItemRepository;
 import com.bimlab.asset.repository.AssetTransferRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,6 +40,11 @@ public class AssetTransferService {
         return assetTransfers.findAllSortedByDateDesc();
     }
 
+
+    @Transactional(readOnly = true)
+    public Page<AssetTransfer> listTransfersPaged(Pageable pageable) {
+        return assetTransfers.findAll(pageable);
+    }
     @Transactional(readOnly = true)
     public List<AssetTransfer> listTransfersByAsset(Long assetId) {
         return assetTransfers.findByAssetIdOrderByTransferDateDesc(assetId);

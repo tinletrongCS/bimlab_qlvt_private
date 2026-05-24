@@ -9,6 +9,8 @@ import com.bimlab.asset.model.status.AssetStatus;
 import com.bimlab.asset.model.status.StatusParser;
 import com.bimlab.asset.repository.AssetItemRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,6 +36,12 @@ public class AssetService {
     @Transactional(readOnly = true)
     public List<AssetItem> listAssets() {
         return assets.findAll();
+    }
+
+    // N4: paginated read; legacy listAssets() kept for FE back-compat.
+    @Transactional(readOnly = true)
+    public Page<AssetItem> listAssetsPaged(Pageable pageable) {
+        return assets.findAll(pageable);
     }
 
     @Transactional(readOnly = true)
