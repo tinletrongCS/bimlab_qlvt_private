@@ -168,6 +168,8 @@ export interface Contract {
   paymentTerms?: string
   status: string
   attachmentUrl?: string
+  // Q7: prefer attachmentObjectKey; attachmentUrl deprecated, kept for back-compat
+  attachmentObjectKey?: string
   notes?: string
   createdAt?: string
   updatedAt?: string
@@ -186,6 +188,8 @@ export interface ContractPayload {
   paymentTerms?: string
   status?: string
   attachmentUrl?: string
+  // Q7: prefer attachmentObjectKey; attachmentUrl deprecated, kept for back-compat
+  attachmentObjectKey?: string
   notes?: string
 }
 

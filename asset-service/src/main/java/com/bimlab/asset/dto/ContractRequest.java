@@ -26,5 +26,7 @@ public record ContractRequest(
                 message = "URL không hợp lệ"
         )
         String attachmentUrl,
+        // Q7: object key in MinIO bucket (preferred over attachmentUrl)
+        @Size(max = 500) String attachmentObjectKey,
         String notes
 ) {}

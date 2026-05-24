@@ -5,12 +5,14 @@ import com.bimlab.asset.model.Contract;
 import com.bimlab.asset.model.status.ContractStatus;
 import com.bimlab.asset.model.status.StatusParser;
 import com.bimlab.asset.repository.ContractRepository;
+import com.bimlab.asset.storage.MinioService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 
 /**
  * Q2: Contract domain split from the original {@code AssetManagementService}.
@@ -30,6 +32,7 @@ public class ContractService {
     private final ContractRepository contracts;
     private final VendorService vendorService;
     private final PurchaseRequestService purchaseRequestService;
+    private final MinioService minioService;
 
     @Transactional(readOnly = true)
     public List<Contract> listContracts() {
@@ -59,8 +62,15 @@ public class ContractService {
                 && contracts.existsByContractNumber(req.contractNumber())) {
             throw new IllegalArgumentException("Số hợp đồng đã tồn tại: " + req.contractNumber());
         }
+        // Q7: capture old object key before mutation, delete in MinIO if replaced
+        String oldKey = c.getAttachmentObjectKey();
         applyContract(c, req);
-        return contracts.save(c);
+        Contract saved = contracts.save(c);
+        String newKey = saved.getAttachmentObjectKey();
+        if (oldKey != null && !oldKey.isBlank() && !Objects.equals(oldKey, newKey)) {
+            minioService.delete(oldKey);
+        }
+        return saved;
     }
 
     @Transactional
@@ -72,7 +82,12 @@ public class ContractService {
 
     @Transactional
     public void deleteContract(Long id) {
-        contracts.delete(getContract(id));
+        Contract c = getContract(id);
+        String key = c.getAttachmentObjectKey();
+        contracts.delete(c);
+        if (key != null && !key.isBlank()) {
+            minioService.delete(key);
+        }
     }
 
     private void applyContract(Contract c, ContractRequest req) {
@@ -91,6 +106,7 @@ public class ContractService {
         ContractStatus parsed = StatusParser.parseOrNull(ContractStatus.class, req.status());
         if (parsed != null) c.setStatus(parsed);
         c.setAttachmentUrl(req.attachmentUrl());
+        c.setAttachmentObjectKey(req.attachmentObjectKey());
         c.setNotes(req.notes());
     }
 }
