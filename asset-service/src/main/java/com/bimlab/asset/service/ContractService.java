@@ -29,10 +29,12 @@ public class ContractService {
     private final VendorService vendorService;
     private final PurchaseRequestService purchaseRequestService;
 
+    @Transactional(readOnly = true)
     public List<Contract> listContracts() {
         return contracts.findAll();
     }
 
+    @Transactional(readOnly = true)
     public Contract getContract(Long id) {
         return contracts.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Hợp đồng không tồn tại"));

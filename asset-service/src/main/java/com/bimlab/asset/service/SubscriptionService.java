@@ -21,10 +21,12 @@ public class SubscriptionService {
     private final SubscriptionRepository subscriptions;
     private final VendorService vendorService;
 
+    @Transactional(readOnly = true)
     public List<Subscription> listSubscriptions() {
         return subscriptions.findAll();
     }
 
+    @Transactional(readOnly = true)
     public Subscription getSubscription(Long id) {
         return subscriptions.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Subscription không tồn tại"));

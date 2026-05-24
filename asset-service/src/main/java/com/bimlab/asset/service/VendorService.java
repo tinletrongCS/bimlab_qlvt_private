@@ -22,10 +22,12 @@ import java.util.NoSuchElementException;
 public class VendorService {
     private final VendorRepository vendors;
 
+    @Transactional(readOnly = true)
     public List<Vendor> listVendors() {
         return vendors.findAll();
     }
 
+    @Transactional(readOnly = true)
     public Vendor getVendor(Long id) {
         return vendors.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Nhà cung cấp không tồn tại"));

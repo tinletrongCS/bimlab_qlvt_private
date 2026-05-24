@@ -26,10 +26,12 @@ import java.util.NoSuchElementException;
 public class PurchaseRequestService {
     private final PurchaseRequestRepository purchaseRequests;
 
+    @Transactional(readOnly = true)
     public List<PurchaseRequest> listPurchaseRequests() {
         return purchaseRequests.findAll();
     }
 
+    @Transactional(readOnly = true)
     public PurchaseRequest getPurchaseRequest(Long id) {
         return purchaseRequests.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Đề nghị mua sắm không tồn tại"));

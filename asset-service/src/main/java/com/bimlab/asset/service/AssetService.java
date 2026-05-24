@@ -36,10 +36,12 @@ public class AssetService {
     private final AssetItemRepository assets;
     private final VendorService vendorService;
 
+    @Transactional(readOnly = true)
     public List<AssetItem> listAssets() {
         return assets.findAll();
     }
 
+    @Transactional(readOnly = true)
     public AssetItem getAsset(Long id) {
         return assets.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Tài sản không tồn tại"));
@@ -99,8 +101,18 @@ public class AssetService {
         return assets.save(item);
     }
 
+    /**
+     * Q2-followup N3: prefer {@link #calculateDepreciation(AssetItem)} when the
+     * caller has already loaded the item (avoids TOCTOU where the access check
+     * runs against one snapshot and depreciation against another).
+     */
+    @Transactional(readOnly = true)
     public DepreciationSnapshot calculateDepreciation(Long id) {
-        AssetItem item = getAsset(id);
+        return calculateDepreciation(getAsset(id));
+    }
+
+    public DepreciationSnapshot calculateDepreciation(AssetItem item) {
+        Long id = item.getId();
         BigDecimal cost = item.getPurchaseCost() == null ? BigDecimal.ZERO : item.getPurchaseCost();
         BigDecimal residual = item.getResidualValue() == null ? cost : item.getResidualValue();
         Integer life = item.getUsefulLifeYears();
