@@ -2,6 +2,8 @@ package com.bimlab.asset.service;
 
 import com.bimlab.asset.dto.SubscriptionRequest;
 import com.bimlab.asset.model.Subscription;
+import com.bimlab.asset.model.status.StatusParser;
+import com.bimlab.asset.model.status.SubscriptionStatus;
 import com.bimlab.asset.repository.SubscriptionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -61,7 +63,8 @@ public class SubscriptionService {
         s.setBillingCycle(req.billingCycle());
         s.setStartDate(req.startDate());
         s.setRenewalDate(req.renewalDate());
-        if (req.status() != null) s.setStatus(req.status());
+        SubscriptionStatus parsed = StatusParser.parseOrNull(SubscriptionStatus.class, req.status());
+        if (parsed != null) s.setStatus(parsed);
         s.setNotes(req.notes());
     }
 }

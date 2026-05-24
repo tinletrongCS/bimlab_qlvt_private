@@ -2,6 +2,8 @@ package com.bimlab.asset.service;
 
 import com.bimlab.asset.dto.MaintenanceRecordRequest;
 import com.bimlab.asset.model.MaintenanceRecord;
+import com.bimlab.asset.model.status.MaintenanceStatus;
+import com.bimlab.asset.model.status.StatusParser;
 import com.bimlab.asset.repository.MaintenanceRecordRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -70,6 +72,7 @@ public class MaintenanceService {
         m.setPerformedBy(req.performedBy());
         m.setDescription(req.description());
         m.setNextMaintenanceDate(req.nextMaintenanceDate());
-        if (req.status() != null) m.setStatus(req.status());
+        MaintenanceStatus parsed = StatusParser.parseOrNull(MaintenanceStatus.class, req.status());
+        if (parsed != null) m.setStatus(parsed);
     }
 }

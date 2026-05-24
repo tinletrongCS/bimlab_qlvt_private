@@ -2,6 +2,8 @@ package com.bimlab.asset.service;
 
 import com.bimlab.asset.dto.ContractRequest;
 import com.bimlab.asset.model.Contract;
+import com.bimlab.asset.model.status.ContractStatus;
+import com.bimlab.asset.model.status.StatusParser;
 import com.bimlab.asset.repository.ContractRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -64,7 +66,7 @@ public class ContractService {
     @Transactional
     public Contract updateContractStatus(Long id, String status) {
         Contract c = getContract(id);
-        c.setStatus(status);
+        c.setStatus(StatusParser.parse(ContractStatus.class, status));
         return contracts.save(c);
     }
 
@@ -86,7 +88,8 @@ public class ContractService {
         c.setContractValue(req.contractValue());
         if (req.currency() != null) c.setCurrency(req.currency());
         c.setPaymentTerms(req.paymentTerms());
-        if (req.status() != null) c.setStatus(req.status());
+        ContractStatus parsed = StatusParser.parseOrNull(ContractStatus.class, req.status());
+        if (parsed != null) c.setStatus(parsed);
         c.setAttachmentUrl(req.attachmentUrl());
         c.setNotes(req.notes());
     }

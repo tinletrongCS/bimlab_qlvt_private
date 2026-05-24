@@ -1,6 +1,7 @@
 package com.bimlab.asset.model;
 
 import jakarta.persistence.*;
+import com.bimlab.asset.model.status.VendorStatus;
 import lombok.*;
 import java.time.LocalDateTime;
 
@@ -22,8 +23,9 @@ public class Vendor {
     private String phone;
     @Column(length = 500)
     private String address;
+    @Enumerated(EnumType.STRING)
     @Column(length = 20, nullable = false)
-    private String status;
+    private VendorStatus status;
     @Column(nullable = false)
     private LocalDateTime createdAt;
     @Column(nullable = false)
@@ -34,7 +36,7 @@ public class Vendor {
         LocalDateTime now = LocalDateTime.now();
         createdAt = now;
         updatedAt = now;
-        if (status == null || status.isBlank()) status = "ACTIVE";
+        if (status == null) status = VendorStatus.ACTIVE;
     }
 
     @PreUpdate

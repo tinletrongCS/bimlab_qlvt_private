@@ -2,6 +2,7 @@ package com.bimlab.asset.model;
 
 import jakarta.persistence.*;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.bimlab.asset.model.status.ContractStatus;
 import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -47,8 +48,9 @@ public class Contract {
     @Column(columnDefinition = "text")
     private String paymentTerms;
 
+    @Enumerated(EnumType.STRING)
     @Column(length = 30, nullable = false)
-    private String status;
+    private ContractStatus status;
 
     @Column(length = 500)
     private String attachmentUrl;
@@ -67,7 +69,7 @@ public class Contract {
         LocalDateTime now = LocalDateTime.now();
         createdAt = now;
         updatedAt = now;
-        if (status == null || status.isBlank()) status = "DRAFT";
+        if (status == null) status = ContractStatus.DRAFT;
         if (currency == null || currency.isBlank()) currency = "VND";
     }
 

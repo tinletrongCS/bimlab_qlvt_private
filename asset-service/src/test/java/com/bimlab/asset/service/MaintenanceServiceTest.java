@@ -1,5 +1,7 @@
 package com.bimlab.asset.service;
 
+
+import com.bimlab.asset.model.status.AssetStatus;
 import com.bimlab.asset.dto.MaintenanceRecordRequest;
 import com.bimlab.asset.model.AssetItem;
 import com.bimlab.asset.model.MaintenanceRecord;
@@ -34,7 +36,7 @@ class MaintenanceServiceTest {
 
     @Test
     void createMaintenanceRecord_attachesAsset() {
-        AssetItem asset = AssetItem.builder().id(1L).assetCode("LAP-1").name("X").category("IT").status("ASSIGNED").build();
+        AssetItem asset = AssetItem.builder().id(1L).assetCode("LAP-1").name("X").category("IT").status(AssetStatus.ASSIGNED).build();
         when(assetService.getAsset(1L)).thenReturn(asset);
         when(maintenanceRecords.save(any(MaintenanceRecord.class))).thenAnswer(inv -> inv.getArgument(0));
 

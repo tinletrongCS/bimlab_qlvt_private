@@ -2,6 +2,7 @@ package com.bimlab.asset.model;
 
 import jakarta.persistence.*;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.bimlab.asset.model.status.MaintenanceStatus;
 import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -45,8 +46,9 @@ public class MaintenanceRecord {
 
     private LocalDate nextMaintenanceDate;
 
+    @Enumerated(EnumType.STRING)
     @Column(length = 30, nullable = false)
-    private String status;
+    private MaintenanceStatus status;
 
     @Column(nullable = false)
     private LocalDateTime createdAt;
@@ -59,7 +61,7 @@ public class MaintenanceRecord {
         LocalDateTime now = LocalDateTime.now();
         createdAt = now;
         updatedAt = now;
-        if (status == null || status.isBlank()) status = "COMPLETED";
+        if (status == null) status = MaintenanceStatus.COMPLETED;
     }
 
     @PreUpdate

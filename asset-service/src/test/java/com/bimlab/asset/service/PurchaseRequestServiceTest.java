@@ -1,5 +1,7 @@
 package com.bimlab.asset.service;
 
+
+import com.bimlab.asset.model.status.PurchaseRequestStatus;
 import com.bimlab.asset.dto.PurchaseRequestPayload;
 import com.bimlab.asset.model.PurchaseRequest;
 import com.bimlab.asset.repository.PurchaseRequestRepository;
@@ -63,7 +65,7 @@ class PurchaseRequestServiceTest {
 
         ArgumentCaptor<PurchaseRequest> captor = ArgumentCaptor.forClass(PurchaseRequest.class);
         verify(purchaseRequests).save(captor.capture());
-        assertEquals("PENDING", captor.getValue().getStatus(),
+        assertEquals(PurchaseRequestStatus.PENDING, captor.getValue().getStatus(),
                 "create path must force PENDING regardless of body");
     }
 
@@ -80,7 +82,7 @@ class PurchaseRequestServiceTest {
         ArgumentCaptor<PurchaseRequest> captor = ArgumentCaptor.forClass(PurchaseRequest.class);
         verify(purchaseRequests).save(captor.capture());
         assertNull(captor.getValue().getRequesterEmployeeId());
-        assertEquals("PENDING", captor.getValue().getStatus());
+        assertEquals(PurchaseRequestStatus.PENDING, captor.getValue().getStatus());
     }
 
     @Test
@@ -89,7 +91,7 @@ class PurchaseRequestServiceTest {
         PurchaseRequest stored = new PurchaseRequest();
         stored.setId(100L);
         stored.setRequesterEmployeeId(7L);
-        stored.setStatus("PENDING");
+        stored.setStatus(PurchaseRequestStatus.PENDING);
         when(purchaseRequests.findById(100L)).thenReturn(Optional.of(stored));
         when(purchaseRequests.save(any(PurchaseRequest.class))).thenAnswer(inv -> inv.getArgument(0));
 
@@ -99,6 +101,6 @@ class PurchaseRequestServiceTest {
         verify(purchaseRequests).save(captor.capture());
         assertEquals(7L, captor.getValue().getRequesterEmployeeId(),
                 "update path must keep stored requesterEmployeeId");
-        assertEquals("APPROVED", captor.getValue().getStatus());
+        assertEquals(PurchaseRequestStatus.APPROVED, captor.getValue().getStatus());
     }
 }

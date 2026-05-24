@@ -1,5 +1,8 @@
 package com.bimlab.asset.service;
 
+
+import com.bimlab.asset.model.status.VendorStatus;
+import com.bimlab.asset.model.status.ContractStatus;
 import com.bimlab.asset.dto.ContractRequest;
 import com.bimlab.asset.model.Contract;
 import com.bimlab.asset.model.Vendor;
@@ -69,8 +72,8 @@ class ContractServiceTest {
 
     @Test
     void updateContract_attachesVendor() {
-        Contract existing = Contract.builder().id(1L).contractNumber("HD-A").title("x").status("DRAFT").build();
-        Vendor vendor = Vendor.builder().id(7L).name("V").status("ACTIVE").build();
+        Contract existing = Contract.builder().id(1L).contractNumber("HD-A").title("x").status(ContractStatus.DRAFT).build();
+        Vendor vendor = Vendor.builder().id(7L).name("V").status(VendorStatus.ACTIVE).build();
         when(contracts.findById(1L)).thenReturn(Optional.of(existing));
         when(vendorService.getVendor(7L)).thenReturn(vendor);
         when(contracts.save(any(Contract.class))).thenAnswer(inv -> inv.getArgument(0));
@@ -82,7 +85,7 @@ class ContractServiceTest {
 
         assertEquals(vendor, updated.getVendor());
         assertEquals("x updated", updated.getTitle());
-        assertEquals("ACTIVE", updated.getStatus());
+        assertEquals(ContractStatus.ACTIVE, updated.getStatus());
     }
 
     @Test
@@ -93,12 +96,12 @@ class ContractServiceTest {
 
     @Test
     void updateContractStatus_persists() {
-        Contract existing = Contract.builder().id(1L).status("DRAFT").build();
+        Contract existing = Contract.builder().id(1L).status(ContractStatus.DRAFT).build();
         when(contracts.findById(1L)).thenReturn(Optional.of(existing));
         when(contracts.save(any(Contract.class))).thenAnswer(inv -> inv.getArgument(0));
 
         Contract updated = service.updateContractStatus(1L, "ACTIVE");
 
-        assertEquals("ACTIVE", updated.getStatus());
+        assertEquals(ContractStatus.ACTIVE, updated.getStatus());
     }
 }

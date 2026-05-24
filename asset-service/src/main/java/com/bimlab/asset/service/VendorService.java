@@ -2,6 +2,8 @@ package com.bimlab.asset.service;
 
 import com.bimlab.asset.dto.VendorRequest;
 import com.bimlab.asset.model.Vendor;
+import com.bimlab.asset.model.status.StatusParser;
+import com.bimlab.asset.model.status.VendorStatus;
 import com.bimlab.asset.repository.VendorRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -10,13 +12,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.NoSuchElementException;
 
-/**
- * Q2: Vendor domain split from the original {@code AssetManagementService}
- * god-service. Owns Vendor CRUD. {@link #getVendor(Long)} is intentionally
- * public — it is consumed as a cross-domain resolver by
- * {@link SubscriptionService}, {@link ContractService},
- * {@link MaintenanceService}, and {@link AssetService}.
- */
 @Service
 @RequiredArgsConstructor
 public class VendorService {
@@ -42,7 +37,7 @@ public class VendorService {
                 .email(req.email())
                 .phone(req.phone())
                 .address(req.address())
-                .status(req.status())
+                .status(StatusParser.parseOrNull(VendorStatus.class, req.status()))
                 .build());
     }
 
@@ -55,7 +50,8 @@ public class VendorService {
         v.setEmail(req.email());
         v.setPhone(req.phone());
         v.setAddress(req.address());
-        if (req.status() != null) v.setStatus(req.status());
+        VendorStatus parsed = StatusParser.parseOrNull(VendorStatus.class, req.status());
+        if (parsed != null) v.setStatus(parsed);
         return vendors.save(v);
     }
 

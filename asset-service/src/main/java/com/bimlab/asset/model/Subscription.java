@@ -2,6 +2,7 @@ package com.bimlab.asset.model;
 
 import jakarta.persistence.*;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.bimlab.asset.model.status.SubscriptionStatus;
 import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -34,8 +35,9 @@ public class Subscription {
     private String billingCycle;
     private LocalDate startDate;
     private LocalDate renewalDate;
+    @Enumerated(EnumType.STRING)
     @Column(length = 30, nullable = false)
-    private String status;
+    private SubscriptionStatus status;
     @Column(length = 500)
     private String notes;
     @Column(nullable = false)
@@ -48,7 +50,7 @@ public class Subscription {
         LocalDateTime now = LocalDateTime.now();
         createdAt = now;
         updatedAt = now;
-        if (status == null || status.isBlank()) status = "ACTIVE";
+        if (status == null) status = SubscriptionStatus.ACTIVE;
         if (totalSeats == null) totalSeats = 1;
         if (usedSeats == null) usedSeats = 0;
     }
