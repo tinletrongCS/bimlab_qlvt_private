@@ -55,6 +55,10 @@ public class Contract {
     @Column(length = 500)
     private String attachmentUrl;
 
+    // Q7: object key in MinIO bucket (preferred); attachmentUrl kept for legacy back-compat
+    @Column(name = "attachment_object_key", length = 500)
+    private String attachmentObjectKey;
+
     @Column(length = 1000)
     private String notes;
 

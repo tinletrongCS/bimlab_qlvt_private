@@ -1,6 +1,10 @@
 spring:
   application:
     name: asset-service
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 21MB
   datasource:
     url: jdbc:postgresql://localhost:5432/bimlab?currentSchema=asset
     driver-class-name: org.postgresql.Driver
@@ -39,6 +43,13 @@ app:
     rsa-public-key: ${RSA_PUBLIC_KEY:}
   auth-service:
     url: ${AUTH_SERVICE_URL:http://localhost:8081}
+
+# Q7: MinIO object storage for contract attachments
+minio:
+  endpoint: ${MINIO_ENDPOINT:http://localhost:9000}
+  access-key: ${MINIO_ACCESS_KEY:}
+  secret-key: ${MINIO_SECRET_KEY:}
+  bucket: ${MINIO_BUCKET:qlvt-assets}
 
 management:
   endpoints:
