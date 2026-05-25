@@ -1,0 +1,26 @@
+# Q8: H2 in-memory profile for @DataJpaTest + @SpringBootTest slices.
+# Compatible with PostgreSQL DDL (incl. text columns and IDENTITY generators).
+spring:
+  datasource:
+    # INIT pre-creates the `asset` schema that entities pin via @Table(schema=).
+    url: jdbc:h2:mem:asset-test;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;INIT=CREATE SCHEMA IF NOT EXISTS asset
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: ''
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        default_schema: asset
+app:
+  jwt:
+    secret: test-secret-32-bytes-long-padded-padded
+  auth-service:
+    url: http://localhost:1
+minio:
+  endpoint: http://localhost:9000
+  access-key: test-access
+  secret-key: test-secret-not-default
+  bucket: test-bucket
