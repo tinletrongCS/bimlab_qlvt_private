@@ -4,6 +4,13 @@ import type { AssetItem, AssetPayload, AssetTransfer, AssetTransferPayload, Auth
 export const api = axios.create({
   baseURL: '/api',
   withCredentials: true,
+  // F6: SPA cookie→header CSRF pattern. asset-service now enables CSRF
+  // (CookieCsrfTokenRepository.withHttpOnlyFalse()); axios reads the
+  // XSRF-TOKEN cookie on every request and echoes it in X-XSRF-TOKEN,
+  // which matches the cookie value Spring stored. Without this, every
+  // POST/PUT/PATCH/DELETE returns 403.
+  xsrfCookieName: 'XSRF-TOKEN',
+  xsrfHeaderName: 'X-XSRF-TOKEN',
 })
 
 export async function login(username: string, password: string): Promise<AuthUser> {
