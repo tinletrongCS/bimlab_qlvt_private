@@ -26,14 +26,17 @@ public class MaintenanceService {
     private final AssetService assetService;
     private final VendorService vendorService;
 
+    @Transactional(readOnly = true)
     public List<MaintenanceRecord> listMaintenanceRecords() {
         return maintenanceRecords.findAll();
     }
 
+    @Transactional(readOnly = true)
     public List<MaintenanceRecord> listMaintenanceByAsset(Long assetId) {
         return maintenanceRecords.findByAssetIdOrderByMaintenanceDateDesc(assetId);
     }
 
+    @Transactional(readOnly = true)
     public MaintenanceRecord getMaintenanceRecord(Long id) {
         return maintenanceRecords.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Bản ghi bảo trì không tồn tại"));

@@ -32,14 +32,17 @@ public class AssetTransferService {
     private final AssetItemRepository assets;
     private final AssetService assetService;
 
+    @Transactional(readOnly = true)
     public List<AssetTransfer> listTransfers() {
         return assetTransfers.findAllSortedByDateDesc();
     }
 
+    @Transactional(readOnly = true)
     public List<AssetTransfer> listTransfersByAsset(Long assetId) {
         return assetTransfers.findByAssetIdOrderByTransferDateDesc(assetId);
     }
 
+    @Transactional(readOnly = true)
     public AssetTransfer getTransfer(Long id) {
         return assetTransfers.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Bản ghi luân chuyển không tồn tại"));

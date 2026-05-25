@@ -60,12 +60,15 @@ public class AssetController {
     }
 
     // F1: same scoping for depreciation snapshot.
+    // Q2-followup N3: pass the loaded item to avoid a second DB roundtrip and
+    // close the TOCTOU window where the asset could mutate between the access
+    // check and the depreciation computation.
     @GetMapping("/{id}/depreciation")
     @PreAuthorize("hasAnyAuthority('asset_access','asset_view_self','asset_view_team','asset_view_all','asset_manage','asset_finance_manage')")
     public DepreciationSnapshot depreciation(@PathVariable Long id) {
         AssetItem item = service.getAsset(id);
         access.ensureSelfOrAny(item.getAssignedEmployeeId(), Permission.Sets.ASSET_ADMIN);
-        return service.calculateDepreciation(id);
+        return service.calculateDepreciation(item);
     }
 
     @PostMapping("/{id}/dispose")
