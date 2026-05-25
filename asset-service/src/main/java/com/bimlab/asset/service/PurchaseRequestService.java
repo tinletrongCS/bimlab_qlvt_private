@@ -2,6 +2,8 @@ package com.bimlab.asset.service;
 
 import com.bimlab.asset.dto.PurchaseRequestPayload;
 import com.bimlab.asset.model.PurchaseRequest;
+import com.bimlab.asset.model.status.PurchaseRequestStatus;
+import com.bimlab.asset.model.status.StatusParser;
 import com.bimlab.asset.repository.PurchaseRequestRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -48,7 +50,7 @@ public class PurchaseRequestService {
         PurchaseRequest pr = new PurchaseRequest();
         applyPurchaseRequest(pr, req, false);
         pr.setRequesterEmployeeId(callerEmployeeId);
-        pr.setStatus("PENDING");
+        pr.setStatus(PurchaseRequestStatus.PENDING);
         return purchaseRequests.save(pr);
     }
 
@@ -62,7 +64,7 @@ public class PurchaseRequestService {
     @Transactional
     public PurchaseRequest updatePurchaseStatus(Long id, String status) {
         PurchaseRequest pr = getPurchaseRequest(id);
-        pr.setStatus(status);
+        pr.setStatus(StatusParser.parse(PurchaseRequestStatus.class, status));
         return purchaseRequests.save(pr);
     }
 
@@ -88,7 +90,10 @@ public class PurchaseRequestService {
         // is permitted because PUT /{id} is gated by purchase_request_approve
         // (see PurchaseRequestController) — only approvers can hit this path,
         // so accepting status from body and PATCH /status are equivalent.
-        if (isUpdate && req.status() != null) pr.setStatus(req.status());
+        if (isUpdate) {
+            PurchaseRequestStatus parsed = StatusParser.parseOrNull(PurchaseRequestStatus.class, req.status());
+            if (parsed != null) pr.setStatus(parsed);
+        }
         pr.setNotes(req.notes());
     }
 }

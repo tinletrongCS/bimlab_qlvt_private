@@ -2,6 +2,7 @@ package com.bimlab.asset.model;
 
 import jakarta.persistence.*;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.bimlab.asset.model.status.AssetStatus;
 import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -41,8 +42,10 @@ public class AssetItem {
     private BigDecimal residualValue;
     private LocalDate purchaseDate;
     private LocalDate warrantyUntil;
+    // Q5: type-safe lifecycle; persisted as VARCHAR(30) name() via @Enumerated(STRING).
+    @Enumerated(EnumType.STRING)
     @Column(length = 30, nullable = false)
-    private String status;
+    private AssetStatus status;
 
     @Column(length = 30)
     private String depreciationMethod;
@@ -66,7 +69,7 @@ public class AssetItem {
         LocalDateTime now = LocalDateTime.now();
         createdAt = now;
         updatedAt = now;
-        if (status == null || status.isBlank()) status = "IN_STOCK";
+        if (status == null) status = AssetStatus.IN_STOCK;
         if (residualValue == null) residualValue = purchaseCost;
     }
 

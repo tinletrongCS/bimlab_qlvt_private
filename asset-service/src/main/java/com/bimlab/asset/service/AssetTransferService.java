@@ -3,6 +3,7 @@ package com.bimlab.asset.service;
 import com.bimlab.asset.dto.AssetTransferRequest;
 import com.bimlab.asset.model.AssetItem;
 import com.bimlab.asset.model.AssetTransfer;
+import com.bimlab.asset.model.status.AssetStatus;
 import com.bimlab.asset.repository.AssetItemRepository;
 import com.bimlab.asset.repository.AssetTransferRepository;
 import lombok.RequiredArgsConstructor;
@@ -71,8 +72,8 @@ public class AssetTransferService {
             asset.setAssignedEmployeeId(req.toEmployeeId());
             if (req.toDepartmentId() != null) asset.setDepartmentId(req.toDepartmentId());
             if (req.toSiteId() != null) asset.setSiteId(req.toSiteId());
-            if (req.toEmployeeId() != null) asset.setStatus("ASSIGNED");
-            else if ("REVOKE".equals(req.transferType())) asset.setStatus("IN_STOCK");
+            if (req.toEmployeeId() != null) asset.setStatus(AssetStatus.ASSIGNED);
+            else if ("REVOKE".equals(req.transferType())) asset.setStatus(AssetStatus.IN_STOCK);
             assets.save(asset);
         }
         return saved;

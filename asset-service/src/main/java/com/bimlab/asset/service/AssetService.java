@@ -5,6 +5,8 @@ import com.bimlab.asset.dto.DepreciationSnapshot;
 import com.bimlab.asset.dto.DisposeAssetRequest;
 import com.bimlab.asset.dto.UtilizationReport;
 import com.bimlab.asset.model.AssetItem;
+import com.bimlab.asset.model.status.AssetStatus;
+import com.bimlab.asset.model.status.StatusParser;
 import com.bimlab.asset.repository.AssetItemRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -21,14 +23,7 @@ import java.util.stream.Collectors;
 
 /**
  * Q2: Asset domain split from the original {@code AssetManagementService}.
- * Owns Asset CRUD, disposal, depreciation math, warranty filtering, and
- * the utilization aggregation report (which only reads
- * {@link AssetItemRepository}, so it stays here rather than getting its own
- * service class).
- *
- * <p>{@link #getAsset(Long)} is intentionally public — consumed as a
- * cross-domain resolver by {@link MaintenanceService} and
- * {@link AssetTransferService}.
+ * Q5: status fields are type-safe {@link AssetStatus} enums.
  */
 @Service
 @RequiredArgsConstructor
@@ -81,7 +76,8 @@ public class AssetService {
         item.setResidualValue(req.residualValue());
         item.setPurchaseDate(req.purchaseDate());
         item.setWarrantyUntil(req.warrantyUntil());
-        if (req.status() != null) item.setStatus(req.status());
+        AssetStatus parsed = StatusParser.parseOrNull(AssetStatus.class, req.status());
+        if (parsed != null) item.setStatus(parsed);
         item.setDepreciationMethod(req.depreciationMethod());
         item.setUsefulLifeYears(req.usefulLifeYears());
         item.setNotes(req.notes());
@@ -90,10 +86,10 @@ public class AssetService {
     @Transactional
     public AssetItem disposeAsset(Long id, DisposeAssetRequest req) {
         AssetItem item = getAsset(id);
-        if ("DISPOSED".equals(item.getStatus())) {
+        if (item.getStatus() == AssetStatus.DISPOSED) {
             throw new IllegalStateException("Tài sản đã được thanh lý");
         }
-        item.setStatus("DISPOSED");
+        item.setStatus(AssetStatus.DISPOSED);
         item.setDisposalDate(req.disposalDate());
         item.setDisposalPrice(req.disposalPrice());
         item.setDisposalReason(req.disposalReason());
@@ -156,6 +152,7 @@ public class AssetService {
         return new DepreciationSnapshot(id, method, life, cost, residual, annual, accumulated, bookValue, yearsElapsed);
     }
 
+    @Transactional(readOnly = true)
     public List<AssetItem> listAssetsWithWarrantyExpiringWithin(int days) {
         LocalDate cutoff = LocalDate.now().plusDays(days);
         LocalDate today = LocalDate.now();
@@ -163,33 +160,35 @@ public class AssetService {
                 .filter(a -> a.getWarrantyUntil() != null)
                 .filter(a -> !a.getWarrantyUntil().isBefore(today))
                 .filter(a -> !a.getWarrantyUntil().isAfter(cutoff))
-                .filter(a -> !"DISPOSED".equals(a.getStatus()))
+                .filter(a -> a.getStatus() != AssetStatus.DISPOSED)
                 .toList();
     }
 
+    @Transactional(readOnly = true)
     public UtilizationReport getUtilizationReport() {
         List<AssetItem> all = assets.findAll();
         long total = all.size();
-        long assigned = all.stream().filter(a -> "ASSIGNED".equals(a.getStatus())).count();
-        long inStock = all.stream().filter(a -> "IN_STOCK".equals(a.getStatus())).count();
-        long maintenance = all.stream().filter(a -> "MAINTENANCE".equals(a.getStatus())).count();
-        long disposed = all.stream().filter(a -> "DISPOSED".equals(a.getStatus())).count();
+        long assigned = all.stream().filter(a -> a.getStatus() == AssetStatus.ASSIGNED).count();
+        long inStock = all.stream().filter(a -> a.getStatus() == AssetStatus.IN_STOCK).count();
+        long maintenance = all.stream().filter(a -> a.getStatus() == AssetStatus.MAINTENANCE).count();
+        long disposed = all.stream().filter(a -> a.getStatus() == AssetStatus.DISPOSED).count();
         long active = total - disposed;
         double rate = active > 0 ? (double) assigned * 100.0 / active : 0.0;
 
         BigDecimal totalValue = all.stream()
-                .filter(a -> !"DISPOSED".equals(a.getStatus()))
+                .filter(a -> a.getStatus() != AssetStatus.DISPOSED)
                 .map(a -> a.getPurchaseCost() == null ? BigDecimal.ZERO : a.getPurchaseCost())
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         BigDecimal idleValue = all.stream()
-                .filter(a -> "IN_STOCK".equals(a.getStatus()))
+                .filter(a -> a.getStatus() == AssetStatus.IN_STOCK)
                 .map(a -> a.getPurchaseCost() == null ? BigDecimal.ZERO : a.getPurchaseCost())
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
+        // Q5: enum.name() keeps the JSON shape stable for FE (Map<String,Long>).
         Map<String, Long> byStatus = all.stream()
-                .collect(Collectors.groupingBy(AssetItem::getStatus, Collectors.counting()));
+                .collect(Collectors.groupingBy(a -> a.getStatus().name(), Collectors.counting()));
         Map<String, Long> byCategory = all.stream()
-                .filter(a -> !"DISPOSED".equals(a.getStatus()))
+                .filter(a -> a.getStatus() != AssetStatus.DISPOSED)
                 .collect(Collectors.groupingBy(AssetItem::getCategory, Collectors.counting()));
 
         return new UtilizationReport(

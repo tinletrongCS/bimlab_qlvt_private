@@ -1,5 +1,8 @@
 package com.bimlab.asset.service;
 
+
+import com.bimlab.asset.model.status.AssetStatus;
+import com.bimlab.asset.model.status.VendorStatus;
 import com.bimlab.asset.dto.AssetRequest;
 import com.bimlab.asset.dto.DepreciationSnapshot;
 import com.bimlab.asset.dto.DisposeAssetRequest;
@@ -54,7 +57,7 @@ class AssetServiceTest {
 
     @Test
     void createAsset_resolvesVendorWhenIdProvided() {
-        Vendor vendor = Vendor.builder().id(7L).name("V").status("ACTIVE").build();
+        Vendor vendor = Vendor.builder().id(7L).name("V").status(VendorStatus.ACTIVE).build();
         when(vendorService.getVendor(7L)).thenReturn(vendor);
         when(assets.save(any(AssetItem.class))).thenAnswer(inv -> inv.getArgument(0));
 
@@ -69,7 +72,7 @@ class AssetServiceTest {
 
         assertEquals(vendor, saved.getVendor());
         assertEquals("A-1", saved.getAssetCode());
-        assertEquals("IN_STOCK", saved.getStatus());
+        assertEquals(AssetStatus.IN_STOCK, saved.getStatus());
     }
 
     @Test
@@ -149,7 +152,7 @@ class AssetServiceTest {
     void disposeAsset_setsStatusAndUnassigns() {
         AssetItem item = AssetItem.builder()
                 .id(1L).assetCode("A1").name("Laptop").category("IT")
-                .status("ASSIGNED").assignedEmployeeId(42L)
+                .status(AssetStatus.ASSIGNED).assignedEmployeeId(42L)
                 .build();
         when(assets.findById(1L)).thenReturn(Optional.of(item));
         when(assets.save(any(AssetItem.class))).thenAnswer(inv -> inv.getArgument(0));
@@ -162,7 +165,7 @@ class AssetServiceTest {
 
         AssetItem disposed = service.disposeAsset(1L, req);
 
-        assertEquals("DISPOSED", disposed.getStatus());
+        assertEquals(AssetStatus.DISPOSED, disposed.getStatus());
         assertEquals(LocalDate.of(2026, 5, 19), disposed.getDisposalDate());
         assertEquals(new BigDecimal("2000000"), disposed.getDisposalPrice());
         assertEquals("Hỏng hóc không sửa được", disposed.getDisposalReason());
@@ -171,7 +174,7 @@ class AssetServiceTest {
 
     @Test
     void disposeAsset_rejects_already_disposed() {
-        AssetItem item = AssetItem.builder().id(1L).status("DISPOSED").build();
+        AssetItem item = AssetItem.builder().id(1L).status(AssetStatus.DISPOSED).build();
         when(assets.findById(1L)).thenReturn(Optional.of(item));
 
         DisposeAssetRequest req = new DisposeAssetRequest(LocalDate.now(), null, null);
@@ -184,11 +187,11 @@ class AssetServiceTest {
 
     @Test
     void warrantyExpiring_filtersAssetsInWindow() {
-        AssetItem inWindow = AssetItem.builder().id(1L).warrantyUntil(LocalDate.now().plusDays(10)).status("ASSIGNED").build();
-        AssetItem expired = AssetItem.builder().id(2L).warrantyUntil(LocalDate.now().minusDays(5)).status("ASSIGNED").build();
-        AssetItem far = AssetItem.builder().id(3L).warrantyUntil(LocalDate.now().plusDays(60)).status("ASSIGNED").build();
-        AssetItem disposed = AssetItem.builder().id(4L).warrantyUntil(LocalDate.now().plusDays(10)).status("DISPOSED").build();
-        AssetItem noWarranty = AssetItem.builder().id(5L).status("ASSIGNED").build();
+        AssetItem inWindow = AssetItem.builder().id(1L).warrantyUntil(LocalDate.now().plusDays(10)).status(AssetStatus.ASSIGNED).build();
+        AssetItem expired = AssetItem.builder().id(2L).warrantyUntil(LocalDate.now().minusDays(5)).status(AssetStatus.ASSIGNED).build();
+        AssetItem far = AssetItem.builder().id(3L).warrantyUntil(LocalDate.now().plusDays(60)).status(AssetStatus.ASSIGNED).build();
+        AssetItem disposed = AssetItem.builder().id(4L).warrantyUntil(LocalDate.now().plusDays(10)).status(AssetStatus.DISPOSED).build();
+        AssetItem noWarranty = AssetItem.builder().id(5L).status(AssetStatus.ASSIGNED).build();
         when(assets.findAll()).thenReturn(List.of(inWindow, expired, far, disposed, noWarranty));
 
         List<AssetItem> expiring = service.listAssetsWithWarrantyExpiringWithin(30);
@@ -202,11 +205,11 @@ class AssetServiceTest {
     @Test
     void utilizationReport_aggregatesByStatusAndCategory() {
         when(assets.findAll()).thenReturn(List.of(
-                AssetItem.builder().status("ASSIGNED").category("Laptop").purchaseCost(new BigDecimal("30000000")).build(),
-                AssetItem.builder().status("ASSIGNED").category("Laptop").purchaseCost(new BigDecimal("25000000")).build(),
-                AssetItem.builder().status("IN_STOCK").category("Monitor").purchaseCost(new BigDecimal("5000000")).build(),
-                AssetItem.builder().status("MAINTENANCE").category("Laptop").purchaseCost(new BigDecimal("20000000")).build(),
-                AssetItem.builder().status("DISPOSED").category("Phone").purchaseCost(new BigDecimal("10000000")).build()
+                AssetItem.builder().status(AssetStatus.ASSIGNED).category("Laptop").purchaseCost(new BigDecimal("30000000")).build(),
+                AssetItem.builder().status(AssetStatus.ASSIGNED).category("Laptop").purchaseCost(new BigDecimal("25000000")).build(),
+                AssetItem.builder().status(AssetStatus.IN_STOCK).category("Monitor").purchaseCost(new BigDecimal("5000000")).build(),
+                AssetItem.builder().status(AssetStatus.MAINTENANCE).category("Laptop").purchaseCost(new BigDecimal("20000000")).build(),
+                AssetItem.builder().status(AssetStatus.DISPOSED).category("Phone").purchaseCost(new BigDecimal("10000000")).build()
         ));
 
         UtilizationReport report = service.getUtilizationReport();

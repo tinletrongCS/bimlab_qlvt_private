@@ -1,5 +1,7 @@
 package com.bimlab.asset.service;
 
+
+import com.bimlab.asset.model.status.VendorStatus;
 import com.bimlab.asset.dto.VendorRequest;
 import com.bimlab.asset.model.Vendor;
 import com.bimlab.asset.repository.VendorRepository;
@@ -48,13 +50,13 @@ class VendorServiceTest {
 
         assertEquals("FPT", saved.getName());
         assertEquals("0100109106", saved.getTaxCode());
-        assertEquals("ACTIVE", saved.getStatus());
+        assertEquals(VendorStatus.ACTIVE, saved.getStatus());
         verify(vendors).save(any(Vendor.class));
     }
 
     @Test
     void updateVendor_overwritesMutableFields() {
-        Vendor existing = Vendor.builder().id(1L).name("Old").status("ACTIVE").build();
+        Vendor existing = Vendor.builder().id(1L).name("Old").status(VendorStatus.ACTIVE).build();
         when(vendors.findById(1L)).thenReturn(Optional.of(existing));
         when(vendors.save(any(Vendor.class))).thenAnswer(inv -> inv.getArgument(0));
 
@@ -64,12 +66,12 @@ class VendorServiceTest {
         Vendor updated = service.updateVendor(1L, req);
 
         assertEquals("New", updated.getName());
-        assertEquals("INACTIVE", updated.getStatus());
+        assertEquals(VendorStatus.INACTIVE, updated.getStatus());
     }
 
     @Test
     void deleteVendor_callsRepoDelete() {
-        Vendor existing = Vendor.builder().id(1L).name("X").status("ACTIVE").build();
+        Vendor existing = Vendor.builder().id(1L).name("X").status(VendorStatus.ACTIVE).build();
         when(vendors.findById(1L)).thenReturn(Optional.of(existing));
 
         service.deleteVendor(1L);

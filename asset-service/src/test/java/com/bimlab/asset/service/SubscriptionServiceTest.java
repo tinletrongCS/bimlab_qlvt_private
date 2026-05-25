@@ -1,5 +1,8 @@
 package com.bimlab.asset.service;
 
+
+import com.bimlab.asset.model.status.SubscriptionStatus;
+import com.bimlab.asset.model.status.VendorStatus;
 import com.bimlab.asset.dto.SubscriptionRequest;
 import com.bimlab.asset.model.Subscription;
 import com.bimlab.asset.model.Vendor;
@@ -42,7 +45,7 @@ class SubscriptionServiceTest {
 
     @Test
     void createSubscription_attachesVendor() {
-        Vendor vendor = Vendor.builder().id(7L).name("MSFT").status("ACTIVE").build();
+        Vendor vendor = Vendor.builder().id(7L).name("MSFT").status(VendorStatus.ACTIVE).build();
         when(vendorService.getVendor(7L)).thenReturn(vendor);
         when(subscriptions.save(any(Subscription.class))).thenAnswer(inv -> inv.getArgument(0));
 
@@ -59,7 +62,7 @@ class SubscriptionServiceTest {
         assertEquals(vendor, saved.getVendor());
         assertEquals("Office 365", saved.getSoftwareName());
         assertEquals(100, saved.getTotalSeats());
-        assertEquals("ACTIVE", saved.getStatus());
+        assertEquals(SubscriptionStatus.ACTIVE, saved.getStatus());
     }
 
     @Test
@@ -80,7 +83,7 @@ class SubscriptionServiceTest {
     @Test
     void updateSubscription_overwritesFields() {
         Subscription existing = Subscription.builder()
-                .id(1L).softwareName("Old").totalSeats(50).status("ACTIVE").build();
+                .id(1L).softwareName("Old").totalSeats(50).status(SubscriptionStatus.ACTIVE).build();
         when(subscriptions.findById(1L)).thenReturn(Optional.of(existing));
         when(subscriptions.save(any(Subscription.class))).thenAnswer(inv -> inv.getArgument(0));
 
@@ -94,6 +97,6 @@ class SubscriptionServiceTest {
 
         assertEquals("New", updated.getSoftwareName());
         assertEquals(200, updated.getTotalSeats());
-        assertEquals("EXPIRED", updated.getStatus());
+        assertEquals(SubscriptionStatus.EXPIRED, updated.getStatus());
     }
 }

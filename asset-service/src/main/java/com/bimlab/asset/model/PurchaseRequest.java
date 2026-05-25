@@ -1,6 +1,7 @@
 package com.bimlab.asset.model;
 
 import jakarta.persistence.*;
+import com.bimlab.asset.model.status.PurchaseRequestStatus;
 import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -28,8 +29,9 @@ public class PurchaseRequest {
     private Long siteId;
     private Long projectId;
     private LocalDate neededDate;
+    @Enumerated(EnumType.STRING)
     @Column(length = 30, nullable = false)
-    private String status;
+    private PurchaseRequestStatus status;
     @Column(length = 500)
     private String notes;
     @Column(nullable = false)
@@ -42,7 +44,7 @@ public class PurchaseRequest {
         LocalDateTime now = LocalDateTime.now();
         createdAt = now;
         updatedAt = now;
-        if (status == null || status.isBlank()) status = "DRAFT";
+        if (status == null) status = PurchaseRequestStatus.DRAFT;
     }
 
     @PreUpdate
