@@ -14,6 +14,10 @@ spring:
     properties:
       hibernate:
         default_schema: asset
+  # PA.5: Flyway disabled in tests — H2 schema is built by Hibernate
+  # create-drop on each test class, no migration history needed.
+  flyway:
+    enabled: false
 app:
   jwt:
     secret: test-secret-32-bytes-long-padded-padded

@@ -28,6 +28,17 @@ spring:
         hbm2ddl:
           create_namespaces: true
 
+  # Phase A · PA.5: Flyway as future schema-change channel. Currently
+  # in transition: ddl-auto stays `update` so existing-DB deploys remain
+  # safe; baseline-on-migrate marks current schema as V1 and the next
+  # migration (V2_*.sql) takes effect. Once schema parity confirmed in
+  # prod, flip ddl-auto from `update` to `validate`.
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    baseline-version: "1"
+    schemas: asset
+
 server:
   port: 8086
   error:
