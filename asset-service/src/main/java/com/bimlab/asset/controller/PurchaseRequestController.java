@@ -1,5 +1,9 @@
 package com.bimlab.asset.controller;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
+
 import com.bimlab.asset.dto.PurchaseRequestPayload;
 import com.bimlab.asset.model.PurchaseRequest;
 import com.bimlab.asset.security.AssetAccessService;
@@ -25,6 +29,14 @@ public class PurchaseRequestController {
     public List<PurchaseRequest> list() {
         return service.listPurchaseRequests();
     }
+
+    // N4: paginated list — backward-compatible with legacy GET (no /paged) which still returns List<PurchaseRequest>.
+    @GetMapping("/paged")
+    @PreAuthorize("hasAnyAuthority('asset_access','asset_view_self','asset_view_team','asset_view_all','asset_manage','asset_finance_manage')")
+    public Page<PurchaseRequest> listPaged(@PageableDefault(size = 20) Pageable pageable) {
+        return service.listPurchaseRequestsPaged(pageable);
+    }
+
 
     // F1: requester can see own PR; otherwise admin perm required.
     @GetMapping("/{id}")

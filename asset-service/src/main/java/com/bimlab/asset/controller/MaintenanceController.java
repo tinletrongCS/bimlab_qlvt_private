@@ -1,5 +1,9 @@
 package com.bimlab.asset.controller;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
+
 import com.bimlab.asset.dto.MaintenanceRecordRequest;
 import com.bimlab.asset.model.AssetItem;
 import com.bimlab.asset.model.MaintenanceRecord;
@@ -32,6 +36,14 @@ public class MaintenanceController {
     public List<MaintenanceRecord> list() {
         return service.listMaintenanceRecords();
     }
+
+    // N4: paginated list — backward-compatible with legacy GET (no /paged) which still returns List<MaintenanceRecord>.
+    @GetMapping("/paged")
+    @PreAuthorize("hasAnyAuthority('asset_access','asset_view_self','asset_view_team','asset_view_all','asset_manage','asset_finance_manage')")
+    public Page<MaintenanceRecord> listPaged(@PageableDefault(size = 20) Pageable pageable) {
+        return service.listMaintenanceRecordsPaged(pageable);
+    }
+
 
     // F1: maintenance records inherit scope from parent asset.
     @GetMapping("/asset/{assetId}")

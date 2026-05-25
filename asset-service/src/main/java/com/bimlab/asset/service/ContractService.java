@@ -7,6 +7,8 @@ import com.bimlab.asset.model.status.StatusParser;
 import com.bimlab.asset.repository.ContractRepository;
 import com.bimlab.asset.storage.MinioService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,6 +41,11 @@ public class ContractService {
         return contracts.findAll();
     }
 
+
+    @Transactional(readOnly = true)
+    public Page<Contract> listContractsPaged(Pageable pageable) {
+        return contracts.findAll(pageable);
+    }
     @Transactional(readOnly = true)
     public Contract getContract(Long id) {
         return contracts.findById(id)

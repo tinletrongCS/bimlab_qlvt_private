@@ -1,5 +1,9 @@
 package com.bimlab.asset.controller;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
+
 import com.bimlab.asset.dto.AssetRequest;
 import com.bimlab.asset.dto.DepreciationSnapshot;
 import com.bimlab.asset.dto.DisposeAssetRequest;
@@ -31,6 +35,14 @@ public class AssetController {
     public List<AssetItem> list() {
         return service.listAssets();
     }
+
+    // N4: paginated list — backward-compatible with legacy GET (no /paged) which still returns List<AssetItem>.
+    @GetMapping("/paged")
+    @PreAuthorize("hasAnyAuthority('asset_access','asset_view_self','asset_view_team','asset_view_all','asset_manage','asset_finance_manage')")
+    public Page<AssetItem> listPaged(@PageableDefault(size = 20) Pageable pageable) {
+        return service.listAssetsPaged(pageable);
+    }
+
 
     // F1: object-level scoping — self-scoped users only see assets assigned to them.
     @GetMapping("/{id}")

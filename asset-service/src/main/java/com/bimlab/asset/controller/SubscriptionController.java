@@ -1,5 +1,9 @@
 package com.bimlab.asset.controller;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
+
 import com.bimlab.asset.dto.SubscriptionRequest;
 import com.bimlab.asset.model.Subscription;
 import com.bimlab.asset.service.SubscriptionService;
@@ -21,6 +25,14 @@ public class SubscriptionController {
     public List<Subscription> list() {
         return service.listSubscriptions();
     }
+
+    // N4: paginated list — backward-compatible with legacy GET (no /paged) which still returns List<Subscription>.
+    @GetMapping("/paged")
+    @PreAuthorize("hasAnyAuthority('asset_access','asset_view_self','asset_view_team','asset_view_all','asset_manage','asset_finance_manage')")
+    public Page<Subscription> listPaged(@PageableDefault(size = 20) Pageable pageable) {
+        return service.listSubscriptionsPaged(pageable);
+    }
+
 
     // F1: Subscription is master data — admin perms only (Q1 flattened gate).
     @GetMapping("/{id}")

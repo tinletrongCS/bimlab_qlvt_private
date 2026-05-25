@@ -1,5 +1,9 @@
 package com.bimlab.asset.controller;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
+
 import com.bimlab.asset.dto.ContractRequest;
 import com.bimlab.asset.model.Contract;
 import com.bimlab.asset.service.ContractService;
@@ -31,6 +35,14 @@ public class ContractController {
     public List<Contract> list() {
         return service.listContracts();
     }
+
+    // N4: paginated list — backward-compatible with legacy GET (no /paged) which still returns List<Contract>.
+    @GetMapping("/paged")
+    @PreAuthorize("hasAnyAuthority('asset_access','asset_view_self','asset_view_team','asset_view_all','asset_manage','asset_finance_manage')")
+    public Page<Contract> listPaged(@PageableDefault(size = 20) Pageable pageable) {
+        return service.listContractsPaged(pageable);
+    }
+
 
     // F1: Contract has no employee owner — admin perms only (Q1 flattened gate).
     @GetMapping("/{id}")

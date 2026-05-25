@@ -6,6 +6,8 @@ import com.bimlab.asset.model.status.PurchaseRequestStatus;
 import com.bimlab.asset.model.status.StatusParser;
 import com.bimlab.asset.repository.PurchaseRequestRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,6 +35,11 @@ public class PurchaseRequestService {
         return purchaseRequests.findAll();
     }
 
+
+    @Transactional(readOnly = true)
+    public Page<PurchaseRequest> listPurchaseRequestsPaged(Pageable pageable) {
+        return purchaseRequests.findAll(pageable);
+    }
     @Transactional(readOnly = true)
     public PurchaseRequest getPurchaseRequest(Long id) {
         return purchaseRequests.findById(id)
