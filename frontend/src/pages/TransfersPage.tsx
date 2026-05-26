@@ -55,6 +55,7 @@ export function TransfersPage() {
             render: (item) =>
               canManage ? (
                 <button
+                  type="button"
                   className="mini danger"
                   onClick={() => void deleteResource("transfers", item.id)}
                 >

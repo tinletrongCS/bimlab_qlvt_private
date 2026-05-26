@@ -14,19 +14,19 @@ export function AssetActions({ item, onEdit, onDelete, onRevoke, onDispose }: As
   return (
     <div className="row-actions">
       {!isDisposed && item.assignedEmployeeId && (
-        <button className="mini success" onClick={onRevoke}>
+        <button type="button" className="mini success" onClick={onRevoke}>
           Thu hồi
         </button>
       )}
       {!isDisposed && (
-        <button className="mini" onClick={onDispose}>
+        <button type="button" className="mini" onClick={onDispose}>
           Thanh lý
         </button>
       )}
-      <button className="mini" onClick={onEdit}>
+      <button type="button" className="mini" onClick={onEdit}>
         <FiEdit2 /> Sửa
       </button>
-      <button className="mini danger" onClick={onDelete}>
+      <button type="button" className="mini danger" onClick={onDelete}>
         <FiTrash2 /> Xóa
       </button>
     </div>

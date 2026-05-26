@@ -14,7 +14,7 @@ export function PanelHeader({ title, action, onAdd }: PanelHeaderProps) {
         <p>Danh sách dữ liệu thật từ backend QLVT</p>
       </div>
       {action && (
-        <button onClick={onAdd}>
+        <button type="button" onClick={onAdd}>
           <FiPlus /> Thêm mới
         </button>
       )}

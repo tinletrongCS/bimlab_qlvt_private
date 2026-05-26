@@ -8,10 +8,10 @@ interface RowActionsProps {
 export function RowActions({ onEdit, onDelete }: RowActionsProps) {
   return (
     <div className="row-actions">
-      <button className="mini" onClick={onEdit}>
+      <button type="button" className="mini" onClick={onEdit}>
         <FiEdit2 /> Sửa
       </button>
-      <button className="mini danger" onClick={onDelete}>
+      <button type="button" className="mini danger" onClick={onDelete}>
         <FiTrash2 /> Xóa
       </button>
     </div>

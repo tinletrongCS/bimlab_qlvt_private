@@ -47,6 +47,7 @@ export function PurchaseRequestsPage() {
               <div className="row-actions">
                 {canApprove && item.status !== "APPROVED" && (
                   <button
+                    type="button"
                     className="mini success"
                     onClick={() => void approveRequest(item.id, "APPROVED")}
                   >
@@ -55,6 +56,7 @@ export function PurchaseRequestsPage() {
                 )}
                 {canApprove && item.status !== "REJECTED" && (
                   <button
+                    type="button"
                     className="mini danger"
                     onClick={() => void approveRequest(item.id, "REJECTED")}
                   >

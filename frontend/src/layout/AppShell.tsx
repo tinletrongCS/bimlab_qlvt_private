@@ -88,6 +88,7 @@ export function AppShell() {
             <span>{user?.role}</span>
           </div>
           <button
+            type="button"
             className="logout-button"
             onClick={() => void logout()}
             disabled={authSubmitting}
@@ -105,6 +106,7 @@ export function AppShell() {
             <h1>{currentLabel}</h1>
           </div>
           <button
+            type="button"
             className="secondary"
             onClick={() => void refresh()}
             disabled={loading || actionSubmitting}
