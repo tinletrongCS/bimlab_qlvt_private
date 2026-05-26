@@ -1,16 +1,16 @@
-import { FiEdit2, FiTrash2 } from 'react-icons/fi'
-import type { AssetItem } from '../services/types'
+import { FiEdit2, FiTrash2 } from "react-icons/fi";
+import type { AssetItem } from "../services/types";
 
 interface AssetActionsProps {
-  item: AssetItem
-  onEdit: () => void
-  onDelete: () => void
-  onRevoke: () => void
-  onDispose: () => void
+  item: AssetItem;
+  onEdit: () => void;
+  onDelete: () => void;
+  onRevoke: () => void;
+  onDispose: () => void;
 }
 
 export function AssetActions({ item, onEdit, onDelete, onRevoke, onDispose }: AssetActionsProps) {
-  const isDisposed = item.status === 'DISPOSED'
+  const isDisposed = item.status === "DISPOSED";
   return (
     <div className="row-actions">
       {!isDisposed && item.assignedEmployeeId && (
@@ -30,5 +30,5 @@ export function AssetActions({ item, onEdit, onDelete, onRevoke, onDispose }: As
         <FiTrash2 /> Xóa
       </button>
     </div>
-  )
+  );
 }

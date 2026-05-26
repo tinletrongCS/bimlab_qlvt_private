@@ -1,25 +1,25 @@
-import { DataTable } from '../components/DataTable'
-import { StatusBadge } from '../components/StatusBadge'
-import { PanelHeader } from '../components/PanelHeader'
-import { RowActions } from '../components/RowActions'
-import { useAppData } from '../contexts/AppDataContext'
-import { useActions } from '../contexts/ActionsContext'
-import { useAuth } from '../contexts/AuthContext'
-import { money } from '../lib/format'
+import { DataTable } from "../components/DataTable";
+import { PanelHeader } from "../components/PanelHeader";
+import { RowActions } from "../components/RowActions";
+import { StatusBadge } from "../components/StatusBadge";
+import { useActions } from "../contexts/ActionsContext";
+import { useAppData } from "../contexts/AppDataContext";
+import { useAuth } from "../contexts/AuthContext";
+import { money } from "../lib/format";
 
 export function MaintenancePage() {
-  const { hasPermission } = useAuth()
-  const { maintenanceRecords } = useAppData()
-  const { openModal, deleteResource } = useActions()
+  const { hasPermission } = useAuth();
+  const { maintenanceRecords } = useAppData();
+  const { openModal, deleteResource } = useActions();
 
-  const canManage = hasPermission('maintenance_manage')
+  const canManage = hasPermission("maintenance_manage");
 
   return (
     <section className="panel">
       <PanelHeader
         title="Bảo trì / Sửa chữa"
         action={canManage}
-        onAdd={() => openModal({ type: 'maintenance', mode: 'create' })}
+        onAdd={() => openModal({ type: "maintenance", mode: "create" })}
       />
       <DataTable
         data={maintenanceRecords}
@@ -27,33 +27,45 @@ export function MaintenancePage() {
         emptyText="Chưa có bản ghi bảo trì"
         columns={[
           {
-            key: 'asset',
-            title: 'Tài sản',
+            key: "asset",
+            title: "Tài sản",
             render: (item) => (
               <strong>
                 {item.asset?.assetCode} · {item.asset?.name}
               </strong>
             ),
           },
-          { key: 'type', title: 'Loại', render: (item) => item.maintenanceType },
-          { key: 'date', title: 'Ngày bảo trì', render: (item) => item.maintenanceDate },
-          { key: 'cost', title: 'Chi phí', render: (item) => money.format(Number(item.cost || 0)) },
-          { key: 'vendor', title: 'Nhà cung cấp', render: (item) => item.vendor?.name || item.performedBy || '—' },
-          { key: 'next', title: 'Lần tiếp theo', render: (item) => item.nextMaintenanceDate || '—' },
-          { key: 'status', title: 'Trạng thái', render: (item) => <StatusBadge value={item.status} /> },
+          { key: "type", title: "Loại", render: (item) => item.maintenanceType },
+          { key: "date", title: "Ngày bảo trì", render: (item) => item.maintenanceDate },
+          { key: "cost", title: "Chi phí", render: (item) => money.format(Number(item.cost || 0)) },
           {
-            key: 'actions',
-            title: '',
+            key: "vendor",
+            title: "Nhà cung cấp",
+            render: (item) => item.vendor?.name || item.performedBy || "—",
+          },
+          {
+            key: "next",
+            title: "Lần tiếp theo",
+            render: (item) => item.nextMaintenanceDate || "—",
+          },
+          {
+            key: "status",
+            title: "Trạng thái",
+            render: (item) => <StatusBadge value={item.status} />,
+          },
+          {
+            key: "actions",
+            title: "",
             render: (item) =>
               canManage ? (
                 <RowActions
-                  onEdit={() => openModal({ type: 'maintenance', mode: 'edit', item })}
-                  onDelete={() => void deleteResource('maintenance', item.id)}
+                  onEdit={() => openModal({ type: "maintenance", mode: "edit", item })}
+                  onDelete={() => void deleteResource("maintenance", item.id)}
                 />
               ) : null,
           },
         ]}
       />
     </section>
-  )
+  );
 }

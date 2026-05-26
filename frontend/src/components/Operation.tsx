@@ -1,9 +1,9 @@
-import type { ReactElement } from 'react'
+import type { ReactElement } from "react";
 
 interface OperationProps {
-  icon: ReactElement
-  label: string
-  value: string | number
+  icon: ReactElement;
+  label: string;
+  value: string | number;
 }
 
 export function Operation({ icon, label, value }: OperationProps) {
@@ -15,5 +15,5 @@ export function Operation({ icon, label, value }: OperationProps) {
         <strong>{value}</strong>
       </div>
     </div>
-  )
+  );
 }

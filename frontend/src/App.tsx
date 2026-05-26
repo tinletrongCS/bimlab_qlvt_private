@@ -1,18 +1,18 @@
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
-import { AuthProvider } from './contexts/AuthContext'
-import { AppDataProvider } from './contexts/AppDataContext'
-import { ActionsProvider } from './contexts/ActionsContext'
-import { ProtectedRoute } from './auth/ProtectedRoute'
-import { AppShell } from './layout/AppShell'
-import { LoginPage } from './pages/LoginPage'
-import { DashboardPage } from './pages/DashboardPage'
-import { AssetsPage } from './pages/AssetsPage'
-import { SubscriptionsPage } from './pages/SubscriptionsPage'
-import { VendorsPage } from './pages/VendorsPage'
-import { PurchaseRequestsPage } from './pages/PurchaseRequestsPage'
-import { ContractsPage } from './pages/ContractsPage'
-import { MaintenancePage } from './pages/MaintenancePage'
-import { TransfersPage } from './pages/TransfersPage'
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { ProtectedRoute } from "./auth/ProtectedRoute";
+import { ActionsProvider } from "./contexts/ActionsContext";
+import { AppDataProvider } from "./contexts/AppDataContext";
+import { AuthProvider } from "./contexts/AuthContext";
+import { AppShell } from "./layout/AppShell";
+import { AssetsPage } from "./pages/AssetsPage";
+import { ContractsPage } from "./pages/ContractsPage";
+import { DashboardPage } from "./pages/DashboardPage";
+import { LoginPage } from "./pages/LoginPage";
+import { MaintenancePage } from "./pages/MaintenancePage";
+import { PurchaseRequestsPage } from "./pages/PurchaseRequestsPage";
+import { SubscriptionsPage } from "./pages/SubscriptionsPage";
+import { TransfersPage } from "./pages/TransfersPage";
+import { VendorsPage } from "./pages/VendorsPage";
 
 /**
  * Q6: thin router shell. State lives in AuthProvider + AppDataProvider +
@@ -108,7 +108,7 @@ function App() {
         </AppDataProvider>
       </AuthProvider>
     </BrowserRouter>
-  )
+  );
 }
 
-export default App
+export default App;

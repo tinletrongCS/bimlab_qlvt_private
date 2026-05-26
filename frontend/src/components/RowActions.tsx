@@ -1,8 +1,8 @@
-import { FiEdit2, FiTrash2 } from 'react-icons/fi'
+import { FiEdit2, FiTrash2 } from "react-icons/fi";
 
 interface RowActionsProps {
-  onEdit: () => void
-  onDelete: () => void
+  onEdit: () => void;
+  onDelete: () => void;
 }
 
 export function RowActions({ onEdit, onDelete }: RowActionsProps) {
@@ -15,5 +15,5 @@ export function RowActions({ onEdit, onDelete }: RowActionsProps) {
         <FiTrash2 /> Xóa
       </button>
     </div>
-  )
+  );
 }

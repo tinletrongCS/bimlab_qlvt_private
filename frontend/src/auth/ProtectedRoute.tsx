@@ -1,28 +1,28 @@
-import { Navigate, useLocation } from 'react-router-dom'
-import { useAuth } from '../contexts/AuthContext'
-import type { Permission } from '../services/types'
-import type { ReactNode } from 'react'
+import type { ReactNode } from "react";
+import { Navigate, useLocation } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
+import type { Permission } from "../services/types";
 
 interface ProtectedRouteProps {
-  children: ReactNode
-  permission?: Permission
+  children: ReactNode;
+  permission?: Permission;
 }
 
 export function ProtectedRoute({ children, permission }: ProtectedRouteProps) {
-  const { user, bootstrapping, hasPermission } = useAuth()
-  const location = useLocation()
+  const { user, bootstrapping, hasPermission } = useAuth();
+  const location = useLocation();
 
   if (bootstrapping) {
-    return <div className="loading">Đang khởi tạo...</div>
+    return <div className="loading">Đang khởi tạo...</div>;
   }
 
   if (!user) {
-    return <Navigate to="/login" replace state={{ from: location }} />
+    return <Navigate to="/login" replace state={{ from: location }} />;
   }
 
   if (permission && !hasPermission(permission)) {
-    return <Navigate to="/dashboard" replace />
+    return <Navigate to="/dashboard" replace />;
   }
 
-  return <>{children}</>
+  return <>{children}</>;
 }

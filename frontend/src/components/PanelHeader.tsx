@@ -1,9 +1,9 @@
-import { FiPlus } from 'react-icons/fi'
+import { FiPlus } from "react-icons/fi";
 
 interface PanelHeaderProps {
-  title: string
-  action: boolean
-  onAdd: () => void
+  title: string;
+  action: boolean;
+  onAdd: () => void;
 }
 
 export function PanelHeader({ title, action, onAdd }: PanelHeaderProps) {
@@ -19,5 +19,5 @@ export function PanelHeader({ title, action, onAdd }: PanelHeaderProps) {
         </button>
       )}
     </div>
-  )
+  );
 }

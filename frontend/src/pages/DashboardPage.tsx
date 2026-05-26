@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo } from "react";
 import {
   FiBox,
   FiBriefcase,
@@ -9,29 +9,29 @@ import {
   FiTrash2,
   FiTrendingUp,
   FiUsers,
-} from 'react-icons/fi'
-import { StatCard } from '../components/StatCard'
-import { Operation } from '../components/Operation'
-import { useAppData } from '../contexts/AppDataContext'
-import { money } from '../lib/format'
+} from "react-icons/fi";
+import { Operation } from "../components/Operation";
+import { StatCard } from "../components/StatCard";
+import { useAppData } from "../contexts/AppDataContext";
+import { money } from "../lib/format";
 
 export function DashboardPage() {
-  const { summary, assets, subscriptions, vendors, requests, utilization } = useAppData()
+  const { summary, assets, subscriptions, vendors, requests, utilization } = useAppData();
 
   const assetValue = useMemo(
     () => assets.reduce((sum, item) => sum + Number(item.purchaseCost || 0), 0),
     [assets],
-  )
+  );
   const subscriptionSeats = useMemo(
     () => subscriptions.reduce((sum, item) => sum + Number(item.totalSeats || 0), 0),
     [subscriptions],
-  )
-  const pendingRequests = requests.filter((request) => request.status === 'PENDING').length
-  const activeVendors = vendors.filter((vendor) => vendor.status === 'ACTIVE').length
+  );
+  const pendingRequests = requests.filter((request) => request.status === "PENDING").length;
+  const activeVendors = vendors.filter((vendor) => vendor.status === "ACTIVE").length;
   const subscriptionCost = useMemo(
     () => subscriptions.reduce((sum, item) => sum + Number(item.cost || 0), 0),
     [subscriptions],
-  )
+  );
 
   return (
     <div className="page-grid">
@@ -41,7 +41,8 @@ export function DashboardPage() {
           <p className="eyebrow">BIMLab Asset Intelligence</p>
           <h2>Quản lý vật tư, tài sản và license phần mềm</h2>
           <p>
-            Theo dõi vòng đời tài sản, nhà cung cấp, subscription và đề nghị mua sắm trong cùng hệ phân quyền HRM.
+            Theo dõi vòng đời tài sản, nhà cung cấp, subscription và đề nghị mua sắm trong cùng hệ
+            phân quyền HRM.
           </p>
         </div>
         <div className="hero-summary">
@@ -51,7 +52,12 @@ export function DashboardPage() {
         </div>
       </section>
       <div className="stats-grid">
-        <StatCard label="Tài sản đang quản lý" value={summary.assets} icon={<FiBox />} tone="blue" />
+        <StatCard
+          label="Tài sản đang quản lý"
+          value={summary.assets}
+          icon={<FiBox />}
+          tone="blue"
+        />
         <StatCard label="License seat" value={subscriptionSeats} icon={<FiUsers />} tone="violet" />
         <StatCard
           label="Nhà cung cấp hoạt động"
@@ -59,7 +65,12 @@ export function DashboardPage() {
           icon={<FiBriefcase />}
           tone="green"
         />
-        <StatCard label="Đề nghị chờ xử lý" value={pendingRequests} icon={<FiShoppingCart />} tone="orange" />
+        <StatCard
+          label="Đề nghị chờ xử lý"
+          value={pendingRequests}
+          icon={<FiShoppingCart />}
+          tone="orange"
+        />
       </div>
       <section className="panel overview-panel">
         <div className="panel-title">
@@ -72,15 +83,23 @@ export function DashboardPage() {
           <Operation
             icon={<FiCheckCircle />}
             label="Tài sản trong kho"
-            value={assets.filter((item) => item.status === 'IN_STOCK').length}
+            value={assets.filter((item) => item.status === "IN_STOCK").length}
           />
           <Operation
             icon={<FiTrendingUp />}
             label="Subscription đang hoạt động"
-            value={subscriptions.filter((item) => item.status === 'ACTIVE').length}
+            value={subscriptions.filter((item) => item.status === "ACTIVE").length}
           />
-          <Operation icon={<FiShoppingCart />} label="Tổng đề nghị mua sắm" value={summary.purchaseRequests} />
-          <Operation icon={<FiCreditCard />} label="Chi phí subscription" value={money.format(subscriptionCost)} />
+          <Operation
+            icon={<FiShoppingCart />}
+            label="Tổng đề nghị mua sắm"
+            value={summary.purchaseRequests}
+          />
+          <Operation
+            icon={<FiCreditCard />}
+            label="Chi phí subscription"
+            value={money.format(subscriptionCost)}
+          />
         </div>
       </section>
       {utilization && (
@@ -90,12 +109,24 @@ export function DashboardPage() {
               <h2>Hiệu quả sử dụng tài sản</h2>
               <p>Tỷ lệ tài sản đang được cấp phát so với tổng tài sản đang hoạt động.</p>
             </div>
-            <strong style={{ fontSize: '1.8rem' }}>{utilization.utilizationRate}%</strong>
+            <strong style={{ fontSize: "1.8rem" }}>{utilization.utilizationRate}%</strong>
           </div>
           <div className="operations-grid">
-            <Operation icon={<FiCheckCircle />} label="Đang cấp phát" value={utilization.assignedAssets} />
-            <Operation icon={<FiBox />} label="Đang trong kho (idle)" value={utilization.idleAssets} />
-            <Operation icon={<FiTool />} label="Đang bảo trì" value={utilization.maintenanceAssets} />
+            <Operation
+              icon={<FiCheckCircle />}
+              label="Đang cấp phát"
+              value={utilization.assignedAssets}
+            />
+            <Operation
+              icon={<FiBox />}
+              label="Đang trong kho (idle)"
+              value={utilization.idleAssets}
+            />
+            <Operation
+              icon={<FiTool />}
+              label="Đang bảo trì"
+              value={utilization.maintenanceAssets}
+            />
             <Operation icon={<FiTrash2 />} label="Đã thanh lý" value={utilization.disposedAssets} />
             <Operation
               icon={<FiCreditCard />}
@@ -116,5 +147,5 @@ export function DashboardPage() {
         </section>
       )}
     </div>
-  )
+  );
 }

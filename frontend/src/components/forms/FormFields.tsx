@@ -1,40 +1,49 @@
-import type { DepartmentLite, EmployeeLite, ProjectLite, Vendor, WorkSiteLite } from '../../services/types'
-import { employeeLabel, projectLabel } from '../../lib/format'
+import { employeeLabel, projectLabel } from "../../lib/format";
+import type {
+  DepartmentLite,
+  EmployeeLite,
+  ProjectLite,
+  Vendor,
+  WorkSiteLite,
+} from "../../services/types";
 
 interface FieldProps {
-  label: string
-  value?: string
-  onChange: (value: string) => void
-  type?: string
-  required?: boolean
+  label: string;
+  value?: string;
+  onChange: (value: string) => void;
+  type?: string;
+  required?: boolean;
 }
 
-export function Field({ label, value, onChange, type = 'text', required = false }: FieldProps) {
+export function Field({ label, value, onChange, type = "text", required = false }: FieldProps) {
   return (
     <label>
       {label}
       <input
-        value={value || ''}
+        value={value || ""}
         onChange={(event) => onChange(event.target.value)}
         type={type}
         required={required}
       />
     </label>
-  )
+  );
 }
 
 interface SelectProps {
-  label: string
-  value?: string
-  onChange: (value: string) => void
-  options: Array<[string, string]>
+  label: string;
+  value?: string;
+  onChange: (value: string) => void;
+  options: Array<[string, string]>;
 }
 
 export function Select({ label, value, onChange, options }: SelectProps) {
   return (
     <label>
       {label}
-      <select value={value || options[0]?.[0] || ''} onChange={(event) => onChange(event.target.value)}>
+      <select
+        value={value || options[0]?.[0] || ""}
+        onChange={(event) => onChange(event.target.value)}
+      >
         {options.map(([key, labelText]) => (
           <option key={key} value={key}>
             {labelText}
@@ -42,7 +51,7 @@ export function Select({ label, value, onChange, options }: SelectProps) {
         ))}
       </select>
     </label>
-  )
+  );
 }
 
 export function VendorSelect({
@@ -50,14 +59,14 @@ export function VendorSelect({
   value,
   onChange,
 }: {
-  vendors: Vendor[]
-  value?: string
-  onChange: (value: string) => void
+  vendors: Vendor[];
+  value?: string;
+  onChange: (value: string) => void;
 }) {
   return (
     <label>
       Nhà cung cấp
-      <select value={value || ''} onChange={(event) => onChange(event.target.value)}>
+      <select value={value || ""} onChange={(event) => onChange(event.target.value)}>
         <option value="">Không chọn</option>
         {vendors.map((vendor) => (
           <option key={vendor.id} value={vendor.id}>
@@ -66,7 +75,7 @@ export function VendorSelect({
         ))}
       </select>
     </label>
-  )
+  );
 }
 
 export function EmployeeSelect({
@@ -74,14 +83,14 @@ export function EmployeeSelect({
   value,
   onChange,
 }: {
-  employees: EmployeeLite[]
-  value?: string
-  onChange: (value: string) => void
+  employees: EmployeeLite[];
+  value?: string;
+  onChange: (value: string) => void;
 }) {
   return (
     <label>
       Nhân viên sử dụng
-      <select value={value || ''} onChange={(event) => onChange(event.target.value)}>
+      <select value={value || ""} onChange={(event) => onChange(event.target.value)}>
         <option value="">Không gán</option>
         {employees.map((employee) => (
           <option key={employee.id} value={employee.id}>
@@ -90,7 +99,7 @@ export function EmployeeSelect({
         ))}
       </select>
     </label>
-  )
+  );
 }
 
 export function DepartmentSelect({
@@ -98,14 +107,14 @@ export function DepartmentSelect({
   value,
   onChange,
 }: {
-  departments: DepartmentLite[]
-  value?: string
-  onChange: (value: string) => void
+  departments: DepartmentLite[];
+  value?: string;
+  onChange: (value: string) => void;
 }) {
   return (
     <label>
       Phòng ban
-      <select value={value || ''} onChange={(event) => onChange(event.target.value)}>
+      <select value={value || ""} onChange={(event) => onChange(event.target.value)}>
         <option value="">Không chọn</option>
         {departments.map((department) => (
           <option key={department.id} value={department.id}>
@@ -114,7 +123,7 @@ export function DepartmentSelect({
         ))}
       </select>
     </label>
-  )
+  );
 }
 
 export function WorkSiteSelect({
@@ -122,14 +131,14 @@ export function WorkSiteSelect({
   value,
   onChange,
 }: {
-  workSites: WorkSiteLite[]
-  value?: string
-  onChange: (value: string) => void
+  workSites: WorkSiteLite[];
+  value?: string;
+  onChange: (value: string) => void;
 }) {
   return (
     <label>
       Site làm việc
-      <select value={value || ''} onChange={(event) => onChange(event.target.value)}>
+      <select value={value || ""} onChange={(event) => onChange(event.target.value)}>
         <option value="">Không chọn</option>
         {workSites.map((site) => (
           <option key={site.id} value={site.id}>
@@ -138,7 +147,7 @@ export function WorkSiteSelect({
         ))}
       </select>
     </label>
-  )
+  );
 }
 
 export function ProjectSelect({
@@ -146,14 +155,14 @@ export function ProjectSelect({
   value,
   onChange,
 }: {
-  projects: ProjectLite[]
-  value?: string
-  onChange: (value: string) => void
+  projects: ProjectLite[];
+  value?: string;
+  onChange: (value: string) => void;
 }) {
   return (
     <label>
       Dự án CDS
-      <select value={value || ''} onChange={(event) => onChange(event.target.value)}>
+      <select value={value || ""} onChange={(event) => onChange(event.target.value)}>
         <option value="">Không chọn</option>
         {projects.map((project) => (
           <option key={project.id} value={project.id}>
@@ -162,19 +171,19 @@ export function ProjectSelect({
         ))}
       </select>
     </label>
-  )
+  );
 }
 
 export function empty(value?: string): string | undefined {
-  return value?.trim() || undefined
+  return value?.trim() || undefined;
 }
 
 export function num(value?: string): number | null {
-  if (!value) return null
-  const parsed = Number(value)
-  return Number.isFinite(parsed) ? parsed : null
+  if (!value) return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
 }
 
 export function val(value?: string | number | null): string {
-  return value == null ? '' : String(value)
+  return value == null ? "" : String(value);
 }

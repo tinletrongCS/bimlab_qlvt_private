@@ -1,16 +1,16 @@
-import type { ReactNode } from 'react'
+import type { ReactNode } from "react";
 
 interface Column<T> {
-  key: string
-  title: string
-  render: (item: T) => ReactNode
+  key: string;
+  title: string;
+  render: (item: T) => ReactNode;
 }
 
 interface DataTableProps<T> {
-  columns: Column<T>[]
-  data: T[]
-  emptyText: string
-  getRowKey?: (item: T, index: number) => string | number
+  columns: Column<T>[];
+  data: T[];
+  emptyText: string;
+  getRowKey?: (item: T, index: number) => string | number;
 }
 
 export function DataTable<T>({ columns, data, emptyText, getRowKey }: DataTableProps<T>) {
@@ -27,7 +27,9 @@ export function DataTable<T>({ columns, data, emptyText, getRowKey }: DataTableP
         <tbody>
           {data.length === 0 ? (
             <tr>
-              <td className="empty" colSpan={columns.length}>{emptyText}</td>
+              <td className="empty" colSpan={columns.length}>
+                {emptyText}
+              </td>
             </tr>
           ) : (
             data.map((item, index) => (
@@ -41,5 +43,5 @@ export function DataTable<T>({ columns, data, emptyText, getRowKey }: DataTableP
         </tbody>
       </table>
     </div>
-  )
+  );
 }
