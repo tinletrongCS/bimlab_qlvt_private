@@ -36,6 +36,15 @@
         <dependency><groupId>com.h2database</groupId><artifactId>h2</artifactId><scope>test</scope></dependency>
         <!-- Q8: Spring Security test helpers (@WithMockUser etc.) for @WebMvcTest -->
         <dependency><groupId>org.springframework.security</groupId><artifactId>spring-security-test</artifactId><scope>test</scope></dependency>
+        <!-- Dev-only: auto-restart on classpath change via `mvn spring-boot:run`.
+             Scope=runtime + optional=true excludes it from the packaged Docker JAR. -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-devtools</artifactId>
+            <scope>runtime</scope>
+            <optional>true</optional>
+        </dependency>
+
     </dependencies>
     <build>
         <plugins>
