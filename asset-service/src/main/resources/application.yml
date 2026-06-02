@@ -20,7 +20,10 @@ spring:
       connection-test-query: SELECT 1
   jpa:
     hibernate:
-      ddl-auto: update
+      # SEC-449b4a: env-overridable so prod pins `validate` (set
+      # SPRING_JPA_HIBERNATE_DDL_AUTO=validate in the prod compose) while
+      # existing-DB/dev deploys keep `update` during the Flyway transition.
+      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:update}
     open-in-view: false
     properties:
       hibernate:
