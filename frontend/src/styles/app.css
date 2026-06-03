@@ -318,17 +318,35 @@ select:focus {
   padding: 12px;
 }
 
+/* AppShell render nav bằng <NavLink> (thẻ <a>); giữ cả 'button' cho tương thích. */
+.sidebar nav a,
 .sidebar nav button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   justify-content: flex-start;
   background: transparent;
+  border: 0;
   border-radius: 10px;
   color: #4b5563;
   font-size: 14px;
   font-weight: 600;
+  text-decoration: none;
   box-shadow: none;
   padding: 10px 12px;
+  cursor: pointer;
+  transition: 0.2s ease;
 }
 
+.sidebar nav a svg,
+.sidebar nav button svg {
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+}
+
+.sidebar nav a.active,
+.sidebar nav a:hover,
 .sidebar nav button.active,
 .sidebar nav button:hover {
   background: #eff6ff;
