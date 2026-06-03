@@ -7,6 +7,15 @@ import {
   useMemo,
   useState,
 } from "react";
+import { isKeycloak } from "../auth/authMode";
+import {
+  handleOidcCallback,
+  isOidcCallback,
+  keycloakLogin,
+  keycloakLogout,
+  onSessionLost,
+  trySilentLogin,
+} from "../auth/oidc";
 import { login as apiLogin, logout as apiLogout, loadCurrentUser } from "../services/api";
 import type { AuthUser, Permission } from "../services/types";
 
@@ -30,22 +39,49 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let cancelled = false;
-    loadCurrentUser()
-      .then((current) => {
+    async function bootstrap() {
+      try {
+        if (isKeycloak) {
+          // PR#6: refresh token rotation thất bại / token hết hạn → mất phiên → logout UI (về /login).
+          onSessionLost(() => {
+            if (!cancelled) setUser(null);
+          });
+          // Keycloak: nếu là callback → đổi code→token; nếu không → thử khôi phục phiên (prompt=none).
+          if (isOidcCallback()) {
+            await handleOidcCallback();
+          } else {
+            await trySilentLogin();
+          }
+        }
+        // loadCurrentUser: legacy → /auth/me (cookie); keycloak → /asset/me (Bearer in-memory).
+        const current = await loadCurrentUser();
         if (!cancelled) setUser(current);
-      })
-      .catch(() => {
+      } catch {
         // No active session — fall through to login screen.
-      })
-      .finally(() => {
+      } finally {
         if (!cancelled) setBootstrapping(false);
-      });
+      }
+    }
+    bootstrap();
     return () => {
       cancelled = true;
     };
   }, []);
 
   const login = useCallback(async (username: string, password: string): Promise<boolean> => {
+    if (isKeycloak) {
+      // Keycloak: redirect sang trang login Keycloak (username/password bỏ qua — KC xử lý). Trang điều hướng đi.
+      setSubmitting(true);
+      setLoginError("");
+      try {
+        await keycloakLogin();
+        return true;
+      } catch (err) {
+        setLoginError(readError(err));
+        setSubmitting(false);
+        return false;
+      }
+    }
     setSubmitting(true);
     setLoginError("");
     try {
@@ -63,7 +99,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = useCallback(async () => {
     setSubmitting(true);
     try {
-      await apiLogout();
+      if (isKeycloak) {
+        await keycloakLogout();
+      } else {
+        await apiLogout();
+      }
     } catch {
       // Token may already be expired; local logout still valid.
     } finally {

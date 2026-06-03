@@ -2,6 +2,7 @@ import { animate, createTimeline, stagger } from "animejs";
 import { type FormEvent, useEffect, useRef, useState } from "react";
 import { FiLogIn, FiShield } from "react-icons/fi";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
+import { isKeycloak } from "../auth/authMode";
 import { useAuth } from "../contexts/AuthContext";
 
 interface LocationState {
@@ -127,31 +128,46 @@ export function LoginPage() {
           </div>
           <p className="login-subtitle">Quản lý vật tư · tài sản · subscription</p>
           <h1>Đăng nhập QLVT</h1>
-          <form onSubmit={handleSubmit}>
-            <label className="login-field">
-              Tên đăng nhập
-              <input
-                value={username}
-                onChange={(event) => setUsername(event.target.value)}
-                autoComplete="username"
-                placeholder="Nhập username HRM"
-              />
-            </label>
-            <label className="login-field">
-              Mật khẩu
-              <input
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                type="password"
-                autoComplete="current-password"
-                placeholder="Nhập mật khẩu"
-              />
-            </label>
-            {loginError && <div className="alert login-field">{loginError}</div>}
-            <button className="login-btn" disabled={submitting} type="submit">
-              <FiLogIn /> Đăng nhập
-            </button>
-          </form>
+          {isKeycloak ? (
+            // Chế độ Keycloak (SSO): redirect sang trang login Keycloak (Authorization Code + PKCE).
+            <div className="login-keycloak">
+              {loginError && <div className="alert login-field">{loginError}</div>}
+              <button
+                className="login-btn login-field"
+                disabled={submitting}
+                type="button"
+                onClick={() => login("", "")}
+              >
+                <FiLogIn /> Đăng nhập bằng SSO (Keycloak)
+              </button>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit}>
+              <label className="login-field">
+                Tên đăng nhập
+                <input
+                  value={username}
+                  onChange={(event) => setUsername(event.target.value)}
+                  autoComplete="username"
+                  placeholder="Nhập username HRM"
+                />
+              </label>
+              <label className="login-field">
+                Mật khẩu
+                <input
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  type="password"
+                  autoComplete="current-password"
+                  placeholder="Nhập mật khẩu"
+                />
+              </label>
+              {loginError && <div className="alert login-field">{loginError}</div>}
+              <button className="login-btn" disabled={submitting} type="submit">
+                <FiLogIn /> Đăng nhập
+              </button>
+            </form>
+          )}
           <div className="login-note">
             <FiShield />
             <span>Dùng chung tài khoản HRM, phân quyền theo role hiện tại.</span>

@@ -1,4 +1,6 @@
 import axios from "axios";
+import { isKeycloak } from "../auth/authMode";
+import { getAccessToken } from "../auth/oidc";
 import type {
   AssetItem,
   AssetPayload,
@@ -15,6 +17,7 @@ import type {
   MaintenanceRecord,
   MaintenanceRecordPayload,
   ProjectLite,
+  Permission,
   PurchaseRequest,
   PurchaseRequestPayload,
   Subscription,
@@ -25,17 +28,30 @@ import type {
   WorkSiteLite,
 } from "./types";
 
+// Phase 2 PR#5 — mode-aware:
+//  - legacy (mặc định): cookie httpOnly JWT + CSRF (withCredentials + XSRF cookie→header).
+//  - keycloak: Authorization: Bearer (token in-memory) + KHÔNG cookie (withCredentials=false,
+//    không XSRF — Bearer được asset-service miễn CSRF).
 export const api = axios.create({
   baseURL: "/api",
-  withCredentials: true,
-  // F6: SPA cookie→header CSRF pattern. asset-service now enables CSRF
-  // (CookieCsrfTokenRepository.withHttpOnlyFalse()); axios reads the
-  // XSRF-TOKEN cookie on every request and echoes it in X-XSRF-TOKEN,
-  // which matches the cookie value Spring stored. Without this, every
-  // POST/PUT/PATCH/DELETE returns 403.
-  xsrfCookieName: "XSRF-TOKEN",
-  xsrfHeaderName: "X-XSRF-TOKEN",
+  withCredentials: !isKeycloak,
+  // F6: SPA cookie→header CSRF pattern (CHỈ legacy). asset-service enable CSRF cho request dựa cookie;
+  // Bearer request được miễn CSRF nên keycloak mode không cần XSRF.
+  ...(isKeycloak
+    ? {}
+    : { xsrfCookieName: "XSRF-TOKEN", xsrfHeaderName: "X-XSRF-TOKEN" }),
 });
+
+// keycloak mode: gắn Bearer token (in-memory) vào mọi request.
+if (isKeycloak) {
+  api.interceptors.request.use((config) => {
+    const token = getAccessToken();
+    if (token) {
+      config.headers.set("Authorization", `Bearer ${token}`);
+    }
+    return config;
+  });
+}
 
 export async function login(username: string, password: string): Promise<AuthUser> {
   const response = await api.post<AuthUser>("/auth/login", { username, password });
@@ -48,6 +64,22 @@ export async function logout(): Promise<void> {
 
 export async function loadCurrentUser(): Promise<AuthUser | null> {
   try {
+    if (isKeycloak) {
+      // PA-B: token Keycloak chỉ có role → lấy permissions từ asset-service /asset/me (mode-agnostic).
+      const response = await api.get<{
+        username: string;
+        role: string;
+        employeeId: number | null;
+        permissions: Permission[];
+      }>("/asset/me");
+      const me = response.data;
+      return {
+        username: me.username,
+        role: me.role,
+        permissions: me.permissions,
+        id: me.employeeId ?? undefined,
+      };
+    }
     const response = await api.get<AuthUser>("/auth/me");
     return response.data;
   } catch {

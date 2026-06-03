@@ -57,6 +57,23 @@ app:
     rsa-public-key: ${RSA_PUBLIC_KEY:}
   auth-service:
     url: ${AUTH_SERVICE_URL:http://localhost:8081}
+  # PA-B (Keycloak SSO): key gọi auth-service /internal/roles/{role}/permissions. Từ env, không hardcode.
+  internal-api-key: ${APP_INTERNAL_API_KEY:}
+
+# Phase 1 — Keycloak SSO dual-issuer (xem plans/260602-keycloak-sso-migration/).
+# enabled=false (mặc định) → giữ NGUYÊN đường JwtAuthenticationFilter cũ (rollback an toàn).
+# enabled=true → resource-server chấp nhận CẢ token legacy (iss=bimlab-auth, MAC/HS512, không aud)
+# lẫn token Keycloak (iss=<kc>/realms/bimlab, RS256 qua JWKS, aud=asset-service). Dùng jwk-set-uri
+# (KHÔNG issuer-uri discovery) để service vẫn start được khi Keycloak down.
+auth:
+  keycloak:
+    enabled: ${AUTH_KEYCLOAK_ENABLED:false}
+    issuer: ${AUTH_KEYCLOAK_ISSUER:}
+    jwk-set-uri: ${AUTH_KEYCLOAK_JWK_SET_URI:}
+    audience: ${AUTH_KEYCLOAK_AUDIENCE:asset-service}
+    clock-skew-seconds: ${AUTH_KEYCLOAK_CLOCK_SKEW_SECONDS:30}
+  legacy:
+    issuer: ${AUTH_LEGACY_ISSUER:bimlab-auth}
 
 # Q7: MinIO object storage for contract attachments
 minio:
