@@ -1,5 +1,5 @@
 import type { FormEvent, ReactNode } from "react";
-import { FiX } from "react-icons/fi";
+import { FiEdit2, FiPlus, FiX } from "react-icons/fi";
 
 interface CrudModalProps {
   title: string;
@@ -18,6 +18,9 @@ export function CrudModal({
   onClose,
   onSubmit,
 }: CrudModalProps) {
+  const isUpdate = title.toLowerCase().startsWith("cập nhật");
+  const HeaderIcon = isUpdate ? FiEdit2 : FiPlus;
+
   return (
     <div className="modal-backdrop" onMouseDown={onClose}>
       <form
@@ -26,9 +29,14 @@ export function CrudModal({
         onMouseDown={(event) => event.stopPropagation()}
       >
         <div className="modal-head">
-          <div>
-            <h2>{title}</h2>
-            <p>{subtitle}</p>
+          <div className="modal-title-group">
+            <div className={`modal-title-icon ${isUpdate ? "edit" : "create"}`}>
+              <HeaderIcon />
+            </div>
+            <div>
+              <h2>{title}</h2>
+              <p>{subtitle}</p>
+            </div>
           </div>
           <button className="icon-button" type="button" onClick={onClose} aria-label="Đóng">
             <FiX />

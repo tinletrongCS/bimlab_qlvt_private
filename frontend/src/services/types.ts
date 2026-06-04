@@ -21,6 +21,15 @@ export interface AuthUser {
   role: string;
   fullName?: string;
   permissions?: Permission[];
+  mfaEnabled?: boolean;
+}
+
+export interface AuthLoginResponse extends Partial<AuthUser> {
+  token?: string;
+  refreshToken?: string;
+  mfaRequired?: boolean;
+  mfaChallengeId?: string;
+  message?: string;
 }
 
 export interface Vendor {

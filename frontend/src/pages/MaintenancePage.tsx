@@ -17,7 +17,7 @@ export function MaintenancePage() {
   return (
     <section className="panel">
       <PanelHeader
-        title="Bảo trì / Sửa chữa"
+        title="Tài sản đang được bảo trì"
         action={canManage}
         onAdd={() => openModal({ type: "maintenance", mode: "create" })}
       />

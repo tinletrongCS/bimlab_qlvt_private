@@ -16,15 +16,24 @@ import {
   onSessionLost,
   trySilentLogin,
 } from "../auth/oidc";
-import { login as apiLogin, logout as apiLogout, loadCurrentUser } from "../services/api";
-import type { AuthUser, Permission } from "../services/types";
+import {
+  login as apiLogin,
+  logout as apiLogout,
+  verifyMfaLogin as apiVerifyMfaLogin,
+  loadCurrentUser,
+} from "../services/api";
+import type { AuthLoginResponse, AuthUser, Permission } from "../services/types";
 
 interface AuthContextValue {
   user: AuthUser | null;
   bootstrapping: boolean;
   loginError: string;
   submitting: boolean;
-  login: (username: string, password: string) => Promise<boolean>;
+  login: (
+    username: string,
+    password: string,
+  ) => Promise<{ user?: AuthUser; mfaRequired?: boolean; challengeId?: string; message?: string }>;
+  verifyMfaLogin: (challengeId: string, code: string, backupCode?: string) => Promise<AuthUser>;
   logout: () => Promise<void>;
   hasPermission: (permission?: Permission) => boolean;
 }
@@ -68,33 +77,71 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const login = useCallback(async (username: string, password: string): Promise<boolean> => {
-    if (isKeycloak) {
-      // Keycloak: redirect sang trang login Keycloak (username/password bỏ qua — KC xử lý). Trang điều hướng đi.
+  const login = useCallback(
+    async (
+      username: string,
+      password: string,
+    ): Promise<{
+      user?: AuthUser;
+      mfaRequired?: boolean;
+      challengeId?: string;
+      message?: string;
+    }> => {
+      if (isKeycloak) {
+        // Keycloak: redirect sang trang login Keycloak (username/password bỏ qua — KC xử lý). Trang điều hướng đi.
+        setSubmitting(true);
+        setLoginError("");
+        try {
+          await keycloakLogin();
+          return {};
+        } catch (err) {
+          setLoginError(readError(err));
+          setSubmitting(false);
+          return {};
+        }
+      }
       setSubmitting(true);
       setLoginError("");
       try {
-        await keycloakLogin();
-        return true;
+        const response = await apiLogin(username, password);
+        if (response.mfaRequired) {
+          return {
+            mfaRequired: true,
+            challengeId: response.mfaChallengeId,
+            message: response.message,
+          };
+        }
+        const loginUser = mapAuthUser(response);
+        setUser(loginUser);
+        return { user: loginUser };
       } catch (err) {
         setLoginError(readError(err));
+        return {};
+      } finally {
         setSubmitting(false);
-        return false;
       }
-    }
-    setSubmitting(true);
-    setLoginError("");
-    try {
-      const loginUser = await apiLogin(username, password);
-      setUser(loginUser);
-      return true;
-    } catch (err) {
-      setLoginError(readError(err));
-      return false;
-    } finally {
-      setSubmitting(false);
-    }
-  }, []);
+    },
+    [],
+  );
+
+  const verifyMfaLogin = useCallback(
+    async (challengeId: string, code: string, backupCode?: string): Promise<AuthUser> => {
+      setSubmitting(true);
+      setLoginError("");
+      try {
+        const response = await apiVerifyMfaLogin(challengeId, code, backupCode);
+        const loginUser = mapAuthUser(response);
+        setUser(loginUser);
+        return loginUser;
+      } catch (err) {
+        setLoginError(readError(err));
+        throw err;
+      } finally {
+        setSubmitting(false);
+      }
+    },
+    [],
+  );
 
   const logout = useCallback(async () => {
     setSubmitting(true);
@@ -122,8 +169,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const value = useMemo(
-    () => ({ user, bootstrapping, loginError, submitting, login, logout, hasPermission }),
-    [user, bootstrapping, loginError, submitting, login, logout, hasPermission],
+    () => ({
+      user,
+      bootstrapping,
+      loginError,
+      submitting,
+      login,
+      verifyMfaLogin,
+      logout,
+      hasPermission,
+    }),
+    [user, bootstrapping, loginError, submitting, login, verifyMfaLogin, logout, hasPermission],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
@@ -133,6 +189,17 @@ export function useAuth(): AuthContextValue {
   const ctx = useContext(AuthContext);
   if (!ctx) throw new Error("useAuth must be used inside <AuthProvider>");
   return ctx;
+}
+
+function mapAuthUser(response: AuthLoginResponse): AuthUser {
+  return {
+    id: response.id,
+    username: response.username || "",
+    role: response.role || "",
+    fullName: response.fullName,
+    permissions: response.permissions,
+    mfaEnabled: response.mfaEnabled,
+  };
 }
 
 function readError(error: unknown): string {
