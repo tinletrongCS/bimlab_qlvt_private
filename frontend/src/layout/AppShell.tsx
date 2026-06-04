@@ -1,4 +1,4 @@
-import { type ReactElement, useMemo } from "react";
+import { type ReactElement, useMemo, useState } from "react";
 import {
   FiBarChart2,
   FiBox,
@@ -6,6 +6,7 @@ import {
   FiCreditCard,
   FiFileText,
   FiLogOut,
+  FiMenu,
   FiRefreshCw,
   FiRepeat,
   FiShield,
@@ -52,6 +53,7 @@ export function AppShell() {
   const { loading, error, refresh } = useAppData();
   const { submitting: actionSubmitting } = useActions();
   const location = useLocation();
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const visibleItems = useMemo(
     () => NAV_ITEMS.filter((item) => hasPermission(item.permission)),
@@ -64,7 +66,16 @@ export function AppShell() {
 
   return (
     <main className="app-shell">
-      <aside className="sidebar">
+      {mobileOpen && (
+        <button
+          type="button"
+          aria-label="Đóng menu"
+          className="sidebar-backdrop"
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
+
+      <aside className={`sidebar ${mobileOpen ? "open" : ""}`}>
         <div className="brand">
           <img src="https://bimlab.com.vn/assets/img/bimlab-logo.png" alt="BIMLab" />
           <p>Quản lý vật tư</p>
@@ -75,9 +86,10 @@ export function AppShell() {
               to={item.to}
               key={item.to}
               className={({ isActive }) => (isActive ? "active" : "")}
+              onClick={() => setMobileOpen(false)}
             >
               {item.icon}
-              {item.label}
+              <span>{item.label}</span>
             </NavLink>
           ))}
         </nav>
@@ -100,9 +112,33 @@ export function AppShell() {
       </aside>
 
       <section className="content">
+        <header className="mobile-topbar">
+          <button
+            type="button"
+            className="menu-button"
+            aria-label="Mở menu"
+            onClick={() => setMobileOpen(true)}
+          >
+            <FiMenu />
+          </button>
+          <div>
+            <strong>BIMLab QLVT</strong>
+            <span>{currentLabel}</span>
+          </div>
+          <button
+            type="button"
+            className="icon-button"
+            onClick={() => void refresh()}
+            disabled={loading || actionSubmitting}
+            title="Làm mới"
+          >
+            <FiRefreshCw />
+          </button>
+        </header>
+
         <header className="topbar">
           <div>
-            <p className="eyebrow">Giai đoạn 4</p>
+            <p className="eyebrow">BIMLab QLVT</p>
             <h1>{currentLabel}</h1>
           </div>
           <button
