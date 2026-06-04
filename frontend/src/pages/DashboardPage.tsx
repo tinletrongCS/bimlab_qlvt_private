@@ -17,6 +17,16 @@ import { money } from "../lib/format";
 
 export function DashboardPage() {
   const { summary, assets, subscriptions, vendors, requests, utilization } = useAppData();
+  const todayLabel = useMemo(
+    () =>
+      new Date().toLocaleDateString("vi-VN", {
+        weekday: "long",
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      }),
+    [],
+  );
 
   const assetValue = useMemo(
     () => assets.reduce((sum, item) => sum + Number(item.purchaseCost || 0), 0),
@@ -38,17 +48,13 @@ export function DashboardPage() {
       <section className="hero-panel">
         <div className="hero-pattern" />
         <div className="hero-content">
-          <p className="eyebrow">BIMLab Asset Intelligence</p>
-          <h2>Quản lý vật tư, tài sản và license phần mềm</h2>
-          <p>
-            Theo dõi vòng đời tài sản, nhà cung cấp, subscription và đề nghị mua sắm trong cùng hệ
-            phân quyền HRM.
-          </p>
+          <p className="eyebrow">BIMLab Asset Management</p>
+          <h1>Dashboard</h1>
+          <p>Quản lý vật tư, tài sản và bản quyền phần mềm · {todayLabel}</p>
         </div>
         <div className="hero-summary">
           <span>Tổng giá trị tài sản</span>
           <strong>{money.format(assetValue)}</strong>
-          <small>Cập nhật theo dữ liệu backend QLVT</small>
         </div>
       </section>
       <div className="stats-grid">
@@ -87,7 +93,7 @@ export function DashboardPage() {
           />
           <Operation
             icon={<FiTrendingUp />}
-            label="Subscription đang hoạt động"
+            label="Gói đăng ký đang hoạt động"
             value={subscriptions.filter((item) => item.status === "ACTIVE").length}
           />
           <Operation
@@ -97,7 +103,7 @@ export function DashboardPage() {
           />
           <Operation
             icon={<FiCreditCard />}
-            label="Chi phí subscription"
+            label="Chi phí gói đăng ký"
             value={money.format(subscriptionCost)}
           />
         </div>

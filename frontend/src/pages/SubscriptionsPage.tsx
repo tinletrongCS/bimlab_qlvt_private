@@ -17,7 +17,7 @@ export function SubscriptionsPage() {
   return (
     <section className="panel">
       <PanelHeader
-        title="Subscription phần mềm"
+        title="Gói đăng ký phần mềm"
         action={canManage}
         onAdd={() => openModal({ type: "subscription", mode: "create" })}
       />
