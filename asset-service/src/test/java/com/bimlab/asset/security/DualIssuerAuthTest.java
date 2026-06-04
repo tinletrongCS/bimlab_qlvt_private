@@ -84,6 +84,27 @@ class DualIssuerAuthTest {
         assertEquals(9L, ((AssetPrincipal) auth.getPrincipal()).employeeId());
     }
 
+    // Keycloak: username lấy từ preferred_username (sub là UUID/khác) — KHÔNG dùng sub khi có preferred_username.
+    @Test
+    void converter_keycloak_usernameFromPreferredUsername() {
+        RecordingResolver resolver = new RecordingResolver(List.of("asset_view_all"));
+        Jwt token = jwt(Jwt.withTokenValue("x")
+                .subject("8f3c-uuid-not-username")
+                .claim("preferred_username", "admin")
+                .claim("role", "ADMIN").claim("employeeId", 1));
+        AbstractAuthenticationToken auth = new AssetJwtAuthoritiesConverter(resolver, KEYCLOAK).convert(token);
+        assertEquals("admin", ((AssetPrincipal) auth.getPrincipal()).username());
+    }
+
+    // Keycloak: thiếu preferred_username → fallback về sub (không null/khác hành vi).
+    @Test
+    void converter_keycloak_usernameFallsBackToSub_whenNoPreferred() {
+        RecordingResolver resolver = new RecordingResolver(List.of());
+        Jwt token = jwt(Jwt.withTokenValue("x").subject("kc-sub").claim("role", "HR"));
+        AbstractAuthenticationToken auth = new AssetJwtAuthoritiesConverter(resolver, KEYCLOAK).convert(token);
+        assertEquals("kc-sub", ((AssetPrincipal) auth.getPrincipal()).username());
+    }
+
     // Defense: token Keycloak có claim permissions (ai thêm mapper tay) → BỎ QUA claim, vẫn resolve.
     @Test
     void converter_keycloak_ignoresStaleClaim_alwaysResolves() {

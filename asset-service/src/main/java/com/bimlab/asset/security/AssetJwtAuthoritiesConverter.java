@@ -22,9 +22,10 @@ import java.util.List;
  * <ul>
  *   <li><b>Legacy</b> ({@code resolveFromApi=false}): dùng claim {@code permissions} (kể cả rỗng) →
  *       KHÔNG bao giờ gọi resolver → authorities byte-identical filter cũ (rollback gate Phase 1).</li>
- *   <li><b>Keycloak</b> ({@code resolveFromApi=true}): LUÔN resolve role→permissions qua
- *       {@link RolePermissionResolver}, BỎ QUA mọi claim permissions (defense: ai thêm mapper tay trên
- *       KC cũng không bypass được).</li>
+ *   <li><b>Keycloak</b> ({@code resolveFromApi=true}): username = {@code preferred_username} (fallback
+ *       {@code sub}) vì {@code sub} của token KC là UUID/có thể vắng, KHÔNG phải username; LUÔN resolve
+ *       role→permissions qua {@link RolePermissionResolver}, BỎ QUA mọi claim permissions (defense: ai thêm
+ *       mapper tay trên KC cũng không bypass được).</li>
  * </ul>
  */
 public final class AssetJwtAuthoritiesConverter implements Converter<Jwt, AbstractAuthenticationToken> {
@@ -46,14 +47,17 @@ public final class AssetJwtAuthoritiesConverter implements Converter<Jwt, Abstra
 
     @Override
     public AbstractAuthenticationToken convert(Jwt jwt) {
-        String username = jwt.getSubject();
         String role = jwt.getClaimAsString("role");
+        String username;
         List<String> permissions;
         if (resolveFromApi) {
-            // Keycloak (PA-B): LUÔN resolve role→permissions; bỏ qua mọi claim permissions có thể có.
+            // Keycloak (PA-B): sub là UUID (hoặc vắng) → username lấy từ preferred_username (fallback sub);
+            // LUÔN resolve role→permissions; bỏ qua mọi claim permissions có thể có.
+            username = firstNonBlank(jwt.getClaimAsString("preferred_username"), jwt.getSubject());
             permissions = resolver.resolve(role);
         } else {
-            // Legacy: dùng claim permissions (kể cả [] rỗng); KHÔNG gọi API (giữ authorities y hệt filter cũ).
+            // Legacy: sub = username; dùng claim permissions (kể cả [] rỗng); KHÔNG gọi API (authorities y hệt filter cũ).
+            username = jwt.getSubject();
             permissions = jwt.getClaimAsStringList("permissions");
         }
         if (permissions == null) {
@@ -70,6 +74,13 @@ public final class AssetJwtAuthoritiesConverter implements Converter<Jwt, Abstra
         AssetPrincipal principal = new AssetPrincipal(username, employeeId);
         // Giữ shape giống filter cũ: principal = AssetPrincipal, credentials = jwt.
         return new UsernamePasswordAuthenticationToken(principal, jwt, authorities);
+    }
+
+    private static String firstNonBlank(String a, String b) {
+        if (a != null && !a.isBlank()) {
+            return a;
+        }
+        return b;
     }
 
     /** Khớp JwtTokenProvider.getEmployeeId: Number hoặc String số → Long, ngược lại null. */
