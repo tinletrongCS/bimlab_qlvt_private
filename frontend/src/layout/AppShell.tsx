@@ -1,8 +1,9 @@
-import { type ReactElement, useMemo, useState } from "react";
+import { type ReactElement, useEffect, useMemo, useState } from "react";
 import {
   FiBarChart2,
   FiBox,
   FiBriefcase,
+  FiChevronDown,
   FiChevronLeft,
   FiChevronRight,
   FiCreditCard,
@@ -33,43 +34,39 @@ interface NavItem {
 
 interface NavGroup {
   key: string;
-  items: NavItem[];
+  to: string;
+  label: string;
+  icon: ReactElement;
+  permission?: Permission;
+  children: NavItem[];
 }
 
 const NAV_GROUPS: NavGroup[] = [
   {
     key: "dashboard",
-    items: [
-      {
-        to: "/dashboard",
-        label: "Tổng quan",
-        icon: <FiBarChart2 />,
-        permission: "asset_report_view",
-      },
-    ],
+    to: "/dashboard",
+    label: "Tổng quan",
+    icon: <FiBarChart2 />,
+    permission: "asset_report_view",
+    children: [],
   },
   {
     key: "assets",
-    items: [
-      { to: "/assets", label: "Tài sản", icon: <FiBox />, permission: "asset_access" },
+    to: "/assets",
+    label: "Tài sản",
+    icon: <FiBox />,
+    children: [
+      { to: "/assets", label: "Danh sách", icon: <FiBox />, permission: "asset_access" },
       { to: "/transfers", label: "Luân chuyển", icon: <FiRepeat />, permission: "asset_manage" },
       { to: "/maintenance", label: "Bảo trì", icon: <FiTool />, permission: "maintenance_manage" },
     ],
   },
   {
-    key: "subscriptions",
-    items: [
-      {
-        to: "/subscriptions",
-        label: "Gói đăng ký",
-        icon: <FiCreditCard />,
-        permission: "subscription_manage",
-      },
-    ],
-  },
-  {
     key: "procurement",
-    items: [
+    to: "/requests",
+    label: "Mua sắm",
+    icon: <FiShoppingCart />,
+    children: [
       {
         to: "/requests",
         label: "Đề nghị mua sắm",
@@ -80,9 +77,21 @@ const NAV_GROUPS: NavGroup[] = [
       { to: "/contracts", label: "Hợp đồng", icon: <FiFileText />, permission: "contract_manage" },
     ],
   },
+  {
+    key: "subscriptions",
+    to: "/subscriptions",
+    label: "Gói đăng ký",
+    icon: <FiCreditCard />,
+    permission: "subscription_manage",
+    children: [],
+  },
 ];
 
-const NAV_ITEMS = NAV_GROUPS.flatMap((group) => group.items);
+const NAV_ITEMS = NAV_GROUPS.flatMap((group) =>
+  group.children.length > 0
+    ? group.children
+    : [{ to: group.to, label: group.label, icon: group.icon, permission: group.permission }],
+);
 
 function HighlightedLabel({ label, query }: { label: string; query: string }) {
   if (!query) return <>{label}</>;
@@ -107,24 +116,52 @@ export function AppShell() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [sidebarSearch, setSidebarSearch] = useState("");
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() =>
+    NAV_GROUPS.reduce<Record<string, boolean>>((acc, group) => {
+      acc[group.key] = group.children.some((item) => location.pathname.startsWith(item.to));
+      return acc;
+    }, {}),
+  );
 
   const normalizedSidebarSearch = sidebarSearch.trim().toLowerCase();
-  const permittedItems = useMemo(
-    () => NAV_ITEMS.filter((item) => hasPermission(item.permission)),
-    [hasPermission],
-  );
+  const searchActive = normalizedSidebarSearch.length > 0;
   const permittedGroups = useMemo(
     () =>
-      NAV_GROUPS.map((group) => ({
-        ...group,
-        items: group.items.filter((item) => hasPermission(item.permission)),
-      })).filter((group) => group.items.length > 0),
+      NAV_GROUPS.map((group) => {
+        const permittedChildren = group.children.filter((item) => hasPermission(item.permission));
+        if (group.children.length > 0) {
+          return permittedChildren.length > 0
+            ? {
+                ...group,
+                to: permittedChildren[0].to,
+                children: permittedChildren,
+              }
+            : null;
+        }
+        return hasPermission(group.permission) ? group : null;
+      }).filter((group): group is NavGroup => group !== null),
     [hasPermission],
   );
-  const visibleItems = useMemo(
+  const visibleGroups = useMemo(
     () =>
-      permittedItems.filter((item) => item.label.toLowerCase().includes(normalizedSidebarSearch)),
-    [permittedItems, normalizedSidebarSearch],
+      permittedGroups
+        .map((group) => {
+          const parentMatches = group.label.toLowerCase().includes(normalizedSidebarSearch);
+          const matchingChildren = group.children.filter((item) =>
+            item.label.toLowerCase().includes(normalizedSidebarSearch),
+          );
+          return {
+            ...group,
+            parentMatches,
+            childMatches: matchingChildren.length > 0,
+            visibleChildren:
+              searchActive && !parentMatches && matchingChildren.length > 0
+                ? matchingChildren
+                : group.children,
+          };
+        })
+        .filter((group) => !searchActive || group.parentMatches || group.childMatches),
+    [permittedGroups, normalizedSidebarSearch, searchActive],
   );
   const currentLabel = useMemo(() => {
     const match = NAV_ITEMS.find((item) => location.pathname.startsWith(item.to));
@@ -133,13 +170,25 @@ export function AppShell() {
   const currentGroup = useMemo(
     () =>
       permittedGroups.find((group) =>
-        group.items.some((item) => location.pathname.startsWith(item.to)),
+        [group.to, ...group.children.map((item) => item.to)].some((to) =>
+          location.pathname.startsWith(to),
+        ),
       ),
     [location.pathname, permittedGroups],
   );
-  const subnavItems = currentGroup && currentGroup.items.length > 1 ? currentGroup.items : [];
+  const subnavItems = currentGroup && currentGroup.children.length > 0 ? currentGroup.children : [];
   const sidebarCompact = collapsed && !mobileOpen;
   const displayName = user?.fullName || user?.username;
+
+  useEffect(() => {
+    const activeGroup = NAV_GROUPS.find((group) =>
+      group.children.some((item) => location.pathname.startsWith(item.to)),
+    );
+    if (!activeGroup) return;
+    setOpenGroups((prev) => ({ ...prev, [activeGroup.key]: true }));
+  }, [location.pathname]);
+
+  const toggleGroup = (key: string) => setOpenGroups((prev) => ({ ...prev, [key]: !prev[key] }));
 
   return (
     <main className="app-shell">
@@ -153,7 +202,7 @@ export function AppShell() {
       )}
 
       <aside className={`sidebar ${mobileOpen ? "open" : ""} ${sidebarCompact ? "compact" : ""}`}>
-        <div className="brand">
+        <button type="button" className="brand" onClick={() => window.location.reload()}>
           {sidebarCompact ? (
             <img src="/lgBL.ico" alt="BIMLab" className="brand-icon" />
           ) : (
@@ -162,7 +211,7 @@ export function AppShell() {
               <p>Quản lý vật tư</p>
             </>
           )}
-        </div>
+        </button>
 
         {!sidebarCompact && (
           <div className="sidebar-search">
@@ -187,25 +236,69 @@ export function AppShell() {
         )}
 
         <nav>
-          {visibleItems.length === 0 && !sidebarCompact && (
+          {visibleGroups.length === 0 && !sidebarCompact && (
             <div className="sidebar-empty">Không tìm thấy menu phù hợp.</div>
           )}
-          {visibleItems.map((item) => (
-            <NavLink
-              to={item.to}
-              key={item.to}
-              title={sidebarCompact ? item.label : undefined}
-              className={({ isActive }) => (isActive ? "active" : "")}
-              onClick={() => setMobileOpen(false)}
-            >
-              {item.icon}
-              {!sidebarCompact && (
-                <span>
-                  <HighlightedLabel label={item.label} query={normalizedSidebarSearch} />
-                </span>
-              )}
-            </NavLink>
-          ))}
+          {visibleGroups.map((item) => {
+            const isGroupActive =
+              currentGroup?.key === item.key || location.pathname.startsWith(item.to);
+
+            if (item.children.length === 0 || sidebarCompact) {
+              return (
+                <NavLink
+                  to={item.to}
+                  key={item.key}
+                  title={sidebarCompact ? item.label : undefined}
+                  className={() => (isGroupActive ? "active" : "")}
+                  onClick={() => setMobileOpen(false)}
+                >
+                  {item.icon}
+                  {!sidebarCompact && (
+                    <span>
+                      <HighlightedLabel label={item.label} query={normalizedSidebarSearch} />
+                    </span>
+                  )}
+                </NavLink>
+              );
+            }
+
+            const isOpen = searchActive ? true : openGroups[item.key];
+
+            return (
+              <div className="sidebar-group" key={item.key}>
+                <button
+                  type="button"
+                  className={`sidebar-group-button ${isGroupActive ? "active" : ""}`}
+                  onClick={() => toggleGroup(item.key)}
+                >
+                  {item.icon}
+                  <span>
+                    <HighlightedLabel label={item.label} query={normalizedSidebarSearch} />
+                  </span>
+                  {isOpen ? <FiChevronDown /> : <FiChevronRight />}
+                </button>
+
+                {isOpen && (
+                  <div className="sidebar-submenu">
+                    {item.visibleChildren.map((child) => (
+                      <NavLink
+                        key={child.to}
+                        to={child.to}
+                        end
+                        className={({ isActive }) => (isActive ? "active" : "")}
+                        onClick={() => setMobileOpen(false)}
+                      >
+                        {child.icon}
+                        <span>
+                          <HighlightedLabel label={child.label} query={normalizedSidebarSearch} />
+                        </span>
+                      </NavLink>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </nav>
 
         <div className="collapse-row">

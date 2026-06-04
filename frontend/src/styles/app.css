@@ -101,24 +101,25 @@ button svg {
 }
 
 label {
-  color: #334155;
+  color: #4b5563;
   display: grid;
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 500;
   gap: 8px;
 }
 
 input,
 select,
 textarea {
-  background: #fff;
-  border: 1px solid #dbe3ef;
-  border-radius: 10px;
-  color: #0f172a;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  color: #111827;
   min-height: 42px;
   outline: none;
-  padding: 10px 12px;
+  padding: 10px 14px;
   transition:
+    background-color 0.18s ease,
     border-color 0.18s ease,
     box-shadow 0.18s ease;
   width: 100%;
@@ -127,8 +128,9 @@ textarea {
 input:focus,
 select:focus,
 textarea:focus {
-  border-color: #2e82b6;
-  box-shadow: 0 0 0 4px rgba(46, 130, 182, 0.14);
+  background: #fff;
+  border-color: #60a5fa;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.18);
 }
 
 .app-shell {
@@ -152,12 +154,24 @@ textarea:focus {
 
 .brand {
   align-items: center;
+  background: transparent;
   border-bottom: 1px solid #e5e7eb;
+  border-radius: 0;
+  box-shadow: none;
+  color: inherit;
+  cursor: pointer;
   display: flex;
   flex-direction: column;
   justify-content: center;
   min-height: 96px;
   padding: 18px 16px 16px;
+  width: 100%;
+}
+
+.brand:hover {
+  background: #f9fafb;
+  box-shadow: none;
+  transform: none;
 }
 
 .brand img {
@@ -478,6 +492,30 @@ textarea:focus {
   margin: 8px 0;
 }
 
+.hero-equipment-art {
+  bottom: -8px;
+  height: 165px;
+  pointer-events: none;
+  position: absolute;
+  right: 22px;
+  width: min(38vw, 360px);
+  z-index: 1;
+}
+
+.hero-art-line,
+.hero-art-detail {
+  fill: none;
+  stroke: rgba(21, 77, 124, 0.18);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.4;
+}
+
+.hero-art-detail {
+  stroke: rgba(21, 77, 124, 0.11);
+  stroke-dasharray: 5 5;
+}
+
 .panel {
   border-radius: 16px;
   padding: 22px;
@@ -759,11 +797,43 @@ tbody tr:last-child td {
   padding: 24px 28px;
 }
 
+.modal-body label {
+  color: #6b7280;
+  font-size: 12px;
+  font-weight: 600;
+  gap: 0;
+  letter-spacing: 0;
+}
+
+.modal-body .form-label-text {
+  color: #6b7280;
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0;
+  line-height: 1.35;
+  margin-bottom: 6px;
+  text-transform: none;
+}
+
+.modal-body .form-required {
+  color: #f87171;
+  text-transform: none;
+}
+
+.modal-body input,
+.modal-body select,
+.modal-body textarea,
+.modal-body option {
+  font-size: 14px;
+  text-transform: none !important;
+}
+
 .modal-actions {
   border-top: 1px solid #f3f4f6;
   display: flex;
   gap: 10px;
-  justify-content: flex-start;
+  justify-content: flex-end;
   padding: 16px 28px;
   flex: 0 0 auto;
 }
@@ -771,11 +841,6 @@ tbody tr:last-child td {
 .modal-actions button[type="submit"] {
   background: #2563eb;
   box-shadow: 0 8px 18px rgba(37, 99, 235, 0.16);
-  order: 1;
-}
-
-.modal-actions .secondary {
-  order: 2;
 }
 
 .login-shell {
@@ -794,6 +859,21 @@ tbody tr:last-child td {
   inset: 0;
   justify-content: center;
   overflow: hidden;
+  position: absolute;
+}
+
+.login-blueprint-grid {
+  inset: 0;
+  pointer-events: none;
+  position: absolute;
+  width: 100%;
+  height: 100%;
+}
+
+.login-shapes {
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
   position: absolute;
 }
 
@@ -851,11 +931,36 @@ tbody tr:last-child td {
   width: 130px;
 }
 
+.shape-compass {
+  height: 60px;
+  left: 15%;
+  top: 70%;
+  width: 60px;
+}
+
+.scan-line {
+  height: 1px;
+  left: 0;
+  pointer-events: none;
+  position: absolute;
+  top: 0;
+  width: 100%;
+}
+
+.scan-line > div {
+  background: linear-gradient(90deg, transparent, rgba(96, 165, 250, 0.5), transparent);
+  height: 100%;
+  width: 100%;
+}
+
 .login-card {
-  background: rgba(255, 255, 255, 0.9);
-  border: 1px solid rgba(255, 255, 255, 0.65);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.92) 0%, rgba(248, 250, 255, 0.95) 100%);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(219, 234, 254, 0.9);
   border-radius: 24px;
-  box-shadow: 0 24px 80px rgba(21, 77, 124, 0.16);
+  box-shadow:
+    0 24px 80px rgba(21, 77, 124, 0.16),
+    0 18px 48px rgba(191, 219, 254, 0.5);
   opacity: 0;
   padding: 34px;
   position: relative;
@@ -863,20 +968,61 @@ tbody tr:last-child td {
   z-index: 1;
 }
 
+.corner {
+  border-color: rgba(96, 165, 250, 0.5);
+  height: 24px;
+  pointer-events: none;
+  position: absolute;
+  width: 24px;
+}
+
+.corner-tl {
+  border-left: 2px solid;
+  border-top: 2px solid;
+  border-top-left-radius: 24px;
+  left: 0;
+  top: 0;
+}
+
+.corner-tr {
+  border-right: 2px solid;
+  border-top: 2px solid;
+  border-top-right-radius: 24px;
+  right: 0;
+  top: 0;
+}
+
+.corner-bl {
+  border-bottom: 2px solid;
+  border-left: 2px solid;
+  border-bottom-left-radius: 24px;
+  bottom: 0;
+  left: 0;
+}
+
+.corner-br {
+  border-bottom: 2px solid;
+  border-right: 2px solid;
+  border-bottom-right-radius: 24px;
+  bottom: 0;
+  right: 0;
+}
+
 .login-logo {
   text-align: center;
 }
 
 .login-logo img {
-  height: 42px;
+  height: 56px;
   object-fit: contain;
 }
 
 .login-subtitle {
-  color: #64748b;
-  font-size: 13px;
-  font-weight: 600;
-  margin: 8px 0 0;
+  color: rgba(37, 99, 235, 0.8);
+  font-size: 14px;
+  font-weight: 400;
+  letter-spacing: 0.12em;
+  margin: 12px 0 0;
   text-align: center;
 }
 
@@ -891,7 +1037,7 @@ tbody tr:last-child td {
 .login-card form,
 .login-keycloak {
   display: grid;
-  gap: 18px;
+  gap: 20px;
   margin-top: 28px;
 }
 
@@ -901,7 +1047,134 @@ tbody tr:last-child td {
 }
 
 .login-field {
-  opacity: 0;
+  opacity: 1;
+}
+
+.login-field span {
+  color: #6b7280;
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+
+.login-card input {
+  background: rgba(255, 255, 255, 0.72);
+  border-color: #bfdbfe;
+  border-radius: 12px;
+  color: #1f2937;
+  min-height: 48px;
+  padding: 12px 16px;
+}
+
+.login-card input:focus {
+  background: #fff;
+  border-color: #3b82f6;
+  box-shadow: 0 0 15px rgba(21, 77, 124, 0.1);
+}
+
+.login-btn {
+  background: linear-gradient(135deg, #1f6699 0%, #154d7c 100%);
+  border: 1px solid rgba(37, 99, 235, 0.5);
+  border-radius: 12px;
+  box-shadow: 0 12px 28px rgba(29, 78, 216, 0.24);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  opacity: 1;
+  width: 100%;
+}
+
+.login-btn:hover {
+  box-shadow: 0 14px 32px rgba(29, 78, 216, 0.3);
+}
+
+.login-spinner {
+  animation: login-spin 0.8s linear infinite;
+  border: 2px solid rgba(255, 255, 255, 0.32);
+  border-radius: 999px;
+  border-top-color: #fff;
+  height: 16px;
+  width: 16px;
+}
+
+@keyframes login-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.mfa-block {
+  display: grid;
+  gap: 12px;
+}
+
+.mfa-block p {
+  color: #6b7280;
+  font-size: 12px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.mfa-code-input {
+  font-weight: 700;
+  letter-spacing: 0.3em;
+  text-align: center;
+}
+
+.backup-code-input {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-align: center;
+}
+
+.login-link-button {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  color: #2563eb;
+  font-size: 12px;
+  justify-content: flex-start;
+  min-height: 0;
+  padding: 0;
+  width: fit-content;
+}
+
+.login-link-button:hover {
+  background: transparent;
+  box-shadow: none;
+  color: #1d4ed8;
+  text-decoration: underline;
+}
+
+.login-back-button {
+  border-color: #bfdbfe;
+  color: #1d4ed8;
+  min-height: 44px;
+  width: 100%;
+}
+
+.login-footer-line {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.login-footer-line span {
+  background: linear-gradient(90deg, transparent, rgba(147, 197, 253, 0.42), transparent);
+  flex: 1;
+  height: 1px;
+}
+
+.login-footer-line small {
+  color: #9ca3af;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
 }
 
 .login-note {
@@ -1105,12 +1378,24 @@ tbody tr:last-child td {
 
 .brand {
   align-items: center;
+  background: transparent;
   border-bottom: 1px solid #e5e7eb;
+  border-radius: 0;
+  box-shadow: none;
+  color: inherit;
+  cursor: pointer;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  min-height: 0;
+  min-height: 64px;
   padding: 16px;
+  width: 100%;
+}
+
+.brand:hover {
+  background: #f9fafb;
+  box-shadow: none;
+  transform: none;
 }
 
 .sidebar.compact .brand {
@@ -1243,6 +1528,71 @@ tbody tr:last-child td {
 
 .sidebar nav a.active {
   font-weight: 600;
+}
+
+.sidebar-group {
+  display: grid;
+  gap: 2px;
+}
+
+.sidebar-group-button {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: 8px;
+  box-shadow: none;
+  color: #4b5563;
+  display: flex;
+  font-size: 14px;
+  font-weight: 500;
+  gap: 12px;
+  justify-content: flex-start;
+  min-height: 40px;
+  padding: 10px 12px;
+  text-align: left;
+  width: 100%;
+}
+
+.sidebar-group-button:hover,
+.sidebar-group-button.active {
+  background: #eff6ff;
+  box-shadow: none;
+  color: #154d7c;
+  transform: none;
+}
+
+.sidebar-group-button.active {
+  font-weight: 600;
+}
+
+.sidebar-group-button span {
+  flex: 1;
+  min-width: 0;
+}
+
+.sidebar-group-button svg {
+  flex: 0 0 auto;
+  height: 20px;
+  width: 20px;
+}
+
+.sidebar-submenu {
+  border-left: 2px solid #f3f4f6;
+  display: grid;
+  gap: 2px;
+  margin: 2px 0 2px 30px;
+  padding-left: 10px;
+}
+
+.sidebar-submenu a {
+  font-size: 14px;
+  min-height: 40px;
+  padding: 9px 10px;
+}
+
+.sidebar-submenu a svg {
+  height: 16px;
+  width: 16px;
 }
 
 .sidebar-empty {
@@ -1569,6 +1919,30 @@ tbody tr:last-child td {
   margin-top: 4px;
 }
 
+.hero-equipment-art {
+  bottom: -8px;
+  height: 165px;
+  pointer-events: none;
+  position: absolute;
+  right: 24px;
+  width: min(38vw, 360px);
+  z-index: 1;
+}
+
+.hero-art-line,
+.hero-art-detail {
+  fill: none;
+  stroke: rgba(21, 77, 124, 0.18);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.4;
+}
+
+.hero-art-detail {
+  stroke: rgba(21, 77, 124, 0.11);
+  stroke-dasharray: 5 5;
+}
+
 .operation-card {
   align-items: flex-start;
   min-height: 86px;
@@ -1764,5 +2138,19 @@ button:hover {
   .hero-summary {
     text-align: left;
     width: 100%;
+  }
+
+  .hero-equipment-art {
+    display: none;
+  }
+
+  .modal-actions {
+    align-items: center;
+    flex-direction: row;
+    justify-content: flex-end;
+  }
+
+  .modal-actions > button {
+    width: auto;
   }
 }

@@ -8,6 +8,7 @@ import {
   EmployeeSelect,
   empty,
   Field,
+  FormLabel,
   num,
   ProjectSelect,
   Select,
@@ -570,7 +571,7 @@ function CrudFormInner({
       {modal.type === "maintenance" && (
         <>
           <label>
-            Tài sản
+            <FormLabel required>Tài sản</FormLabel>
             <select
               value={form.assetId}
               onChange={(event) => setField("assetId", event.target.value)}
@@ -644,7 +645,7 @@ function CrudFormInner({
       {modal.type === "transfer" && (
         <>
           <label>
-            Tài sản
+            <FormLabel required>Tài sản</FormLabel>
             <select
               value={form.assetId}
               onChange={(event) => setField("assetId", event.target.value)}
@@ -676,7 +677,7 @@ function CrudFormInner({
             onChange={(value) => setField("fromEmployeeId", value)}
           />
           <label>
-            Nhân viên nhận
+            <FormLabel>Nhân viên nhận</FormLabel>
             <select
               value={form.toEmployeeId}
               onChange={(event) => setField("toEmployeeId", event.target.value)}

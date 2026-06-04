@@ -6,6 +6,7 @@ import type {
   AssetPayload,
   AssetTransfer,
   AssetTransferPayload,
+  AuthLoginResponse,
   AuthUser,
   Contract,
   ContractPayload,
@@ -16,8 +17,8 @@ import type {
   EmployeeLite,
   MaintenanceRecord,
   MaintenanceRecordPayload,
-  ProjectLite,
   Permission,
+  ProjectLite,
   PurchaseRequest,
   PurchaseRequestPayload,
   Subscription,
@@ -37,9 +38,7 @@ export const api = axios.create({
   withCredentials: !isKeycloak,
   // F6: SPA cookie→header CSRF pattern (CHỈ legacy). asset-service enable CSRF cho request dựa cookie;
   // Bearer request được miễn CSRF nên keycloak mode không cần XSRF.
-  ...(isKeycloak
-    ? {}
-    : { xsrfCookieName: "XSRF-TOKEN", xsrfHeaderName: "X-XSRF-TOKEN" }),
+  ...(isKeycloak ? {} : { xsrfCookieName: "XSRF-TOKEN", xsrfHeaderName: "X-XSRF-TOKEN" }),
 });
 
 // keycloak mode: gắn Bearer token (in-memory) vào mọi request.
@@ -53,8 +52,21 @@ if (isKeycloak) {
   });
 }
 
-export async function login(username: string, password: string): Promise<AuthUser> {
-  const response = await api.post<AuthUser>("/auth/login", { username, password });
+export async function login(username: string, password: string): Promise<AuthLoginResponse> {
+  const response = await api.post<AuthLoginResponse>("/auth/login", { username, password });
+  return response.data;
+}
+
+export async function verifyMfaLogin(
+  challengeId: string,
+  code: string,
+  backupCode?: string,
+): Promise<AuthLoginResponse> {
+  const response = await api.post<AuthLoginResponse>("/auth/mfa/login/verify", {
+    challengeId,
+    code,
+    backupCode,
+  });
   return response.data;
 }
 

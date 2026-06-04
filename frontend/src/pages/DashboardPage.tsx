@@ -56,6 +56,24 @@ export function DashboardPage() {
           <span>Tổng giá trị tài sản</span>
           <strong>{money.format(assetValue)}</strong>
         </div>
+        <svg className="hero-equipment-art" aria-hidden="true" viewBox="0 0 360 190">
+          <g className="hero-art-line">
+            <rect x="24" y="76" width="118" height="72" rx="6" />
+            <path d="M42 148h180l18 26H28l14-26Z" />
+            <path d="M55 91h86M55 107h62M55 123h75" />
+            <path d="M176 62h82a12 12 0 0 1 12 12v94H164V74a12 12 0 0 1 12-12Z" />
+            <path d="M184 83h48M184 101h34M184 119h52M184 137h42" />
+            <path d="M292 44h46v132h-46z" />
+            <path d="M304 60h26M304 78h26M304 96h26M304 114h26M304 132h26" />
+            <path d="M252 44v-20h80v20" />
+            <path d="M260 24l-10 12M332 24l10 12" />
+          </g>
+          <g className="hero-art-detail">
+            <circle cx="258" cy="154" r="4" />
+            <circle cx="315" cy="158" r="4" />
+            <path d="M16 56h80M34 42h42M118 44h52" />
+          </g>
+        </svg>
       </section>
       <div className="stats-grid">
         <StatCard
