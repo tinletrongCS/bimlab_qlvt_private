@@ -3,6 +3,7 @@ package com.bimlab.asset.config;
 import com.bimlab.asset.client.RolePermissionResolver;
 import com.bimlab.asset.security.AssetJwtAuthoritiesConverter;
 import com.bimlab.asset.security.AudienceValidator;
+import com.bimlab.asset.security.AzpValidator;
 import com.bimlab.asset.security.CookieBearerTokenResolver;
 import com.bimlab.asset.security.TokenIssuerPeeker;
 import jakarta.servlet.http.HttpServletRequest;
@@ -33,8 +34,12 @@ import java.security.KeyFactory;
 import java.security.interfaces.RSAPublicKey;
 import java.security.spec.X509EncodedKeySpec;
 import java.time.Duration;
+import java.util.Arrays;
 import java.util.Base64;
+import java.util.LinkedHashSet;
+import java.util.Set;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 /**
  * Phase 1 (Keycloak SSO) — chỉ kích hoạt khi {@code auth.keycloak.enabled=true}.
@@ -72,6 +77,8 @@ public class KeycloakResourceServerConfig {
     private String keycloakJwkSetUri;
     @Value("${auth.keycloak.audience:asset-service}")
     private String keycloakAudience;
+    @Value("${auth.keycloak.allowed-clients:qlvt}")
+    private String allowedClientsCsv;
     @Value("${auth.keycloak.clock-skew-seconds:30}")
     private long clockSkewSeconds;
 
@@ -164,9 +171,21 @@ public class KeycloakResourceServerConfig {
         OAuth2TokenValidator<Jwt> validators = new DelegatingOAuth2TokenValidator<>(
                 new JwtTimestampValidator(Duration.ofSeconds(clockSkewSeconds)),
                 new JwtIssuerValidator(keycloakIssuer),
-                new AudienceValidator(keycloakAudience));
+                new AudienceValidator(keycloakAudience),
+                new AzpValidator(parseAllowedClients(allowedClientsCsv)));
         decoder.setJwtValidator(validators);
         return decoder;
+    }
+
+    /** CSV → Set client cho azp allowlist (trim, bỏ phần tử rỗng). CSV rỗng → Set rỗng (lenient/tắt check). */
+    private static Set<String> parseAllowedClients(String csv) {
+        if (csv == null || csv.isBlank()) {
+            return Set.of();
+        }
+        return Arrays.stream(csv.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .collect(Collectors.toCollection(LinkedHashSet::new));
     }
 
     private static RSAPublicKey decodeRsaPublicKey(String value) {

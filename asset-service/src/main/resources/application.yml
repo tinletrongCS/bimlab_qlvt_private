@@ -71,6 +71,7 @@ auth:
     issuer: ${AUTH_KEYCLOAK_ISSUER:}
     jwk-set-uri: ${AUTH_KEYCLOAK_JWK_SET_URI:}
     audience: ${AUTH_KEYCLOAK_AUDIENCE:asset-service}
+    allowed-clients: ${AUTH_KEYCLOAK_ALLOWED_CLIENTS:qlvt}
     clock-skew-seconds: ${AUTH_KEYCLOAK_CLOCK_SKEW_SECONDS:30}
   legacy:
     issuer: ${AUTH_LEGACY_ISSUER:bimlab-auth}

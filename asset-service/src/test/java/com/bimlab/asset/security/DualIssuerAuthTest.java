@@ -148,6 +148,28 @@ class DualIssuerAuthTest {
         assertEquals(true, r.hasErrors());
     }
 
+    // ── AzpValidator: hardening nhánh Keycloak (allowed client = qlvt) ────
+    @Test
+    void azp_pass_whenAllowedClient() {
+        Jwt token = jwt(Jwt.withTokenValue("x").subject("a").claim("azp", "qlvt"));
+        OAuth2TokenValidatorResult r = new AzpValidator(Set.of("qlvt")).validate(token);
+        assertEquals(false, r.hasErrors());
+    }
+
+    @Test
+    void azp_fail_whenOtherClient() {
+        Jwt token = jwt(Jwt.withTokenValue("x").subject("a").claim("azp", "some-other-client"));
+        OAuth2TokenValidatorResult r = new AzpValidator(Set.of("qlvt")).validate(token);
+        assertEquals(true, r.hasErrors());
+    }
+
+    @Test
+    void azp_disabled_whenEmptySet() {
+        Jwt token = jwt(Jwt.withTokenValue("x").subject("a").claim("azp", "some-other-client"));
+        OAuth2TokenValidatorResult r = new AzpValidator(Set.of()).validate(token);
+        assertEquals(false, r.hasErrors());
+    }
+
     // ── LegacyAccessTokenValidator: chặn refresh token ───────────────────
     @Test
     void legacyValidator_rejectsRefreshToken() {
