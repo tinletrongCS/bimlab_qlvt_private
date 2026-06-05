@@ -426,7 +426,7 @@ function CrudFormInner({
             onChange={(value) => setField("requestType", value)}
             options={[
               ["DEVICE", "Thiết bị"],
-              ["SUPPLY", "Vật tư"],
+              ["SUPPLY", "Tài sản"],
               ["OFFICE", "Văn phòng phẩm"],
               ["SOFTWARE", "Phần mềm"],
             ]}

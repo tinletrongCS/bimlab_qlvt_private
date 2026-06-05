@@ -1,6 +1,5 @@
 # BIMLab Asset Management / QLVT
 
-Backend base cho hệ thống quản lý tài sản, vật tư, subscription, nhà cung cấp và đề nghị mua sắm.
 
 ## Service
 
