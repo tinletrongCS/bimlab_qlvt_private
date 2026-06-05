@@ -73,6 +73,8 @@ auth:
     audience: ${AUTH_KEYCLOAK_AUDIENCE:asset-service}
     allowed-clients: ${AUTH_KEYCLOAK_ALLOWED_CLIENTS:qlvt}
     clock-skew-seconds: ${AUTH_KEYCLOAK_CLOCK_SKEW_SECONDS:30}
+    # Phase 4.3d (L3): false → resource-server reject token legacy-issuer (chỉ KC). Default true. Bật ở cutover.
+    accept-legacy-token: ${AUTH_KEYCLOAK_ACCEPT_LEGACY_TOKEN:true}
   legacy:
     issuer: ${AUTH_LEGACY_ISSUER:bimlab-auth}
 

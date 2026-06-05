@@ -81,6 +81,10 @@ public class KeycloakResourceServerConfig {
     private String allowedClientsCsv;
     @Value("${auth.keycloak.clock-skew-seconds:30}")
     private long clockSkewSeconds;
+    // Phase 4.3d (L3): accept-legacy-token=false → resource-server TỪ CHỐI token legacy-issuer (chỉ KC pass).
+    // Default true = giữ dual-issuer (0 đổi hành vi). Bật false ở CUTOVER sau token-drain (L1+L2 off + chờ TTL).
+    @Value("${auth.keycloak.accept-legacy-token:true}")
+    private boolean acceptLegacyToken;
 
     @Bean
     BearerTokenResolver cookieBearerTokenResolver() {
@@ -108,7 +112,8 @@ public class KeycloakResourceServerConfig {
             String token = bearerTokenResolver.resolve(request);
             String issuer = TokenIssuerPeeker.peekIssuer(token);
             if (legacyIssuer.equals(issuer)) {
-                return legacyManager;
+                // Phase 4.3d (L3) cutover: accept-legacy-token=false → reject token legacy-issuer (401) thay vì accept.
+                return acceptLegacyToken ? legacyManager : rejectManager;
             }
             if (keycloakIssuer != null && !keycloakIssuer.isBlank() && keycloakIssuer.equals(issuer)) {
                 return keycloakManager;
