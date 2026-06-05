@@ -53,6 +53,20 @@ if (isKeycloak) {
   });
 }
 
+// Phase 4.3d (FE-410 contract): 410 Gone = login legacy đã tắt vĩnh viễn (kill-switch L1/L2). KHÔNG retry →
+// về /login (KC mode: trang /login tự kích hoạt SSO). Single-flight tránh redirect lặp khi nhiều request cùng 410.
+let goneHandled = false;
+api.interceptors.response.use(
+  (res) => res,
+  (error) => {
+    if (error.response?.status === 410 && !goneHandled) {
+      goneHandled = true;
+      if (window.location.pathname !== "/login") window.location.href = "/login";
+    }
+    return Promise.reject(error);
+  },
+);
+
 export async function login(username: string, password: string): Promise<AuthUser> {
   const response = await api.post<AuthUser>("/auth/login", { username, password });
   return response.data;
