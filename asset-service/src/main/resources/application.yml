@@ -67,7 +67,7 @@ app:
 # (KHÔNG issuer-uri discovery) để service vẫn start được khi Keycloak down.
 auth:
   keycloak:
-    enabled: ${AUTH_KEYCLOAK_ENABLED:false}
+    enabled: ${AUTH_KEYCLOAK_ENABLED:true}
     issuer: ${AUTH_KEYCLOAK_ISSUER:}
     jwk-set-uri: ${AUTH_KEYCLOAK_JWK_SET_URI:}
     audience: ${AUTH_KEYCLOAK_AUDIENCE:asset-service}

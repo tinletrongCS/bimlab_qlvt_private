@@ -6,6 +6,6 @@
 export type AuthMode = "legacy" | "keycloak";
 
 export const AUTH_MODE: AuthMode =
-  import.meta.env.VITE_AUTH_MODE === "keycloak" ? "keycloak" : "legacy";
+  import.meta.env.VITE_AUTH_MODE === "legacy" ? "legacy" : "keycloak";
 
 export const isKeycloak = AUTH_MODE === "keycloak";
