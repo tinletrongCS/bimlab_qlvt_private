@@ -1,11 +1,8 @@
 package com.bimlab.asset.config;
 
 import com.bimlab.asset.security.CsrfCookieFilter;
-import com.bimlab.asset.security.JwtAuthenticationFilter;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.ObjectProvider;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -35,15 +32,11 @@ import java.util.Set;
 @EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
-    private final JwtAuthenticationFilter jwtFilter;
-    // Phase 1 — beans chỉ tồn tại khi auth.keycloak.enabled=true (xem
-    // KeycloakResourceServerConfig). ObjectProvider để inject optional, không vỡ khi flag tắt.
-    private final ObjectProvider<AuthenticationManagerResolver<HttpServletRequest>> keycloakAuthManagerResolver;
-    private final ObjectProvider<BearerTokenResolver> keycloakBearerTokenResolver;
-
-    // Default false → giữ NGUYÊN đường JwtAuthenticationFilter cũ (rollback = tắt flag).
-    @Value("${auth.keycloak.enabled:false}")
-    private boolean keycloakEnabled;
+    // Keycloak-only resource server: token verify qua AuthenticationManagerResolver
+    // (issuer + aud + azp) và BearerTokenResolver (cookie/Authorization). Cả hai bean
+    // do KeycloakResourceServerConfig cung cấp.
+    private final AuthenticationManagerResolver<HttpServletRequest> keycloakAuthManagerResolver;
+    private final BearerTokenResolver keycloakBearerTokenResolver;
 
     @Bean
     SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -59,10 +52,9 @@ public class SecurityConfig {
                                 "/internal/**"
                         )
                         // Phase 1: CSRF chỉ áp cho request dựa COOKIE (credential ambient của SPA).
-                        // Request mang `Authorization: Bearer` (token Keycloak/legacy header, mobile,
-                        // service) KHÔNG ambient — trình duyệt cross-site không thể tự gắn header này
-                        // → miễn nhiễm CSRF. Không có dòng này, ghi (POST/PUT/DELETE) qua bearer dưới
-                        // flag ON sẽ bị 403 vì thiếu XSRF cookie.
+                        // Request mang `Authorization: Bearer` (token Keycloak, mobile, service) KHÔNG
+                        // ambient — trình duyệt cross-site không thể tự gắn header này → miễn nhiễm CSRF.
+                        // Không có dòng này, ghi (POST/PUT/DELETE) qua bearer sẽ bị 403 vì thiếu XSRF cookie.
                         .requireCsrfProtectionMatcher(SecurityConfig::requiresCsrf)
                 )
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -72,20 +64,9 @@ public class SecurityConfig {
                         .anyRequest().authenticated())
                 .addFilterAfter(new CsrfCookieFilter(), UsernamePasswordAuthenticationFilter.class);
 
-        AuthenticationManagerResolver<HttpServletRequest> resolver = keycloakAuthManagerResolver.getIfAvailable();
-        if (keycloakEnabled && resolver != null) {
-            // Đường Keycloak dual-issuer (bổ sung sau flag). KHÔNG add legacy filter.
-            BearerTokenResolver bearerTokenResolver = keycloakBearerTokenResolver.getIfAvailable();
-            http.oauth2ResourceServer(oauth2 -> {
-                if (bearerTokenResolver != null) {
-                    oauth2.bearerTokenResolver(bearerTokenResolver);
-                }
-                oauth2.authenticationManagerResolver(resolver);
-            });
-        } else {
-            // Mặc định: giữ nguyên hành vi hệ cũ.
-            http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
-        }
+        http.oauth2ResourceServer(oauth2 -> oauth2
+                .bearerTokenResolver(keycloakBearerTokenResolver)
+                .authenticationManagerResolver(keycloakAuthManagerResolver));
         return http.build();
     }
 

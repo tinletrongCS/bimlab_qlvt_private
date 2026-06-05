@@ -4,8 +4,6 @@ import com.bimlab.asset.config.TestSecurityConfig;
 import com.bimlab.asset.model.Contract;
 import com.bimlab.asset.model.status.ContractStatus;
 import com.bimlab.asset.security.AssetAccessService;
-import com.bimlab.asset.security.JwtAuthenticationFilter;
-import com.bimlab.asset.security.JwtTokenProvider;
 import com.bimlab.asset.service.ContractService;
 import com.bimlab.asset.storage.MinioService;
 import org.junit.jupiter.api.Test;
@@ -35,8 +33,6 @@ class ContractControllerWebMvcTest {
     @MockBean ContractService contractService;
     @MockBean MinioService minioService;
     @MockBean AssetAccessService assetAccessService;
-    @MockBean JwtAuthenticationFilter jwtAuthenticationFilter;
-    @MockBean JwtTokenProvider jwtTokenProvider;
 
     private Contract sample() {
         return Contract.builder()

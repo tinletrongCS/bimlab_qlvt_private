@@ -5,8 +5,6 @@ import com.bimlab.asset.dto.VendorRequest;
 import com.bimlab.asset.model.Vendor;
 import com.bimlab.asset.model.status.VendorStatus;
 import com.bimlab.asset.security.AssetAccessService;
-import com.bimlab.asset.security.JwtAuthenticationFilter;
-import com.bimlab.asset.security.JwtTokenProvider;
 import com.bimlab.asset.service.VendorService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
@@ -49,11 +47,6 @@ class VendorControllerWebMvcTest {
     // Q1 declarative gate doesn't reference AssetAccessService here, but other
     // controllers do; mocking it keeps the slice config reusable.
     @MockBean AssetAccessService assetAccessService;
-    // @WebMvcTest auto-scans Filter beans — the production JWT filter requires
-    // a JwtTokenProvider which isn't part of the MVC slice. Mock both so the
-    // application context resolves without pulling in jwt + auth-service deps.
-    @MockBean JwtAuthenticationFilter jwtAuthenticationFilter;
-    @MockBean JwtTokenProvider jwtTokenProvider;
 
     private Vendor sampleVendor() {
         return Vendor.builder()
