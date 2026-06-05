@@ -1,5 +1,4 @@
 import axios from "axios";
-import { isKeycloak } from "../auth/authMode";
 import { getAccessToken } from "../auth/oidc";
 import type {
   AssetItem,
@@ -28,33 +27,24 @@ import type {
   WorkSiteLite,
 } from "./types";
 
-// Phase 2 PR#5 — mode-aware:
-//  - legacy (mặc định): cookie httpOnly JWT + CSRF (withCredentials + XSRF cookie→header).
-//  - keycloak: Authorization: Bearer (token in-memory) + KHÔNG cookie (withCredentials=false,
-//    không XSRF — Bearer được asset-service miễn CSRF).
+// Keycloak-only: Authorization: Bearer (token in-memory) + KHÔNG cookie (withCredentials=false,
+// không XSRF — Bearer được asset-service miễn CSRF).
 export const api = axios.create({
   baseURL: "/api",
-  withCredentials: !isKeycloak,
-  // F6: SPA cookie→header CSRF pattern (CHỈ legacy). asset-service enable CSRF cho request dựa cookie;
-  // Bearer request được miễn CSRF nên keycloak mode không cần XSRF.
-  ...(isKeycloak
-    ? {}
-    : { xsrfCookieName: "XSRF-TOKEN", xsrfHeaderName: "X-XSRF-TOKEN" }),
+  withCredentials: false,
 });
 
-// keycloak mode: gắn Bearer token (in-memory) vào mọi request.
-if (isKeycloak) {
-  api.interceptors.request.use((config) => {
-    const token = getAccessToken();
-    if (token) {
-      config.headers.set("Authorization", `Bearer ${token}`);
-    }
-    return config;
-  });
-}
+// Gắn Bearer token (in-memory) vào mọi request.
+api.interceptors.request.use((config) => {
+  const token = getAccessToken();
+  if (token) {
+    config.headers.set("Authorization", `Bearer ${token}`);
+  }
+  return config;
+});
 
-// Phase 4.3d (FE-410 contract): 410 Gone = login legacy đã tắt vĩnh viễn (kill-switch L1/L2). KHÔNG retry →
-// về /login (KC mode: trang /login tự kích hoạt SSO). Single-flight tránh redirect lặp khi nhiều request cùng 410.
+// FE-410 contract: 410 Gone từ backend → KHÔNG retry → về /login (trang /login tự kích hoạt SSO).
+// Single-flight tránh redirect lặp khi nhiều request cùng nhận 410.
 let goneHandled = false;
 api.interceptors.response.use(
   (res) => res,
@@ -67,35 +57,22 @@ api.interceptors.response.use(
   },
 );
 
-export async function login(username: string, password: string): Promise<AuthUser> {
-  const response = await api.post<AuthUser>("/auth/login", { username, password });
-  return response.data;
-}
-
-export async function logout(): Promise<void> {
-  await api.post("/auth/logout");
-}
-
 export async function loadCurrentUser(): Promise<AuthUser | null> {
   try {
-    if (isKeycloak) {
-      // PA-B: token Keycloak chỉ có role → lấy permissions từ asset-service /asset/me (mode-agnostic).
-      const response = await api.get<{
-        username: string;
-        role: string;
-        employeeId: number | null;
-        permissions: Permission[];
-      }>("/asset/me");
-      const me = response.data;
-      return {
-        username: me.username,
-        role: me.role,
-        permissions: me.permissions,
-        id: me.employeeId ?? undefined,
-      };
-    }
-    const response = await api.get<AuthUser>("/auth/me");
-    return response.data;
+    // PA-B: token Keycloak chỉ có role → lấy permissions từ asset-service /asset/me.
+    const response = await api.get<{
+      username: string;
+      role: string;
+      employeeId: number | null;
+      permissions: Permission[];
+    }>("/asset/me");
+    const me = response.data;
+    return {
+      username: me.username,
+      role: me.role,
+      permissions: me.permissions,
+      id: me.employeeId ?? undefined,
+    };
   } catch {
     return null;
   }
