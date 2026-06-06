@@ -51,30 +51,26 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf
                         .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
                         .csrfTokenRequestHandler(csrfRequestHandler())
-                        // Internal-service / actuator paths bypass CSRF: they don't
-                        // accept browser cookies, so requiring X-XSRF-TOKEN would
-                        // break service-to-service calls.
                         .ignoringRequestMatchers(
                                 "/actuator/**",
                                 "/internal/**"
                         )
-                        // Phase 1: CSRF chỉ áp cho request dựa COOKIE (credential ambient của SPA).
-                        // Request mang `Authorization: Bearer` (token Keycloak/legacy header, mobile,
-                        // service) KHÔNG ambient — trình duyệt cross-site không thể tự gắn header này
-                        // → miễn nhiễm CSRF. Không có dòng này, ghi (POST/PUT/DELETE) qua bearer dưới
-                        // flag ON sẽ bị 403 vì thiếu XSRF cookie.
                         .requireCsrfProtectionMatcher(SecurityConfig::requiresCsrf)
                 )
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers("/actuator/health", "/actuator/health/**", "/actuator/prometheus").permitAll()
+                        .requestMatchers(
+                            "/actuator/health", 
+                            "/actuator/health/**", 
+                            "/actuator.info",
+                            "/actuator/prometheus"
+                        ).permitAll()
                         .anyRequest().authenticated())
                 .addFilterAfter(new CsrfCookieFilter(), UsernamePasswordAuthenticationFilter.class);
 
         AuthenticationManagerResolver<HttpServletRequest> resolver = keycloakAuthManagerResolver.getIfAvailable();
         if (keycloakEnabled && resolver != null) {
-            // Đường Keycloak dual-issuer (bổ sung sau flag). KHÔNG add legacy filter.
             BearerTokenResolver bearerTokenResolver = keycloakBearerTokenResolver.getIfAvailable();
             http.oauth2ResourceServer(oauth2 -> {
                 if (bearerTokenResolver != null) {
@@ -83,7 +79,6 @@ public class SecurityConfig {
                 oauth2.authenticationManagerResolver(resolver);
             });
         } else {
-            // Mặc định: giữ nguyên hành vi hệ cũ.
             http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
         }
         return http.build();
@@ -102,14 +97,7 @@ public class SecurityConfig {
         return handler;
     }
 
-    // HTTP method "an toàn" (read-only) — Spring mặc định không bảo vệ CSRF cho các method này.
     private static final Set<String> CSRF_SAFE_METHODS = Set.of("GET", "HEAD", "TRACE", "OPTIONS");
-
-    /**
-     * Yêu cầu CSRF khi: method ghi (không thuộc nhóm an toàn) VÀ request KHÔNG mang
-     * `Authorization: Bearer` (tức là dựa cookie ambient). Bearer-authenticated request
-     * được miễn vì không thể bị giả mạo cross-site.
-     */
     private static boolean requiresCsrf(HttpServletRequest request) {
         if (CSRF_SAFE_METHODS.contains(request.getMethod())) {
             return false;
