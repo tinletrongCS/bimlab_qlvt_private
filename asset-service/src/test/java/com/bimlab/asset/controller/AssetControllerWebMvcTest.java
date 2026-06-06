@@ -4,8 +4,6 @@ import com.bimlab.asset.config.TestSecurityConfig;
 import com.bimlab.asset.model.AssetItem;
 import com.bimlab.asset.model.status.AssetStatus;
 import com.bimlab.asset.security.AssetAccessService;
-import com.bimlab.asset.security.JwtAuthenticationFilter;
-import com.bimlab.asset.security.JwtTokenProvider;
 import com.bimlab.asset.service.AssetService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,8 +33,6 @@ class AssetControllerWebMvcTest {
     @Autowired MockMvc mockMvc;
     @MockBean AssetService assetService;
     @MockBean AssetAccessService assetAccessService;
-    @MockBean JwtAuthenticationFilter jwtAuthenticationFilter;
-    @MockBean JwtTokenProvider jwtTokenProvider;
 
     private AssetItem sample() {
         return AssetItem.builder()

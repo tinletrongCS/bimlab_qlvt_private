@@ -84,6 +84,19 @@ export async function handleOidcCallback(): Promise<boolean> {
   return ok;
 }
 
+/**
+ * Hoàn tất callback trong IFRAME silent-renew của oidc-client-ts (prompt=none): relay ?code/&error
+ * về tab cha (postMessage) rồi DỪNG — KHÔNG render app. Nếu thiếu, iframe render full SPA, không báo
+ * về cha → signinSilent() ở cha timeout ~10s → mất phiên. Chỉ gọi khi ở iframe (self!==top + ?state&code|error).
+ */
+export async function completeSilentRenewCallback(): Promise<void> {
+  try {
+    await userManager().signinSilentCallback();
+  } catch {
+    // Tab cha tự xử lý timeout/lỗi — không làm gì thêm trong iframe.
+  }
+}
+
 /** Khôi phục phiên khi reload, dựa session SSO Keycloak (prompt=none). Thất bại = chưa đăng nhập. */
 export async function trySilentLogin(): Promise<boolean> {
   try {

@@ -9,11 +9,11 @@ import org.springframework.security.web.SecurityFilterChain;
 /**
  * Q8: minimal security config for @WebMvcTest slices.
  *
- * <p>The production {@link SecurityConfig} pulls in {@code JwtAuthenticationFilter}
- * which requires the auth-service URL + JWT secret env vars — those aren't
- * available in unit-test context. This shim enables {@code @EnableMethodSecurity}
- * (so {@code @PreAuthorize} actually fires) but skips the JWT chain entirely,
- * letting {@code @WithMockUser} drive authentication in tests.
+ * <p>The production {@link SecurityConfig} wires the Keycloak OAuth2 resource
+ * server (AuthenticationManagerResolver + BearerTokenResolver), which isn't
+ * needed for slice tests. This shim enables {@code @EnableMethodSecurity}
+ * (so {@code @PreAuthorize} actually fires) but skips the resource-server chain
+ * entirely, letting {@code @WithMockUser} drive authentication in tests.
  */
 // @TestConfiguration is opt-in via @Import — prevents Spring Boot's
 // component-scan from picking this up in unrelated @SpringBootTest contexts

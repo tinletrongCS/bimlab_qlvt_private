@@ -19,10 +19,16 @@ spring:
   flyway:
     enabled: false
 app:
-  jwt:
-    secret: test-secret-32-bytes-long-padded-padded
   auth-service:
     url: http://localhost:1
+# KEYCLOAK-ONLY: KeycloakResourceServerConfig luôn active → dựng NimbusJwtDecoder
+# eager khi load context (MethodSecurityBootSmokeTest @SpringBootTest). jwk-set-uri
+# phải non-blank để decoder build được (Nimbus assert hasText). URI dummy: decoder
+# CHỈ fetch JWKS khi decode token thật — smoke test không decode nên không gọi mạng.
+auth:
+  keycloak:
+    issuer: http://localhost/realms/bimlab
+    jwk-set-uri: http://localhost/realms/bimlab/protocol/openid-connect/certs
 minio:
   endpoint: http://localhost:9000
   access-key: test-access

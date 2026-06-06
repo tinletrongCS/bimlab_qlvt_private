@@ -16,9 +16,8 @@ import java.io.IOException;
  * that explicitly access the token, which leaves the SPA without a
  * value to echo back in {@code X-XSRF-TOKEN}.
  *
- * <p>Mirror of {@code com.bimlab.hrm.employee.security.CsrfCookieFilter}
- * — kept here per-service until {@code bimlab-auth-contract} adds a
- * shared version (PA.3 follow-up).
+ * <p>Mirror of {@code com.bimlab.hrm.employee.security.CsrfCookieFilter},
+ * kept per-service (each service owns its CSRF filter).
  */
 public class CsrfCookieFilter extends OncePerRequestFilter {
     @Override

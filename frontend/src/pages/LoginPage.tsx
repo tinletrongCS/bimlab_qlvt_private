@@ -1,8 +1,7 @@
 import { animate, createTimeline, stagger } from "animejs";
-import { type FormEvent, useEffect, useRef, useState } from "react";
-import { FiLogIn } from "react-icons/fi";
-import { Navigate, useLocation, useNavigate } from "react-router-dom";
-import { isKeycloak } from "../auth/authMode";
+import { useEffect, useRef } from "react";
+import { FiLogIn, FiShield } from "react-icons/fi";
+import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 
 interface LocationState {
@@ -109,18 +108,11 @@ function FloatingShapes() {
 }
 
 export function LoginPage() {
-  const { user, bootstrapping, login, verifyMfaLogin, loginError, submitting } = useAuth();
-  const navigate = useNavigate();
+  // Keycloak-only: đăng nhập qua SSO (Authorization Code + PKCE) — không còn form username/password.
+  const { user, bootstrapping, login, loginError, submitting } = useAuth();
   const location = useLocation();
   const loginSceneRef = useRef<HTMLDivElement>(null);
   const hasAnimated = useRef(false);
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [mfaCode, setMfaCode] = useState("");
-  const [mfaBackupCode, setMfaBackupCode] = useState("");
-  const [mfaChallengeId, setMfaChallengeId] = useState("");
-  const [useBackupCode, setUseBackupCode] = useState(false);
-  const [step, setStep] = useState<"credentials" | "mfa">("credentials");
 
   const redirectTo = (location.state as LocationState | null)?.from?.pathname || "/dashboard";
 
@@ -178,39 +170,6 @@ export function LoginPage() {
     return <Navigate to={redirectTo} replace />;
   }
 
-  async function handleSubmit(event: FormEvent) {
-    event.preventDefault();
-    animate(".login-btn", { scale: [1, 0.97, 1], duration: 200, ease: "inOutQuad" });
-
-    if (isKeycloak) {
-      await login("", "");
-      return;
-    }
-
-    if (step === "credentials") {
-      const result = await login(username, password);
-      if (result.mfaRequired) {
-        setMfaChallengeId(result.challengeId || "");
-        setStep("mfa");
-        return;
-      }
-      if (result.user) navigate(redirectTo, { replace: true });
-      return;
-    }
-
-    if (!mfaChallengeId) {
-      setStep("credentials");
-      return;
-    }
-
-    await verifyMfaLogin(
-      mfaChallengeId,
-      useBackupCode ? "" : mfaCode,
-      useBackupCode ? mfaBackupCode : undefined,
-    );
-    navigate(redirectTo, { replace: true });
-  }
-
   return (
     <main className="login-shell">
       <section className="login-blueprint" ref={loginSceneRef}>
@@ -232,118 +191,22 @@ export function LoginPage() {
           </div>
           <p className="login-subtitle">HỆ THỐNG QUẢN LÝ VẬT TƯ</p>
 
-          <form onSubmit={handleSubmit}>
-            {isKeycloak ? (
-              <button className="login-btn login-field" disabled={submitting} type="submit">
-                <FiLogIn /> Đăng nhập bằng SSO (Keycloak)
-              </button>
-            ) : step === "credentials" ? (
-              <>
-                <label className="login-field">
-                  <span>Tên đăng nhập</span>
-                  <input
-                    value={username}
-                    onChange={(event) => setUsername(event.target.value)}
-                    autoComplete="username"
-                    placeholder="VD: nguyen.van.a"
-                    required
-                  />
-                </label>
-                <label className="login-field">
-                  <span>Mật khẩu</span>
-                  <input
-                    value={password}
-                    onChange={(event) => setPassword(event.target.value)}
-                    type="password"
-                    autoComplete="current-password"
-                    placeholder="••••••••"
-                    required
-                  />
-                </label>
-              </>
-            ) : (
-              <div className="login-field mfa-block">
-                {!useBackupCode ? (
-                  <>
-                    <label>
-                      <span>Mã Google Authenticator</span>
-                      <input
-                        value={mfaCode}
-                        onChange={(event) =>
-                          setMfaCode(event.target.value.replace(/\D/g, "").slice(0, 6))
-                        }
-                        inputMode="numeric"
-                        maxLength={6}
-                        placeholder="000000"
-                        className="mfa-code-input"
-                      />
-                    </label>
-                    <p>Mở Google Authenticator và nhập mã 6 số hiện tại.</p>
-                  </>
-                ) : (
-                  <>
-                    <label>
-                      <span>Mã dự phòng (Backup code)</span>
-                      <input
-                        value={mfaBackupCode}
-                        onChange={(event) =>
-                          setMfaBackupCode(event.target.value.trim().toUpperCase())
-                        }
-                        placeholder="XXXX-XXXX"
-                        className="backup-code-input"
-                      />
-                    </label>
-                    <p>Nhập một trong các mã dự phòng được cấp khi thiết lập 2FA.</p>
-                  </>
-                )}
-                <button
-                  type="button"
-                  className="login-link-button"
-                  onClick={() => {
-                    setUseBackupCode((prev) => !prev);
-                    setMfaCode("");
-                    setMfaBackupCode("");
-                  }}
-                >
-                  {useBackupCode
-                    ? "← Dùng mã Google Authenticator"
-                    : "Không có điện thoại? Dùng backup code"}
-                </button>
-              </div>
-            )}
-
+          {/* Keycloak (SSO): redirect sang trang login Keycloak (Authorization Code + PKCE). */}
+          <div className="login-keycloak">
             {loginError && <div className="alert login-field">{loginError}</div>}
-
-            {!isKeycloak && (
-              <button className="login-btn" disabled={submitting} type="submit">
-                {submitting ? (
-                  <>
-                    <span className="login-spinner" /> Đang xử lý...
-                  </>
-                ) : step === "credentials" ? (
-                  "ĐĂNG NHẬP"
-                ) : (
-                  "XÁC THỰC 2FA"
-                )}
-              </button>
-            )}
-
-            {step === "mfa" && (
-              <button
-                type="button"
-                className="secondary login-back-button"
-                onClick={() => {
-                  setStep("credentials");
-                  setMfaCode("");
-                  setMfaBackupCode("");
-                  setMfaChallengeId("");
-                  setUseBackupCode(false);
-                }}
-              >
-                Quay lại đăng nhập
-              </button>
-            )}
-          </form>
+            <button
+              className="login-btn login-field"
+              disabled={submitting}
+              type="button"
+              onClick={() => login()}
+            >
+              <FiLogIn /> Đăng nhập bằng SSO (Keycloak)
+            </button>
+          </div>
+          <div className="login-note">
+            <FiShield />
+            <span>Dùng chung tài khoản HRM, phân quyền theo role hiện tại.</span>
+          </div>
 
           <div className="login-footer-line">
             <span />
