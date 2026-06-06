@@ -5,8 +5,6 @@ import com.bimlab.asset.model.AssetItem;
 import com.bimlab.asset.model.AssetTransfer;
 import com.bimlab.asset.model.status.AssetStatus;
 import com.bimlab.asset.security.AssetAccessService;
-import com.bimlab.asset.security.JwtAuthenticationFilter;
-import com.bimlab.asset.security.JwtTokenProvider;
 import com.bimlab.asset.service.AssetService;
 import com.bimlab.asset.service.AssetTransferService;
 import org.junit.jupiter.api.Test;
@@ -37,8 +35,6 @@ class AssetTransferControllerWebMvcTest {
     @MockBean AssetTransferService assetTransferService;
     @MockBean AssetService assetService;
     @MockBean AssetAccessService assetAccessService;
-    @MockBean JwtAuthenticationFilter jwtAuthenticationFilter;
-    @MockBean JwtTokenProvider jwtTokenProvider;
 
     private AssetTransfer sample() {
         AssetItem asset = AssetItem.builder().id(1L).assetCode("LAP-1").name("Laptop").category("IT").status(AssetStatus.ASSIGNED).build();

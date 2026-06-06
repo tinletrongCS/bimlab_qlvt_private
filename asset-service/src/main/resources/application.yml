@@ -52,9 +52,6 @@ server:
     include-stacktrace: never
 
 app:
-  jwt:
-    secret: ${APP_JWT_SECRET}
-    rsa-public-key: ${RSA_PUBLIC_KEY:}
   auth-service:
     url: ${AUTH_SERVICE_URL:http://localhost:8081}
   # PA-B (Keycloak SSO): key gọi auth-service /internal/roles/{role}/permissions. Từ env, không hardcode.
@@ -62,13 +59,11 @@ app:
 
 auth:
   keycloak:
-    enabled: ${AUTH_KEYCLOAK_ENABLED:false}
     issuer: ${AUTH_KEYCLOAK_ISSUER:}
     jwk-set-uri: ${AUTH_KEYCLOAK_JWK_SET_URI:}
     audience: ${AUTH_KEYCLOAK_AUDIENCE:asset-service}
+    allowed-clients: ${AUTH_KEYCLOAK_ALLOWED_CLIENTS:qlvt}
     clock-skew-seconds: ${AUTH_KEYCLOAK_CLOCK_SKEW_SECONDS:30}
-  legacy:
-    issuer: ${AUTH_LEGACY_ISSUER:bimlab-auth}
 
 # Q7: MinIO object storage for contract attachments
 minio:

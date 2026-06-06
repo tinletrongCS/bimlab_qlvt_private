@@ -6,8 +6,6 @@ import com.bimlab.asset.model.MaintenanceRecord;
 import com.bimlab.asset.model.status.AssetStatus;
 import com.bimlab.asset.model.status.MaintenanceStatus;
 import com.bimlab.asset.security.AssetAccessService;
-import com.bimlab.asset.security.JwtAuthenticationFilter;
-import com.bimlab.asset.security.JwtTokenProvider;
 import com.bimlab.asset.service.AssetService;
 import com.bimlab.asset.service.MaintenanceService;
 import org.junit.jupiter.api.Test;
@@ -38,8 +36,6 @@ class MaintenanceControllerWebMvcTest {
     @MockBean MaintenanceService maintenanceService;
     @MockBean AssetService assetService;
     @MockBean AssetAccessService assetAccessService;
-    @MockBean JwtAuthenticationFilter jwtAuthenticationFilter;
-    @MockBean JwtTokenProvider jwtTokenProvider;
 
     private MaintenanceRecord sample() {
         AssetItem asset = AssetItem.builder().id(1L).assetCode("LAP-1").name("Laptop").category("IT").status(AssetStatus.ASSIGNED).build();

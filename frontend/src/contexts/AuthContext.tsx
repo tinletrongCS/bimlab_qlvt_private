@@ -7,7 +7,6 @@ import {
   useMemo,
   useState,
 } from "react";
-import { isKeycloak } from "../auth/authMode";
 import {
   handleOidcCallback,
   isOidcCallback,
@@ -16,24 +15,15 @@ import {
   onSessionLost,
   trySilentLogin,
 } from "../auth/oidc";
-import {
-  login as apiLogin,
-  logout as apiLogout,
-  verifyMfaLogin as apiVerifyMfaLogin,
-  loadCurrentUser,
-} from "../services/api";
-import type { AuthLoginResponse, AuthUser, Permission } from "../services/types";
+import { loadCurrentUser } from "../services/api";
+import type { AuthUser, Permission } from "../services/types";
 
 interface AuthContextValue {
   user: AuthUser | null;
   bootstrapping: boolean;
   loginError: string;
   submitting: boolean;
-  login: (
-    username: string,
-    password: string,
-  ) => Promise<{ user?: AuthUser; mfaRequired?: boolean; challengeId?: string; message?: string }>;
-  verifyMfaLogin: (challengeId: string, code: string, backupCode?: string) => Promise<AuthUser>;
+  login: () => Promise<boolean>;
   logout: () => Promise<void>;
   hasPermission: (permission?: Permission) => boolean;
 }
@@ -50,19 +40,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let cancelled = false;
     async function bootstrap() {
       try {
-        if (isKeycloak) {
-          // PR#6: refresh token rotation thất bại / token hết hạn → mất phiên → logout UI (về /login).
-          onSessionLost(() => {
-            if (!cancelled) setUser(null);
-          });
-          // Keycloak: nếu là callback → đổi code→token; nếu không → thử khôi phục phiên (prompt=none).
-          if (isOidcCallback()) {
-            await handleOidcCallback();
-          } else {
-            await trySilentLogin();
-          }
+        // PR#6: refresh token rotation thất bại / token hết hạn → mất phiên → logout UI (về /login).
+        onSessionLost(() => {
+          if (!cancelled) setUser(null);
+        });
+        // Keycloak: nếu là callback → đổi code→token; nếu không → thử khôi phục phiên (prompt=none).
+        if (isOidcCallback()) {
+          await handleOidcCallback();
+        } else {
+          await trySilentLogin();
         }
-        // loadCurrentUser: legacy → /auth/me (cookie); keycloak → /asset/me (Bearer in-memory).
+        // loadCurrentUser → /asset/me (Bearer in-memory).
         const current = await loadCurrentUser();
         if (!cancelled) setUser(current);
       } catch {
@@ -77,80 +65,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const login = useCallback(
-    async (
-      username: string,
-      password: string,
-    ): Promise<{
-      user?: AuthUser;
-      mfaRequired?: boolean;
-      challengeId?: string;
-      message?: string;
-    }> => {
-      if (isKeycloak) {
-        // Keycloak: redirect sang trang login Keycloak (username/password bỏ qua — KC xử lý). Trang điều hướng đi.
-        setSubmitting(true);
-        setLoginError("");
-        try {
-          await keycloakLogin();
-          return {};
-        } catch (err) {
-          setLoginError(readError(err));
-          setSubmitting(false);
-          return {};
-        }
-      }
-      setSubmitting(true);
-      setLoginError("");
-      try {
-        const response = await apiLogin(username, password);
-        if (response.mfaRequired) {
-          return {
-            mfaRequired: true,
-            challengeId: response.mfaChallengeId,
-            message: response.message,
-          };
-        }
-        const loginUser = mapAuthUser(response);
-        setUser(loginUser);
-        return { user: loginUser };
-      } catch (err) {
-        setLoginError(readError(err));
-        return {};
-      } finally {
-        setSubmitting(false);
-      }
-    },
-    [],
-  );
-
-  const verifyMfaLogin = useCallback(
-    async (challengeId: string, code: string, backupCode?: string): Promise<AuthUser> => {
-      setSubmitting(true);
-      setLoginError("");
-      try {
-        const response = await apiVerifyMfaLogin(challengeId, code, backupCode);
-        const loginUser = mapAuthUser(response);
-        setUser(loginUser);
-        return loginUser;
-      } catch (err) {
-        setLoginError(readError(err));
-        throw err;
-      } finally {
-        setSubmitting(false);
-      }
-    },
-    [],
-  );
+  const login = useCallback(async (): Promise<boolean> => {
+    // Keycloak: redirect sang trang login Keycloak (Authorization Code + PKCE). Trang điều hướng đi.
+    setSubmitting(true);
+    setLoginError("");
+    try {
+      await keycloakLogin();
+      return true;
+    } catch (err) {
+      setLoginError(readError(err));
+      setSubmitting(false);
+      return false;
+    }
+  }, []);
 
   const logout = useCallback(async () => {
     setSubmitting(true);
     try {
-      if (isKeycloak) {
-        await keycloakLogout();
-      } else {
-        await apiLogout();
-      }
+      await keycloakLogout();
     } catch {
       // Token may already be expired; local logout still valid.
     } finally {
@@ -169,17 +101,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const value = useMemo(
-    () => ({
-      user,
-      bootstrapping,
-      loginError,
-      submitting,
-      login,
-      verifyMfaLogin,
-      logout,
-      hasPermission,
-    }),
-    [user, bootstrapping, loginError, submitting, login, verifyMfaLogin, logout, hasPermission],
+    () => ({ user, bootstrapping, loginError, submitting, login, logout, hasPermission }),
+    [user, bootstrapping, loginError, submitting, login, logout, hasPermission],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
@@ -189,17 +112,6 @@ export function useAuth(): AuthContextValue {
   const ctx = useContext(AuthContext);
   if (!ctx) throw new Error("useAuth must be used inside <AuthProvider>");
   return ctx;
-}
-
-function mapAuthUser(response: AuthLoginResponse): AuthUser {
-  return {
-    id: response.id,
-    username: response.username || "",
-    role: response.role || "",
-    fullName: response.fullName,
-    permissions: response.permissions,
-    mfaEnabled: response.mfaEnabled,
-  };
 }
 
 function readError(error: unknown): string {

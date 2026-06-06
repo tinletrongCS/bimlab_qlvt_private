@@ -1,13 +1,10 @@
 package com.bimlab.asset.controller;
 
 import com.bimlab.asset.config.TestSecurityConfig;
-import com.bimlab.asset.security.JwtAuthenticationFilter;
-import com.bimlab.asset.security.JwtTokenProvider;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
@@ -26,12 +23,6 @@ class MeControllerWebMvcTest {
 
     @Autowired
     MockMvc mockMvc;
-
-    // Production SecurityConfig kéo JwtAuthenticationFilter (@Component) → mock để @WebMvcTest slice load được.
-    @MockBean
-    JwtAuthenticationFilter jwtAuthenticationFilter;
-    @MockBean
-    JwtTokenProvider jwtTokenProvider;
 
     @Test
     @WithMockUser(username = "alice", authorities = {"ROLE_ADMIN", "asset_manage", "asset_view_all"})

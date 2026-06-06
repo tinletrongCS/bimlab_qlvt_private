@@ -4,8 +4,6 @@ import com.bimlab.asset.config.TestSecurityConfig;
 import com.bimlab.asset.model.Subscription;
 import com.bimlab.asset.model.status.SubscriptionStatus;
 import com.bimlab.asset.security.AssetAccessService;
-import com.bimlab.asset.security.JwtAuthenticationFilter;
-import com.bimlab.asset.security.JwtTokenProvider;
 import com.bimlab.asset.service.SubscriptionService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,8 +31,6 @@ class SubscriptionControllerWebMvcTest {
     @Autowired MockMvc mockMvc;
     @MockBean SubscriptionService subscriptionService;
     @MockBean AssetAccessService assetAccessService;
-    @MockBean JwtAuthenticationFilter jwtAuthenticationFilter;
-    @MockBean JwtTokenProvider jwtTokenProvider;
 
     private Subscription sample() {
         return Subscription.builder()

@@ -4,8 +4,6 @@ import com.bimlab.asset.config.TestSecurityConfig;
 import com.bimlab.asset.model.PurchaseRequest;
 import com.bimlab.asset.model.status.PurchaseRequestStatus;
 import com.bimlab.asset.security.AssetAccessService;
-import com.bimlab.asset.security.JwtAuthenticationFilter;
-import com.bimlab.asset.security.JwtTokenProvider;
 import com.bimlab.asset.service.PurchaseRequestService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,8 +31,6 @@ class PurchaseRequestControllerWebMvcTest {
     @Autowired MockMvc mockMvc;
     @MockBean PurchaseRequestService purchaseRequestService;
     @MockBean AssetAccessService assetAccessService;
-    @MockBean JwtAuthenticationFilter jwtAuthenticationFilter;
-    @MockBean JwtTokenProvider jwtTokenProvider;
 
     private PurchaseRequest sample() {
         return PurchaseRequest.builder()
