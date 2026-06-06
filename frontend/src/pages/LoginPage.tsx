@@ -75,6 +75,16 @@ function FloatingShapes() {
           />
         ))}
       </svg>
+      <svg className="bim-shape shape-truss" viewBox="0 0 90 60">
+        <polygon
+          points="45,5 85,55 5,55"
+          fill="none"
+          stroke="rgba(21,77,124,0.25)"
+          strokeWidth="1.5"
+        />
+        <line x1="45" y1="5" x2="45" y2="55" stroke="rgba(21,77,124,0.14)" />
+        <line x1="25" y1="30" x2="65" y2="30" stroke="rgba(21,77,124,0.14)" />
+      </svg>
       <svg className="bim-shape shape-dimension" viewBox="0 0 120 40">
         <line
           x1="5"
@@ -96,12 +106,6 @@ function FloatingShapes() {
         >
           QLVT
         </text>
-      </svg>
-      <svg className="bim-shape shape-compass" viewBox="0 0 60 60">
-        <circle cx="30" cy="30" r="25" fill="none" stroke="rgba(21,77,124,0.22)" />
-        <circle cx="30" cy="30" r="2" fill="rgba(21,77,124,0.40)" />
-        <line x1="30" y1="5" x2="30" y2="55" stroke="rgba(21,77,124,0.12)" />
-        <line x1="5" y1="30" x2="55" y2="30" stroke="rgba(21,77,124,0.12)" />
       </svg>
     </div>
   );
@@ -127,6 +131,14 @@ export function LoginPage() {
       { opacity: [0, 1], scale: [0.55, 1], duration: 700, delay: stagger(80, { from: "center" }) },
       0,
     );
+    const scanLine = root.querySelector(".scan-line");
+    if (scanLine) {
+      timeline.add(
+        scanLine,
+        { top: ["0%", "100%"], opacity: [0.8, 0], duration: 800, ease: "inOutSine" },
+        0,
+      );
+    }
     const loginCard = root.querySelector(".login-card");
     if (loginCard) {
       timeline.add(
@@ -189,7 +201,7 @@ export function LoginPage() {
           <div className="login-logo">
             <img src="https://bimlab.com.vn/assets/img/bimlab-logo.png" alt="BIMLab" />
           </div>
-          <p className="login-subtitle">HỆ THỐNG QUẢN LÝ VẬT TƯ</p>
+          <p className="login-subtitle">HỆ THỐNG QUẢN LÝ TÀI SẢN</p>
 
           {/* Keycloak (SSO): redirect sang trang login Keycloak (Authorization Code + PKCE). */}
           <div className="login-keycloak">

@@ -1,0 +1,55 @@
+"schema_name","table_name","column_order","column_name","data_type","is_nullable","column_default"
+"auth","audit_logs",1,"id","bigint(64,0)","NO","nextval('auth.audit_logs_id_seq'::regclass)"
+"auth","audit_logs",2,"action","character varying(30)","NO",NULL
+"auth","audit_logs",3,"username","character varying(50)","YES",NULL
+"auth","audit_logs",4,"detail","character varying(200)","YES",NULL
+"auth","audit_logs",5,"ip_address","character varying(45)","YES",NULL
+"auth","audit_logs",6,"success","boolean","NO",NULL
+"auth","audit_logs",7,"timestamp","timestamp without time zone","NO","now()"
+"auth","custom_roles",1,"key","character varying(50)","NO",NULL
+"auth","custom_roles",2,"display_name","character varying(100)","NO",NULL
+"auth","custom_roles",3,"description","text","YES",NULL
+"auth","custom_roles",4,"created_at","timestamp with time zone","NO","now()"
+"auth","custom_roles",5,"color","character varying(7)","YES",NULL
+"auth","mfa_backup_codes",1,"id","bigint(64,0)","NO","nextval('auth.mfa_backup_codes_id_seq'::regclass)"
+"auth","mfa_backup_codes",2,"user_id","bigint(64,0)","NO",NULL
+"auth","mfa_backup_codes",3,"code_hash","text","NO",NULL
+"auth","mfa_backup_codes",4,"used_at","timestamp without time zone","YES",NULL
+"auth","mfa_backup_codes",5,"created_at","timestamp without time zone","NO","now()"
+"auth","mfa_login_challenges",1,"challenge_id","character varying(36)","NO",NULL
+"auth","mfa_login_challenges",2,"username","character varying(50)","NO",NULL
+"auth","mfa_login_challenges",3,"ip_address","character varying(50)","YES",NULL
+"auth","mfa_login_challenges",4,"expires_at","timestamp without time zone","NO",NULL
+"auth","mfa_login_challenges",5,"failed_attempts","integer(32,0)","NO","0"
+"auth","mfa_login_challenges",6,"created_at","timestamp without time zone","NO","now()"
+"auth","password_reset_tokens",1,"id","bigint(64,0)","NO","nextval('auth.password_reset_tokens_id_seq'::regclass)"
+"auth","password_reset_tokens",2,"token_hash","character varying(64)","NO",NULL
+"auth","password_reset_tokens",3,"user_id","bigint(64,0)","NO",NULL
+"auth","password_reset_tokens",4,"issued_by","character varying(100)","YES",NULL
+"auth","password_reset_tokens",5,"expires_at","timestamp without time zone","NO",NULL
+"auth","password_reset_tokens",6,"used_at","timestamp without time zone","YES",NULL
+"auth","password_reset_tokens",7,"created_at","timestamp without time zone","NO","now()"
+"auth","permission_meta",1,"key","character varying(50)","NO",NULL
+"auth","permission_meta",2,"label","character varying(100)","NO",NULL
+"auth","permission_meta",3,"description","text","YES",NULL
+"auth","permission_meta",4,"category","character varying(50)","NO","'custom'::character varying"
+"auth","permission_meta",5,"is_system","boolean","NO","false"
+"auth","role_permissions",1,"id","bigint(64,0)","NO","nextval('auth.role_permissions_id_seq'::regclass)"
+"auth","role_permissions",2,"role","character varying(30)","NO",NULL
+"auth","role_permissions",3,"permission_key","character varying(50)","NO",NULL
+"auth","token_blacklist",1,"jti","character varying(36)","NO",NULL
+"auth","token_blacklist",2,"blacklisted_at","timestamp without time zone","NO",NULL
+"auth","token_blacklist",3,"expires_at","timestamp without time zone","NO",NULL
+"auth","users",1,"id","bigint(64,0)","NO","nextval('auth.users_id_seq'::regclass)"
+"auth","users",2,"username","character varying(50)","NO",NULL
+"auth","users",3,"password","character varying(255)","NO",NULL
+"auth","users",4,"role","character varying(30)","NO",NULL
+"auth","users",5,"full_name","character varying(100)","YES",NULL
+"auth","users",6,"mfa_enabled","boolean","NO","false"
+"auth","users",7,"mfa_secret_enc","text","YES",NULL
+"auth","users",8,"mfa_enabled_at","timestamp without time zone","YES",NULL
+"auth","users",9,"last_used_totp_counter","bigint(64,0)","YES",NULL
+"auth","users",10,"enabled","boolean","NO","true"
+"auth","users",11,"created_at","timestamp without time zone","NO","now()"
+"auth","users",12,"tokens_invalidated_at","timestamp without time zone","YES",NULL
+"auth","users",13,"employee_id","bigint(64,0)","YES",NULL

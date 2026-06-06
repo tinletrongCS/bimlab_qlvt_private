@@ -50,7 +50,8 @@ export function DashboardPage() {
         <div className="hero-content">
           <p className="eyebrow">BIMLab Asset Management</p>
           <h1>Dashboard</h1>
-          <p>Quản lý vật tư, tài sản và bản quyền phần mềm · {todayLabel}</p>
+          <p>Quản lý tài sản</p>
+          <p>{todayLabel}</p>
         </div>
         <div className="hero-summary">
           <span>Tổng giá trị tài sản</span>

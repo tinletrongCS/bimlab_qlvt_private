@@ -208,7 +208,7 @@ export function AppShell() {
           ) : (
             <>
               <img src="https://bimlab.com.vn/assets/img/bimlab-logo.png" alt="BIMLab" />
-              <p>Quản lý vật tư</p>
+              <p>Quản lý tài sản</p>
             </>
           )}
         </button>
