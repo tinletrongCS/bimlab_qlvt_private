@@ -81,3 +81,8 @@ management:
     health:
       probes:
         enabled: true
+
+# STEP-5 observability: include correlationId in every log line (MDC set by CorrelationIdMdcFilter).
+logging:
+  pattern:
+    level: "%5p [${spring.application.name:asset-service},%X{correlationId:-}]"
