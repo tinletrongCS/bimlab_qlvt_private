@@ -1,0 +1,110 @@
+# ================================================================
+# bimlab_qlvt — asset-service + frontend (tách từ monorepo, STEP-4 4-b)
+# ================================================================
+# Phụ thuộc NGOÀI stack (join qua network bimlab-net do platform_bimlab tạo):
+#   postgres (schema `asset` — sau DB-split 4-c: DB `qlvt`, schema GIỮ tên `asset`)
+#   auth-service (HRM) · minio · keycloak · api-gateway (platform)
+# Chạy platform stack trước: docker compose --profile sso up -d (repo platform_bimlab)
+# ================================================================
+
+networks:
+  bimlab-net:
+    external: true
+    name: bimlab-net
+
+x-sec-strict: &sec_strict
+  security_opt:
+    - no-new-privileges:true
+  cap_drop:
+    - ALL
+
+x-sec-nginx: &sec_nginx
+  security_opt:
+    - no-new-privileges:true
+  cap_drop:
+    - ALL
+  cap_add:
+    - NET_BIND_SERVICE
+    - CHOWN
+    - SETUID
+    - SETGID
+    - DAC_OVERRIDE
+
+x-default-logging: &default_logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "5"
+
+services:
+  asset-service:
+    <<: *sec_strict
+    image: ${DOCKER_REGISTRY:-local}/bimlab-asset-service:${BIMLAB_TAG:-latest}
+    build:
+      context: ./asset-service
+      dockerfile: Dockerfile
+    networks:
+      - bimlab-net
+    # depends_on postgres/auth-service/minio đã bỏ — service ngoài stack, join external network.
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - JAVA_TOOL_OPTIONS=${JAVA_TOOL_OPTIONS:--Xms64m -Xmx320m -XX:+UseContainerSupport -XX:MaxRAMPercentage=65.0 -XX:+UseSerialGC -XX:TieredStopAtLevel=1}
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://${EXTERNAL_DB_HOST:-postgres}:5432/${POSTGRES_DB:-bimlab}?currentSchema=asset
+      - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER}
+      - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD}
+      - SPRING_DATASOURCE_HIKARI_MAX_LIFETIME=${SPRING_DATASOURCE_HIKARI_MAX_LIFETIME:-240000}
+      - SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE=${SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE:-5}
+      - SPRING_DATASOURCE_HIKARI_KEEPALIVE_TIME=${SPRING_DATASOURCE_HIKARI_KEEPALIVE_TIME:-60000}
+      - SPRING_DATASOURCE_HIKARI_IDLE_TIMEOUT=${SPRING_DATASOURCE_HIKARI_IDLE_TIMEOUT:-120000}
+      - SPRING_DATASOURCE_HIKARI_VALIDATION_TIMEOUT=${SPRING_DATASOURCE_HIKARI_VALIDATION_TIMEOUT:-5000}
+      - AUTH_SERVICE_URL=http://auth-service:8081
+      - APP_INTERNAL_API_KEY=${INTERNAL_API_KEY:?INTERNAL_API_KEY is required — set it in .env}
+      - AUTH_KEYCLOAK_ISSUER=${AUTH_KEYCLOAK_ISSUER:-}
+      - AUTH_KEYCLOAK_JWK_SET_URI=${AUTH_KEYCLOAK_JWK_SET_URI:-http://keycloak:8080/realms/bimlab/protocol/openid-connect/certs}
+      - AUTH_KEYCLOAK_AUDIENCE=${AUTH_KEYCLOAK_AUDIENCE_ASSET:-asset-service}
+      - MINIO_ENDPOINT=http://minio:9000
+      - MINIO_ACCESS_KEY=${MINIO_ROOT_USER:?MINIO_ROOT_USER is required — set it in .env}
+      - MINIO_SECRET_KEY=${MINIO_ROOT_PASSWORD:?MINIO_ROOT_PASSWORD is required — set it in .env}
+      - MINIO_BUCKET=qlvt-assets
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+          cpus: '1'
+        reservations:
+          memory: 256m
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8086/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 180s
+    logging: *default_logging
+    restart: unless-stopped
+
+  asset-frontend:
+    <<: *sec_nginx
+    image: ${DOCKER_REGISTRY:-local}/bimlab-asset-frontend:${BIMLAB_TAG:-latest}
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    networks:
+      - bimlab-net
+    depends_on:
+      asset-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:80/ -o /dev/null || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          memory: 128m
+          cpus: '0.5'
+        reservations:
+          memory: 64m
+    logging: *default_logging
+    restart: unless-stopped
