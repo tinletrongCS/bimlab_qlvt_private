@@ -88,6 +88,15 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      # Build args bake vào bundle (đổi xong phải rebuild). Dev: Keycloak qua localhost:8081,
+      # redirect về cổng QLVT localhost:3002 (đã có trong redirectUris client qlvt).
+      args:
+        VITE_AUTH_MODE: ${VITE_AUTH_MODE:-keycloak}
+        VITE_KEYCLOAK_AUTHORITY: ${VITE_KEYCLOAK_AUTHORITY:-http://localhost:8081/realms/bimlab}
+        VITE_KEYCLOAK_CLIENT_ID: ${VITE_KEYCLOAK_CLIENT_ID:-qlvt}
+        VITE_KEYCLOAK_REDIRECT_URI: ${VITE_KEYCLOAK_REDIRECT_URI:-http://localhost:3002/}
+    ports:
+      - "${QLVT_FRONTEND_PORT:-3002}:80"
     networks:
       - bimlab-net
     depends_on:
