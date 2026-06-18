@@ -9,18 +9,6 @@ import java.util.Arrays;
 import java.util.Objects;
 import java.util.Set;
 
-/**
- * Imperative authorization helper for QLVT endpoints.
- *
- * <p>Q1: non-object-context gates (POST/PUT/DELETE/PATCH and the list/report
- * endpoints) are now expressed declaratively via {@code @PreAuthorize} on
- * controller methods. The {@code ensureSelfOrAny} / {@code ensurePartyOrAny}
- * helpers stay imperative because they need the domain object loaded from
- * the DB before the ownership check can run.
- *
- * <p>{@link #ensureAccess()} remains imperative too — it gates the broad
- * read scope and runs <em>before</em> {@code ensureSelfOrAny}.
- */
 @Component
 public class AssetAccessService {
 
@@ -65,14 +53,6 @@ public class AssetAccessService {
                 Permission.ASSET_MANAGE, Permission.ASSET_FINANCE_MANAGE);
     }
 
-    // ── F1 object-level scoping ────────────────────────────────────────────
-
-    /**
-     * F1: returns the caller's employeeId from the JWT-bound AssetPrincipal,
-     * or null if the token has no employeeId claim (legacy session). Callers
-     * must treat null as "cannot satisfy self-scope" — fall back to admin
-     * permission check.
-     */
     public Long getCurrentEmployeeId() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null) return null;
@@ -87,13 +67,6 @@ public class AssetAccessService {
         return matchesAny(authentication, permissions);
     }
 
-    /**
-     * F1: pass if caller has any of {@code adminPermissions}, OR if
-     * {@code ownerEmployeeId} matches the caller's employeeId from the JWT.
-     * If {@code ownerEmployeeId} is null (resource has no owner — e.g.
-     * Contract/Vendor/Subscription master data), only admin permissions allow
-     * access.
-     */
     public void ensureSelfOrAny(Long ownerEmployeeId, Set<Permission> adminPermissions) {
         if (hasAnyPermission(adminPermissions.toArray(Permission[]::new))) return;
         Long current = getCurrentEmployeeId();
@@ -101,16 +74,17 @@ public class AssetAccessService {
         throw new AccessDeniedException("Không có quyền truy cập tài nguyên này");
     }
 
-    /**
-     * F1 variant for AssetTransfer where the caller may be either the
-     * from-party or the to-party of the transfer. Pass if admin perm, or if
-     * caller's employeeId matches either side.
+    /*
+      Dùng cho luân chuyển tài sản. Người gọi được xem nếu là:
+      - Người bàn giao;
+      - Người nhận;
+      - Hoặc admin.
      */
     public void ensurePartyOrAny(Long fromEmployeeId, Long toEmployeeId, Set<Permission> adminPermissions) {
         if (hasAnyPermission(adminPermissions.toArray(Permission[]::new))) return;
-        Long current = getCurrentEmployeeId();
-        if (current != null && (Objects.equals(current, fromEmployeeId) || Objects.equals(current, toEmployeeId))) return;
-        throw new AccessDeniedException("Không có quyền truy cập tài nguyên này");
+        Long currentEmployeeId = this.getCurrentEmployeeId();
+        if (fromEmployeeId != null && (Objects.equals(currentEmployeeId, fromEmployeeId) || Objects.equals(currentEmployeeId, toEmployeeId))) return;
+        throw new AccessDeniedException("Không có quyền truy cập tài sản này");
     }
 
     private void ensureAny(Permission... permissions) {

@@ -1,10 +1,11 @@
 package com.bimlab.asset.service;
 
-import com.bimlab.asset.dto.ContractRequest;
+import com.bimlab.asset.dto.request.ContractRequest;
 import com.bimlab.asset.model.Contract;
 import com.bimlab.asset.model.status.ContractStatus;
 import com.bimlab.asset.model.status.StatusParser;
 import com.bimlab.asset.repository.ContractRepository;
+import com.bimlab.asset.repository.AssetDocumentRepository;
 import com.bimlab.asset.storage.MinioService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -34,6 +35,8 @@ public class ContractService {
     private final ContractRepository contracts;
     private final VendorService vendorService;
     private final PurchaseRequestService purchaseRequestService;
+    private final AssetService assetService;
+    private final AssetDocumentRepository assetDocuments;
     private final MinioService minioService;
 
     @Transactional(readOnly = true)
@@ -104,6 +107,11 @@ public class ContractService {
         c.setPurchaseRequest(req.purchaseRequestId() == null
                 ? null
                 : purchaseRequestService.getPurchaseRequest(req.purchaseRequestId()));
+        c.setAsset(req.assetId() == null ? null : assetService.getAsset(req.assetId()));
+        c.setDocument(req.documentId() == null
+                ? null
+                : assetDocuments.findById(req.documentId())
+                        .orElseThrow(() -> new NoSuchElementException("Tài liệu hợp đồng không tồn tại")));
         c.setSignDate(req.signDate());
         c.setEffectiveFrom(req.effectiveFrom());
         c.setEffectiveTo(req.effectiveTo());

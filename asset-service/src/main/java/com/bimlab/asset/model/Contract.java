@@ -10,16 +10,18 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "contracts", schema = "asset", indexes = {
-        @Index(name = "idx_contracts_number", columnList = "contractNumber"),
+        @Index(name = "idx_contracts_contract_number", columnList = "contract_number"),
         @Index(name = "idx_contracts_status", columnList = "status"),
-        @Index(name = "idx_contracts_vendor", columnList = "vendor_id")
+        @Index(name = "idx_contracts_vendor_id", columnList = "vendor_id"),
+        @Index(name = "idx_contracts_purchase_request_id", columnList = "purchase_request_id"),
+        @Index(name = "idx_contracts_asset_id", columnList = "asset_id")
 })
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class Contract {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true, length = 80)
+    @Column(name = "contract_number", nullable = false, unique = true, length = 80)
     private String contractNumber;
 
     @Column(nullable = false, length = 200)
@@ -35,11 +37,19 @@ public class Contract {
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private PurchaseRequest purchaseRequest;
 
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "asset_id")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    private AssetItem asset;
+
+    @Column(name = "sign_date")
     private LocalDate signDate;
+    @Column(name = "effective_from")
     private LocalDate effectiveFrom;
+    @Column(name = "effective_to")
     private LocalDate effectiveTo;
 
-    @Column(precision = 18, scale = 2)
+    @Column(name = "contract_value", precision = 18, scale = 2)
     private BigDecimal contractValue;
 
     @Column(length = 10)
@@ -59,13 +69,18 @@ public class Contract {
     @Column(name = "attachment_object_key", length = 500)
     private String attachmentObjectKey;
 
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "document_id")
+    @JsonIgnoreProperties({"asset", "hibernateLazyInitializer", "handler"})
+    private AssetDocument document;
+
     @Column(length = 1000)
     private String notes;
 
-    @Column(nullable = false)
+    @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
-    @Column(nullable = false)
+    @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
     @PrePersist

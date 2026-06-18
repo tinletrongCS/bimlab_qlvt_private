@@ -10,17 +10,34 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "subscriptions", schema = "asset", indexes = {
-        @Index(name = "idx_subscriptions_renewal", columnList = "renewalDate"),
+        @Index(name = "idx_subscriptions_asset_id", columnList = "asset_id"),
+        @Index(name = "idx_subscriptions_vendor_id", columnList = "vendor_id"),
+        @Index(name = "idx_subscriptions_software_name", columnList = "software_name"),
+        @Index(name = "idx_subscriptions_renewal_date", columnList = "renewal_date"),
         @Index(name = "idx_subscriptions_status", columnList = "status")
 })
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class Subscription {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @Column(nullable = false, length = 180)
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "asset_id")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    private AssetItem asset;
+
+    @Column(name = "software_name", nullable = false, length = 180)
     private String softwareName;
-    @Column(length = 120)
+
+    @Column(name = "plan_name", length = 120)
     private String planName;
+
+    @Column(name = "license_key", length = 500)
+    private String licenseKey;
+
+    @Column(name = "owner_employee_id")
+    private Long ownerEmployeeId;
+
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "vendor_id")
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
@@ -29,20 +46,22 @@ public class Subscription {
     private Integer totalSeats;
     @Column(nullable = false)
     private Integer usedSeats;
-    @Column(precision = 16, scale = 2)
+    @Column(precision = 18, scale = 2)
     private BigDecimal cost;
     @Column(length = 20)
     private String billingCycle;
+    @Column(name = "start_date")
     private LocalDate startDate;
+    @Column(name = "renewal_date")
     private LocalDate renewalDate;
     @Enumerated(EnumType.STRING)
     @Column(length = 30, nullable = false)
     private SubscriptionStatus status;
     @Column(length = 500)
     private String notes;
-    @Column(nullable = false)
+    @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
-    @Column(nullable = false)
+    @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
     @PrePersist
@@ -51,7 +70,7 @@ public class Subscription {
         createdAt = now;
         updatedAt = now;
         if (status == null) status = SubscriptionStatus.ACTIVE;
-        if (totalSeats == null) totalSeats = 1;
+        if (totalSeats == null) totalSeats = 0;
         if (usedSeats == null) usedSeats = 0;
     }
 

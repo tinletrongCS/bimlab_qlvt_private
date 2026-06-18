@@ -1,17 +1,28 @@
 package com.bimlab.asset.repository;
 
+import com.bimlab.asset.model.AssetCatalogItem;
+import com.bimlab.asset.model.AssetCategory;
+import com.bimlab.asset.model.AssetDocument;
 import com.bimlab.asset.model.AssetItem;
+import com.bimlab.asset.model.AssetQrCode;
 import com.bimlab.asset.model.AssetTransfer;
+import com.bimlab.asset.model.AssetValueSnapshot;
 import com.bimlab.asset.model.Contract;
 import com.bimlab.asset.model.MaintenanceRecord;
 import com.bimlab.asset.model.PurchaseRequest;
 import com.bimlab.asset.model.Subscription;
 import com.bimlab.asset.model.Vendor;
+import com.bimlab.asset.model.status.AssetClass;
+import com.bimlab.asset.model.status.AssetDocumentType;
 import com.bimlab.asset.model.status.AssetStatus;
+import com.bimlab.asset.model.status.CatalogType;
 import com.bimlab.asset.model.status.ContractStatus;
+import com.bimlab.asset.model.status.FixedAssetType;
 import com.bimlab.asset.model.status.MaintenanceStatus;
 import com.bimlab.asset.model.status.PurchaseRequestStatus;
+import com.bimlab.asset.model.status.QrCodeStatus;
 import com.bimlab.asset.model.status.SubscriptionStatus;
+import com.bimlab.asset.model.status.ValueSnapshotSource;
 import com.bimlab.asset.model.status.VendorStatus;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,6 +48,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class AllRepositoriesDataJpaTest {
 
     @Autowired AssetItemRepository assets;
+    @Autowired AssetCategoryRepository assetCategories;
+    @Autowired AssetCatalogItemRepository catalogItems;
+    @Autowired AssetValueSnapshotRepository valueSnapshots;
+    @Autowired AssetDocumentRepository assetDocuments;
+    @Autowired AssetQrCodeRepository qrCodes;
     @Autowired AssetTransferRepository assetTransfers;
     @Autowired ContractRepository contracts;
     @Autowired MaintenanceRecordRepository maintenanceRecords;
@@ -61,6 +77,61 @@ class AllRepositoriesDataJpaTest {
         var page = assets.findAll(PageRequest.of(0, 1));
         assertEquals(2, page.getTotalElements());
         assertEquals(1, page.getContent().size());
+    }
+
+    @Test
+    void improvedSchemaRepositories_persistAssetGraph() {
+        AssetCategory category = assetCategories.save(AssetCategory.builder()
+                .code("TEST_TANGIBLE")
+                .name("Test tangible assets")
+                .assetClass(AssetClass.FIXED_ASSET)
+                .active(true)
+                .build());
+        AssetCatalogItem catalogItem = catalogItems.save(AssetCatalogItem.builder()
+                .itemCode("CAT-001")
+                .name("Laptop catalog item")
+                .category(category)
+                .catalogType(CatalogType.ASSET)
+                .active(true)
+                .build());
+        AssetItem asset = assets.save(AssetItem.builder()
+                .assetCode("GRAPH-001")
+                .name("Laptop graph")
+                .assetCategory(category)
+                .catalogItem(catalogItem)
+                .assetClass(AssetClass.FIXED_ASSET)
+                .fixedAssetType(FixedAssetType.TANGIBLE)
+                .status(AssetStatus.IN_STOCK)
+                .purchaseCost(new BigDecimal("2000"))
+                .build());
+
+        valueSnapshots.save(AssetValueSnapshot.builder()
+                .asset(asset)
+                .snapshotDate(LocalDate.of(2026, 6, 18))
+                .originalCost(new BigDecimal("2000"))
+                .bookValue(new BigDecimal("2000"))
+                .source(ValueSnapshotSource.SYSTEM_CALCULATION)
+                .build());
+        AssetDocument document = assetDocuments.save(AssetDocument.builder()
+                .asset(asset)
+                .documentType(AssetDocumentType.INVOICE)
+                .fileName("invoice.pdf")
+                .objectKey("assets/GRAPH-001/invoice.pdf")
+                .build());
+        qrCodes.save(AssetQrCode.builder()
+                .asset(asset)
+                .qrPayload("asset:GRAPH-001")
+                .qrToken("GRAPH-001")
+                .status(QrCodeStatus.ACTIVE)
+                .build());
+
+        assertEquals(category.getId(), assets.findByAssetCode("GRAPH-001")
+                .orElseThrow().getAssetCategory().getId());
+        assertEquals(1, valueSnapshots.findByAssetIdOrderBySnapshotDateDesc(asset.getId()).size());
+        assertEquals(document.getId(), assetDocuments.findByObjectKey(
+                "assets/GRAPH-001/invoice.pdf").orElseThrow().getId());
+        assertEquals(asset.getId(), qrCodes.findByQrToken("GRAPH-001")
+                .orElseThrow().getAsset().getId());
     }
 
     @Test

@@ -1,4 +1,4 @@
-package com.bimlab.asset.dto;
+package com.bimlab.asset.dto.response;
 
 import java.math.BigDecimal;
 

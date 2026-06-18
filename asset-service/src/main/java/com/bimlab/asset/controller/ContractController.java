@@ -4,8 +4,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 
-import com.bimlab.asset.dto.ContractRequest;
-import com.bimlab.asset.model.Contract;
+import com.bimlab.asset.dto.request.ContractRequest;
+import com.bimlab.asset.dto.request.StatusUpdateRequest;
+import com.bimlab.asset.dto.response.ContractResponse;
+import com.bimlab.asset.dto.response.FileUploadResponse;
+import com.bimlab.asset.mapper.ContractMapper;
 import com.bimlab.asset.service.ContractService;
 import com.bimlab.asset.storage.MinioService;
 import jakarta.validation.Valid;
@@ -19,9 +22,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.InputStream;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/asset/contracts")
@@ -29,44 +30,48 @@ import java.util.Map;
 public class ContractController {
     private final ContractService service;
     private final MinioService minioService;
+    private final ContractMapper mapper;
 
     @GetMapping
     @PreAuthorize("hasAnyAuthority('asset_access','asset_view_self','asset_view_team','asset_view_all','asset_manage','asset_finance_manage')")
-    public List<Contract> list() {
-        return service.listContracts();
+    public List<ContractResponse> list() {
+        return service.listContracts().stream().map(mapper::toResponse).toList();
     }
 
     // N4: paginated list — backward-compatible with legacy GET (no /paged) which still returns List<Contract>.
     @GetMapping("/paged")
     @PreAuthorize("hasAnyAuthority('asset_access','asset_view_self','asset_view_team','asset_view_all','asset_manage','asset_finance_manage')")
-    public Page<Contract> listPaged(@PageableDefault(size = 20) Pageable pageable) {
-        return service.listContractsPaged(pageable);
+    public Page<ContractResponse> listPaged(@PageableDefault(size = 20) Pageable pageable) {
+        return service.listContractsPaged(pageable).map(mapper::toResponse);
     }
 
 
     // F1: Contract has no employee owner — admin perms only (Q1 flattened gate).
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyAuthority('contract_manage','asset_finance_manage','asset_manage','asset_view_all')")
-    public Contract get(@PathVariable Long id) {
-        return service.getContract(id);
+    public ContractResponse get(@PathVariable Long id) {
+        return mapper.toResponse(service.getContract(id));
     }
 
     @PostMapping
     @PreAuthorize("hasAnyAuthority('contract_manage','asset_finance_manage','asset_manage')")
-    public Contract create(@Valid @RequestBody ContractRequest req) {
-        return service.createContract(req);
+    public ContractResponse create(@Valid @RequestBody ContractRequest req) {
+        return mapper.toResponse(service.createContract(req));
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyAuthority('contract_manage','asset_finance_manage','asset_manage')")
-    public Contract update(@PathVariable Long id, @Valid @RequestBody ContractRequest req) {
-        return service.updateContract(id, req);
+    public ContractResponse update(@PathVariable Long id, @Valid @RequestBody ContractRequest req) {
+        return mapper.toResponse(service.updateContract(id, req));
     }
 
     @PatchMapping("/{id}/status")
     @PreAuthorize("hasAnyAuthority('contract_manage','asset_finance_manage','asset_manage')")
-    public Contract status(@PathVariable Long id, @RequestBody Map<String, String> body) {
-        return service.updateContractStatus(id, body.get("status"));
+    public ContractResponse status(
+            @PathVariable Long id,
+            @Valid @RequestBody StatusUpdateRequest req
+    ) {
+        return mapper.toResponse(service.updateContractStatus(id, req.status()));
     }
 
     @DeleteMapping("/{id}")
@@ -78,13 +83,9 @@ public class ContractController {
     // Q7: upload a contract attachment to MinIO. Returns {fileKey, downloadUrl}.
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasAnyAuthority('contract_manage','asset_finance_manage','asset_manage')")
-    public Map<String, String> upload(@RequestParam("file") MultipartFile file) {
+    public FileUploadResponse upload(@RequestParam("file") MultipartFile file) {
         String key = minioService.upload(file, "contracts");
-        Map<String, String> body = new HashMap<>();
-        body.put("fileKey", key);
-        String url = minioService.getPresignedUrl(key);
-        if (url != null) body.put("downloadUrl", url);
-        return body;
+        return new FileUploadResponse(key, minioService.getPresignedUrl(key));
     }
 
     // Q7: stream a contract attachment by object key (server-side fetch, no public URL leak).

@@ -1,6 +1,7 @@
 package com.bimlab.asset.controller;
 
 import com.bimlab.asset.config.TestSecurityConfig;
+import com.bimlab.asset.mapper.AssetMapper;
 import com.bimlab.asset.model.AssetItem;
 import com.bimlab.asset.model.status.AssetStatus;
 import com.bimlab.asset.security.AssetAccessService;
@@ -26,7 +27,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(AssetController.class)
-@Import(TestSecurityConfig.class)
+@Import({TestSecurityConfig.class, AssetMapper.class})
 @AutoConfigureMockMvc(addFilters = false)
 class AssetControllerWebMvcTest {
 
@@ -65,7 +66,7 @@ class AssetControllerWebMvcTest {
     @Test
     @WithMockUser(authorities = {"asset_view_self"})
     void get_appliesScopingCheck() throws Exception {
-        when(assetService.getAsset(1L)).thenReturn(sample());
+        when(assetService.getAssetById(1L)).thenReturn(sample());
         mockMvc.perform(get("/api/asset/assets/1"))
                 .andExpect(status().isOk());
         verify(assetAccessService).ensureSelfOrAny(any(), any());

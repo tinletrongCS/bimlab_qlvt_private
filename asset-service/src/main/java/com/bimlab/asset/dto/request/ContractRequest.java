@@ -1,4 +1,4 @@
-package com.bimlab.asset.dto;
+package com.bimlab.asset.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -28,5 +28,31 @@ public record ContractRequest(
         String attachmentUrl,
         // Q7: object key in MinIO bucket (preferred over attachmentUrl)
         @Size(max = 500) String attachmentObjectKey,
-        String notes
-) {}
+        String notes,
+        Long assetId,
+        Long documentId
+) {
+    public ContractRequest(
+            String contractNumber,
+            String title,
+            Long vendorId,
+            Long purchaseRequestId,
+            LocalDate signDate,
+            LocalDate effectiveFrom,
+            LocalDate effectiveTo,
+            BigDecimal contractValue,
+            String currency,
+            String paymentTerms,
+            String status,
+            String attachmentUrl,
+            String attachmentObjectKey,
+            String notes
+    ) {
+        this(
+                contractNumber, title, vendorId, purchaseRequestId, signDate,
+                effectiveFrom, effectiveTo, contractValue, currency,
+                paymentTerms, status, attachmentUrl, attachmentObjectKey,
+                notes, null, null
+        );
+    }
+}

@@ -1,6 +1,6 @@
 package com.bimlab.asset.service;
 
-import com.bimlab.asset.dto.MaintenanceRecordRequest;
+import com.bimlab.asset.dto.request.MaintenanceRecordRequest;
 import com.bimlab.asset.model.MaintenanceRecord;
 import com.bimlab.asset.model.status.MaintenanceStatus;
 import com.bimlab.asset.model.status.StatusParser;
@@ -79,6 +79,9 @@ public class MaintenanceService {
         m.setPerformedBy(req.performedBy());
         m.setDescription(req.description());
         m.setNextMaintenanceDate(req.nextMaintenanceDate());
+        m.setDowntimeHours(req.downtimeHours());
+        m.setMeterReading(req.meterReading());
+        m.setConditionAfter(req.conditionAfter());
         MaintenanceStatus parsed = StatusParser.parseOrNull(MaintenanceStatus.class, req.status());
         if (parsed != null) m.setStatus(parsed);
     }

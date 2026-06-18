@@ -3,7 +3,7 @@ package com.bimlab.asset.service;
 
 import com.bimlab.asset.model.status.SubscriptionStatus;
 import com.bimlab.asset.model.status.VendorStatus;
-import com.bimlab.asset.dto.SubscriptionRequest;
+import com.bimlab.asset.dto.request.SubscriptionRequest;
 import com.bimlab.asset.model.Subscription;
 import com.bimlab.asset.model.Vendor;
 import com.bimlab.asset.repository.SubscriptionRepository;

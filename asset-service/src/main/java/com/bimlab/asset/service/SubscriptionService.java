@@ -1,6 +1,6 @@
 package com.bimlab.asset.service;
 
-import com.bimlab.asset.dto.SubscriptionRequest;
+import com.bimlab.asset.dto.request.SubscriptionRequest;
 import com.bimlab.asset.model.Subscription;
 import com.bimlab.asset.model.status.StatusParser;
 import com.bimlab.asset.model.status.SubscriptionStatus;
@@ -24,6 +24,7 @@ import java.util.NoSuchElementException;
 public class SubscriptionService {
     private final SubscriptionRepository subscriptions;
     private final VendorService vendorService;
+    private final AssetService assetService;
 
     @Transactional(readOnly = true)
     public List<Subscription> listSubscriptions() {
@@ -63,6 +64,9 @@ public class SubscriptionService {
     private void applySubscription(Subscription s, SubscriptionRequest req) {
         s.setSoftwareName(req.softwareName());
         s.setPlanName(req.planName());
+        s.setAsset(req.assetId() == null ? null : assetService.getAsset(req.assetId()));
+        s.setLicenseKey(req.licenseKey());
+        s.setOwnerEmployeeId(req.ownerEmployeeId());
         s.setVendor(req.vendorId() == null ? null : vendorService.getVendor(req.vendorId()));
         s.setTotalSeats(req.totalSeats());
         s.setUsedSeats(req.usedSeats());

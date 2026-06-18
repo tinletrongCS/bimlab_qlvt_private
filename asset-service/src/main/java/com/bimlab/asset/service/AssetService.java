@@ -1,12 +1,19 @@
 package com.bimlab.asset.service;
 
-import com.bimlab.asset.dto.AssetRequest;
-import com.bimlab.asset.dto.DepreciationSnapshot;
-import com.bimlab.asset.dto.DisposeAssetRequest;
-import com.bimlab.asset.dto.UtilizationReport;
+import com.bimlab.asset.dto.request.AssetRequest;
+import com.bimlab.asset.dto.request.DisposeAssetRequest;
+import com.bimlab.asset.dto.response.DepreciationSnapshot;
+import com.bimlab.asset.dto.response.UtilizationReportResponse;
+import com.bimlab.asset.model.AssetCatalogItem;
+import com.bimlab.asset.model.AssetCategory;
 import com.bimlab.asset.model.AssetItem;
+import com.bimlab.asset.model.status.AssetClass;
 import com.bimlab.asset.model.status.AssetStatus;
+import com.bimlab.asset.model.status.FixedAssetType;
 import com.bimlab.asset.model.status.StatusParser;
+import com.bimlab.asset.model.status.ToolUsageType;
+import com.bimlab.asset.repository.AssetCatalogItemRepository;
+import com.bimlab.asset.repository.AssetCategoryRepository;
 import com.bimlab.asset.repository.AssetItemRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -32,22 +39,29 @@ import java.util.stream.Collectors;
 public class AssetService {
     private final AssetItemRepository assets;
     private final VendorService vendorService;
+    private final AssetCategoryRepository assetCategories;
+    private final AssetCatalogItemRepository catalogItems;
 
     @Transactional(readOnly = true)
     public List<AssetItem> listAssets() {
         return assets.findAll();
     }
 
-    // N4: paginated read; legacy listAssets() kept for FE back-compat.
     @Transactional(readOnly = true)
     public Page<AssetItem> listAssetsPaged(Pageable pageable) {
         return assets.findAll(pageable);
     }
 
+
+    @Transactional(readOnly = true)
+    public AssetItem getAssetById(Long id) {
+        return assets.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy tài sản"));
+    }
+
     @Transactional(readOnly = true)
     public AssetItem getAsset(Long id) {
-        return assets.findById(id)
-                .orElseThrow(() -> new NoSuchElementException("Tài sản không tồn tại"));
+        return getAssetById(id);
     }
 
     @Transactional
@@ -59,20 +73,40 @@ public class AssetService {
 
     @Transactional
     public AssetItem updateAsset(Long id, AssetRequest req) {
-        AssetItem item = getAsset(id);
+        AssetItem item = getAssetById(id);
         applyAsset(item, req);
         return assets.save(item);
     }
 
     @Transactional
     public void deleteAsset(Long id) {
-        assets.delete(getAsset(id));
+        assets.delete(getAssetById(id));
     }
 
     private void applyAsset(AssetItem item, AssetRequest req) {
         item.setAssetCode(req.assetCode());
         item.setName(req.name());
+        AssetCatalogItem catalogItem = req.catalogItemId() == null
+                ? null
+                : catalogItems.findById(req.catalogItemId())
+                        .orElseThrow(() -> new NoSuchElementException("Danh mục vật tư không tồn tại"));
+        AssetCategory assetCategory = req.categoryId() == null
+                ? null
+                : assetCategories.findById(req.categoryId())
+                        .orElseThrow(() -> new NoSuchElementException("Nhóm tài sản không tồn tại"));
+        item.setCatalogItem(catalogItem);
+        item.setAssetCategory(assetCategory);
+        item.setParentAsset(req.parentAssetId() == null ? null : getAssetById(req.parentAssetId()));
         item.setCategory(req.category());
+        AssetClass assetClass = StatusParser.parseOrNull(AssetClass.class, req.assetClass());
+        if (assetClass == null && assetCategory != null) {
+            assetClass = assetCategory.getAssetClass();
+        }
+        if (assetClass != null) item.setAssetClass(assetClass);
+        FixedAssetType fixedAssetType = StatusParser.parseOrNull(FixedAssetType.class, req.fixedAssetType());
+        if (fixedAssetType != null) item.setFixedAssetType(fixedAssetType);
+        ToolUsageType toolUsageType = StatusParser.parseOrNull(ToolUsageType.class, req.toolUsageType());
+        if (toolUsageType != null) item.setToolUsageType(toolUsageType);
         item.setSerialNumber(req.serialNumber());
         item.setSource(req.source());
         item.setVendor(req.vendorId() == null ? null : vendorService.getVendor(req.vendorId()));
@@ -80,20 +114,34 @@ public class AssetService {
         item.setDepartmentId(req.departmentId());
         item.setSiteId(req.siteId());
         item.setProjectId(req.projectId());
+        item.setUseDate(req.useDate());
+        item.setDepreciationStartDate(req.depreciationStartDate());
+        item.setOriginalCost(req.originalCost());
         item.setPurchaseCost(req.purchaseCost());
+        item.setAccumulatedDepreciation(req.accumulatedDepreciation());
+        item.setBookValue(req.bookValue());
         item.setResidualValue(req.residualValue());
         item.setPurchaseDate(req.purchaseDate());
         item.setWarrantyUntil(req.warrantyUntil());
         AssetStatus parsed = StatusParser.parseOrNull(AssetStatus.class, req.status());
         if (parsed != null) item.setStatus(parsed);
         item.setDepreciationMethod(req.depreciationMethod());
+        item.setUsefulLifeMonths(req.usefulLifeMonths());
         item.setUsefulLifeYears(req.usefulLifeYears());
+        item.setDepreciationRate(req.depreciationRate());
+        item.setManufactureYear(req.manufactureYear());
+        item.setInstallationYear(req.installationYear());
+        item.setCountryCode(req.countryCode());
+        item.setCapacity(req.capacity());
+        item.setCapacityUnit(req.capacityUnit());
+        item.setRealCapacity(req.realCapacity());
+        item.setTechnicalDescription(req.technicalDescription());
         item.setNotes(req.notes());
     }
 
     @Transactional
     public AssetItem disposeAsset(Long id, DisposeAssetRequest req) {
-        AssetItem item = getAsset(id);
+        AssetItem item = getAssetById(id);
         if (item.getStatus() == AssetStatus.DISPOSED) {
             throw new IllegalStateException("Tài sản đã được thanh lý");
         }
@@ -112,7 +160,7 @@ public class AssetService {
      */
     @Transactional(readOnly = true)
     public DepreciationSnapshot calculateDepreciation(Long id) {
-        return calculateDepreciation(getAsset(id));
+        return calculateDepreciation(getAssetById(id));
     }
 
     public DepreciationSnapshot calculateDepreciation(AssetItem item) {
@@ -173,7 +221,7 @@ public class AssetService {
     }
 
     @Transactional(readOnly = true)
-    public UtilizationReport getUtilizationReport() {
+    public UtilizationReportResponse getUtilizationReport() {
         List<AssetItem> all = assets.findAll();
         long total = all.size();
         long assigned = all.stream().filter(a -> a.getStatus() == AssetStatus.ASSIGNED).count();
@@ -197,9 +245,13 @@ public class AssetService {
                 .collect(Collectors.groupingBy(a -> a.getStatus().name(), Collectors.counting()));
         Map<String, Long> byCategory = all.stream()
                 .filter(a -> a.getStatus() != AssetStatus.DISPOSED)
-                .collect(Collectors.groupingBy(AssetItem::getCategory, Collectors.counting()));
+                .collect(Collectors.groupingBy(
+                        a -> a.getCategory() != null
+                                ? a.getCategory()
+                                : a.getAssetCategory() != null ? a.getAssetCategory().getName() : "UNCLASSIFIED",
+                        Collectors.counting()));
 
-        return new UtilizationReport(
+        return new UtilizationReportResponse(
                 total, assigned, inStock, maintenance, disposed,
                 Math.round(rate * 100.0) / 100.0,
                 totalValue, idleValue, byStatus, byCategory

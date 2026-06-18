@@ -1,5 +1,6 @@
 package com.bimlab.asset.service;
 
+import com.bimlab.asset.dto.response.DashboardSummaryResponse;
 import com.bimlab.asset.repository.AssetItemRepository;
 import com.bimlab.asset.repository.ContractRepository;
 import com.bimlab.asset.repository.PurchaseRequestRepository;
@@ -8,8 +9,6 @@ import com.bimlab.asset.repository.VendorRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.Map;
 
 /**
  * Q2-followup N1: dashboard counts extracted out of {@link com.bimlab.asset.controller.AssetDashboardController}
@@ -27,13 +26,13 @@ public class DashboardService {
     private final ContractRepository contracts;
 
     @Transactional(readOnly = true)
-    public Map<String, Long> getCounts() {
-        return Map.of(
-                "assets", assets.count(),
-                "subscriptions", subscriptions.count(),
-                "vendors", vendors.count(),
-                "purchaseRequests", purchaseRequests.count(),
-                "contracts", contracts.count()
+    public DashboardSummaryResponse getCounts() {
+        return new DashboardSummaryResponse(
+                assets.count(),
+                subscriptions.count(),
+                vendors.count(),
+                purchaseRequests.count(),
+                contracts.count()
         );
     }
 }

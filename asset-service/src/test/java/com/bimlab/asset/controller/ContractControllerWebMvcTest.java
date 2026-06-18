@@ -1,6 +1,9 @@
 package com.bimlab.asset.controller;
 
 import com.bimlab.asset.config.TestSecurityConfig;
+import com.bimlab.asset.mapper.ContractMapper;
+import com.bimlab.asset.mapper.PurchaseRequestMapper;
+import com.bimlab.asset.mapper.VendorMapper;
 import com.bimlab.asset.model.Contract;
 import com.bimlab.asset.model.status.ContractStatus;
 import com.bimlab.asset.security.AssetAccessService;
@@ -25,7 +28,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(ContractController.class)
-@Import(TestSecurityConfig.class)
+@Import({
+        TestSecurityConfig.class,
+        ContractMapper.class,
+        PurchaseRequestMapper.class,
+        VendorMapper.class
+})
 @AutoConfigureMockMvc(addFilters = false)
 class ContractControllerWebMvcTest {
 

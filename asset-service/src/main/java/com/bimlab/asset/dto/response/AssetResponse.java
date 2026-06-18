@@ -1,0 +1,52 @@
+package com.bimlab.asset.dto.response;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
+public record AssetResponse(
+        Long id,
+        String assetCode,
+        String name,
+        AssetCatalogItemResponse catalogItem,
+        AssetCategoryResponse assetCategory,
+        String category,
+        AssetSummaryResponse parentAsset,
+        String assetClass,
+        String fixedAssetType,
+        String toolUsageType,
+        String serialNumber,
+        String source,
+        VendorResponse vendor,
+        Long assignedEmployeeId,
+        Long departmentId,
+        Long siteId,
+        Long projectId,
+        LocalDate purchaseDate,
+        LocalDate useDate,
+        LocalDate depreciationStartDate,
+        LocalDate warrantyUntil,
+        BigDecimal originalCost,
+        BigDecimal purchaseCost,
+        BigDecimal accumulatedDepreciation,
+        BigDecimal bookValue,
+        BigDecimal residualValue,
+        String depreciationMethod,
+        Integer usefulLifeMonths,
+        Integer usefulLifeYears,
+        BigDecimal depreciationRate,
+        Integer manufactureYear,
+        Integer installationYear,
+        String countryCode,
+        BigDecimal capacity,
+        String capacityUnit,
+        BigDecimal realCapacity,
+        String technicalDescription,
+        String status,
+        LocalDate disposalDate,
+        BigDecimal disposalPrice,
+        String disposalReason,
+        String notes,
+        LocalDateTime createdAt,
+        LocalDateTime updatedAt
+) {}

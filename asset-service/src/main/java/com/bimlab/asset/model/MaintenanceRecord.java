@@ -10,9 +10,11 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "maintenance_records", schema = "asset", indexes = {
-        @Index(name = "idx_maintenance_asset", columnList = "asset_id"),
-        @Index(name = "idx_maintenance_date", columnList = "maintenanceDate"),
-        @Index(name = "idx_maintenance_status", columnList = "status")
+        @Index(name = "idx_maintenance_records_asset_id", columnList = "asset_id"),
+        @Index(name = "idx_maintenance_records_vendor_id", columnList = "vendor_id"),
+        @Index(name = "idx_maintenance_records_maintenance_date", columnList = "maintenance_date"),
+        @Index(name = "idx_maintenance_records_next_maintenance_date", columnList = "next_maintenance_date"),
+        @Index(name = "idx_maintenance_records_status", columnList = "status")
 })
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class MaintenanceRecord {
@@ -27,10 +29,10 @@ public class MaintenanceRecord {
     @Column(length = 30, nullable = false)
     private String maintenanceType;
 
-    @Column(nullable = false)
+    @Column(name = "maintenance_date", nullable = false)
     private LocalDate maintenanceDate;
 
-    @Column(precision = 16, scale = 2)
+    @Column(precision = 18, scale = 2)
     private BigDecimal cost;
 
     @ManyToOne(fetch = FetchType.EAGER)
@@ -44,16 +46,26 @@ public class MaintenanceRecord {
     @Column(length = 1000)
     private String description;
 
+    @Column(name = "next_maintenance_date")
     private LocalDate nextMaintenanceDate;
+
+    @Column(name = "downtime_hours", precision = 10, scale = 2)
+    private BigDecimal downtimeHours;
+
+    @Column(name = "meter_reading", precision = 18, scale = 2)
+    private BigDecimal meterReading;
+
+    @Column(name = "condition_after", length = 500)
+    private String conditionAfter;
 
     @Enumerated(EnumType.STRING)
     @Column(length = 30, nullable = false)
     private MaintenanceStatus status;
 
-    @Column(nullable = false)
+    @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
-    @Column(nullable = false)
+    @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
     @PrePersist

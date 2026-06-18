@@ -1,6 +1,8 @@
 package com.bimlab.asset.controller;
 
 import com.bimlab.asset.config.TestSecurityConfig;
+import com.bimlab.asset.mapper.SubscriptionMapper;
+import com.bimlab.asset.mapper.VendorMapper;
 import com.bimlab.asset.model.Subscription;
 import com.bimlab.asset.model.status.SubscriptionStatus;
 import com.bimlab.asset.security.AssetAccessService;
@@ -24,7 +26,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(SubscriptionController.class)
-@Import(TestSecurityConfig.class)
+@Import({TestSecurityConfig.class, SubscriptionMapper.class, VendorMapper.class})
 @AutoConfigureMockMvc(addFilters = false)
 class SubscriptionControllerWebMvcTest {
 

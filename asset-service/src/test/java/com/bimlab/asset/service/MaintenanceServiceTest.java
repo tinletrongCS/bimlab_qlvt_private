@@ -2,7 +2,7 @@ package com.bimlab.asset.service;
 
 
 import com.bimlab.asset.model.status.AssetStatus;
-import com.bimlab.asset.dto.MaintenanceRecordRequest;
+import com.bimlab.asset.dto.request.MaintenanceRecordRequest;
 import com.bimlab.asset.model.AssetItem;
 import com.bimlab.asset.model.MaintenanceRecord;
 import com.bimlab.asset.repository.MaintenanceRecordRepository;
