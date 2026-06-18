@@ -9,18 +9,6 @@ import java.util.Arrays;
 import java.util.Objects;
 import java.util.Set;
 
-/**
- * Imperative authorization helper for QLVT endpoints.
- *
- * <p>Q1: non-object-context gates (POST/PUT/DELETE/PATCH and the list/report
- * endpoints) are now expressed declaratively via {@code @PreAuthorize} on
- * controller methods. The {@code ensureSelfOrAny} / {@code ensurePartyOrAny}
- * helpers stay imperative because they need the domain object loaded from
- * the DB before the ownership check can run.
- *
- * <p>{@link #ensureAccess()} remains imperative too — it gates the broad
- * read scope and runs <em>before</em> {@code ensureSelfOrAny}.
- */
 @Component
 public class AssetAccessService {
 
@@ -85,13 +73,13 @@ public class AssetAccessService {
         if (ownerEmployeeId != null && Objects.equals(ownerEmployeeId, current)) return;
         throw new AccessDeniedException("Không có quyền truy cập tài nguyên này");
     }
+
     /*
       Dùng cho luân chuyển tài sản. Người gọi được xem nếu là:
       - Người bàn giao;
       - Người nhận;
       - Hoặc admin.
      */
-
     public void ensurePartyOrAny(Long fromEmployeeId, Long toEmployeeId, Set<Permission> adminPermissions) {
         if (hasAnyPermission(adminPermissions.toArray(Permission[]::new))) return;
         Long currentEmployeeId = this.getCurrentEmployeeId();

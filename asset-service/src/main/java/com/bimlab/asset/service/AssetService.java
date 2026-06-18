@@ -1,9 +1,9 @@
 package com.bimlab.asset.service;
 
-import com.bimlab.asset.dto.AssetRequest;
-import com.bimlab.asset.dto.DepreciationSnapshot;
-import com.bimlab.asset.dto.DisposeAssetRequest;
-import com.bimlab.asset.dto.UtilizationReport;
+import com.bimlab.asset.dto.request.AssetRequest;
+import com.bimlab.asset.dto.request.DisposeAssetRequest;
+import com.bimlab.asset.dto.response.DepreciationSnapshot;
+import com.bimlab.asset.dto.response.UtilizationReportResponse;
 import com.bimlab.asset.model.AssetCatalogItem;
 import com.bimlab.asset.model.AssetCategory;
 import com.bimlab.asset.model.AssetItem;
@@ -53,10 +53,15 @@ public class AssetService {
     }
 
 
-    @Transactional
+    @Transactional(readOnly = true)
     public AssetItem getAssetById(Long id) {
         return assets.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Không tìm thấy tài sản"));
+    }
+
+    @Transactional(readOnly = true)
+    public AssetItem getAsset(Long id) {
+        return getAssetById(id);
     }
 
     @Transactional
@@ -216,7 +221,7 @@ public class AssetService {
     }
 
     @Transactional(readOnly = true)
-    public UtilizationReport getUtilizationReport() {
+    public UtilizationReportResponse getUtilizationReport() {
         List<AssetItem> all = assets.findAll();
         long total = all.size();
         long assigned = all.stream().filter(a -> a.getStatus() == AssetStatus.ASSIGNED).count();
@@ -246,7 +251,7 @@ public class AssetService {
                                 : a.getAssetCategory() != null ? a.getAssetCategory().getName() : "UNCLASSIFIED",
                         Collectors.counting()));
 
-        return new UtilizationReport(
+        return new UtilizationReportResponse(
                 total, assigned, inStock, maintenance, disposed,
                 Math.round(rate * 100.0) / 100.0,
                 totalValue, idleValue, byStatus, byCategory

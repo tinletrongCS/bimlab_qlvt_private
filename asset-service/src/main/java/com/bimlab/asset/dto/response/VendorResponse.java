@@ -1,9 +1,8 @@
-package com.bimlab.asset.dto;
+package com.bimlab.asset.dto.response;
 
-import jakarta.validation.constraints.NotBlank;
-
-public record VendorRequest(
-        @NotBlank String name,
+public record VendorResponse(
+        Long id,
+        String name,
         String taxCode,
         String contactName,
         String email,

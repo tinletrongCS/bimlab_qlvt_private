@@ -1,10 +1,10 @@
-package com.bimlab.asset.dto;
+package com.bimlab.asset.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-public record PurchaseRequestPayload(
+public record PurchaseRequestRequest(
         @NotBlank String requestType,
         @NotBlank String title,
         String reason,

@@ -2,7 +2,7 @@ package com.bimlab.asset.service;
 
 
 import com.bimlab.asset.model.status.PurchaseRequestStatus;
-import com.bimlab.asset.dto.PurchaseRequestPayload;
+import com.bimlab.asset.dto.request.PurchaseRequestRequest;
 import com.bimlab.asset.model.PurchaseRequest;
 import com.bimlab.asset.repository.PurchaseRequestRepository;
 import org.junit.jupiter.api.Test;
@@ -35,8 +35,8 @@ class PurchaseRequestServiceTest {
 
     @InjectMocks PurchaseRequestService service;
 
-    private static PurchaseRequestPayload payload(Long requesterFromBody, String status) {
-        return new PurchaseRequestPayload(
+    private static PurchaseRequestRequest payload(Long requesterFromBody, String status) {
+        return new PurchaseRequestRequest(
                 "PURCHASE", "Mua laptop", "Bổ sung thiết bị",
                 new BigDecimal("15000000"),
                 requesterFromBody, 1L, 2L, 3L,

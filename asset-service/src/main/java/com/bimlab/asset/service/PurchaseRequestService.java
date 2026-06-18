@@ -1,6 +1,6 @@
 package com.bimlab.asset.service;
 
-import com.bimlab.asset.dto.PurchaseRequestPayload;
+import com.bimlab.asset.dto.request.PurchaseRequestRequest;
 import com.bimlab.asset.model.PurchaseRequest;
 import com.bimlab.asset.model.status.PurchaseRequestStatus;
 import com.bimlab.asset.model.status.StatusParser;
@@ -53,7 +53,7 @@ public class PurchaseRequestService {
      * regular user could submit a PR pre-approved by passing status=APPROVED.
      */
     @Transactional
-    public PurchaseRequest createPurchaseRequest(PurchaseRequestPayload req, Long callerEmployeeId) {
+    public PurchaseRequest createPurchaseRequest(PurchaseRequestRequest req, Long callerEmployeeId) {
         PurchaseRequest pr = new PurchaseRequest();
         applyPurchaseRequest(pr, req, false);
         pr.setRequesterEmployeeId(callerEmployeeId);
@@ -62,7 +62,7 @@ public class PurchaseRequestService {
     }
 
     @Transactional
-    public PurchaseRequest updatePurchaseRequest(Long id, PurchaseRequestPayload req) {
+    public PurchaseRequest updatePurchaseRequest(Long id, PurchaseRequestRequest req) {
         PurchaseRequest pr = getPurchaseRequest(id);
         applyPurchaseRequest(pr, req, true);
         return purchaseRequests.save(pr);
@@ -80,7 +80,7 @@ public class PurchaseRequestService {
         purchaseRequests.delete(getPurchaseRequest(id));
     }
 
-    private void applyPurchaseRequest(PurchaseRequest pr, PurchaseRequestPayload req, boolean isUpdate) {
+    private void applyPurchaseRequest(PurchaseRequest pr, PurchaseRequestRequest req, boolean isUpdate) {
         pr.setRequestType(req.requestType());
         pr.setTitle(req.title());
         pr.setReason(req.reason());

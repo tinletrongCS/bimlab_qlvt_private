@@ -4,9 +4,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 
-import com.bimlab.asset.dto.AssetRequest;
-import com.bimlab.asset.dto.DepreciationSnapshot;
-import com.bimlab.asset.dto.DisposeAssetRequest;
+import com.bimlab.asset.dto.request.AssetRequest;
+import com.bimlab.asset.dto.request.DisposeAssetRequest;
+import com.bimlab.asset.dto.response.AssetResponse;
+import com.bimlab.asset.dto.response.DepreciationSnapshot;
+import com.bimlab.asset.mapper.AssetMapper;
 import com.bimlab.asset.model.AssetItem;
 import com.bimlab.asset.security.AssetAccessService;
 import com.bimlab.asset.security.Permission;
@@ -23,38 +25,38 @@ import java.util.List;
 @RequiredArgsConstructor
 public class AssetController {
     private final AssetService service;
-
     private final AssetAccessService access;
+    private final AssetMapper mapper;
 
     @GetMapping
     @PreAuthorize("hasAnyAuthority('asset_access','asset_view_self','asset_view_team','asset_view_all','asset_manage','asset_finance_manage')")
-    public List<AssetItem> list() {
-        return service.listAssets();
+    public List<AssetResponse> list() {
+        return service.listAssets().stream().map(mapper::toResponse).toList();
     }
 
     @GetMapping("/paged")
     @PreAuthorize("hasAnyAuthority('asset_access','asset_view_self','asset_view_team','asset_view_all','asset_manage','asset_finance_manage')")
-    public Page<AssetItem> listPaged(@PageableDefault(size = 20) Pageable pageable) {
-        return service.listAssetsPaged(pageable);
+    public Page<AssetResponse> listPaged(@PageableDefault(size = 20) Pageable pageable) {
+        return service.listAssetsPaged(pageable).map(mapper::toResponse);
     }
 
-    @GetMapping("{/id}")
+    @GetMapping("/{id}")
     @PreAuthorize("hasAnyAuthority('asset_access', 'asset_view_self', 'asset_view_team', 'asset_view_all', 'asset_manage', 'asset_finance_manage')")
-    public AssetItem get(@PathVariable Long id) {
+    public AssetResponse get(@PathVariable Long id) {
         AssetItem item = service.getAssetById(id);
         access.ensureSelfOrAny(item.getAssignedEmployeeId(), Permission.Sets.ASSET_ADMIN);
-        return item;
+        return mapper.toResponse(item);
     }
     @PostMapping
     @PreAuthorize("hasAuthority('asset_manage')")
-    public AssetItem create(@Valid @RequestBody AssetRequest req) {
-        return service.createAsset(req);
+    public AssetResponse create(@Valid @RequestBody AssetRequest req) {
+        return mapper.toResponse(service.createAsset(req));
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAuthority('asset_manage')")
-    public AssetItem update(@PathVariable Long id, @Valid @RequestBody AssetRequest req) {
-        return service.updateAsset(id, req);
+    public AssetResponse update(@PathVariable Long id, @Valid @RequestBody AssetRequest req) {
+        return mapper.toResponse(service.updateAsset(id, req));
     }
 
     @DeleteMapping("/{id}")
@@ -76,7 +78,7 @@ public class AssetController {
 
     @PostMapping("/{id}/dispose")
     @PreAuthorize("hasAuthority('asset_manage')")
-    public AssetItem dispose(@PathVariable Long id, @Valid @RequestBody DisposeAssetRequest req) {
-        return service.disposeAsset(id, req);
+    public AssetResponse dispose(@PathVariable Long id, @Valid @RequestBody DisposeAssetRequest req) {
+        return mapper.toResponse(service.disposeAsset(id, req));
     }
 }

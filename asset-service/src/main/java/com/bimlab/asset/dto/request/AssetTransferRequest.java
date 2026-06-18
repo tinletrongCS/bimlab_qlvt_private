@@ -1,4 +1,4 @@
-package com.bimlab.asset.dto;
+package com.bimlab.asset.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -18,7 +18,6 @@ public record AssetTransferRequest(
         @NotNull LocalDate transferDate,
         String reason,
         String performedBy,
-        // F5: restrict to https?:// or relative path; defensive against SSRF.
         @Size(max = 2048)
         @Pattern(
                 regexp = "^$|^(https?://|/)[A-Za-z0-9._~:/?#@!$&'()*+,;=%\\-]{1,2047}$",

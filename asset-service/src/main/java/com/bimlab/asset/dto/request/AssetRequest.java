@@ -1,13 +1,14 @@
-package com.bimlab.asset.dto;
+package com.bimlab.asset.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.AssertTrue;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
 public record AssetRequest(
         @NotBlank String assetCode,
         @NotBlank String name,
-        @NotBlank String category,
+        String category,
         String serialNumber,
         String source,
         Long vendorId,
@@ -73,5 +74,10 @@ public record AssetRequest(
                 null, null, null, null, null, null, null, null,
                 null, null, null, null
         );
+    }
+
+    @AssertTrue(message = "Phải chọn categoryId hoặc nhập category")
+    public boolean hasCategorySelection() {
+        return categoryId != null || (category != null && !category.isBlank());
     }
 }

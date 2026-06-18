@@ -46,7 +46,6 @@ public class AssetItem {
     @JsonIgnoreProperties({"parent", "hibernateLazyInitializer", "handler"})
     private AssetCategory assetCategory;
 
-    // Legacy display/category text retained while clients move to categoryId.
     @Column(length = 80)
     private String category;
 

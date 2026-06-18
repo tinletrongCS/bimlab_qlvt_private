@@ -2,7 +2,7 @@ package com.bimlab.asset.service;
 
 
 import com.bimlab.asset.model.status.VendorStatus;
-import com.bimlab.asset.dto.VendorRequest;
+import com.bimlab.asset.dto.request.VendorRequest;
 import com.bimlab.asset.model.Vendor;
 import com.bimlab.asset.repository.VendorRepository;
 import org.junit.jupiter.api.Test;

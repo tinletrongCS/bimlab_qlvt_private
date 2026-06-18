@@ -1,6 +1,6 @@
 package com.bimlab.asset.service;
 
-import com.bimlab.asset.dto.SubscriptionRequest;
+import com.bimlab.asset.dto.request.SubscriptionRequest;
 import com.bimlab.asset.model.Subscription;
 import com.bimlab.asset.model.status.StatusParser;
 import com.bimlab.asset.model.status.SubscriptionStatus;

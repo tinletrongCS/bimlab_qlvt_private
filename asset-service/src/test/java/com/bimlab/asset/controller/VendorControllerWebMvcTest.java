@@ -1,7 +1,8 @@
 package com.bimlab.asset.controller;
 
 import com.bimlab.asset.config.TestSecurityConfig;
-import com.bimlab.asset.dto.VendorRequest;
+import com.bimlab.asset.mapper.VendorMapper;
+import com.bimlab.asset.dto.request.VendorRequest;
 import com.bimlab.asset.model.Vendor;
 import com.bimlab.asset.model.status.VendorStatus;
 import com.bimlab.asset.security.AssetAccessService;
@@ -36,7 +37,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * other 6 list-bearing controllers is in their own *WebMvcTest classes.
  */
 @WebMvcTest(VendorController.class)
-@Import(TestSecurityConfig.class)
+@Import({TestSecurityConfig.class, VendorMapper.class})
 @AutoConfigureMockMvc(addFilters = false)
 class VendorControllerWebMvcTest {
 

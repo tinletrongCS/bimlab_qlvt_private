@@ -1,6 +1,7 @@
 package com.bimlab.asset.service;
 
-import com.bimlab.asset.dto.AssetTransferRequest;
+import com.bimlab.asset.dto.request.AssetTransferRequest;
+import com.bimlab.asset.model.AssetDocument;
 import com.bimlab.asset.model.AssetItem;
 import com.bimlab.asset.model.AssetTransfer;
 import com.bimlab.asset.model.status.AssetStatus;
@@ -61,7 +62,16 @@ public class AssetTransferService {
     @Transactional
     public AssetTransfer createTransfer(AssetTransferRequest req) {
         AssetItem asset = assetService.getAsset(req.assetId());
-        AssetTransfer transfer = AssetTransfer.builder()
+
+        AssetDocument document = null;
+        if (req.handoverDocumentId() != null) {
+            document = assetDocuments.findById(req.handoverDocumentId())
+                    .orElseThrow(() -> new NoSuchElementException(
+                            "Không tìm thấy tài liệu với id: " + req.handoverDocumentId()
+                    ));
+        }
+
+        AssetTransfer assetTransfer = AssetTransfer.builder()
                 .asset(asset)
                 .transferType(req.transferType())
                 .fromEmployeeId(req.fromEmployeeId())
@@ -76,26 +86,39 @@ public class AssetTransferService {
                 .conditionBefore(req.conditionBefore())
                 .conditionAfter(req.conditionAfter())
                 .reason(req.reason())
-                .performedBy(req.performedBy())
                 .handoverDocumentUrl(req.handoverDocumentUrl())
-                .handoverDocument(req.handoverDocumentId() == null
-                        ? null
-                        : assetDocuments.findById(req.handoverDocumentId())
-                                .orElseThrow(() -> new NoSuchElementException("Tài liệu bàn giao không tồn tại")))
+                .handoverDocument(document)
+                .performedBy(req.performedBy())
                 .approvedBy(req.approvedBy())
                 .build();
-        AssetTransfer saved = assetTransfers.save(transfer);
+
+        AssetTransfer savedAssetTransfer = assetTransfers.save(assetTransfer);
 
         if (Boolean.TRUE.equals(req.applyToAsset())) {
             asset.setAssignedEmployeeId(req.toEmployeeId());
-            if (req.toDepartmentId() != null) asset.setDepartmentId(req.toDepartmentId());
-            if (req.toSiteId() != null) asset.setSiteId(req.toSiteId());
-            if (req.toProjectId() != null) asset.setProjectId(req.toProjectId());
-            if (req.toEmployeeId() != null) asset.setStatus(AssetStatus.ASSIGNED);
-            else if ("REVOKE".equals(req.transferType())) asset.setStatus(AssetStatus.IN_STOCK);
+
+            if (req.toDepartmentId() != null) {
+                asset.setDepartmentId(req.toDepartmentId());
+            }
+
+            if (req.toSiteId() != null) {
+                asset.setSiteId(req.toSiteId());
+            }
+
+            if (req.toProjectId() != null) {
+                asset.setProjectId(req.toProjectId());
+            }
+
+            if (req.toEmployeeId() != null) {
+                asset.setStatus(AssetStatus.ASSIGNED);
+            } else if ("REVOKE".equals(req.transferType())) {
+                asset.setStatus(AssetStatus.IN_STOCK);
+            }
+
             assets.save(asset);
         }
-        return saved;
+
+        return savedAssetTransfer;
     }
 
     @Transactional

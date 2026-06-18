@@ -4,7 +4,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 
-import com.bimlab.asset.dto.PurchaseRequestPayload;
+import com.bimlab.asset.dto.request.PurchaseRequestRequest;
+import com.bimlab.asset.dto.request.StatusUpdateRequest;
+import com.bimlab.asset.dto.response.PurchaseRequestResponse;
+import com.bimlab.asset.mapper.PurchaseRequestMapper;
 import com.bimlab.asset.model.PurchaseRequest;
 import com.bimlab.asset.security.AssetAccessService;
 import com.bimlab.asset.security.Permission;
@@ -15,7 +18,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/asset/purchase-requests")
@@ -23,28 +25,29 @@ import java.util.Map;
 public class PurchaseRequestController {
     private final PurchaseRequestService service;
     private final AssetAccessService access;
+    private final PurchaseRequestMapper mapper;
 
     @GetMapping
     @PreAuthorize("hasAnyAuthority('asset_access','asset_view_self','asset_view_team','asset_view_all','asset_manage','asset_finance_manage')")
-    public List<PurchaseRequest> list() {
-        return service.listPurchaseRequests();
+    public List<PurchaseRequestResponse> list() {
+        return service.listPurchaseRequests().stream().map(mapper::toResponse).toList();
     }
 
     // N4: paginated list — backward-compatible with legacy GET (no /paged) which still returns List<PurchaseRequest>.
     @GetMapping("/paged")
     @PreAuthorize("hasAnyAuthority('asset_access','asset_view_self','asset_view_team','asset_view_all','asset_manage','asset_finance_manage')")
-    public Page<PurchaseRequest> listPaged(@PageableDefault(size = 20) Pageable pageable) {
-        return service.listPurchaseRequestsPaged(pageable);
+    public Page<PurchaseRequestResponse> listPaged(@PageableDefault(size = 20) Pageable pageable) {
+        return service.listPurchaseRequestsPaged(pageable).map(mapper::toResponse);
     }
 
 
     // F1: requester can see own PR; otherwise admin perm required.
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyAuthority('asset_access','asset_view_self','asset_view_team','asset_view_all','asset_manage','asset_finance_manage')")
-    public PurchaseRequest get(@PathVariable Long id) {
+    public PurchaseRequestResponse get(@PathVariable Long id) {
         PurchaseRequest pr = service.getPurchaseRequest(id);
         access.ensureSelfOrAny(pr.getRequesterEmployeeId(), Permission.Sets.PR_ADMIN);
-        return pr;
+        return mapper.toResponse(pr);
     }
 
     // F4: server stamps requesterEmployeeId from the JWT principal; status forced PENDING.
@@ -52,21 +55,24 @@ public class PurchaseRequestController {
     // accidental null-requester writes that would corrupt the audit trail.
     @PostMapping
     @PreAuthorize("hasAnyAuthority('purchase_request_create','asset_manage')")
-    public PurchaseRequest create(@Valid @RequestBody PurchaseRequestPayload req) {
+    public PurchaseRequestResponse create(@Valid @RequestBody PurchaseRequestRequest req) {
         Long callerEmployeeId = access.getCurrentEmployeeId();
-        return service.createPurchaseRequest(req, callerEmployeeId);
+        return mapper.toResponse(service.createPurchaseRequest(req, callerEmployeeId));
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyAuthority('purchase_request_approve','asset_finance_manage','asset_manage')")
-    public PurchaseRequest update(@PathVariable Long id, @Valid @RequestBody PurchaseRequestPayload req) {
-        return service.updatePurchaseRequest(id, req);
+    public PurchaseRequestResponse update(@PathVariable Long id, @Valid @RequestBody PurchaseRequestRequest req) {
+        return mapper.toResponse(service.updatePurchaseRequest(id, req));
     }
 
     @PatchMapping("/{id}/status")
     @PreAuthorize("hasAnyAuthority('purchase_request_approve','asset_finance_manage','asset_manage')")
-    public PurchaseRequest status(@PathVariable Long id, @RequestBody Map<String, String> body) {
-        return service.updatePurchaseStatus(id, body.get("status"));
+    public PurchaseRequestResponse status(
+            @PathVariable Long id,
+            @Valid @RequestBody StatusUpdateRequest req
+    ) {
+        return mapper.toResponse(service.updatePurchaseStatus(id, req.status()));
     }
 
     @DeleteMapping("/{id}")

@@ -1,6 +1,8 @@
 package com.bimlab.asset.controller;
 
 import com.bimlab.asset.config.TestSecurityConfig;
+import com.bimlab.asset.mapper.AssetMapper;
+import com.bimlab.asset.mapper.AssetTransferMapper;
 import com.bimlab.asset.model.AssetItem;
 import com.bimlab.asset.model.AssetTransfer;
 import com.bimlab.asset.model.status.AssetStatus;
@@ -14,6 +16,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -23,11 +26,12 @@ import java.util.List;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(AssetTransferController.class)
-@Import(TestSecurityConfig.class)
+@Import({TestSecurityConfig.class, AssetTransferMapper.class, AssetMapper.class})
 @AutoConfigureMockMvc(addFilters = false)
 class AssetTransferControllerWebMvcTest {
 
@@ -62,5 +66,26 @@ class AssetTransferControllerWebMvcTest {
         mockMvc.perform(get("/api/asset/transfers/paged"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].transferType").value("ASSIGN"));
+    }
+
+    @Test
+    @WithMockUser(authorities = {"asset_manage"})
+    void create_returnsMappedTransfer() throws Exception {
+        when(assetTransferService.createTransfer(any())).thenReturn(sample());
+
+        mockMvc.perform(post("/api/asset/transfers")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "assetId": 1,
+                                  "transferType": "ASSIGN",
+                                  "toEmployeeId": 42,
+                                  "transferDate": "2026-06-18",
+                                  "applyToAsset": true
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.transferType").value("ASSIGN"))
+                .andExpect(jsonPath("$.asset.assetCode").value("LAP-1"));
     }
 }

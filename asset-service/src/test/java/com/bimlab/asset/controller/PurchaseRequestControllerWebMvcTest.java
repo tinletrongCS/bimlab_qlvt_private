@@ -1,6 +1,7 @@
 package com.bimlab.asset.controller;
 
 import com.bimlab.asset.config.TestSecurityConfig;
+import com.bimlab.asset.mapper.PurchaseRequestMapper;
 import com.bimlab.asset.model.PurchaseRequest;
 import com.bimlab.asset.model.status.PurchaseRequestStatus;
 import com.bimlab.asset.security.AssetAccessService;
@@ -24,7 +25,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(PurchaseRequestController.class)
-@Import(TestSecurityConfig.class)
+@Import({TestSecurityConfig.class, PurchaseRequestMapper.class})
 @AutoConfigureMockMvc(addFilters = false)
 class PurchaseRequestControllerWebMvcTest {
 

@@ -3,10 +3,10 @@ package com.bimlab.asset.service;
 
 import com.bimlab.asset.model.status.AssetStatus;
 import com.bimlab.asset.model.status.VendorStatus;
-import com.bimlab.asset.dto.AssetRequest;
-import com.bimlab.asset.dto.DepreciationSnapshot;
-import com.bimlab.asset.dto.DisposeAssetRequest;
-import com.bimlab.asset.dto.UtilizationReport;
+import com.bimlab.asset.dto.request.AssetRequest;
+import com.bimlab.asset.dto.request.DisposeAssetRequest;
+import com.bimlab.asset.dto.response.DepreciationSnapshot;
+import com.bimlab.asset.dto.response.UtilizationReportResponse;
 import com.bimlab.asset.model.AssetItem;
 import com.bimlab.asset.model.Vendor;
 import com.bimlab.asset.repository.AssetItemRepository;
@@ -212,7 +212,7 @@ class AssetServiceTest {
                 AssetItem.builder().status(AssetStatus.DISPOSED).category("Phone").purchaseCost(new BigDecimal("10000000")).build()
         ));
 
-        UtilizationReport report = service.getUtilizationReport();
+        UtilizationReportResponse report = service.getUtilizationReport();
 
         assertEquals(5, report.totalAssets());
         assertEquals(2, report.assignedAssets());
@@ -231,7 +231,7 @@ class AssetServiceTest {
     void utilizationReport_emptyState() {
         when(assets.findAll()).thenReturn(List.of());
 
-        UtilizationReport report = service.getUtilizationReport();
+        UtilizationReportResponse report = service.getUtilizationReport();
 
         assertEquals(0, report.totalAssets());
         assertEquals(0.0, report.utilizationRate());

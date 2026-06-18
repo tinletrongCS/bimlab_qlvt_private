@@ -1,5 +1,6 @@
 package com.bimlab.asset.controller;
 
+import com.bimlab.asset.dto.response.CurrentUserResponse;
 import com.bimlab.asset.security.AssetPrincipal;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -10,9 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * PA-B (Keycloak SSO): nguồn permission cho FE QLVT.
@@ -30,7 +29,7 @@ import java.util.Map;
 public class MeController {
 
     @GetMapping("/me")
-    public ResponseEntity<Map<String, Object>> me() {
+    public ResponseEntity<CurrentUserResponse> me() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated()) {
             return ResponseEntity.status(401).build();
@@ -50,11 +49,11 @@ public class MeController {
             employeeId = principal.employeeId();
         }
 
-        Map<String, Object> body = new LinkedHashMap<>();
-        body.put("username", authentication.getName());
-        body.put("role", role);
-        body.put("employeeId", employeeId);
-        body.put("permissions", permissions);
-        return ResponseEntity.ok(body);
+        return ResponseEntity.ok(new CurrentUserResponse(
+                authentication.getName(),
+                role,
+                employeeId,
+                List.copyOf(permissions)
+        ));
     }
 }

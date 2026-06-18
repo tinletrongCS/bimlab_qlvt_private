@@ -1,6 +1,7 @@
 package com.bimlab.asset.controller;
 
-import com.bimlab.asset.dto.UtilizationReport;
+import com.bimlab.asset.dto.response.DashboardSummaryResponse;
+import com.bimlab.asset.dto.response.UtilizationReportResponse;
 import com.bimlab.asset.service.AssetService;
 import com.bimlab.asset.service.DashboardService;
 import lombok.RequiredArgsConstructor;
@@ -8,8 +9,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.Map;
 
 /**
  * Q2-followup N1: thin controller — count aggregation moved to {@link DashboardService};
@@ -24,13 +23,13 @@ public class AssetDashboardController {
 
     @GetMapping
     @PreAuthorize("hasAnyAuthority('asset_report_view','asset_view_all','asset_manage','asset_finance_manage')")
-    public Map<String, Long> summary() {
+    public DashboardSummaryResponse summary() {
         return dashboardService.getCounts();
     }
 
     @GetMapping("/utilization")
     @PreAuthorize("hasAnyAuthority('asset_report_view','asset_view_all','asset_manage','asset_finance_manage')")
-    public UtilizationReport utilization() {
+    public UtilizationReportResponse utilization() {
         return assetService.getUtilizationReport();
     }
 }

@@ -1,9 +1,9 @@
-package com.bimlab.asset.dto;
+package com.bimlab.asset.dto.response;
 
 import java.math.BigDecimal;
 import java.util.Map;
 
-public record UtilizationReport(
+public record UtilizationReportResponse(
         long totalAssets,
         long assignedAssets,
         long idleAssets,

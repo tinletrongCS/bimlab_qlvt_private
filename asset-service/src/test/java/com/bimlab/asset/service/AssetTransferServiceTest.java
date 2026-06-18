@@ -2,7 +2,7 @@ package com.bimlab.asset.service;
 
 
 import com.bimlab.asset.model.status.AssetStatus;
-import com.bimlab.asset.dto.AssetTransferRequest;
+import com.bimlab.asset.dto.request.AssetTransferRequest;
 import com.bimlab.asset.model.AssetItem;
 import com.bimlab.asset.model.AssetTransfer;
 import com.bimlab.asset.repository.AssetItemRepository;
