@@ -79,6 +79,9 @@ public class MaintenanceService {
         m.setPerformedBy(req.performedBy());
         m.setDescription(req.description());
         m.setNextMaintenanceDate(req.nextMaintenanceDate());
+        m.setDowntimeHours(req.downtimeHours());
+        m.setMeterReading(req.meterReading());
+        m.setConditionAfter(req.conditionAfter());
         MaintenanceStatus parsed = StatusParser.parseOrNull(MaintenanceStatus.class, req.status());
         if (parsed != null) m.setStatus(parsed);
     }

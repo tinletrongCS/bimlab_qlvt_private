@@ -14,5 +14,26 @@ public record MaintenanceRecordRequest(
         String performedBy,
         String description,
         LocalDate nextMaintenanceDate,
-        String status
-) {}
+        String status,
+        BigDecimal downtimeHours,
+        BigDecimal meterReading,
+        String conditionAfter
+) {
+    public MaintenanceRecordRequest(
+            Long assetId,
+            String maintenanceType,
+            LocalDate maintenanceDate,
+            BigDecimal cost,
+            Long vendorId,
+            String performedBy,
+            String description,
+            LocalDate nextMaintenanceDate,
+            String status
+    ) {
+        this(
+                assetId, maintenanceType, maintenanceDate, cost, vendorId,
+                performedBy, description, nextMaintenanceDate, status,
+                null, null, null
+        );
+    }
+}

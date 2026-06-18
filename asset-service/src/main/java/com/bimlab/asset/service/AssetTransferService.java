@@ -5,6 +5,7 @@ import com.bimlab.asset.model.AssetItem;
 import com.bimlab.asset.model.AssetTransfer;
 import com.bimlab.asset.model.status.AssetStatus;
 import com.bimlab.asset.repository.AssetItemRepository;
+import com.bimlab.asset.repository.AssetDocumentRepository;
 import com.bimlab.asset.repository.AssetTransferRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -34,6 +35,7 @@ public class AssetTransferService {
     private final AssetTransferRepository assetTransfers;
     private final AssetItemRepository assets;
     private final AssetService assetService;
+    private final AssetDocumentRepository assetDocuments;
 
     @Transactional(readOnly = true)
     public List<AssetTransfer> listTransfers() {
@@ -68,10 +70,19 @@ public class AssetTransferService {
                 .toDepartmentId(req.toDepartmentId())
                 .fromSiteId(req.fromSiteId())
                 .toSiteId(req.toSiteId())
+                .fromProjectId(req.fromProjectId())
+                .toProjectId(req.toProjectId())
                 .transferDate(req.transferDate())
+                .conditionBefore(req.conditionBefore())
+                .conditionAfter(req.conditionAfter())
                 .reason(req.reason())
                 .performedBy(req.performedBy())
                 .handoverDocumentUrl(req.handoverDocumentUrl())
+                .handoverDocument(req.handoverDocumentId() == null
+                        ? null
+                        : assetDocuments.findById(req.handoverDocumentId())
+                                .orElseThrow(() -> new NoSuchElementException("Tài liệu bàn giao không tồn tại")))
+                .approvedBy(req.approvedBy())
                 .build();
         AssetTransfer saved = assetTransfers.save(transfer);
 
@@ -79,6 +90,7 @@ public class AssetTransferService {
             asset.setAssignedEmployeeId(req.toEmployeeId());
             if (req.toDepartmentId() != null) asset.setDepartmentId(req.toDepartmentId());
             if (req.toSiteId() != null) asset.setSiteId(req.toSiteId());
+            if (req.toProjectId() != null) asset.setProjectId(req.toProjectId());
             if (req.toEmployeeId() != null) asset.setStatus(AssetStatus.ASSIGNED);
             else if ("REVOKE".equals(req.transferType())) asset.setStatus(AssetStatus.IN_STOCK);
             assets.save(asset);

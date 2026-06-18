@@ -6,16 +6,19 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "vendors", schema = "asset")
+@Table(name = "vendors", schema = "asset", indexes = {
+        @Index(name = "idx_vendors_name", columnList = "name"),
+        @Index(name = "idx_vendors_status", columnList = "status")
+})
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class Vendor {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     @Column(nullable = false, length = 180)
     private String name;
-    @Column(length = 80)
+    @Column(name = "tax_code", unique = true, length = 80)
     private String taxCode;
-    @Column(length = 120)
+    @Column(name = "contact_name", length = 120)
     private String contactName;
     @Column(length = 120)
     private String email;
@@ -26,9 +29,9 @@ public class Vendor {
     @Enumerated(EnumType.STRING)
     @Column(length = 20, nullable = false)
     private VendorStatus status;
-    @Column(nullable = false)
+    @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
-    @Column(nullable = false)
+    @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
     @PrePersist

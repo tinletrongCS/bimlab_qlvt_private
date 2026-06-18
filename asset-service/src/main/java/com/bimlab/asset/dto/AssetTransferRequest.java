@@ -25,5 +25,34 @@ public record AssetTransferRequest(
                 message = "URL không hợp lệ"
         )
         String handoverDocumentUrl,
-        Boolean applyToAsset
-) {}
+        Boolean applyToAsset,
+        Long fromProjectId,
+        Long toProjectId,
+        String conditionBefore,
+        String conditionAfter,
+        Long handoverDocumentId,
+        String approvedBy
+) {
+    public AssetTransferRequest(
+            Long assetId,
+            String transferType,
+            Long fromEmployeeId,
+            Long toEmployeeId,
+            Long fromDepartmentId,
+            Long toDepartmentId,
+            Long fromSiteId,
+            Long toSiteId,
+            LocalDate transferDate,
+            String reason,
+            String performedBy,
+            String handoverDocumentUrl,
+            Boolean applyToAsset
+    ) {
+        this(
+                assetId, transferType, fromEmployeeId, toEmployeeId,
+                fromDepartmentId, toDepartmentId, fromSiteId, toSiteId,
+                transferDate, reason, performedBy, handoverDocumentUrl,
+                applyToAsset, null, null, null, null, null, null
+        );
+    }
+}

@@ -18,16 +18,12 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-/**
- * Q1: declarative permissions via {@code @PreAuthorize}; object-context
- * endpoints retain imperative {@code ensureSelfOrAny} after entity load.
- * Q2: depends on {@link AssetService} only (was the monolith).
- */
 @RestController
 @RequestMapping("/api/asset/assets")
 @RequiredArgsConstructor
 public class AssetController {
     private final AssetService service;
+
     private final AssetAccessService access;
 
     @GetMapping
@@ -36,23 +32,19 @@ public class AssetController {
         return service.listAssets();
     }
 
-    // N4: paginated list — backward-compatible with legacy GET (no /paged) which still returns List<AssetItem>.
     @GetMapping("/paged")
     @PreAuthorize("hasAnyAuthority('asset_access','asset_view_self','asset_view_team','asset_view_all','asset_manage','asset_finance_manage')")
     public Page<AssetItem> listPaged(@PageableDefault(size = 20) Pageable pageable) {
         return service.listAssetsPaged(pageable);
     }
 
-
-    // F1: object-level scoping — self-scoped users only see assets assigned to them.
-    @GetMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('asset_access','asset_view_self','asset_view_team','asset_view_all','asset_manage','asset_finance_manage')")
+    @GetMapping("{/id}")
+    @PreAuthorize("hasAnyAuthority('asset_access', 'asset_view_self', 'asset_view_team', 'asset_view_all', 'asset_manage', 'asset_finance_manage')")
     public AssetItem get(@PathVariable Long id) {
-        AssetItem item = service.getAsset(id);
+        AssetItem item = service.getAssetById(id);
         access.ensureSelfOrAny(item.getAssignedEmployeeId(), Permission.Sets.ASSET_ADMIN);
         return item;
     }
-
     @PostMapping
     @PreAuthorize("hasAuthority('asset_manage')")
     public AssetItem create(@Valid @RequestBody AssetRequest req) {
@@ -71,14 +63,13 @@ public class AssetController {
         service.deleteAsset(id);
     }
 
-    // F1: same scoping for depreciation snapshot.
-    // Q2-followup N3: pass the loaded item to avoid a second DB roundtrip and
-    // close the TOCTOU window where the asset could mutate between the access
-    // check and the depreciation computation.
+    /*
+    TODO tính khấu hao theo từng danh mục tài sản -> để làm sau khi có công thức tính
+     */
     @GetMapping("/{id}/depreciation")
     @PreAuthorize("hasAnyAuthority('asset_access','asset_view_self','asset_view_team','asset_view_all','asset_manage','asset_finance_manage')")
     public DepreciationSnapshot depreciation(@PathVariable Long id) {
-        AssetItem item = service.getAsset(id);
+        AssetItem item = service.getAssetById(id);
         access.ensureSelfOrAny(item.getAssignedEmployeeId(), Permission.Sets.ASSET_ADMIN);
         return service.calculateDepreciation(item);
     }

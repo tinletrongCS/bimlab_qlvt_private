@@ -68,8 +68,6 @@ public enum Permission {
         public static final Set<Permission> ASSET_ADMIN = Set.of(
                 ASSET_VIEW_TEAM, ASSET_VIEW_ALL, ASSET_MANAGE, ASSET_FINANCE_MANAGE);
 
-        // Identical contents to ASSET_ADMIN today; kept as a named alias so
-        // controller intent is explicit and the two can diverge later.
         public static final Set<Permission> TRANSFER_ADMIN = ASSET_ADMIN;
 
         public static final Set<Permission> MAINT_ADMIN = Set.of(
