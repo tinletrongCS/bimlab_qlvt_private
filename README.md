@@ -37,3 +37,17 @@ cp platform_bimlab/dev/.env.shared.example .env.shared   # ở workspace cha, đ
 platform_bimlab/dev/dev-up.sh                            # platform → HRM → CDS → QLVT → EduBIM
 ```
 Chi tiết + bảng cổng/health: **`platform_bimlab/DEV-STACK.md`**.
+
+## Database migration
+
+`asset-service` owns schema `asset` through Flyway migrations in
+`asset-service/src/main/resources/db/migration`.
+
+- Production/staging: deploy the new `asset-service` image and let Flyway run
+  `V3__qlvt_asset_schema_refactor.sql` on startup. Do not run
+  `init_qlvt_asset_schema.sql` against production because it drops
+  `asset` schema and all data.
+- Local/dev reset only: `asset-service/src/main/resources/db/init_qlvt_asset_schema.sql`
+  can recreate the schema from scratch when data loss is acceptable.
+- After backend entities/DTOs are fully aligned with the refactored schema, set
+  `SPRING_JPA_HIBERNATE_DDL_AUTO=validate` in deployed environments.
