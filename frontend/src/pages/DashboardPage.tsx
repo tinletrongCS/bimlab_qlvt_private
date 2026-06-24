@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import {
   FiBox,
   FiBriefcase,
@@ -16,7 +16,12 @@ import { useAppData } from "../contexts/AppDataContext";
 import { money } from "../lib/format";
 
 export function DashboardPage() {
-  const { summary, assets, subscriptions, vendors, requests, utilization } = useAppData();
+  const { summary, assets, subscriptions, vendors, requests, utilization, ensureDashboard } =
+    useAppData();
+
+  useEffect(() => {
+    void ensureDashboard();
+  }, [ensureDashboard]);
   const todayLabel = useMemo(
     () =>
       new Date().toLocaleDateString("vi-VN", {

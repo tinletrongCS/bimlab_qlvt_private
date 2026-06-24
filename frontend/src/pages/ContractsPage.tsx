@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { DataTable } from "../components/DataTable";
 import { PanelHeader } from "../components/PanelHeader";
 import { RowActions } from "../components/RowActions";
@@ -9,8 +10,12 @@ import { money } from "../lib/format";
 
 export function ContractsPage() {
   const { hasPermission } = useAuth();
-  const { contracts } = useAppData();
+  const { contracts, ensureContracts } = useAppData();
   const { openModal, deleteResource } = useActions();
+
+  useEffect(() => {
+    void ensureContracts();
+  }, [ensureContracts]);
 
   const canManage = hasPermission("contract_manage");
 

@@ -8,6 +8,7 @@ import {
   FiChevronRight,
   FiCreditCard,
   FiFileText,
+  FiGrid,
   FiLogOut,
   FiMenu,
   FiRefreshCw,
@@ -58,6 +59,7 @@ const NAV_GROUPS: NavGroup[] = [
     icon: <FiBox />,
     children: [
       { to: "/assets", label: "Danh sách", icon: <FiBox />, permission: "asset_access" },
+      { to: "/asset-categories", label: "Danh mục", icon: <FiGrid />, permission: "asset_manage" },
       { to: "/transfers", label: "Luân chuyển", icon: <FiRepeat />, permission: "asset_manage" },
       { to: "/maintenance", label: "Bảo trì", icon: <FiTool />, permission: "maintenance_manage" },
     ],
@@ -205,7 +207,9 @@ export function AppShell() {
       <aside className={`sidebar ${mobileOpen ? "open" : ""} ${sidebarCompact ? "compact" : ""}`}>
         <button type="button" className="brand" onClick={() => window.location.reload()}>
           {sidebarCompact ? (
-            <img src="/lgBL.ico" alt="BIMLab" className="brand-icon" />
+            <span className="brand-compact-mark" aria-hidden="true">
+              <img src="/lgBL.ico" alt="" />
+            </span>
           ) : (
             <>
               <img src="https://bimlab.com.vn/assets/img/bimlab-logo.png" alt="BIMLab" />

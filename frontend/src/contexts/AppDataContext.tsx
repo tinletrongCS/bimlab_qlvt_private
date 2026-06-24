@@ -5,6 +5,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import {
@@ -39,6 +40,21 @@ import type {
 } from "../services/types";
 import { useAuth } from "./AuthContext";
 
+type DataKey =
+  | "summary"
+  | "assets"
+  | "subscriptions"
+  | "vendors"
+  | "requests"
+  | "contracts"
+  | "maintenance"
+  | "transfers"
+  | "utilization"
+  | "employees"
+  | "departments"
+  | "workSites"
+  | "projects";
+
 interface AppDataContextValue {
   summary: DashboardSummary;
   assets: AssetItem[];
@@ -56,6 +72,15 @@ interface AppDataContextValue {
   loading: boolean;
   error: string;
   refresh: () => Promise<void>;
+  ensureDashboard: () => Promise<void>;
+  ensureAssets: () => Promise<void>;
+  ensureVendors: () => Promise<void>;
+  ensureSubscriptions: () => Promise<void>;
+  ensureRequests: () => Promise<void>;
+  ensureContracts: () => Promise<void>;
+  ensureMaintenance: () => Promise<void>;
+  ensureTransfers: () => Promise<void>;
+  ensureLookups: () => Promise<void>;
   clearError: () => void;
   setError: (message: string) => void;
 }
@@ -72,6 +97,7 @@ const AppDataContext = createContext<AppDataContextValue | null>(null);
 
 export function AppDataProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
+  const loadedRef = useRef(new Set<DataKey>());
   const [summary, setSummary] = useState<DashboardSummary>(emptySummary);
   const [assets, setAssets] = useState<AssetItem[]>([]);
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
@@ -88,75 +114,100 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(false);
   const [error, setErrorState] = useState("");
 
-  const refresh = useCallback(async () => {
+  useEffect(() => {
+    if (user) return;
+    loadedRef.current.clear();
+    setSummary(emptySummary);
+    setAssets([]);
+    setSubscriptions([]);
+    setVendors([]);
+    setRequests([]);
+    setContracts([]);
+    setMaintenanceRecords([]);
+    setTransfers([]);
+    setUtilization(null);
+    setEmployees([]);
+    setDepartments([]);
+    setWorkSites([]);
+    setProjects([]);
+    setLoading(false);
+    setErrorState("");
+  }, [user]);
+
+  const loadKeys = useCallback(async (keys: DataKey[], force = false) => {
+    const uniqueKeys = Array.from(new Set(keys));
+    const pendingKeys = force
+      ? uniqueKeys
+      : uniqueKeys.filter((key) => !loadedRef.current.has(key));
+    if (pendingKeys.length === 0) return;
+
     setLoading(true);
     setErrorState("");
     try {
-      // Parallel fetch with per-call defaults — a single 401 from any endpoint
-      // shouldn't blank the entire page; the others still hydrate.
-      const [
-        dashboardData,
-        vendorData,
-        assetData,
-        subscriptionData,
-        requestData,
-        contractData,
-        maintenanceData,
-        transferData,
-        utilizationData,
-        employeeData,
-        departmentData,
-        siteData,
-        projectData,
-      ] = await Promise.all([
-        loadDashboard().catch(() => emptySummary),
-        loadVendors().catch(() => []),
-        loadAssets().catch(() => []),
-        loadSubscriptions().catch(() => []),
-        loadPurchaseRequests().catch(() => []),
-        loadContracts().catch(() => []),
-        loadMaintenanceRecords().catch(() => []),
-        loadTransfers().catch(() => []),
-        loadUtilization().catch(() => null),
-        loadEmployees().catch(() => []),
-        loadDepartments().catch(() => []),
-        loadWorkSites().catch(() => []),
-        loadProjects().catch(() => []),
-      ]);
-      setSummary(dashboardData);
-      setVendors(vendorData);
-      setAssets(assetData);
-      setSubscriptions(subscriptionData);
-      setRequests(requestData);
-      setContracts(contractData);
-      setMaintenanceRecords(maintenanceData);
-      setTransfers(transferData);
-      setUtilization(utilizationData);
-      setEmployees(employeeData);
-      setDepartments(departmentData);
-      setWorkSites(siteData);
-      setProjects(projectData);
+      await Promise.all(
+        pendingKeys.map(async (key) => {
+          if (key === "summary") setSummary(await loadDashboard().catch(() => emptySummary));
+          if (key === "assets") setAssets(await loadAssets().catch(() => []));
+          if (key === "subscriptions") setSubscriptions(await loadSubscriptions().catch(() => []));
+          if (key === "vendors") setVendors(await loadVendors().catch(() => []));
+          if (key === "requests") setRequests(await loadPurchaseRequests().catch(() => []));
+          if (key === "contracts") setContracts(await loadContracts().catch(() => []));
+          if (key === "maintenance")
+            setMaintenanceRecords(await loadMaintenanceRecords().catch(() => []));
+          if (key === "transfers") setTransfers(await loadTransfers().catch(() => []));
+          if (key === "utilization") setUtilization(await loadUtilization().catch(() => null));
+          if (key === "employees") setEmployees(await loadEmployees().catch(() => []));
+          if (key === "departments") setDepartments(await loadDepartments().catch(() => []));
+          if (key === "workSites") setWorkSites(await loadWorkSites().catch(() => []));
+          if (key === "projects") setProjects(await loadProjects().catch(() => []));
+          loadedRef.current.add(key);
+        }),
+      );
     } finally {
       setLoading(false);
     }
   }, []);
 
-  useEffect(() => {
-    if (!user) {
-      // Logout — clear sensitive caches.
-      setAssets([]);
-      setSubscriptions([]);
-      setVendors([]);
-      setRequests([]);
-      setContracts([]);
-      setMaintenanceRecords([]);
-      setTransfers([]);
-      setSummary(emptySummary);
-      setUtilization(null);
+  const ensureLookups = useCallback(
+    () => loadKeys(["vendors", "employees", "departments", "workSites", "projects"]),
+    [loadKeys],
+  );
+
+  const ensureDashboard = useCallback(
+    () =>
+      loadKeys(["summary", "assets", "subscriptions", "vendors", "requests", "utilization"]),
+    [loadKeys],
+  );
+
+  const ensureAssets = useCallback(
+    () => loadKeys(["assets", "employees", "departments", "workSites", "projects"]),
+    [loadKeys],
+  );
+
+  const ensureVendors = useCallback(() => loadKeys(["vendors"]), [loadKeys]);
+  const ensureSubscriptions = useCallback(
+    () => loadKeys(["subscriptions", "vendors"]),
+    [loadKeys],
+  );
+  const ensureRequests = useCallback(() => loadKeys(["requests"]), [loadKeys]);
+  const ensureContracts = useCallback(() => loadKeys(["contracts", "vendors"]), [loadKeys]);
+  const ensureMaintenance = useCallback(
+    () => loadKeys(["maintenance", "assets", "vendors"]),
+    [loadKeys],
+  );
+  const ensureTransfers = useCallback(
+    () => loadKeys(["transfers", "employees", "assets", "departments", "workSites"]),
+    [loadKeys],
+  );
+
+  const refresh = useCallback(async () => {
+    const loadedKeys = Array.from(loadedRef.current);
+    if (loadedKeys.length === 0) {
+      await ensureDashboard();
       return;
     }
-    void refresh();
-  }, [user, refresh]);
+    await loadKeys(loadedKeys, true);
+  }, [ensureDashboard, loadKeys]);
 
   const clearError = useCallback(() => setErrorState(""), []);
   const setError = useCallback((message: string) => setErrorState(message), []);
@@ -179,6 +230,15 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       loading,
       error,
       refresh,
+      ensureDashboard,
+      ensureAssets,
+      ensureVendors,
+      ensureSubscriptions,
+      ensureRequests,
+      ensureContracts,
+      ensureMaintenance,
+      ensureTransfers,
+      ensureLookups,
       clearError,
       setError,
     }),
@@ -199,6 +259,15 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       loading,
       error,
       refresh,
+      ensureDashboard,
+      ensureAssets,
+      ensureVendors,
+      ensureSubscriptions,
+      ensureRequests,
+      ensureContracts,
+      ensureMaintenance,
+      ensureTransfers,
+      ensureLookups,
       clearError,
       setError,
     ],
