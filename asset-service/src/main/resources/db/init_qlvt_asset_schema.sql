@@ -45,36 +45,36 @@ VALUES
     ('FIXED_ASSET', 'Tài sản cố định', 'FIXED_ASSET', 'Nhóm tài sản cố định'),
     ('TOOL_EQUIPMENT', 'Công cụ dụng cụ', 'TOOL_EQUIPMENT', 'Nhóm công cụ dụng cụ');
 
-INSERT INTO asset.asset_categories (code, name, parent_id, asset_class, description)
-VALUES
-    (
-        'TANGIBLE',
-        'Tài sản hữu hình',
-        (SELECT id FROM asset.asset_categories WHERE code = 'FIXED_ASSET'),
-        'FIXED_ASSET',
-        'Máy móc, xe, khuôn mặt, nhà xưởng, vật kiến trúc'
-    ),
-    (
-        'INTANGIBLE',
-        'Tài sản vô hình',
-        (SELECT id FROM asset.asset_categories WHERE code = 'FIXED_ASSET'),
-        'FIXED_ASSET',
-        'Bản quyền phần mềm, license, quyền sử dụng, gọi dịch vụ dài hạn'
-    ),
-    (
-        'TOOL_SINGLE_USE',
-        'Công cụ dùng một lần',
-        (SELECT id FROM asset.asset_categories WHERE code = 'TOOL_EQUIPMENT'),
-        'TOOL_EQUIPMENT',
-        'Công cụ dụng cụ dùng một lần'
-    ),
-    (
-        'TOOL_MULTI_USE',
-        'Công cụ dùng nhiều lần',
-        (SELECT id FROM asset.asset_categories WHERE code = 'TOOL_EQUIPMENT'),
-        'TOOL_EQUIPMENT',
-        'Công cụ dụng cụ dùng nhiều lần'
-    );
+-- INSERT INTO asset.asset_categories (code, name, parent_id, asset_class, description)
+-- VALUES
+--     (
+--         'TANGIBLE',
+--         'Tài sản hữu hình',
+--         (SELECT id FROM asset.asset_categories WHERE code = 'FIXED_ASSET'),
+--         'FIXED_ASSET',
+--         'Máy móc, xe, khuôn mặt, nhà xưởng, vật kiến trúc'
+--     ),
+--     (
+--         'INTANGIBLE',
+--         'Tài sản vô hình',
+--         (SELECT id FROM asset.asset_categories WHERE code = 'FIXED_ASSET'),
+--         'FIXED_ASSET',
+--         'Bản quyền phần mềm, license, quyền sử dụng, gọi dịch vụ dài hạn'
+--     ),
+--     (
+--         'TOOL_SINGLE_USE',
+--         'Công cụ dùng một lần',
+--         (SELECT id FROM asset.asset_categories WHERE code = 'TOOL_EQUIPMENT'),
+--         'TOOL_EQUIPMENT',
+--         'Công cụ dụng cụ dùng một lần'
+--     ),
+--     (
+--         'TOOL_MULTI_USE',
+--         'Công cụ dùng nhiều lần',
+--         (SELECT id FROM asset.asset_categories WHERE code = 'TOOL_EQUIPMENT'),
+--         'TOOL_EQUIPMENT',
+--         'Công cụ dụng cụ dùng nhiều lần'
+--     );
 
 -- ---------------------------------------------------------------------------
 -- Vendors

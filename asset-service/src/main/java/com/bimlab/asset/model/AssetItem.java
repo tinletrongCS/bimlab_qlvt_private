@@ -58,10 +58,12 @@ public class AssetItem {
     @Column(name = "asset_class", nullable = false, length = 40)
     private AssetClass assetClass;
 
+    // Phân loại nhóm tài sản cố định
     @Enumerated(EnumType.STRING)
     @Column(name = "fixed_asset_type", length = 40)
     private FixedAssetType fixedAssetType;
 
+    // Công cụ dụng cụ
     @Enumerated(EnumType.STRING)
     @Column(name = "tool_usage_type", length = 40)
     private ToolUsageType toolUsageType;

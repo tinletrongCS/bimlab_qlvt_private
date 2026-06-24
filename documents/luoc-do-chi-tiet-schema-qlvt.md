@@ -59,6 +59,7 @@ Các cột enum có thể triển khai bằng `varchar` trong giai đoạn đầ
 | Bảng | Vai trò |
 | --- | --- |
 | `asset.asset_categories` | Cây phân loại tài sản, thay thế `assets.category` dạng text tự do |
+| `asset.asset_code_sequences` | Bộ đếm sinh mã tài sản theo từng phân loại |
 | `asset.asset_catalog_items` | Danh mục gốc của tài sản, CCDC, vật tư/thành phẩm tham chiếu |
 | `asset.assets` | Bảng lưu từng tài sản/CCDC thực tế |
 | `asset.asset_value_snapshots` | Lịch sử giá trị tài sản theo kỳ |
@@ -107,15 +108,40 @@ Ví dụ cây phân loại:
 | Check | `asset_class in ('FIXED_ASSET', 'TOOL_EQUIPMENT')` |
 | Index | `parent_id`, `asset_class`, `is_active` |
 
-## 4. `asset.asset_catalog_items`
+## 4. `asset.asset_code_sequences`
 
 ### 4.1. Ý nghĩa
+
+Bảng lưu bộ đếm sinh mã tài sản theo từng phân loại. Mỗi `category_id` có một dòng sequence riêng, giúp backend cấp mã tăng dần theo nhóm tài sản/CCDC mà không phải scan bảng `asset.assets`.
+
+Bảng này chỉ chứa dữ liệu vận hành phát sinh khi hệ thống bắt đầu sinh mã, không phải dữ liệu mẫu. Migration V3 chỉ tạo cấu trúc bảng rỗng.
+
+### 4.2. Cột
+
+| Cột | Kiểu dữ liệu | Bắt buộc | Mặc định | Khóa | Ý nghĩa |
+| --- | --- | --- | --- | --- | --- |
+| `category_id` | `bigint` | Có |  | PK, FK -> `asset_categories.id` | Phân loại sở hữu bộ đếm mã |
+| `current_number` | `bigint` | Có | `0` |  | Số thứ tự hiện tại đã cấp trong phân loại |
+| `created_at` | `timestamp` | Có | `now()` |  | Thời điểm tạo bộ đếm |
+| `updated_at` | `timestamp` | Có | `now()` |  | Thời điểm cập nhật gần nhất |
+
+### 4.3. Ràng buộc đề xuất
+
+| Ràng buộc | Nội dung |
+| --- | --- |
+| PK | `category_id` |
+| FK | `category_id` tham chiếu `asset.asset_categories(id)` |
+| Check | `current_number >= 0` |
+
+## 5. `asset.asset_catalog_items`
+
+### 5.1. Ý nghĩa
 
 Bảng lưu danh mục gốc lấy từ các file Excel như `Danh mục vật tư - CCDC.xls` và phần cần dùng của `Danh mục vật tư - Thành phẩm.xls`.
 
 Bảng này không đại diện cho một tài sản thực tế đang được gán cho ai đó. Nó là master data để tạo tài sản thực tế nhanh hơn và thống nhất tên, đơn vị, giá trị tham chiếu.
 
-### 4.2. Cột
+### 5.2. Cột
 
 | Cột | Kiểu dữ liệu | Bắt buộc | Mặc định | Khóa | Ý nghĩa |
 | --- | --- | --- | --- | --- | --- |
@@ -135,7 +161,7 @@ Bảng này không đại diện cho một tài sản thực tế đang được
 | `created_at` | `timestamp` | Có | `now()` |  | Thời điểm tạo |
 | `updated_at` | `timestamp` | Có | `now()` |  | Thời điểm cập nhật |
 
-### 4.3. Ràng buộc đề xuất
+### 5.3. Ràng buộc đề xuất
 
 | Ràng buộc | Nội dung |
 | --- | --- |
@@ -144,9 +170,9 @@ Bảng này không đại diện cho một tài sản thực tế đang được
 | Check | `catalog_type in ('ASSET', 'TOOL', 'MATERIAL', 'PRODUCT_REFERENCE')` |
 | Index | `category_id`, `catalog_type`, `name`, `is_active` |
 
-## 5. `asset.assets`
+## 6. `asset.assets`
 
-### 5.1. Ý nghĩa
+### 6.1. Ý nghĩa
 
 Bảng trung tâm của hệ thống QLVT. Mỗi dòng là một tài sản hoặc công cụ dụng cụ thực tế cần quản lý.
 
@@ -158,7 +184,7 @@ Tài sản trong bảng này có thể:
 - Theo dõi nguyên giá, khấu hao, giá trị sổ sách.
 - Liên kết tài sản cha/con.
 
-### 5.2. Cột
+### 6.2. Cột
 
 | Cột | Kiểu dữ liệu | Bắt buộc | Mặc định | Khóa | Ý nghĩa |
 | --- | --- | --- | --- | --- | --- |
@@ -206,7 +232,7 @@ Tài sản trong bảng này có thể:
 | `created_at` | `timestamp` | Có | `now()` |  | Thời điểm tạo |
 | `updated_at` | `timestamp` | Có | `now()` |  | Thời điểm cập nhật |
 
-### 5.3. Ràng buộc đề xuất
+### 6.3. Ràng buộc đề xuất
 
 | Ràng buộc | Nội dung |
 | --- | --- |
@@ -221,7 +247,7 @@ Tài sản trong bảng này có thể:
 | Check | `original_cost >= 0`, `accumulated_depreciation >= 0`, `book_value >= 0` khi có giá trị |
 | Index | `asset_code`, `name`, `category_id`, `asset_class`, `status`, `assigned_employee_id`, `department_id`, `site_id`, `project_id` |
 
-### 5.4. Ghi chú migration
+### 6.4. Ghi chú migration
 
 | Trường hiện tại | Hướng xử lý |
 | --- | --- |
@@ -230,13 +256,13 @@ Tài sản trong bảng này có thể:
 | `useful_life_years` | Chuyển sang `useful_life_months = useful_life_years * 12` |
 | `residual_value` | Giữ lại, nhưng không dùng thay cho `book_value` |
 
-## 6. `asset.asset_value_snapshots`
+## 7. `asset.asset_value_snapshots`
 
-### 6.1. Ý nghĩa
+### 7.1. Ý nghĩa
 
 Bảng lưu lịch sử giá trị tài sản theo từng thời điểm chốt. Bảng này giúp đối chiếu số liệu kế toán, import Excel theo kỳ, và truy vết biến động khấu hao.
 
-### 6.2. Cột
+### 7.2. Cột
 
 | Cột | Kiểu dữ liệu | Bắt buộc | Mặc định | Khóa | Ý nghĩa |
 | --- | --- | --- | --- | --- | --- |
@@ -251,7 +277,7 @@ Bảng lưu lịch sử giá trị tài sản theo từng thời điểm chốt.
 | `notes` | `varchar(500)` | Không |  |  | Ghi chú |
 | `created_at` | `timestamp` | Có | `now()` |  | Thời điểm tạo |
 
-### 6.3. Ràng buộc đề xuất
+### 7.3. Ràng buộc đề xuất
 
 | Ràng buộc | Nội dung |
 | --- | --- |
@@ -260,13 +286,13 @@ Bảng lưu lịch sử giá trị tài sản theo từng thời điểm chốt.
 | Check | Các giá trị tiền không âm |
 | Index | `asset_id`, `snapshot_date`, `source` |
 
-## 7. `asset.asset_documents`
+## 8. `asset.asset_documents`
 
-### 7.1. Ý nghĩa
+### 8.1. Ý nghĩa
 
 Bảng lưu metadata tài liệu đính kèm của tài sản. Tệp tin thực tế được lưu ở MinIO, database chỉ lưu `object_key` và thông tin phục vụ tra cứu.
 
-### 7.2. Cột
+### 8.2. Cột
 
 | Cột | Kiểu dữ liệu | Bắt buộc | Mặc định | Khóa | Ý nghĩa |
 | --- | --- | --- | --- | --- | --- |
@@ -280,7 +306,7 @@ Bảng lưu metadata tài liệu đính kèm của tài sản. Tệp tin thực 
 | `uploaded_by` | `varchar(200)` | Không |  |  | Người upload |
 | `created_at` | `timestamp` | Có | `now()` |  | Thời điểm upload |
 
-### 7.3. Ràng buộc đề xuất
+### 8.3. Ràng buộc đề xuất
 
 | Ràng buộc | Nội dung |
 | --- | --- |
@@ -289,13 +315,13 @@ Bảng lưu metadata tài liệu đính kèm của tài sản. Tệp tin thực 
 | Check | `size_bytes >= 0` khi có giá trị |
 | Index | `asset_id`, `document_type`, `created_at` |
 
-## 8. `asset.asset_qr_codes`
+## 9. `asset.asset_qr_codes`
 
-### 8.1. Ý nghĩa
+### 9.1. Ý nghĩa
 
 Bảng này không bắt buộc nếu QR chỉ sinh trực tiếp từ URL cố định của tài sản. Nên tạo bảng khi cần quản lý lịch sử in tem, thu hồi QR, token QR hoặc nhiều phiên bản QR cho cùng một tài sản.
 
-### 8.2. Cột
+### 9.2. Cột
 
 | Cột | Kiểu dữ liệu | Bắt buộc | Mặc định | Khóa | Ý nghĩa |
 | --- | --- | --- | --- | --- | --- |
@@ -308,7 +334,7 @@ Bảng này không bắt buộc nếu QR chỉ sinh trực tiếp từ URL cố 
 | `printed_by` | `varchar(200)` | Không |  |  | Người in gần nhất |
 | `created_at` | `timestamp` | Có | `now()` |  | Thời điểm tạo QR metadata |
 
-### 8.3. Ràng buộc đề xuất
+### 9.3. Ràng buộc đề xuất
 
 | Ràng buộc | Nội dung |
 | --- | --- |
@@ -317,13 +343,13 @@ Bảng này không bắt buộc nếu QR chỉ sinh trực tiếp từ URL cố 
 | Check | `status in ('ACTIVE', 'REVOKED')` |
 | Index | `asset_id`, `status`, `qr_token` |
 
-## 9. `asset.asset_transfers`
+## 10. `asset.asset_transfers`
 
-### 9.1. Ý nghĩa
+### 10.1. Ý nghĩa
 
 Bảng lưu lịch sử điều chuyển tài sản giữa nhân viên, phòng ban, công trường hoặc dự án. Đây là bảng lịch sử, không nên xóa khi tài sản đã chuyển nhiều lần.
 
-### 9.2. Cột
+### 10.2. Cột
 
 | Cột | Kiểu dữ liệu | Bắt buộc | Mặc định | Khóa | Ý nghĩa |
 | --- | --- | --- | --- | --- | --- |
@@ -348,7 +374,7 @@ Bảng lưu lịch sử điều chuyển tài sản giữa nhân viên, phòng b
 | `approved_by` | `varchar(200)` | Không |  |  | Người duyệt |
 | `created_at` | `timestamp` | Có | `now()` |  | Thời điểm tạo |
 
-### 9.3. Ràng buộc đề xuất
+### 10.3. Ràng buộc đề xuất
 
 | Ràng buộc | Nội dung |
 | --- | --- |
@@ -356,13 +382,13 @@ Bảng lưu lịch sử điều chuyển tài sản giữa nhân viên, phòng b
 | FK | `handover_document_id` tham chiếu `asset.asset_documents(id)` |
 | Index | `asset_id`, `transfer_date`, `from_employee_id`, `to_employee_id`, `from_department_id`, `to_department_id` |
 
-## 10. `asset.maintenance_records`
+## 11. `asset.maintenance_records`
 
-### 10.1. Ý nghĩa
+### 11.1. Ý nghĩa
 
 Bảng lưu lịch sử bảo trì, sửa chữa, kiểm định tài sản. Dùng chủ yếu cho tài sản hữu hình như máy móc, thiết bị, xe, công cụ dùng nhiều lần.
 
-### 10.2. Cột
+### 11.2. Cột
 
 | Cột | Kiểu dữ liệu | Bắt buộc | Mặc định | Khóa | Ý nghĩa |
 | --- | --- | --- | --- | --- | --- |
@@ -382,7 +408,7 @@ Bảng lưu lịch sử bảo trì, sửa chữa, kiểm định tài sản. Dù
 | `created_at` | `timestamp` | Có | `now()` |  | Thời điểm tạo |
 | `updated_at` | `timestamp` | Có | `now()` |  | Thời điểm cập nhật |
 
-### 10.3. Ràng buộc đề xuất
+### 11.3. Ràng buộc đề xuất
 
 | Ràng buộc | Nội dung |
 | --- | --- |
@@ -391,13 +417,13 @@ Bảng lưu lịch sử bảo trì, sửa chữa, kiểm định tài sản. Dù
 | Check | `cost >= 0`, `downtime_hours >= 0`, `meter_reading >= 0` khi có giá trị |
 | Index | `asset_id`, `maintenance_date`, `next_maintenance_date`, `status`, `vendor_id` |
 
-## 11. `asset.vendors`
+## 12. `asset.vendors`
 
-### 11.1. Ý nghĩa
+### 12.1. Ý nghĩa
 
 Bảng lưu nhà cung cấp, đơn vị bảo trì, đơn vị cung cấp phần mềm/license. Bảng này đang có trong schema hiện tại và nên giữ.
 
-### 11.2. Cột
+### 12.2. Cột
 
 | Cột | Kiểu dữ liệu | Bắt buộc | Mặc định | Khóa | Ý nghĩa |
 | --- | --- | --- | --- | --- | --- |
@@ -412,20 +438,20 @@ Bảng lưu nhà cung cấp, đơn vị bảo trì, đơn vị cung cấp phần
 | `created_at` | `timestamp` | Có | `now()` |  | Thời điểm tạo |
 | `updated_at` | `timestamp` | Có | `now()` |  | Thời điểm cập nhật |
 
-### 11.3. Ràng buộc đề xuất
+### 12.3. Ràng buộc đề xuất
 
 | Ràng buộc | Nội dung |
 | --- | --- |
 | Unique | `tax_code` nếu không null |
 | Index | `name`, `status`, `tax_code` |
 
-## 12. `asset.subscriptions`
+## 13. `asset.subscriptions`
 
-### 12.1. Ý nghĩa
+### 13.1. Ý nghĩa
 
 Bảng quản lý phần mềm, license hoặc dịch vụ định kỳ. Nếu license được xem là tài sản vô hình thì nên tạo một dòng tương ứng trong `asset.assets` với `asset_class = 'FIXED_ASSET'` và `fixed_asset_type = 'INTANGIBLE'`, sau đó liên kết qua `asset_id`.
 
-### 12.2. Cột
+### 13.2. Cột
 
 | Cột | Kiểu dữ liệu | Bắt buộc | Mặc định | Khóa | Ý nghĩa |
 | --- | --- | --- | --- | --- | --- |
@@ -447,7 +473,7 @@ Bảng quản lý phần mềm, license hoặc dịch vụ định kỳ. Nếu l
 | `created_at` | `timestamp` | Có | `now()` |  | Thời điểm tạo |
 | `updated_at` | `timestamp` | Có | `now()` |  | Thời điểm cập nhật |
 
-### 12.3. Ràng buộc đề xuất
+### 13.3. Ràng buộc đề xuất
 
 | Ràng buộc | Nội dung |
 | --- | --- |
@@ -457,48 +483,50 @@ Bảng quản lý phần mềm, license hoặc dịch vụ định kỳ. Nếu l
 | Check | `cost >= 0` khi có giá trị |
 | Index | `asset_id`, `vendor_id`, `software_name`, `renewal_date`, `status` |
 
-## 13. Bảng giữ sau, không thuộc lõi giai đoạn đầu
+## 14. Bảng giữ sau, không thuộc lõi giai đoạn đầu
 
 Các bảng hiện tại như `asset.purchase_requests` và `asset.contracts` có thể giữ nếu hệ thống vẫn cần quy trình mua sắm/hợp đồng. Tuy nhiên, theo phạm vi hiện tại là quản lý tài sản, hai bảng này không phải lõi schema cải tiến.
 
-### 13.1. `asset.purchase_requests`
+### 14.1. `asset.purchase_requests`
 
 | Hướng xử lý | Ghi chú |
 | --- | --- |
 | Giữ nguyên nếu cần quy trình đề xuất mua sắm | Không bắt buộc cho chức năng quản lý tài sản/QR/kiểm kê |
 | Không import các cột Excel liên quan mua hàng vào đây trong giai đoạn đầu | Tránh làm rộng phạm vi |
 
-### 13.2. `asset.contracts`
+### 14.2. `asset.contracts`
 
 | Hướng xử lý | Ghi chú |
 | --- | --- |
 | Giữ nguyên nếu cần quản lý hợp đồng mua/bảo trì | Có thể liên kết với `vendors`, `assets`, `asset_documents` sau |
 | Không dùng thay thế `asset_documents` | Hợp đồng là nghiệp vụ riêng, còn tài liệu đính kèm tài sản nên có bảng riêng |
 
-## 14. Gợi ý thứ tự tạo migration
+## 15. Gợi ý thứ tự tạo migration
 
 1. Tạo `asset.asset_categories`.
-2. Tạo `asset.asset_catalog_items`.
-3. Bổ sung cột mới vào `asset.assets`.
-4. Map dữ liệu cũ từ `assets.category`, `purchase_cost`, `useful_life_years`.
-5. Tạo `asset.asset_value_snapshots`.
-6. Tạo `asset.asset_documents`.
-7. Tạo `asset.asset_qr_codes` nếu cần quản lý lịch sử in/thu hồi QR.
-8. Bổ sung cột mới cho `asset.asset_transfers`, `asset.maintenance_records`, `asset.subscriptions`.
-9. Sau khi API/frontend đã chuyển sang field mới, cân nhắc bỏ field cũ `category`, `purchase_cost`, `useful_life_years`.
+2. Tạo `asset.asset_code_sequences`.
+3. Tạo `asset.asset_catalog_items`.
+4. Bổ sung cột mới vào `asset.assets`.
+5. Map dữ liệu cũ từ `assets.category`, `purchase_cost`, `useful_life_years` nếu đang migrate từ DB có dữ liệu thật.
+6. Tạo `asset.asset_value_snapshots`.
+7. Tạo `asset.asset_documents`.
+8. Tạo `asset.asset_qr_codes` nếu cần quản lý lịch sử in/thu hồi QR.
+9. Bổ sung cột mới cho `asset.asset_transfers`, `asset.maintenance_records`, `asset.subscriptions`.
+10. Sau khi API/frontend đã chuyển sang field mới, cân nhắc bỏ field cũ `category`, `purchase_cost`, `useful_life_years`.
 
-## 15. Ghi chú triển khai API/frontend
+## 16. Ghi chú triển khai API/frontend
 
 | Khu vực | Thay đổi cần làm |
 | --- | --- |
 | API tạo/sửa tài sản | Nhận thêm `categoryId`, `assetClass`, `fixedAssetType`, `toolUsageType`, `originalCost`, `bookValue`, `useDate`, `depreciationStartDate` |
 | API danh mục | Thêm CRUD/import cho `asset_categories` và `asset_catalog_items` |
+| API sinh mã tài sản | Dùng `asset_code_sequences` để cấp mã tăng dần theo `category_id` trong transaction |
 | API QR | Sinh QR từ URL ổn định hoặc token; chỉ lưu `asset_qr_codes` nếu cần lịch sử |
 | API file | Upload file vào MinIO, lưu metadata vào `asset_documents` |
 | Frontend tài sản | Form cần tách rõ TSCĐ/CCDC, hữu hình/vô hình, dùng một lần/dùng nhiều lần |
 | Frontend báo cáo | Dùng `asset_value_snapshots` nếu cần báo cáo theo kỳ |
 
-## 16. Kết luận
+## 17. Kết luận
 
 Lược đồ sau cải tiến tách rõ 3 lớp dữ liệu:
 
