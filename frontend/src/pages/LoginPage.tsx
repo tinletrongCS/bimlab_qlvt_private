@@ -2,6 +2,7 @@ import { animate, createTimeline, stagger } from "animejs";
 import { useEffect, useRef } from "react";
 import { FiLogIn, FiShield } from "react-icons/fi";
 import { Navigate, useLocation } from "react-router-dom";
+import { LoadingSkeleton } from "../components/LoadingSkeleton";
 import { useAuth } from "../contexts/AuthContext";
 
 interface LocationState {
@@ -175,7 +176,7 @@ export function LoginPage() {
   }, [user, bootstrapping]);
 
   if (bootstrapping) {
-    return <div className="loading">Đang khởi tạo...</div>;
+    return <LoadingSkeleton variant="login" />;
   }
 
   if (user) {

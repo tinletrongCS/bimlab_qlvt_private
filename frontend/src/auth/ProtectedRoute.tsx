@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Navigate, useLocation } from "react-router-dom";
+import { LoadingSkeleton } from "../components/LoadingSkeleton";
 import { useAuth } from "../contexts/AuthContext";
 import type { Permission } from "../services/types";
 
@@ -13,7 +14,7 @@ export function ProtectedRoute({ children, permission }: ProtectedRouteProps) {
   const location = useLocation();
 
   if (bootstrapping) {
-    return <div className="loading">Đang khởi tạo...</div>;
+    return <LoadingSkeleton />;
   }
 
   if (!user) {

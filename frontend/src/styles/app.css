@@ -331,6 +331,186 @@ textarea:focus {
   text-align: center;
 }
 
+.skeleton-shell {
+  background: #f9fafb;
+}
+
+.skeleton-sidebar {
+  gap: 12px;
+  padding: 16px 12px;
+}
+
+.skeleton-logo,
+.skeleton-nav-item,
+.skeleton-user,
+.skeleton-line,
+.skeleton-button,
+.skeleton-note span,
+.skeleton-stat span,
+.skeleton-stat strong,
+.skeleton-row,
+.skeleton-metric {
+  animation: skeleton-pulse 1.25s ease-in-out infinite;
+  background: linear-gradient(90deg, #e5e7eb 0%, #f3f4f6 45%, #e5e7eb 100%);
+  background-size: 220% 100%;
+  border-radius: 8px;
+  display: block;
+}
+
+.skeleton-logo {
+  height: 34px;
+  margin: 8px auto 16px;
+  width: 132px;
+}
+
+.skeleton-nav-item {
+  height: 40px;
+  width: 100%;
+}
+
+.skeleton-user {
+  height: 52px;
+  margin-top: auto;
+  width: 100%;
+}
+
+.skeleton-content {
+  display: grid;
+  gap: 18px;
+}
+
+.skeleton-hero,
+.skeleton-panel,
+.skeleton-stat,
+.skeleton-login-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: none;
+}
+
+.skeleton-hero {
+  align-items: flex-start;
+  display: flex;
+  gap: 20px;
+  justify-content: space-between;
+  min-height: 180px;
+  padding: 28px 32px;
+}
+
+.skeleton-line {
+  height: 12px;
+  margin-top: 12px;
+  max-width: 520px;
+  width: min(70vw, 520px);
+}
+
+.skeleton-line.short {
+  margin-inline: auto;
+  width: 190px;
+}
+
+.eyebrow-line {
+  height: 10px;
+  margin-top: 0;
+  width: 120px;
+}
+
+.title-line {
+  height: 30px;
+  width: min(60vw, 360px);
+}
+
+.panel-title-line {
+  height: 20px;
+  margin: 0 0 18px;
+  width: 220px;
+}
+
+.skeleton-metric {
+  flex: 0 0 auto;
+  height: 48px;
+  width: 116px;
+}
+
+.skeleton-stats {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.skeleton-stat {
+  display: grid;
+  gap: 12px;
+  min-height: 96px;
+  padding: 18px;
+}
+
+.skeleton-stat span {
+  height: 12px;
+  width: 62%;
+}
+
+.skeleton-stat strong {
+  height: 28px;
+  width: 42%;
+}
+
+.skeleton-panel {
+  padding: 22px;
+}
+
+.skeleton-row {
+  height: 44px;
+  margin-top: 10px;
+  width: 100%;
+}
+
+.skeleton-login-card {
+  padding: 32px;
+  width: min(448px, calc(100vw - 32px));
+  z-index: 1;
+}
+
+.skeleton-login-card .skeleton-logo {
+  height: 56px;
+  width: 156px;
+}
+
+.skeleton-button {
+  height: 48px;
+  margin-top: 28px;
+  width: 100%;
+}
+
+.skeleton-note {
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  display: grid;
+  gap: 9px;
+  margin-top: 20px;
+  padding: 14px;
+}
+
+.skeleton-note span {
+  height: 10px;
+}
+
+.skeleton-note span:last-child {
+  width: 70%;
+}
+
+@keyframes skeleton-pulse {
+  0% {
+    background-position: 120% 0;
+  }
+
+  100% {
+    background-position: -120% 0;
+  }
+}
+
 .page-grid {
   display: grid;
   gap: 18px;

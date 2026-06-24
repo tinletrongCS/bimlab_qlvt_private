@@ -19,6 +19,7 @@ import {
 } from "react-icons/fi";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { CrudForm } from "../components/forms/CrudForm";
+import { LoadingSkeleton } from "../components/LoadingSkeleton";
 import { UserAvatar } from "../components/UserAvatar";
 import { useActions } from "../contexts/ActionsContext";
 import { useAppData } from "../contexts/AppDataContext";
@@ -381,7 +382,7 @@ export function AppShell() {
           </div>
         )}
         {error && <div className="alert">{error}</div>}
-        {loading ? <div className="loading">Đang tải dữ liệu...</div> : <Outlet />}
+        {loading ? <LoadingSkeleton variant="content" /> : <Outlet />}
       </section>
 
       <CrudForm />

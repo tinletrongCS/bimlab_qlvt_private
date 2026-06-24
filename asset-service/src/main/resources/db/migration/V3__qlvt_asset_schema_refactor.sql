@@ -42,44 +42,6 @@ ALTER TABLE asset.asset_categories ADD COLUMN IF NOT EXISTS is_active BOOLEAN NO
 ALTER TABLE asset.asset_categories ADD COLUMN IF NOT EXISTS created_at TIMESTAMP NOT NULL DEFAULT now();
 ALTER TABLE asset.asset_categories ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP NOT NULL DEFAULT now();
 
-INSERT INTO asset.asset_categories (code, name, asset_class, description)
-VALUES
-    ('FIXED_ASSET', 'Tai san co dinh', 'FIXED_ASSET', 'Nhom tai san co dinh'),
-    ('TOOL_EQUIPMENT', 'Cong cu dung cu', 'TOOL_EQUIPMENT', 'Nhom cong cu dung cu')
-ON CONFLICT (code) DO NOTHING;
-
-INSERT INTO asset.asset_categories (code, name, parent_id, asset_class, description)
-VALUES
-    (
-        'TANGIBLE',
-        'Tai san huu hinh',
-        (SELECT id FROM asset.asset_categories WHERE code = 'FIXED_ASSET'),
-        'FIXED_ASSET',
-        'May moc, xe, thiet bi, nha xuong, vat kien truc'
-    ),
-    (
-        'INTANGIBLE',
-        'Tai san vo hinh',
-        (SELECT id FROM asset.asset_categories WHERE code = 'FIXED_ASSET'),
-        'FIXED_ASSET',
-        'Ban quyen phan mem, license, quyen su dung, goi dich vu dai han'
-    ),
-    (
-        'TOOL_SINGLE_USE',
-        'Cong cu dung mot lan',
-        (SELECT id FROM asset.asset_categories WHERE code = 'TOOL_EQUIPMENT'),
-        'TOOL_EQUIPMENT',
-        'Cong cu dung cu dung mot lan'
-    ),
-    (
-        'TOOL_MULTI_USE',
-        'Cong cu dung nhieu lan',
-        (SELECT id FROM asset.asset_categories WHERE code = 'TOOL_EQUIPMENT'),
-        'TOOL_EQUIPMENT',
-        'Cong cu dung cu dung nhieu lan'
-    )
-ON CONFLICT (code) DO NOTHING;
-
 CREATE INDEX IF NOT EXISTS idx_asset_categories_parent_id ON asset.asset_categories(parent_id);
 CREATE INDEX IF NOT EXISTS idx_asset_categories_asset_class ON asset.asset_categories(asset_class);
 CREATE INDEX IF NOT EXISTS idx_asset_categories_is_active ON asset.asset_categories(is_active);
@@ -107,6 +69,24 @@ BEGIN
             CHECK (asset_class IN ('FIXED_ASSET', 'TOOL_EQUIPMENT')) NOT VALID;
     END IF;
 END $$;
+
+-- ---------------------------------------------------------------------------
+-- Asset code sequences
+-- ---------------------------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS asset.asset_code_sequences (
+    category_id BIGINT PRIMARY KEY,
+    current_number BIGINT NOT NULL DEFAULT 0,
+    created_at TIMESTAMP NOT NULL DEFAULT now(),
+    updated_at TIMESTAMP NOT NULL DEFAULT now(),
+
+    CONSTRAINT fk_asset_code_sequences_category
+        FOREIGN KEY (category_id)
+        REFERENCES asset.asset_categories(id),
+
+    CONSTRAINT chk_asset_code_sequences_current_number
+        CHECK (current_number >= 0)
+);
 
 -- ---------------------------------------------------------------------------
 -- Vendors
