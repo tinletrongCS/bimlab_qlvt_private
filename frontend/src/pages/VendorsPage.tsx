@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { DataTable } from "../components/DataTable";
 import { PanelHeader } from "../components/PanelHeader";
 import { RowActions } from "../components/RowActions";
@@ -8,8 +9,12 @@ import { useAuth } from "../contexts/AuthContext";
 
 export function VendorsPage() {
   const { hasPermission } = useAuth();
-  const { vendors } = useAppData();
+  const { vendors, ensureVendors } = useAppData();
   const { openModal, deleteResource } = useActions();
+
+  useEffect(() => {
+    void ensureVendors();
+  }, [ensureVendors]);
 
   const canManage = hasPermission("vendor_manage");
 

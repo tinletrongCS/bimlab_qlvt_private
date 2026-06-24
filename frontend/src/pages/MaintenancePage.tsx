@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { DataTable } from "../components/DataTable";
 import { PanelHeader } from "../components/PanelHeader";
 import { RowActions } from "../components/RowActions";
@@ -9,8 +10,12 @@ import { money } from "../lib/format";
 
 export function MaintenancePage() {
   const { hasPermission } = useAuth();
-  const { maintenanceRecords } = useAppData();
+  const { maintenanceRecords, ensureMaintenance } = useAppData();
   const { openModal, deleteResource } = useActions();
+
+  useEffect(() => {
+    void ensureMaintenance();
+  }, [ensureMaintenance]);
 
   const canManage = hasPermission("maintenance_manage");
 

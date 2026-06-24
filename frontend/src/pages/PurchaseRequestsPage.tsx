@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { DataTable } from "../components/DataTable";
 import { PanelHeader } from "../components/PanelHeader";
 import { RowActions } from "../components/RowActions";
@@ -9,8 +10,12 @@ import { money } from "../lib/format";
 
 export function PurchaseRequestsPage() {
   const { hasPermission } = useAuth();
-  const { requests } = useAppData();
+  const { requests, ensureRequests } = useAppData();
   const { openModal, deleteResource, approveRequest } = useActions();
+
+  useEffect(() => {
+    void ensureRequests();
+  }, [ensureRequests]);
 
   const canCreate = hasPermission("purchase_request_create");
   const canApprove = hasPermission("purchase_request_approve");

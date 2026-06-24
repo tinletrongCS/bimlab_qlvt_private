@@ -1,4 +1,4 @@
-import { type FormEvent, useState } from "react";
+import { type FormEvent, useEffect, useState } from "react";
 import { type ModalPayload, type ModalState, useActions } from "../../contexts/ActionsContext";
 import { useAppData } from "../../contexts/AppDataContext";
 import { employeeLabel } from "../../lib/format";
@@ -18,8 +18,33 @@ import {
 } from "./FormFields";
 
 export function CrudForm() {
-  const { vendors, employees, departments, workSites, projects, assets } = useAppData();
+  const {
+    vendors,
+    employees,
+    departments,
+    workSites,
+    projects,
+    assets,
+    ensureLookups,
+    ensureAssets,
+    ensureVendors,
+  } = useAppData();
   const { modal, closeModal, submitModal, submitting } = useActions();
+
+  useEffect(() => {
+    if (!modal) return;
+    if (modal.type === "vendor") return;
+    if (modal.type === "subscription" || modal.type === "contract") {
+      void ensureVendors();
+      return;
+    }
+    if (modal.type === "maintenance" || modal.type === "transfer") {
+      void Promise.all([ensureAssets(), ensureVendors()]);
+      return;
+    }
+    void ensureLookups();
+  }, [ensureAssets, ensureLookups, ensureVendors, modal]);
+
   if (!modal) return null;
   return (
     <CrudFormInner

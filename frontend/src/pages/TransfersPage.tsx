@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { FiTrash2 } from "react-icons/fi";
 import { DataTable } from "../components/DataTable";
 import { PanelHeader } from "../components/PanelHeader";
@@ -8,8 +9,12 @@ import { employeeLabel } from "../lib/format";
 
 export function TransfersPage() {
   const { hasPermission } = useAuth();
-  const { transfers, employees } = useAppData();
+  const { transfers, employees, ensureTransfers } = useAppData();
   const { openModal, deleteResource } = useActions();
+
+  useEffect(() => {
+    void ensureTransfers();
+  }, [ensureTransfers]);
 
   const canManage = hasPermission("asset_manage");
   const empLabel = (id?: number) => (id ? employeeLabel(employees.find((e) => e.id === id)) : "—");

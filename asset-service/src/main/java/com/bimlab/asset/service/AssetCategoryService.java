@@ -23,12 +23,6 @@ public class AssetCategoryService {
 
     @Transactional(readOnly = true)
     public List<AssetCategoryResponse> listCategories() {
-//        List<AssetCategory> categoryList = categories.findAllByOrderByNameAsc();
-//        List<AssetCategoryResponse> categoryResponses = new ArrayList<>();
-//        for (AssetCategory category : categoryList) {
-//            categoryResponses.add(modelToDto(category));
-//        }
-//        return categoryResponses;
         return categories.findAllByOrderByNameAsc()
                 .stream()
                 .map(this::modelToDto)
@@ -40,6 +34,7 @@ public class AssetCategoryService {
         List<AssetCategory> categoryList = categories.findAllByOrderByNameAsc();
         Map<Long, List<AssetCategory>> childrenByParentId = new LinkedHashMap<>();
 
+        // gom danh mục theo parentId
         for (AssetCategory category : categoryList) {
             Long parentId = category.getParent() == null ? null : category.getParent().getId();
             childrenByParentId
@@ -62,7 +57,7 @@ public class AssetCategoryService {
 
     @Transactional
     public AssetCategoryResponse createCategory(AssetCategoryRequest req) {
-        // TODO PRACTICE 4:
+
         if (categories.existsByCode(req.code())) {
             throw new IllegalArgumentException("Danh mục với mã " + req.code() + " đã tồn tại.");
         }

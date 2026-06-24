@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { DataTable } from "../components/DataTable";
 import { PanelHeader } from "../components/PanelHeader";
 import { RowActions } from "../components/RowActions";
@@ -9,8 +10,12 @@ import { useAuth } from "../contexts/AuthContext";
 
 export function SubscriptionsPage() {
   const { hasPermission } = useAuth();
-  const { subscriptions } = useAppData();
+  const { subscriptions, ensureSubscriptions } = useAppData();
   const { openModal, deleteResource } = useActions();
+
+  useEffect(() => {
+    void ensureSubscriptions();
+  }, [ensureSubscriptions]);
 
   const canManage = hasPermission("subscription_manage");
 
