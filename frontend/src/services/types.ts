@@ -69,6 +69,29 @@ export interface AssetItem {
   disposalReason?: string;
 }
 
+export interface AssetCategory {
+  id: number;
+  code: string;
+  name: string;
+  assetClass: "FIXED_ASSET" | "TOOL_EQUIPMENT" | string;
+  parentId?: number | null;
+  description?: string;
+  active: boolean;
+}
+
+export interface AssetCategoryTree extends AssetCategory {
+  children: AssetCategoryTree[];
+}
+
+export interface AssetCategoryPayload {
+  code: string;
+  name: string;
+  parentId?: number | null;
+  assetClass: "FIXED_ASSET" | "TOOL_EQUIPMENT" | string;
+  description?: string;
+  active: boolean;
+}
+
 export interface AssetPayload {
   assetCode: string;
   name: string;

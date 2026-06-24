@@ -73,6 +73,7 @@ public class AssetMapper {
                 category.getName(),
                 enumName(category.getAssetClass()),
                 category.getParent() == null ? null : category.getParent().getId(),
+                category.getDescription(),
                 category.getActive()
         );
     }
