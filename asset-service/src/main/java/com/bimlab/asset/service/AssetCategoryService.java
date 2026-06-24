@@ -4,22 +4,22 @@ import com.bimlab.asset.dto.request.AssetCategoryRequest;
 import com.bimlab.asset.dto.response.AssetCategoryResponse;
 import com.bimlab.asset.dto.response.AssetCategoryTreeResponse;
 import com.bimlab.asset.model.AssetCategory;
+import com.bimlab.asset.model.status.AssetClass;
+import com.bimlab.asset.repository.AssetCatalogItemRepository;
 import com.bimlab.asset.repository.AssetCategoryRepository;
 import com.bimlab.asset.repository.AssetItemRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.NoSuchElementException;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
 public class AssetCategoryService {
     private final AssetCategoryRepository categories;
     private final AssetItemRepository assets;
+    private final AssetCatalogItemRepository catalogItems;
 
     @Transactional(readOnly = true)
     public List<AssetCategoryResponse> listCategories() {
@@ -37,14 +37,20 @@ public class AssetCategoryService {
 
     @Transactional(readOnly = true)
     public List<AssetCategoryTreeResponse> listCategoryTree() {
-        // TODO PRACTICE 2:
-        // Build cây phân cấp danh mục từ danh sách phẳng asset_categories.
-        //
-        // Yêu cầu:
-        // - Node gốc là category có parent = null.
-        // - Mỗi node có children là các category con.
-        // - Không query DB lặp theo từng node nếu có thể; ưu tiên load all rồi group theo parentId.
-        throw new UnsupportedOperationException("TODO: build asset category tree");
+        List<AssetCategory> categoryList = categories.findAllByOrderByNameAsc();
+        Map<Long, List<AssetCategory>> childrenByParentId = new LinkedHashMap<>();
+
+        for (AssetCategory category : categoryList) {
+            Long parentId = category.getParent() == null ? null : category.getParent().getId();
+            childrenByParentId
+                    .computeIfAbsent(parentId, key -> new ArrayList<>())
+                    .add(category);
+        }
+
+        return childrenByParentId.getOrDefault(null, List.of())
+                .stream()
+                .map(category -> modelToTreeDto(category, childrenByParentId))
+                .toList();
     }
 
     @Transactional(readOnly = true)
@@ -57,50 +63,87 @@ public class AssetCategoryService {
     @Transactional
     public AssetCategoryResponse createCategory(AssetCategoryRequest req) {
         // TODO PRACTICE 4:
-        // Tạo danh mục mới.
-        //
-        // Yêu cầu:
-        // - Validate code không trùng bằng categories.existsByCode(req.code()).
-        // - Nếu req.parentId() != null thì tìm parent category.
-        // - Parse req.assetClass() sang AssetClass enum.
-        // - Set code, name, parent, assetClass, description, active.
-        // - Save bằng categories.save(...).
-        // - Return AssetCategoryResponse.
-        throw new UnsupportedOperationException("TODO: create asset category");
+        if (categories.existsByCode(req.code())) {
+            throw new IllegalArgumentException("Danh mục với mã " + req.code() + " đã tồn tại.");
+        }
+        AssetCategory parent = null;
+        if (req.parentId() != null) {
+            parent = categories.findById(req.parentId())
+                    .orElseThrow(() -> new NoSuchElementException(
+                            "Không tìm thấy danh mục cha với id:" + req.parentId()
+                    ));
+        }
+        AssetClass assetClass = AssetClass.valueOf(req.assetClass());
+
+        AssetCategory category = AssetCategory.builder()
+                .code(req.code())
+                .name(req.name())
+                .parent(parent)
+                .assetClass(assetClass)
+                .description(req.description())
+                .active(req.active())
+                .build();
+
+        AssetCategory saved = categories.save(category);
+        return modelToDto(saved);
     }
 
     @Transactional
     public AssetCategoryResponse updateCategory(Long id, AssetCategoryRequest req) {
-        // TODO PRACTICE 5:
-        // Cập nhật danh mục.
-        //
-        // Yêu cầu:
-        // - Tìm category hiện tại theo id.
-        // - Không cho parentId trỏ về chính nó.
-        // - Nếu đổi code, kiểm tra code mới không trùng.
-        // - Cập nhật các field giống create.
-        // - Save và return response.
-        throw new UnsupportedOperationException("TODO: update asset category");
+        AssetCategory category = categories.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy danh mục với id: " + id));
+
+        AssetCategory parent = null;
+        if (req.parentId() != null) {
+            parent = categories.findById(req.parentId())
+                    .orElseThrow(() -> new NoSuchElementException(
+                            "Không tìm thấy danh mục cha với id: " + req.parentId()
+                    ));
+        }
+        if (req.parentId() != null && req.parentId().equals(id)) {
+            throw new IllegalArgumentException("Danh mục cha không được trỏ về chính nó.");
+        }
+
+        if (!category.getCode().equals(req.code()) && categories.existsByCode(req.code())) {
+            throw new IllegalArgumentException("Danh mục với mã " + req.code() + " đã tồn tại.");
+        }
+
+        AssetClass assetClass = AssetClass.valueOf(req.assetClass().trim().toUpperCase());
+
+        category.setCode(req.code());
+        category.setName(req.name());
+        category.setParent(parent);
+        category.setAssetClass(assetClass);
+        category.setDescription(req.description());
+        category.setActive(req.active());
+
+        AssetCategory saved = categories.save(category);
+
+        return modelToDto(saved);
     }
 
     @Transactional
     public void deleteCategory(Long id) {
-        // TODO PRACTICE 6:
-        // Xóa danh mục.
-        //
-        // Yêu cầu nghiệp vụ đề xuất:
-        // - Không cho xóa nếu category còn category con.
-        // - Không cho xóa nếu category đang được asset.assets hoặc asset_catalog_items tham chiếu.
-        // - Nếu hợp lệ thì categories.delete(...).
-        //
-        // Gợi ý:
-        // - categories.existsByParentId(id)
-        // - assets.findByAssetCategoryId(id)
-        // - Có thể cần bổ sung method repository cho asset_catalog_items khi bạn implement thật.
-        throw new UnsupportedOperationException("TODO: delete asset category");
+        AssetCategory category = categories.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy danh mục với id: " + id));
+
+        if (categories.existsByParentId(id)) {
+            throw new IllegalArgumentException("Không thể xóa danh mục đang có danh mục con.");
+        }
+
+        if (!assets.findByAssetCategoryId(id).isEmpty()) {
+            throw new IllegalArgumentException("Không thể xóa danh mục đang được tài sản sử dụng.");
+        }
+
+        if (catalogItems.existsByCategoryId(id)) {
+            throw new IllegalArgumentException("Không thể xóa danh mục đang được danh mục vật tư sử dụng.");
+        }
+
+        categories.delete(category);
     }
 
-    // Helper function
+    // Helper functions
+
     private AssetCategoryResponse modelToDto(AssetCategory category) {
         return new AssetCategoryResponse(
                 category.getId(),
@@ -115,8 +158,8 @@ public class AssetCategoryService {
 
     private AssetCategoryTreeResponse modelToTreeDto(
             AssetCategory category,
-            Map<Long, List<AssetCategory>> childrenByParentId
-    ) {
+            Map<Long, List<AssetCategory>> childrenByParentId) {
+
         List<AssetCategoryTreeResponse> children = childrenByParentId
                 .getOrDefault(category.getId(), List.of())
                 .stream()

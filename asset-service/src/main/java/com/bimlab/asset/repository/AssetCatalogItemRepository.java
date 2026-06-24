@@ -9,4 +9,5 @@ import java.util.Optional;
 public interface AssetCatalogItemRepository extends JpaRepository<AssetCatalogItem, Long> {
     Optional<AssetCatalogItem> findByItemCode(String itemCode);
     List<AssetCatalogItem> findByActiveTrueOrderByNameAsc();
+    boolean existsByCategoryId(Long categoryId);
 }
