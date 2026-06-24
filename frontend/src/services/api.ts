@@ -2,6 +2,9 @@ import axios from "axios";
 import { getAccessToken } from "../auth/oidc";
 import type {
   AssetItem,
+  AssetCategory,
+  AssetCategoryPayload,
+  AssetCategoryTree,
   AssetPayload,
   AssetTransfer,
   AssetTransferPayload,
@@ -124,6 +127,35 @@ export async function updateAsset(id: number, payload: AssetPayload): Promise<As
 
 export async function deleteAsset(id: number): Promise<void> {
   await api.delete(`/asset/assets/${id}`);
+}
+
+export async function loadAssetCategories(): Promise<AssetCategory[]> {
+  const response = await api.get<AssetCategory[]>("/asset/categories");
+  return response.data;
+}
+
+export async function loadAssetCategoryTree(): Promise<AssetCategoryTree[]> {
+  const response = await api.get<AssetCategoryTree[]>("/asset/categories/tree");
+  return response.data;
+}
+
+export async function createAssetCategory(
+  payload: AssetCategoryPayload,
+): Promise<AssetCategory> {
+  const response = await api.post<AssetCategory>("/asset/categories", payload);
+  return response.data;
+}
+
+export async function updateAssetCategory(
+  id: number,
+  payload: AssetCategoryPayload,
+): Promise<AssetCategory> {
+  const response = await api.put<AssetCategory>(`/asset/categories/${id}`, payload);
+  return response.data;
+}
+
+export async function deleteAssetCategory(id: number): Promise<void> {
+  await api.delete(`/asset/categories/${id}`);
 }
 
 export async function loadDepreciation(id: number): Promise<DepreciationSnapshot> {

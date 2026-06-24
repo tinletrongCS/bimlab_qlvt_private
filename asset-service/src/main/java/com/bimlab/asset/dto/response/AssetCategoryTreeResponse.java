@@ -1,11 +1,14 @@
 package com.bimlab.asset.dto.response;
 
-public record AssetCategoryResponse(
+import java.util.List;
+
+public record AssetCategoryTreeResponse(
         Long id,
         String code,
         String name,
         String assetClass,
         Long parentId,
         String description,
-        Boolean active
+        Boolean active,
+        List<AssetCategoryTreeResponse> children
 ) {}

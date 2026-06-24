@@ -153,11 +153,6 @@ public class AssetService {
         return assets.save(item);
     }
 
-    /**
-     * Q2-followup N3: prefer {@link #calculateDepreciation(AssetItem)} when the
-     * caller has already loaded the item (avoids TOCTOU where the access check
-     * runs against one snapshot and depreciation against another).
-     */
     @Transactional(readOnly = true)
     public DepreciationSnapshot calculateDepreciation(Long id) {
         return calculateDepreciation(getAssetById(id));
