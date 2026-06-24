@@ -6,10 +6,11 @@ import org.springframework.security.oauth2.server.resource.web.BearerTokenResolv
 import org.springframework.security.oauth2.server.resource.web.DefaultBearerTokenResolver;
 
 /**
- * Phase 1 — resolver lấy token cho resource-server từ cookie {@code jwt} TRƯỚC,
- * rồi mới tới header {@code Authorization: Bearer}. Giữ đúng flow cookie-based của
- * hệ cũ (JwtAuthenticationFilter đọc cookie "jwt") khi bật đường Keycloak. Default
- * resolver của Spring chỉ đọc header nên không đủ.
+ * Resolve bearer tokens for the resource server.
+ *
+ * <p>Keycloak SPA requests send {@code Authorization: Bearer ...}; that header
+ * must win over any legacy {@code jwt} cookie that may still be present in the
+ * browser. The cookie remains only as a compatibility fallback.
  */
 public final class CookieBearerTokenResolver implements BearerTokenResolver {
 
@@ -17,6 +18,10 @@ public final class CookieBearerTokenResolver implements BearerTokenResolver {
 
     @Override
     public String resolve(HttpServletRequest request) {
+        String headerToken = delegate.resolve(request);
+        if (headerToken != null && !headerToken.isBlank()) {
+            return headerToken;
+        }
         if (request.getCookies() != null) {
             for (Cookie cookie : request.getCookies()) {
                 if ("jwt".equals(cookie.getName()) && cookie.getValue() != null && !cookie.getValue().isBlank()) {
@@ -24,6 +29,6 @@ public final class CookieBearerTokenResolver implements BearerTokenResolver {
                 }
             }
         }
-        return delegate.resolve(request);
+        return null;
     }
 }

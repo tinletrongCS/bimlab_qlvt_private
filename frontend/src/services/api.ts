@@ -30,11 +30,15 @@ import type {
   WorkSiteLite,
 } from "./types";
 
-// Keycloak-only: Authorization: Bearer (token in-memory) + KHÔNG cookie (withCredentials=false,
-// không XSRF — Bearer được asset-service miễn CSRF).
+// Keycloak-only: Authorization: Bearer token is kept in memory.
+// The backend also issues XSRF-TOKEN; echo it on mutating same-origin
+// requests so Spring Security accepts browser writes even when cookies exist.
 export const api = axios.create({
   baseURL: "/api",
   withCredentials: false,
+  xsrfCookieName: "XSRF-TOKEN",
+  xsrfHeaderName: "X-XSRF-TOKEN",
+  withXSRFToken: true,
 });
 
 // Gắn Bearer token (in-memory) vào mọi request.

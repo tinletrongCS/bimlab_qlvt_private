@@ -18,23 +18,11 @@ import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 
 import java.util.Set;
 
-// Q1: @EnableMethodSecurity is the prerequisite for @PreAuthorize annotations
-// on QLVT controllers. Without it, every @PreAuthorize silently no-ops and
-// authorization regresses to whatever imperative checks remain in the method
-// body — a hard-to-spot security regression.
-//
-// F6 (Phase A): enables CSRF protection to match HRM auth-service +
-// employee-service + attendance-service + CDS project-service +
-// task-service. The SPA cookie→header pattern is configured via
-// CookieCsrfTokenRepository.withHttpOnlyFalse() so axios xsrfCookieName +
-// xsrfHeaderName picks up the value automatically.
+
 @Configuration
 @EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
-    // Keycloak-only resource server: token verify qua AuthenticationManagerResolver
-    // (issuer + aud + azp) và BearerTokenResolver (cookie/Authorization). Cả hai bean
-    // do KeycloakResourceServerConfig cung cấp.
     private final AuthenticationManagerResolver<HttpServletRequest> keycloakAuthManagerResolver;
     private final BearerTokenResolver keycloakBearerTokenResolver;
 

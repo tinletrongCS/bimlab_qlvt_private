@@ -1,4 +1,4 @@
-import { type CSSProperties, type FormEvent, useEffect, useMemo, useState } from "react";
+import { type FormEvent, useEffect, useMemo, useState } from "react";
 import { FiPlus, FiRefreshCw, FiSave, FiTrash2, FiX } from "react-icons/fi";
 import { PanelHeader } from "../components/PanelHeader";
 import {
@@ -22,12 +22,6 @@ const emptyForm: AssetCategoryPayload = {
   description: "",
   active: true,
 };
-
-const LEVEL_COLORS = ["#154d7c", "#2e82b6", "#10b981", "#f59e0b", "#8b5cf6", "#64748b"];
-
-function levelColor(depth: number) {
-  return LEVEL_COLORS[depth % LEVEL_COLORS.length];
-}
 
 function assetClassLabel(value: string) {
   if (value === "FIXED_ASSET") return "Tài sản cố định";
@@ -118,7 +112,6 @@ function CategoryNode({
       <div
         className="category-org-card"
         data-selected={selectedId === node.id ? "true" : undefined}
-        style={{ "--level-color": levelColor(depth) } as CSSProperties}
         onClick={() => {
           onEdit(node);
           if (hasChildren) onToggle(node.id);
@@ -339,7 +332,6 @@ function StructureRow({
         type="button"
         className="category-structure-row-head"
         data-selected={selectedId === node.id ? "true" : undefined}
-        style={{ "--level-color": levelColor(depth) } as CSSProperties}
         onClick={() => {
           onEdit(node);
           if (hasChildren) setOpen((value) => !value);
