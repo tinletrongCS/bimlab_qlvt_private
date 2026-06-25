@@ -1,33 +1,58 @@
 import { type ChangeEvent, type ReactNode, useEffect, useMemo, useState } from "react";
+import toast from "react-hot-toast";
 import {
   FiArchive,
   FiBox,
   FiCheckCircle,
   FiDownload,
+  FiEye,
   FiFileText,
+  FiGrid,
   FiSearch,
   FiTool,
+  FiTrash2,
   FiUpload,
   FiUserCheck,
   FiX,
 } from "react-icons/fi";
-import toast from "react-hot-toast";
-import { AssetActions } from "../components/AssetActions";
 import { PanelHeader } from "../components/PanelHeader";
 import { StatusBadge } from "../components/StatusBadge";
 import { useActions } from "../contexts/ActionsContext";
 import { useAppData } from "../contexts/AppDataContext";
 import { useAuth } from "../contexts/AuthContext";
 import { employeeLabel, money, projectLabel } from "../lib/format";
-import { commitAssetImport, validateAssetImport } from "../services/api";
+import {
+  commitAssetImport,
+  deleteAsset,
+  loadAssetCategoryTree,
+  updateAsset,
+  validateAssetImport,
+} from "../services/api";
 import type {
+  AssetCategoryTree,
   AssetImportCommitPayload,
   AssetImportRowPayload,
   AssetImportValidationResponse,
+  AssetItem,
+  AssetPayload,
 } from "../services/types";
 
 type AssetStatusFilter = "ALL" | "IN_STOCK" | "ASSIGNED" | "MAINTENANCE" | "DISPOSED";
+type AssetValueFilter = "ALL" | "UNDER_10M" | "FROM_10M_TO_50M" | "FROM_50M_TO_200M" | "FROM_200M";
 type ImportMode = AssetImportCommitPayload["importMode"];
+
+const ASSET_VALUE_FILTERS: Array<{
+  value: AssetValueFilter;
+  label: string;
+  min?: number;
+  max?: number;
+}> = [
+  { value: "ALL", label: "Tất cả giá trị" },
+  { value: "UNDER_10M", label: "Dưới 10 triệu", max: 10_000_000 },
+  { value: "FROM_10M_TO_50M", label: "10 - 50 triệu", min: 10_000_000, max: 50_000_000 },
+  { value: "FROM_50M_TO_200M", label: "50 - 200 triệu", min: 50_000_000, max: 200_000_000 },
+  { value: "FROM_200M", label: "Trên 200 triệu", min: 200_000_000 },
+];
 type SheetCell = string | number | boolean | Date | null | undefined;
 type SheetRow = SheetCell[];
 
@@ -40,6 +65,99 @@ function statusLabel(status: AssetStatusFilter) {
     DISPOSED: "Đã thanh lý",
   };
   return labels[status];
+}
+
+function collectCategoryIds(node: AssetCategoryTree): Set<number> {
+  const ids = new Set<number>([node.id]);
+  node.children.forEach((child) => {
+    collectCategoryIds(child).forEach((id) => {
+      ids.add(id);
+    });
+  });
+  return ids;
+}
+
+function findCategoryPath(nodes: AssetCategoryTree[], path: string[]): AssetCategoryTree[] {
+  const result: AssetCategoryTree[] = [];
+  let current = nodes;
+  for (const rawId of path) {
+    const node = current.find((item) => String(item.id) === rawId);
+    if (!node) break;
+    result.push(node);
+    current = node.children;
+  }
+  return result;
+}
+
+function buildAssetPayload(item: AssetItem): AssetPayload {
+  return {
+    assetCode: item.assetCode,
+    name: item.name,
+    category: item.assetCategory?.name || item.category || "",
+    serialNumber: item.serialNumber || "",
+    source: item.source || "",
+    vendorId: item.vendor?.id ?? null,
+    assignedEmployeeId: item.assignedEmployeeId ?? null,
+    departmentId: item.departmentId ?? null,
+    siteId: item.siteId ?? null,
+    projectId: item.projectId ?? null,
+    purchaseCost: item.purchaseCost ?? item.originalCost ?? null,
+    residualValue: item.residualValue ?? item.bookValue ?? null,
+    purchaseDate: item.purchaseDate || "",
+    warrantyUntil: item.warrantyUntil || "",
+    status: item.status,
+    depreciationMethod: item.depreciationMethod || "",
+    usefulLifeYears:
+      item.usefulLifeYears ??
+      (item.usefulLifeMonths ? Math.round(item.usefulLifeMonths / 12) : null),
+    notes: item.notes || "",
+    catalogItemId: item.catalogItem?.id ?? null,
+    categoryId: item.assetCategory?.id ?? null,
+    parentAssetId: item.parentAsset?.id ?? null,
+    assetClass: item.assetClass || "",
+    fixedAssetType: item.fixedAssetType || "",
+    toolUsageType: item.toolUsageType || "",
+    useDate: item.useDate || "",
+    depreciationStartDate: item.depreciationStartDate || "",
+    originalCost: item.originalCost ?? item.purchaseCost ?? null,
+    accumulatedDepreciation: item.accumulatedDepreciation ?? null,
+    bookValue: item.bookValue ?? item.residualValue ?? null,
+    usefulLifeMonths: item.usefulLifeMonths ?? null,
+    depreciationRate: item.depreciationRate ?? null,
+    manufactureYear: item.manufactureYear ?? null,
+    installationYear: item.installationYear ?? null,
+    countryCode: item.countryCode || "",
+    capacity: item.capacity ?? null,
+    capacityUnit: item.capacityUnit || "",
+    realCapacity: item.realCapacity ?? null,
+    technicalDescription: item.technicalDescription || "",
+  };
+}
+
+function optionalNumber(value: string): number | null {
+  if (value.trim() === "") return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function classLabel(value?: string) {
+  if (!value) return "Chưa phân loại";
+  const labels: Record<string, string> = {
+    FIXED_ASSET: "Tài sản cố định",
+    TOOL_EQUIPMENT: "Công cụ dụng cụ",
+    TANGIBLE: "Hữu hình",
+    INTANGIBLE: "Vô hình",
+    SINGLE_USE: "Dùng một lần",
+    MULTI_USE: "Dùng nhiều lần",
+  };
+  return labels[value] || value;
+}
+
+function dateTimeLabel(value?: string) {
+  if (!value) return "—";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleString("vi-VN");
 }
 
 function AssetMetric({
@@ -269,10 +387,10 @@ function downloadImportCsv(result: AssetImportValidationResponse) {
     "Loi",
     "Canh bao",
   ];
-  const escape = (value: string | number | null | undefined) =>
+  const escapeCsvCell = (value: string | number | null | undefined) =>
     `"${String(value ?? "").replace(/"/g, '""')}"`;
   const lines = [
-    header.map(escape).join(","),
+    header.map(escapeCsvCell).join(","),
     ...result.rows.map((row) =>
       [
         row.rowNumber,
@@ -283,7 +401,7 @@ function downloadImportCsv(result: AssetImportValidationResponse) {
         row.errors.map((item) => `${item.code}: ${item.message}`).join("; "),
         row.warnings.map((item) => `${item.code}: ${item.message}`).join("; "),
       ]
-        .map(escape)
+        .map(escapeCsvCell)
         .join(","),
     ),
   ];
@@ -296,15 +414,256 @@ function downloadImportCsv(result: AssetImportValidationResponse) {
   URL.revokeObjectURL(url);
 }
 
+async function downloadAssetImportTemplate() {
+  const ExcelJS = await import("exceljs");
+  const workbook = new ExcelJS.Workbook();
+  workbook.creator = "BIMLab QLVT";
+  workbook.created = new Date();
+
+  const sheet = workbook.addWorksheet("HoSoTaiSan_import", {
+    views: [{ state: "frozen", ySplit: 4 }],
+  });
+  const lookup = workbook.addWorksheet("DanhMuc_ThamChieu");
+
+  const fieldKeys = [
+    "assets.asset_code",
+    "assets.name",
+    "assets.asset_class",
+    "assets.fixed_asset_type/assets.tool_usage_type",
+    "assets.category_id/asset_categories.code",
+    "assets.department_id",
+    "assets.site_id",
+    "catalog_item_code",
+    "depreciation_method",
+    "series_mac_number",
+    "depreciation_start_date",
+    "use_date",
+    "useful_life_months",
+    "original_cost",
+    "book_value",
+    "status",
+    "country_code",
+    "manufacture_year",
+    "installation_year",
+    "technical_description",
+  ];
+  const headers = [
+    "Mã tài sản",
+    "Tên tài sản*",
+    "Phân loại*",
+    "Phân loại lớp con*",
+    "Danh mục tài sản*",
+    "Phòng ban",
+    "Chi nhánh",
+    "Mẫu tài sản",
+    "Phương pháp khấu hao",
+    "Số Series/MAC",
+    "Ngày bắt đầu khấu hao",
+    "Ngày sử dụng",
+    "Số tháng",
+    "Nguyên giá tài sản",
+    "Giá trị sổ sách",
+    "Trạng thái tài sản",
+    "Mã quốc gia/Xuất xứ",
+    "Năm sản xuất",
+    "Năm lắp đặt/Cài đặt",
+    "Mô tả kỹ thuật",
+  ];
+  const examples = [
+    "MONITOR-00001",
+    "Màn hình ASUS",
+    "FIXED_ASSET",
+    "TANGIBLE",
+    "MONITOR",
+    "CNTT - Marketing",
+    "BIMLab",
+    "MONITOR_DELL_24_HD",
+    "STRAIGHT_LINE",
+    "SN-MAC-001",
+    "2026-01-01",
+    "2026-01-05",
+    36,
+    6000000,
+    6000000,
+    "Trong kho",
+    "VN",
+    2025,
+    2026,
+    "Màn hình 24 inch, Full HD",
+  ];
+
+  sheet.addRow([
+    "Không bắt buộc nhập mã tài sản. Nếu để trống, hệ thống sẽ tự sinh theo danh mục node lá.",
+    "Quy ước phân loại: nhập mã FIXED_ASSET hoặc TOOL_EQUIPMENT.",
+    "Cấp cao nhất.",
+    "Phân loại lớp con: TANGIBLE, INTANGIBLE, SINGLE_USE hoặc MULTI_USE.",
+    "Nhập chính xác mã danh mục node lá, ví dụ MONITOR, LAPTOP, LICENSE.",
+  ]);
+  sheet.addRow(fieldKeys);
+  sheet.addRow(headers);
+  sheet.addRow(examples);
+  sheet.addRow([]);
+
+  sheet.mergeCells("A1:T1");
+  const noteCell = sheet.getCell("A1");
+  noteCell.font = { name: "Be Vietnam Pro", size: 11, bold: true, color: { argb: "FF154D7C" } };
+  noteCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFEFF6FF" } };
+  noteCell.alignment = { vertical: "middle", wrapText: true };
+  noteCell.border = {
+    top: { style: "thin", color: { argb: "FFBFDBFE" } },
+    left: { style: "thin", color: { argb: "FFBFDBFE" } },
+    bottom: { style: "thin", color: { argb: "FFBFDBFE" } },
+    right: { style: "thin", color: { argb: "FFBFDBFE" } },
+  };
+  sheet.getRow(1).height = 34;
+
+  sheet.getRow(2).height = 24;
+  sheet.getRow(2).eachCell((cell) => {
+    cell.font = { name: "Be Vietnam Pro", size: 10, color: { argb: "FF64748B" } };
+    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFF8FAFC" } };
+    cell.alignment = { vertical: "middle", wrapText: true };
+    cell.border = { bottom: { style: "thin", color: { argb: "FFE5E7EB" } } };
+  });
+
+  sheet.getRow(3).height = 42;
+  sheet.getRow(3).eachCell((cell) => {
+    cell.font = { name: "Be Vietnam Pro", size: 12, bold: true, color: { argb: "FFFFFFFF" } };
+    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF154D7C" } };
+    cell.alignment = { horizontal: "center", vertical: "middle", wrapText: true };
+    cell.border = {
+      top: { style: "thin", color: { argb: "FF154D7C" } },
+      left: { style: "thin", color: { argb: "FF93C5FD" } },
+      bottom: { style: "thin", color: { argb: "FF154D7C" } },
+      right: { style: "thin", color: { argb: "FF93C5FD" } },
+    };
+  });
+
+  sheet.getRow(4).eachCell((cell) => {
+    cell.font = { name: "Be Vietnam Pro", size: 11, color: { argb: "FF111827" } };
+    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFF8FAFC" } };
+    cell.alignment = { vertical: "middle", wrapText: true };
+  });
+
+  const widths = [16, 28, 16, 24, 22, 22, 18, 24, 20, 20, 22, 18, 12, 18, 18, 18, 18, 14, 18, 36];
+  widths.forEach((width, index) => {
+    sheet.getColumn(index + 1).width = width;
+  });
+
+  for (let rowIndex = 5; rowIndex <= 200; rowIndex += 1) {
+    sheet.getCell(`C${rowIndex}`).dataValidation = {
+      type: "list",
+      allowBlank: false,
+      formulae: ['"FIXED_ASSET,TOOL_EQUIPMENT"'],
+      showErrorMessage: true,
+      errorTitle: "Sai phân loại",
+      error: "Chọn FIXED_ASSET hoặc TOOL_EQUIPMENT.",
+    };
+    sheet.getCell(`D${rowIndex}`).dataValidation = {
+      type: "list",
+      allowBlank: false,
+      formulae: ['"TANGIBLE,INTANGIBLE,SINGLE_USE,MULTI_USE"'],
+      showErrorMessage: true,
+      errorTitle: "Sai phân loại lớp con",
+      error: "Chọn một giá trị trong danh sách.",
+    };
+    sheet.getCell(`I${rowIndex}`).dataValidation = {
+      type: "list",
+      allowBlank: true,
+      formulae: ['"STRAIGHT_LINE,DECLINING_BALANCE,NONE"'],
+    };
+    sheet.getCell(`P${rowIndex}`).dataValidation = {
+      type: "list",
+      allowBlank: true,
+      formulae: ['"IN_STOCK,ASSIGNED,MAINTENANCE,DISPOSED,LOST,PENDING"'],
+    };
+  }
+
+  sheet.autoFilter = "A3:T3";
+  sheet.eachRow((row) => {
+    row.eachCell((cell) => {
+      cell.font = { name: "Be Vietnam Pro", size: cell.font?.size ?? 11, ...cell.font };
+    });
+  });
+
+  lookup.columns = [
+    { header: "Nhóm", key: "group", width: 24 },
+    { header: "Mã/Giá trị nhập", key: "code", width: 28 },
+    { header: "Diễn giải", key: "label", width: 46 },
+    { header: "Danh mục cha", key: "parentCode", width: 28 },
+  ];
+  [
+    ["Phân loại", "FIXED_ASSET", "Tài sản cố định", ""],
+    ["Phân loại", "TOOL_EQUIPMENT", "Công cụ dụng cụ", ""],
+    ["Phân loại lớp con", "TANGIBLE", "Tài sản cố định hữu hình", "FIXED_ASSET"],
+    ["Phân loại lớp con", "INTANGIBLE", "Tài sản cố định vô hình", "FIXED_ASSET"],
+    ["Phân loại lớp con", "SINGLE_USE", "Công cụ dụng cụ sử dụng một lần", "TOOL_EQUIPMENT"],
+    ["Phân loại lớp con", "MULTI_USE", "Công cụ dụng cụ sử dụng nhiều lần", "TOOL_EQUIPMENT"],
+    ["Danh mục ví dụ", "IT_EQUIPMENT", "Thiết bị CNTT", "TANGIBLE"],
+    ["Danh mục ví dụ", "MONITOR", "Màn hình", "IT_EQUIPMENT"],
+    ["Danh mục ví dụ", "LAPTOP", "Laptop", "IT_EQUIPMENT"],
+    ["Danh mục ví dụ", "PRINTER", "Máy in", "IT_EQUIPMENT"],
+    ["Danh mục ví dụ", "OFFICE_EQUIPMENT", "Thiết bị văn phòng", "TANGIBLE"],
+    ["Danh mục ví dụ", "CHAIR", "Ghế", "OFFICE_EQUIPMENT"],
+    ["Danh mục ví dụ", "TABLE", "Bàn", "OFFICE_EQUIPMENT"],
+    ["Danh mục ví dụ", "SOFTWARE", "Phần mềm", "INTANGIBLE"],
+    ["Danh mục ví dụ", "LICENSE", "Bản quyền/phần mềm", "SOFTWARE"],
+    ["Trạng thái", "IN_STOCK", "Trong kho", ""],
+    ["Trạng thái", "ASSIGNED", "Đã cấp phát", ""],
+    ["Trạng thái", "MAINTENANCE", "Bảo trì", ""],
+    ["Trạng thái", "DISPOSED", "Đã thanh lý", ""],
+    ["Trạng thái", "LOST", "Mất", ""],
+    ["Trạng thái", "PENDING", "Chờ xử lý", ""],
+  ].forEach(([group, code, label, parentCode]) => {
+    lookup.addRow({ group, code, label, parentCode });
+  });
+
+  lookup.getRow(1).eachCell((cell) => {
+    cell.font = { name: "Be Vietnam Pro", size: 12, bold: true, color: { argb: "FFFFFFFF" } };
+    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF154D7C" } };
+    cell.alignment = { vertical: "middle", horizontal: "center" };
+  });
+  lookup.eachRow((row, rowNumber) => {
+    row.height = rowNumber === 1 ? 28 : 22;
+    row.eachCell((cell) => {
+      cell.font = {
+        name: "Be Vietnam Pro",
+        size: rowNumber === 1 ? 12 : 11,
+        bold: rowNumber === 1,
+        color: { argb: rowNumber === 1 ? "FFFFFFFF" : "FF111827" },
+      };
+      cell.border = { bottom: { style: "thin", color: { argb: "FFE5E7EB" } } };
+    });
+  });
+
+  const buffer = await workbook.xlsx.writeBuffer();
+  const blob = new Blob([buffer], {
+    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "mau_import_danh_sach_tai_san_bimlab.xlsx";
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
 export function AssetsPage() {
   const { hasPermission } = useAuth();
-  const { assets, employees, departments, workSites, projects, ensureAssets, refresh } =
-    useAppData();
-  const { openModal, deleteResource, disposeAssetAction, revokeAsset } = useActions();
+  const { assets, employees, departments, workSites, projects, ensureAssets } = useAppData();
+  const { openModal } = useActions();
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<AssetStatusFilter>("ALL");
-  const [categoryFilter, setCategoryFilter] = useState("ALL");
+  const [categoryPath, setCategoryPath] = useState<string[]>([]);
+  const [categoryTree, setCategoryTree] = useState<AssetCategoryTree[]>([]);
+  const [siteFilter, setSiteFilter] = useState("ALL");
+  const [valueFilter, setValueFilter] = useState<AssetValueFilter>("ALL");
+  const [listRefreshing, setListRefreshing] = useState(false);
+  const [selectedAsset, setSelectedAsset] = useState<AssetItem | null>(null);
+  const [assetDraft, setAssetDraft] = useState<AssetPayload | null>(null);
+  const [assetSaving, setAssetSaving] = useState(false);
+  const [qrAsset, setQrAsset] = useState<AssetItem | null>(null);
   const [importOpen, setImportOpen] = useState(false);
+  const [importCancelConfirm, setImportCancelConfirm] = useState(false);
   const [importBusy, setImportBusy] = useState(false);
   const [importFileName, setImportFileName] = useState("");
   const [importRows, setImportRows] = useState<AssetImportRowPayload[]>([]);
@@ -315,9 +674,15 @@ export function AssetsPage() {
     void ensureAssets();
   }, [ensureAssets]);
 
+  useEffect(() => {
+    loadAssetCategoryTree()
+      .then(setCategoryTree)
+      .catch(() => setCategoryTree([]));
+  }, []);
+
   const canManage = hasPermission("asset_manage");
   const employeeName = (id?: number) =>
-    id ? employeeLabel(employees.find((employee) => employee.id === id)) : "Trong kho";
+    id ? employeeLabel(employees.find((employee) => employee.id === id)) : "Chưa gán người dùng";
   const departmentName = (id?: number) =>
     id ? departments.find((department) => department.id === id)?.name || `Phòng ban #${id}` : "—";
   const siteName = (id?: number) =>
@@ -325,23 +690,105 @@ export function AssetsPage() {
   const projectName = (id?: number) =>
     id ? projectLabel(projects.find((project) => project.id === id)) : "—";
 
-  const categories = useMemo(
+  const categoryDescendantIds = useMemo(() => {
+    const idsByCategory = new Map<number, Set<number>>();
+    const visit = (node: AssetCategoryTree): Set<number> => {
+      const ids = new Set<number>([node.id]);
+      node.children.forEach((child) => {
+        visit(child).forEach((id) => {
+          ids.add(id);
+        });
+      });
+      idsByCategory.set(node.id, ids);
+      return ids;
+    };
+    categoryTree.forEach(visit);
+    return idsByCategory;
+  }, [categoryTree]);
+
+  const categoryNodesWithAssets = useMemo(() => {
+    const assetCategoryIds = new Set(
+      assets.map((asset) => asset.assetCategory?.id).filter(Boolean) as number[],
+    );
+    const fallbackNames = new Set(
+      assets
+        .flatMap((asset) => [asset.category, asset.assetCategory?.name, asset.assetCategory?.code])
+        .filter(Boolean) as string[],
+    );
+    const matched = new Set<number>();
+    const visit = (node: AssetCategoryTree): boolean => {
+      const descendantIds = categoryDescendantIds.get(node.id) ?? collectCategoryIds(node);
+      const hasExactAsset = Array.from(descendantIds).some((id) => assetCategoryIds.has(id));
+      const hasFallbackAsset = fallbackNames.has(node.name) || fallbackNames.has(node.code);
+      const hasChildAsset = node.children.some(visit);
+      const hasAsset = hasExactAsset || hasFallbackAsset || hasChildAsset;
+      if (hasAsset) matched.add(node.id);
+      return hasAsset;
+    };
+    categoryTree.forEach(visit);
+    return matched;
+  }, [assets, categoryDescendantIds, categoryTree]);
+
+  const selectedCategoryNodes = useMemo(
+    () => findCategoryPath(categoryTree, categoryPath),
+    [categoryPath, categoryTree],
+  );
+
+  const selectedCategoryNode = selectedCategoryNodes.at(-1) ?? null;
+
+  const assetDraftChanged = useMemo(() => {
+    if (!selectedAsset || !assetDraft) return false;
+    return JSON.stringify(assetDraft) !== JSON.stringify(buildAssetPayload(selectedAsset));
+  }, [assetDraft, selectedAsset]);
+
+  const categoryLevelOptions = useMemo(() => {
+    const levels = [categoryTree.filter((node) => categoryNodesWithAssets.has(node.id))];
+    selectedCategoryNodes.forEach((node) => {
+      const children = node.children.filter((child) => categoryNodesWithAssets.has(child.id));
+      if (children.length > 0) levels.push(children);
+    });
+    return levels;
+  }, [categoryNodesWithAssets, categoryTree, selectedCategoryNodes]);
+
+  const siteOptions = useMemo(
     () =>
-      Array.from(new Set(assets.map((asset) => asset.category).filter(Boolean))).sort((a, b) =>
-        a.localeCompare(b, "vi"),
+      Array.from(new Set(assets.map((asset) => asset.siteId).filter(Boolean) as number[])).sort(
+        (a, b) => siteName(a).localeCompare(siteName(b), "vi"),
       ),
-    [assets],
+    [assets, workSites],
   );
 
   const filteredAssets = useMemo(() => {
     const normalized = query.trim().toLowerCase();
+    const valueRange = ASSET_VALUE_FILTERS.find((item) => item.value === valueFilter);
+    const selectedCategoryIds = selectedCategoryNode
+      ? (categoryDescendantIds.get(selectedCategoryNode.id) ??
+        collectCategoryIds(selectedCategoryNode))
+      : null;
     return assets.filter((asset) => {
       const matchesStatus = statusFilter === "ALL" || asset.status === statusFilter;
-      const matchesCategory = categoryFilter === "ALL" || asset.category === categoryFilter;
+      const assetCategoryId = asset.assetCategory?.id;
+      const matchesCategory =
+        !selectedCategoryNode ||
+        (assetCategoryId
+          ? selectedCategoryIds?.has(assetCategoryId)
+          : asset.category === selectedCategoryNode.name ||
+            asset.category === selectedCategoryNode.code);
+      const matchesSite = siteFilter === "ALL" || asset.siteId === Number(siteFilter);
+      const cost = Number(asset.purchaseCost || 0);
+      const matchesValue =
+        valueFilter === "ALL" ||
+        Boolean(
+          valueRange &&
+            (valueRange.min === undefined || cost >= valueRange.min) &&
+            (valueRange.max === undefined || cost < valueRange.max),
+        );
       const searchable = [
         asset.assetCode,
         asset.name,
         asset.category,
+        asset.assetCategory?.name,
+        asset.assetCategory?.code,
         asset.serialNumber,
         asset.vendor?.name,
         employeeName(asset.assignedEmployeeId),
@@ -350,26 +797,108 @@ export function AssetsPage() {
         .join(" ")
         .toLowerCase();
       const matchesQuery = !normalized || searchable.includes(normalized);
-      return matchesStatus && matchesCategory && matchesQuery;
+      return matchesStatus && matchesCategory && matchesSite && matchesValue && matchesQuery;
     });
-  }, [assets, categoryFilter, query, statusFilter]);
+  }, [
+    assets,
+    categoryDescendantIds,
+    query,
+    selectedCategoryNode,
+    siteFilter,
+    statusFilter,
+    valueFilter,
+  ]);
 
   const totalValue = useMemo(
     () => assets.reduce((sum, item) => sum + Number(item.purchaseCost || 0), 0),
     [assets],
   );
 
+  const filteredValue = useMemo(
+    () => filteredAssets.reduce((sum, item) => sum + Number(item.purchaseCost || 0), 0),
+    [filteredAssets],
+  );
+
   const assignedCount = assets.filter((asset) => asset.status === "ASSIGNED").length;
   const inStockCount = assets.filter((asset) => asset.status === "IN_STOCK").length;
   const maintenanceCount = assets.filter((asset) => asset.status === "MAINTENANCE").length;
 
+  const reloadAssetList = async () => {
+    setListRefreshing(true);
+    try {
+      await ensureAssets(true);
+    } finally {
+      setListRefreshing(false);
+    }
+  };
+
+  const handleCategoryLevelChange = (level: number, value: string) => {
+    setCategoryPath((current) => {
+      if (value === "ALL") return current.slice(0, level);
+      return [...current.slice(0, level), value];
+    });
+  };
+
+  const openAssetDetail = (item: AssetItem) => {
+    setSelectedAsset(item);
+    setAssetDraft(buildAssetPayload(item));
+  };
+
+  const closeAssetDetail = () => {
+    if (assetSaving) return;
+    setSelectedAsset(null);
+    setAssetDraft(null);
+  };
+
+  const updateAssetDraft = (field: keyof AssetPayload, value: AssetPayload[keyof AssetPayload]) => {
+    setAssetDraft((current) => (current ? { ...current, [field]: value } : current));
+  };
+
+  const handleSaveAsset = async () => {
+    if (!selectedAsset || !assetDraft) return;
+    setAssetSaving(true);
+    try {
+      await updateAsset(selectedAsset.id, assetDraft);
+      toast.success("Đã cập nhật tài sản.");
+      await reloadAssetList();
+      setSelectedAsset(null);
+      setAssetDraft(null);
+    } catch {
+      toast.error("Không cập nhật được tài sản.");
+    } finally {
+      setAssetSaving(false);
+    }
+  };
+
+  const handleDeleteAsset = async (item: AssetItem) => {
+    const confirmed = window.confirm(`Xóa tài sản ${item.assetCode} - ${item.name}?`);
+    if (!confirmed) return;
+    try {
+      await deleteAsset(item.id);
+      toast.success("Đã xóa tài sản.");
+      await reloadAssetList();
+    } catch {
+      toast.error("Không xóa được tài sản.");
+    }
+  };
+
   const closeImport = () => {
     if (importBusy) return;
     setImportOpen(false);
+    setImportCancelConfirm(false);
     setImportFileName("");
     setImportRows([]);
     setImportResult(null);
     setImportMode("VALID_ROWS_ONLY");
+  };
+
+  const requestCloseImport = () => {
+    if (importBusy) return;
+    if (importFileName || importRows.length > 0 || importResult) {
+      setImportCancelConfirm(true);
+      return;
+    }
+    closeImport();
   };
 
   const handleImportFile = async (event: ChangeEvent<HTMLInputElement>) => {
@@ -430,7 +959,7 @@ export function AssetsPage() {
         rows: result.rows,
       });
       toast.success(`Đã import ${result.importedRows} tài sản.`);
-      await refresh();
+      await reloadAssetList();
     } catch {
       toast.error("Backend import đang chờ bạn implement phần lưu dữ liệu.");
     } finally {
@@ -438,12 +967,34 @@ export function AssetsPage() {
     }
   };
 
+  const handleDownloadTemplate = async () => {
+    const loadingToast = toast.loading("Đang tạo file mẫu Excel...");
+    try {
+      await downloadAssetImportTemplate();
+      toast.success("Đã tải file mẫu Excel.", { id: loadingToast });
+    } catch {
+      toast.error("Không tạo được file mẫu Excel.", { id: loadingToast });
+    }
+  };
+
+  const headerExtraActions = (
+    <>
+      <button type="button" className="asset-template-button" onClick={handleDownloadTemplate}>
+        <FiDownload /> Tải mẫu Excel
+      </button>
+      <button type="button" className="asset-import-button" onClick={() => setImportOpen(true)}>
+        <FiUpload /> Tải lên file Excel
+      </button>
+    </>
+  );
+
   return (
     <section className="asset-page panel">
       <PanelHeader
         title="Danh sách tài sản"
         action={canManage}
         onAdd={() => openModal({ type: "asset", mode: "create" })}
+        extraActions={headerExtraActions}
       />
 
       <div className="asset-summary-grid">
@@ -454,15 +1005,6 @@ export function AssetsPage() {
       </div>
 
       <div className="asset-toolbar">
-        {canManage && (
-          <button
-            type="button"
-            className="asset-import-button"
-            onClick={() => setImportOpen(true)}
-          >
-            <FiUpload /> Tải lên file Excel
-          </button>
-        )}
         <label className="asset-search">
           <FiSearch />
           <input
@@ -481,24 +1023,56 @@ export function AssetsPage() {
             </option>
           ))}
         </select>
+        <div className="asset-category-filter-chain">
+          {categoryLevelOptions.map((options, level) => (
+            <select
+              key={level === 0 ? "root" : selectedCategoryNodes[level - 1]?.id}
+              value={categoryPath[level] ?? "ALL"}
+              onChange={(event) => handleCategoryLevelChange(level, event.target.value)}
+            >
+              <option value="ALL">
+                {level === 0
+                  ? "Tất cả danh mục"
+                  : `Tất cả trong ${selectedCategoryNodes[level - 1]?.name || "danh mục"}`}
+              </option>
+              {options.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
+              ))}
+            </select>
+          ))}
+        </div>
+        <select value={siteFilter} onChange={(event) => setSiteFilter(event.target.value)}>
+          <option value="ALL">Tất cả chi nhánh</option>
+          {siteOptions.map((siteId) => (
+            <option key={siteId} value={siteId}>
+              {siteName(siteId)}
+            </option>
+          ))}
+        </select>
         <select
-          value={categoryFilter}
-          onChange={(event) => setCategoryFilter(event.target.value)}
+          value={valueFilter}
+          onChange={(event) => setValueFilter(event.target.value as AssetValueFilter)}
         >
-          <option value="ALL">Tất cả nhóm tài sản</option>
-          {categories.map((category) => (
-            <option key={category} value={category}>
-              {category}
+          {ASSET_VALUE_FILTERS.map((item) => (
+            <option key={item.value} value={item.value}>
+              {item.label}
             </option>
           ))}
         </select>
       </div>
 
-      <div className="asset-list-panel">
+      <div className={`asset-list-panel ${listRefreshing ? "is-refreshing" : ""}`}>
         <div className="asset-list-head">
           <div>
             <strong>{filteredAssets.length} tài sản</strong>
-            <span>Tổng giá trị: {money.format(totalValue)}</span>
+            <span>
+              Tổng giá trị đang lọc: {money.format(filteredValue)}
+              {filteredAssets.length !== assets.length
+                ? ` / ${money.format(totalValue)} toàn bộ`
+                : ""}
+            </span>
           </div>
         </div>
 
@@ -510,12 +1084,12 @@ export function AssetsPage() {
               <thead>
                 <tr>
                   <th>Tài sản</th>
-                  <th>Phân loại</th>
+                  <th>Danh mục</th>
                   <th>Người dùng</th>
                   <th>Vị trí</th>
                   <th>Giá trị</th>
                   <th>Trạng thái</th>
-                  <th />
+                  <th>Thao tác</th>
                 </tr>
               </thead>
               <tbody>
@@ -530,8 +1104,10 @@ export function AssetsPage() {
                     </td>
                     <td>
                       <div className="asset-muted-stack">
-                        <strong>{item.category}</strong>
-                        <span>{item.vendor?.name || "Chưa có nhà cung cấp"}</span>
+                        <strong>
+                          {item.assetCategory?.name || item.category || "Chưa phân loại"}
+                        </strong>
+                        <span>{item.assetCategory?.code || "Chưa có mã danh mục"}</span>
                       </div>
                     </td>
                     <td>
@@ -550,15 +1126,34 @@ export function AssetsPage() {
                       <StatusBadge value={item.status} />
                     </td>
                     <td>
-                      {canManage && (
-                        <AssetActions
-                          item={item}
-                          onEdit={() => openModal({ type: "asset", mode: "edit", item })}
-                          onDelete={() => void deleteResource("assets", item.id)}
-                          onRevoke={() => void revokeAsset(item)}
-                          onDispose={() => void disposeAssetAction(item)}
-                        />
-                      )}
+                      <div className="asset-row-icon-actions">
+                        <button
+                          type="button"
+                          className="asset-icon-action"
+                          title="Xem và chỉnh sửa tài sản"
+                          onClick={() => openAssetDetail(item)}
+                        >
+                          <FiEye />
+                        </button>
+                        <button
+                          type="button"
+                          className="asset-icon-action"
+                          title="Xem mã QR tài sản"
+                          onClick={() => setQrAsset(item)}
+                        >
+                          <FiGrid />
+                        </button>
+                        {canManage && (
+                          <button
+                            type="button"
+                            className="asset-icon-action danger"
+                            title="Xóa tài sản"
+                            onClick={() => void handleDeleteAsset(item)}
+                          >
+                            <FiTrash2 />
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -566,7 +1161,492 @@ export function AssetsPage() {
             </table>
           </div>
         )}
+        {listRefreshing && <div className="asset-list-refreshing">Đang cập nhật danh sách...</div>}
       </div>
+
+      {selectedAsset && assetDraft && (
+        <div className="modal-backdrop">
+          <div className="crud-modal asset-detail-modal">
+            <div className="modal-head">
+              <div className="modal-title-group">
+                <span className="modal-title-icon edit">
+                  <FiEye />
+                </span>
+                <div>
+                  <h2>Chi tiết tài sản</h2>
+                  <p>
+                    {selectedAsset.assetCode} · {selectedAsset.name}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                className="icon-button"
+                onClick={closeAssetDetail}
+                disabled={assetSaving}
+              >
+                <FiX />
+              </button>
+            </div>
+
+            <div className="asset-detail-body">
+              <div className="asset-detail-hero">
+                <div>
+                  <span>Mã tài sản</span>
+                  <strong>{selectedAsset.assetCode}</strong>
+                </div>
+                <div>
+                  <span>Danh mục</span>
+                  <strong>
+                    {selectedAsset.assetCategory?.name ||
+                      selectedAsset.category ||
+                      "Chưa phân loại"}
+                  </strong>
+                </div>
+                <div>
+                  <span>Phân loại</span>
+                  <strong>{classLabel(selectedAsset.assetClass)}</strong>
+                </div>
+                <div>
+                  <span>Trạng thái</span>
+                  <StatusBadge value={selectedAsset.status} />
+                </div>
+              </div>
+
+              <div className="asset-detail-grid">
+                <section className="asset-detail-section">
+                  <h3>Định danh và phân loại</h3>
+                  <div className="asset-detail-fields">
+                    <label>
+                      <span>Tên tài sản</span>
+                      <input
+                        value={assetDraft.name}
+                        onChange={(event) => updateAssetDraft("name", event.target.value)}
+                        disabled={!canManage || assetSaving}
+                      />
+                    </label>
+                    <label>
+                      <span>Mã tài sản</span>
+                      <input value={assetDraft.assetCode} disabled />
+                    </label>
+                    <label>
+                      <span>Danh mục</span>
+                      <input value={assetDraft.category} disabled />
+                    </label>
+                    <label>
+                      <span>Mã danh mục</span>
+                      <input value={selectedAsset.assetCategory?.code || "—"} disabled />
+                    </label>
+                    <label>
+                      <span>Loại tài sản</span>
+                      <input value={classLabel(assetDraft.assetClass)} disabled />
+                    </label>
+                    <label>
+                      <span>Loại tài sản cố định</span>
+                      <input value={classLabel(assetDraft.fixedAssetType)} disabled />
+                    </label>
+                    <label>
+                      <span>Loại công cụ dụng cụ</span>
+                      <input value={classLabel(assetDraft.toolUsageType)} disabled />
+                    </label>
+                    <label>
+                      <span>Mẫu tài sản</span>
+                      <input
+                        value={
+                          selectedAsset.catalogItem
+                            ? `${selectedAsset.catalogItem.itemCode} - ${selectedAsset.catalogItem.name}`
+                            : "Chưa gắn mẫu tài sản"
+                        }
+                        disabled
+                      />
+                    </label>
+                    <label>
+                      <span>Tài sản cha</span>
+                      <input
+                        value={
+                          selectedAsset.parentAsset
+                            ? `${selectedAsset.parentAsset.assetCode} - ${selectedAsset.parentAsset.name}`
+                            : "Không có"
+                        }
+                        disabled
+                      />
+                    </label>
+                    <label>
+                      <span>Serial/MAC</span>
+                      <input
+                        value={assetDraft.serialNumber || ""}
+                        onChange={(event) => updateAssetDraft("serialNumber", event.target.value)}
+                        disabled={!canManage || assetSaving}
+                      />
+                    </label>
+                    <label>
+                      <span>Trạng thái</span>
+                      <select
+                        value={assetDraft.status || "IN_STOCK"}
+                        onChange={(event) => updateAssetDraft("status", event.target.value)}
+                        disabled={!canManage || assetSaving}
+                      >
+                        <option value="IN_STOCK">Trong kho</option>
+                        <option value="ASSIGNED">Đã cấp phát</option>
+                        <option value="MAINTENANCE">Bảo trì</option>
+                        <option value="DISPOSED">Đã thanh lý</option>
+                        <option value="LOST">Mất</option>
+                      </select>
+                    </label>
+                    <label>
+                      <span>Nguồn hình thành</span>
+                      <input
+                        value={assetDraft.source || ""}
+                        onChange={(event) => updateAssetDraft("source", event.target.value)}
+                        disabled={!canManage || assetSaving}
+                      />
+                    </label>
+                  </div>
+                </section>
+
+                <section className="asset-detail-section">
+                  <h3>Sử dụng, đơn vị và vị trí</h3>
+                  <div className="asset-detail-readonly-grid">
+                    <div>
+                      <span>Người/nhân sự đang giữ</span>
+                      <strong>{employeeName(selectedAsset.assignedEmployeeId)}</strong>
+                    </div>
+                    <div>
+                      <span>Đơn vị/phòng ban quản lý</span>
+                      <strong>{departmentName(selectedAsset.departmentId)}</strong>
+                    </div>
+                    <div>
+                      <span>Site/chi nhánh hiện tại</span>
+                      <strong>{siteName(selectedAsset.siteId)}</strong>
+                    </div>
+                    <div>
+                      <span>Dự án</span>
+                      <strong>{projectName(selectedAsset.projectId)}</strong>
+                    </div>
+                    <div>
+                      <span>Ngày đưa vào sử dụng</span>
+                      <strong>{selectedAsset.useDate || "—"}</strong>
+                    </div>
+                    <div>
+                      <span>Nguồn hình thành</span>
+                      <strong>{assetDraft.source || "—"}</strong>
+                    </div>
+                  </div>
+                </section>
+
+                <section className="asset-detail-section">
+                  <h3>Tài chính và khấu hao</h3>
+                  <div className="asset-detail-fields">
+                    <label>
+                      <span>Nguyên giá</span>
+                      <input
+                        type="number"
+                        value={assetDraft.originalCost ?? ""}
+                        onChange={(event) =>
+                          updateAssetDraft("originalCost", optionalNumber(event.target.value))
+                        }
+                        disabled={!canManage || assetSaving}
+                      />
+                    </label>
+                    <label>
+                      <span>Giá mua/ghi nhận</span>
+                      <input
+                        type="number"
+                        value={assetDraft.purchaseCost ?? ""}
+                        onChange={(event) =>
+                          updateAssetDraft("purchaseCost", optionalNumber(event.target.value))
+                        }
+                        disabled={!canManage || assetSaving}
+                      />
+                    </label>
+                    <label>
+                      <span>Hao mòn lũy kế</span>
+                      <input
+                        type="number"
+                        value={assetDraft.accumulatedDepreciation ?? ""}
+                        onChange={(event) =>
+                          updateAssetDraft(
+                            "accumulatedDepreciation",
+                            optionalNumber(event.target.value),
+                          )
+                        }
+                        disabled={!canManage || assetSaving}
+                      />
+                    </label>
+                    <label>
+                      <span>Giá trị sổ sách</span>
+                      <input
+                        type="number"
+                        value={assetDraft.bookValue ?? ""}
+                        onChange={(event) =>
+                          updateAssetDraft("bookValue", optionalNumber(event.target.value))
+                        }
+                        disabled={!canManage || assetSaving}
+                      />
+                    </label>
+                    <label>
+                      <span>Giá trị còn lại</span>
+                      <input
+                        type="number"
+                        value={assetDraft.residualValue ?? ""}
+                        onChange={(event) =>
+                          updateAssetDraft("residualValue", optionalNumber(event.target.value))
+                        }
+                        disabled={!canManage || assetSaving}
+                      />
+                    </label>
+                    <label>
+                      <span>Ngày mua</span>
+                      <input
+                        type="date"
+                        value={assetDraft.purchaseDate || ""}
+                        onChange={(event) => updateAssetDraft("purchaseDate", event.target.value)}
+                        disabled={!canManage || assetSaving}
+                      />
+                    </label>
+                    <label>
+                      <span>Ngày bắt đầu khấu hao</span>
+                      <input
+                        type="date"
+                        value={assetDraft.depreciationStartDate || ""}
+                        onChange={(event) =>
+                          updateAssetDraft("depreciationStartDate", event.target.value)
+                        }
+                        disabled={!canManage || assetSaving}
+                      />
+                    </label>
+                    <label>
+                      <span>Bảo hành đến</span>
+                      <input
+                        type="date"
+                        value={assetDraft.warrantyUntil || ""}
+                        onChange={(event) => updateAssetDraft("warrantyUntil", event.target.value)}
+                        disabled={!canManage || assetSaving}
+                      />
+                    </label>
+                    <label>
+                      <span>Phương pháp khấu hao</span>
+                      <input
+                        value={assetDraft.depreciationMethod || ""}
+                        onChange={(event) =>
+                          updateAssetDraft("depreciationMethod", event.target.value)
+                        }
+                        disabled={!canManage || assetSaving}
+                      />
+                    </label>
+                    <label>
+                      <span>Số tháng sử dụng</span>
+                      <input
+                        type="number"
+                        value={assetDraft.usefulLifeMonths ?? ""}
+                        onChange={(event) =>
+                          updateAssetDraft("usefulLifeMonths", optionalNumber(event.target.value))
+                        }
+                        disabled={!canManage || assetSaving}
+                      />
+                    </label>
+                    <label>
+                      <span>Số năm sử dụng</span>
+                      <input
+                        type="number"
+                        value={assetDraft.usefulLifeYears ?? ""}
+                        onChange={(event) =>
+                          updateAssetDraft("usefulLifeYears", optionalNumber(event.target.value))
+                        }
+                        disabled={!canManage || assetSaving}
+                      />
+                    </label>
+                    <label>
+                      <span>Tỷ lệ khấu hao</span>
+                      <input
+                        type="number"
+                        value={assetDraft.depreciationRate ?? ""}
+                        onChange={(event) =>
+                          updateAssetDraft("depreciationRate", optionalNumber(event.target.value))
+                        }
+                        disabled={!canManage || assetSaving}
+                      />
+                    </label>
+                  </div>
+                </section>
+
+                <section className="asset-detail-section">
+                  <h3>Thông số kỹ thuật</h3>
+                  <div className="asset-detail-fields">
+                    <label>
+                      <span>Xuất xứ/mã quốc gia</span>
+                      <input
+                        value={assetDraft.countryCode || ""}
+                        onChange={(event) => updateAssetDraft("countryCode", event.target.value)}
+                        disabled={!canManage || assetSaving}
+                      />
+                    </label>
+                    <label>
+                      <span>Năm sản xuất</span>
+                      <input
+                        type="number"
+                        value={assetDraft.manufactureYear ?? ""}
+                        onChange={(event) =>
+                          updateAssetDraft("manufactureYear", optionalNumber(event.target.value))
+                        }
+                        disabled={!canManage || assetSaving}
+                      />
+                    </label>
+                    <label>
+                      <span>Năm lắp đặt/cài đặt</span>
+                      <input
+                        type="number"
+                        value={assetDraft.installationYear ?? ""}
+                        onChange={(event) =>
+                          updateAssetDraft("installationYear", optionalNumber(event.target.value))
+                        }
+                        disabled={!canManage || assetSaving}
+                      />
+                    </label>
+                    <label>
+                      <span>Công suất thiết kế</span>
+                      <input
+                        type="number"
+                        value={assetDraft.capacity ?? ""}
+                        onChange={(event) =>
+                          updateAssetDraft("capacity", optionalNumber(event.target.value))
+                        }
+                        disabled={!canManage || assetSaving}
+                      />
+                    </label>
+                    <label>
+                      <span>Công suất thực tế</span>
+                      <input
+                        type="number"
+                        value={assetDraft.realCapacity ?? ""}
+                        onChange={(event) =>
+                          updateAssetDraft("realCapacity", optionalNumber(event.target.value))
+                        }
+                        disabled={!canManage || assetSaving}
+                      />
+                    </label>
+                    <label>
+                      <span>Đơn vị công suất</span>
+                      <input
+                        value={assetDraft.capacityUnit || ""}
+                        onChange={(event) => updateAssetDraft("capacityUnit", event.target.value)}
+                        disabled={!canManage || assetSaving}
+                      />
+                    </label>
+                  </div>
+                  <label className="asset-detail-wide-field">
+                    <span>Mô tả kỹ thuật</span>
+                    <textarea
+                      value={assetDraft.technicalDescription || ""}
+                      onChange={(event) =>
+                        updateAssetDraft("technicalDescription", event.target.value)
+                      }
+                      disabled={!canManage || assetSaving}
+                      rows={4}
+                    />
+                  </label>
+                </section>
+
+                <section className="asset-detail-section">
+                  <h3>Thanh lý và hệ thống</h3>
+                  <div className="asset-detail-readonly-grid">
+                    <div>
+                      <span>Ngày thanh lý</span>
+                      <strong>{selectedAsset.disposalDate || "—"}</strong>
+                    </div>
+                    <div>
+                      <span>Giá thanh lý</span>
+                      <strong>
+                        {selectedAsset.disposalPrice
+                          ? money.format(Number(selectedAsset.disposalPrice))
+                          : "—"}
+                      </strong>
+                    </div>
+                    <div>
+                      <span>Lý do thanh lý</span>
+                      <strong>{selectedAsset.disposalReason || "—"}</strong>
+                    </div>
+                    <div>
+                      <span>Nhà cung cấp</span>
+                      <strong>{selectedAsset.vendor?.name || "Chưa có nhà cung cấp"}</strong>
+                    </div>
+                    <div>
+                      <span>Ngày tạo</span>
+                      <strong>{dateTimeLabel(selectedAsset.createdAt)}</strong>
+                    </div>
+                    <div>
+                      <span>Cập nhật lần cuối</span>
+                      <strong>{dateTimeLabel(selectedAsset.updatedAt)}</strong>
+                    </div>
+                  </div>
+                </section>
+
+                <section className="asset-detail-section asset-detail-section-wide">
+                  <h3>Ghi chú</h3>
+                  <textarea
+                    value={assetDraft.notes || ""}
+                    onChange={(event) => updateAssetDraft("notes", event.target.value)}
+                    disabled={!canManage || assetSaving}
+                    rows={4}
+                  />
+                </section>
+              </div>
+            </div>
+
+            <div className="modal-actions asset-detail-actions">
+              <button
+                type="button"
+                className="secondary"
+                onClick={closeAssetDetail}
+                disabled={assetSaving}
+              >
+                Đóng
+              </button>
+              {canManage && (
+                <button
+                  type="button"
+                  className="primary-action"
+                  onClick={() => void handleSaveAsset()}
+                  disabled={assetSaving || !assetDraftChanged}
+                >
+                  Lưu thay đổi
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {qrAsset && (
+        <div className="modal-backdrop">
+          <div className="crud-modal asset-qr-modal">
+            <div className="modal-head">
+              <div className="modal-title-group">
+                <span className="modal-title-icon create">
+                  <FiGrid />
+                </span>
+                <div>
+                  <h2>Mã QR tài sản</h2>
+                  <p>{qrAsset.assetCode}</p>
+                </div>
+              </div>
+              <button type="button" className="icon-button" onClick={() => setQrAsset(null)}>
+                <FiX />
+              </button>
+            </div>
+            <div className="asset-qr-placeholder">
+              <FiGrid />
+              <strong>{qrAsset.name}</strong>
+              <span>Tính năng sinh và in QR sẽ được hiện thực ở bước sau.</span>
+            </div>
+            <div className="modal-actions">
+              <button type="button" className="secondary" onClick={() => setQrAsset(null)}>
+                Đóng
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {importOpen && (
         <div className="modal-backdrop">
@@ -577,22 +1657,26 @@ export function AssetsPage() {
                   <FiFileText />
                 </span>
                 <div>
-                  <h2>Nhập danh sách tài sản</h2>
-                  <p>Frontend đọc Excel, backend nhận JSON để kiểm tra và lưu dữ liệu.</p>
+                  <h2>Tải danh sách tài sản</h2>
                 </div>
               </div>
-              <button type="button" className="icon-button" onClick={closeImport}>
+              <button type="button" className="icon-button" onClick={requestCloseImport}>
                 <FiX />
               </button>
             </div>
 
             <div className="asset-import-body">
-              <label className="asset-import-dropzone">
-                <FiUpload />
-                <strong>{importFileName || "Chọn file Excel danh sách tài sản"}</strong>
-                <span>Hỗ trợ file mẫu sheet HoSoTaiSan_import, định dạng .xlsx hoặc .xls</span>
-                <input type="file" accept=".xlsx,.xls" onChange={handleImportFile} />
-              </label>
+              <div className="asset-import-file-card">
+                <div>
+                  <span>File dữ liệu</span>
+                  <strong>{importFileName || "Chưa chọn file Excel"}</strong>
+                  <small>Hỗ trợ sheet HoSoTaiSan_import, định dạng .xlsx hoặc .xls</small>
+                </div>
+                <label className="asset-import-file-button">
+                  <FiUpload /> Chọn file Excel
+                  <input type="file" accept=".xlsx,.xls" onChange={handleImportFile} />
+                </label>
+              </div>
 
               <div className="asset-import-summary">
                 <div>
@@ -615,20 +1699,22 @@ export function AssetsPage() {
 
               <div className="asset-import-options">
                 <label>
-                  <span>Chế độ import</span>
+                  <span>Chế độ nhập dữ liệu</span>
                   <select
                     value={importMode}
                     onChange={(event) => setImportMode(event.target.value as ImportMode)}
                   >
-                    <option value="VALID_ROWS_ONLY">Chỉ nhập dòng hợp lệ</option>
-                    <option value="ALL_OR_NOTHING">Tất cả hợp lệ mới nhập</option>
+                    <option value="VALID_ROWS_ONLY">Chỉ nhập những dòng hợp lệ</option>
+                    <option value="ALL_OR_NOTHING">Tất cả dòng hợp lệ</option>
                   </select>
                 </label>
               </div>
 
               <div className="asset-import-preview">
                 {importRows.length === 0 ? (
-                  <div className="empty-state">Chọn file Excel để xem dữ liệu trước khi import.</div>
+                  <div className="empty-state">
+                    Chọn file Excel để xem dữ liệu trước khi import.
+                  </div>
                 ) : (
                   <table>
                     <thead>
@@ -637,31 +1723,47 @@ export function AssetsPage() {
                         <th>Tài sản</th>
                         <th>Danh mục</th>
                         <th>Phân loại</th>
+                        <th>Loại con</th>
+                        <th>Phòng ban</th>
+                        <th>Chi nhánh</th>
                         <th>Serial/MAC</th>
+                        <th>Ngày dùng</th>
+                        <th>Nguyên giá</th>
+                        <th>Giá trị CL</th>
                         <th>Trạng thái</th>
+                        <th>Ghi chú kiểm tra</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {(importResult?.rows ?? importRows.slice(0, 8)).map((row) => {
+                      {(importResult?.rows ?? importRows.slice(0, 30)).map((row) => {
                         const isResultRow = "errors" in row;
                         const source: AssetImportRowPayload | undefined = isResultRow
                           ? importRows.find((item) => item.rowNumber === row.rowNumber)
                           : row;
                         const status = isResultRow ? row.status : undefined;
+                        const rowMessages = isResultRow
+                          ? [...row.errors, ...row.warnings].map((item) => item.message).join("; ")
+                          : "";
                         return (
                           <tr key={row.rowNumber} data-status={status}>
                             <td>{row.rowNumber}</td>
                             <td>
                               <div className="asset-name-cell">
-                                <strong>
-                                  {isResultRow ? row.assetName : source?.name || "—"}
-                                </strong>
+                                <strong>{isResultRow ? row.assetName : source?.name || "—"}</strong>
                                 {source?.assetCode && <span>{source.assetCode}</span>}
                               </div>
                             </td>
                             <td>{isResultRow ? row.categoryCode : source?.categoryCode}</td>
                             <td>{source?.assetClass || "—"}</td>
+                            <td>{source?.classType || "—"}</td>
+                            <td>{source?.departmentName || "—"}</td>
+                            <td>{source?.siteName || "—"}</td>
                             <td>{source?.serialNumber || "—"}</td>
+                            <td>{source?.useDate || "—"}</td>
+                            <td>
+                              {source?.originalCost ? money.format(source.originalCost) : "—"}
+                            </td>
+                            <td>{source?.bookValue ? money.format(source.bookValue) : "—"}</td>
                             <td>
                               {status ? (
                                 <span className="asset-import-row-status">
@@ -676,6 +1778,7 @@ export function AssetsPage() {
                                 source?.status || "—"
                               )}
                             </td>
+                            <td className="asset-import-message-cell">{rowMessages || "—"}</td>
                           </tr>
                         );
                       })}
@@ -685,13 +1788,19 @@ export function AssetsPage() {
               </div>
             </div>
 
-            <div className="modal-actions">
-              <button type="button" onClick={closeImport} disabled={importBusy}>
+            <div className="modal-actions asset-import-actions">
+              <button
+                type="button"
+                className="secondary"
+                onClick={requestCloseImport}
+                disabled={importBusy}
+              >
                 Hủy
               </button>
               {importResult && (
                 <button
                   type="button"
+                  className="secondary"
                   onClick={() => downloadImportCsv(importResult)}
                   disabled={importBusy}
                 >
@@ -700,6 +1809,7 @@ export function AssetsPage() {
               )}
               <button
                 type="button"
+                className="secondary"
                 onClick={handleValidateImport}
                 disabled={importBusy || importRows.length === 0}
               >
@@ -714,6 +1824,35 @@ export function AssetsPage() {
                 Import
               </button>
             </div>
+
+            {importCancelConfirm && (
+              <div className="asset-import-confirm">
+                <div className="asset-import-confirm-card">
+                  <div className="asset-import-confirm-icon">
+                    <FiX />
+                  </div>
+                  <div className="asset-import-confirm-content">
+                    <strong>Hủy phiên nhập tài sản?</strong>
+                    <p>
+                      File đã chọn, dữ liệu preview và kết quả kiểm tra hiện tại sẽ bị xóa khỏi màn
+                      hình.
+                    </p>
+                  </div>
+                  <div className="asset-import-confirm-actions">
+                    <button
+                      type="button"
+                      className="secondary"
+                      onClick={() => setImportCancelConfirm(false)}
+                    >
+                      Tiếp tục nhập
+                    </button>
+                    <button type="button" className="danger-action" onClick={closeImport}>
+                      Hủy phiên nhập
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

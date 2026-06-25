@@ -4,6 +4,9 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 public record AssetImportRowRequest(
+        /*
+        dòng gốc trong Excel do frontend đã truyền vào từ JSON
+         */
         Integer rowNumber,
         String assetCode,
         String name,

@@ -45,11 +45,30 @@ export interface Vendor {
 
 export type VendorPayload = Omit<Vendor, "id">;
 
+export interface AssetSummary {
+  id: number;
+  assetCode: string;
+  name: string;
+}
+
+export interface AssetCatalogItem {
+  id: number;
+  itemCode: string;
+  name: string;
+  category?: AssetCategory | null;
+}
+
 export interface AssetItem {
   id: number;
   assetCode: string;
   name: string;
+  catalogItem?: AssetCatalogItem | null;
+  assetCategory?: AssetCategory | null;
   category: string;
+  parentAsset?: AssetSummary | null;
+  assetClass?: string;
+  fixedAssetType?: string;
+  toolUsageType?: string;
   serialNumber?: string;
   source?: string;
   vendor?: Vendor;
@@ -57,16 +76,33 @@ export interface AssetItem {
   departmentId?: number;
   siteId?: number;
   projectId?: number;
+  useDate?: string;
+  depreciationStartDate?: string;
+  originalCost?: number;
   purchaseCost?: number;
+  accumulatedDepreciation?: number;
+  bookValue?: number;
   residualValue?: number;
   purchaseDate?: string;
   warrantyUntil?: string;
   status: string;
   depreciationMethod?: string;
+  usefulLifeMonths?: number;
   usefulLifeYears?: number;
+  depreciationRate?: number;
+  manufactureYear?: number;
+  installationYear?: number;
+  countryCode?: string;
+  capacity?: number;
+  capacityUnit?: string;
+  realCapacity?: number;
+  technicalDescription?: string;
   disposalDate?: string;
   disposalPrice?: number;
   disposalReason?: string;
+  notes?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface AssetCategory {
@@ -111,6 +147,26 @@ export interface AssetPayload {
   depreciationMethod?: string;
   usefulLifeYears?: number | null;
   notes?: string;
+  catalogItemId?: number | null;
+  categoryId?: number | null;
+  parentAssetId?: number | null;
+  assetClass?: string;
+  fixedAssetType?: string;
+  toolUsageType?: string;
+  useDate?: string;
+  depreciationStartDate?: string;
+  originalCost?: number | null;
+  accumulatedDepreciation?: number | null;
+  bookValue?: number | null;
+  usefulLifeMonths?: number | null;
+  depreciationRate?: number | null;
+  manufactureYear?: number | null;
+  installationYear?: number | null;
+  countryCode?: string;
+  capacity?: number | null;
+  capacityUnit?: string;
+  realCapacity?: number | null;
+  technicalDescription?: string;
 }
 
 export interface AssetImportRowPayload {
