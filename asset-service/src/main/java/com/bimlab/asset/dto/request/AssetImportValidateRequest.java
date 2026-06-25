@@ -6,5 +6,8 @@ import jakarta.validation.constraints.NotNull;
 import java.util.List;
 
 public record AssetImportValidateRequest(
+        /*
+        validate single row one by one
+         */
         @NotNull @Valid List<AssetImportRowRequest> rows
 ) {}

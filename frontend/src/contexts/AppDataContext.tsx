@@ -73,7 +73,7 @@ interface AppDataContextValue {
   error: string;
   refresh: () => Promise<void>;
   ensureDashboard: () => Promise<void>;
-  ensureAssets: () => Promise<void>;
+  ensureAssets: (force?: boolean) => Promise<void>;
   ensureVendors: () => Promise<void>;
   ensureSubscriptions: () => Promise<void>;
   ensureRequests: () => Promise<void>;
@@ -174,21 +174,21 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   );
 
   const ensureDashboard = useCallback(
-    () =>
-      loadKeys(["summary", "assets", "subscriptions", "vendors", "requests", "utilization"]),
+    () => loadKeys(["summary", "assets", "subscriptions", "vendors", "requests", "utilization"]),
     [loadKeys],
   );
 
   const ensureAssets = useCallback(
-    () => loadKeys(["assets", "employees", "departments", "workSites", "projects"]),
+    (force = false) =>
+      loadKeys(
+        force ? ["assets"] : ["assets", "employees", "departments", "workSites", "projects"],
+        force,
+      ),
     [loadKeys],
   );
 
   const ensureVendors = useCallback(() => loadKeys(["vendors"]), [loadKeys]);
-  const ensureSubscriptions = useCallback(
-    () => loadKeys(["subscriptions", "vendors"]),
-    [loadKeys],
-  );
+  const ensureSubscriptions = useCallback(() => loadKeys(["subscriptions", "vendors"]), [loadKeys]);
   const ensureRequests = useCallback(() => loadKeys(["requests"]), [loadKeys]);
   const ensureContracts = useCallback(() => loadKeys(["contracts", "vendors"]), [loadKeys]);
   const ensureMaintenance = useCallback(

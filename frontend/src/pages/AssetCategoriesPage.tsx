@@ -1,6 +1,6 @@
-import { type FormEvent, useEffect, useMemo, useState } from "react";
-import { FiPlus, FiRefreshCw, FiSave, FiTrash2, FiX } from "react-icons/fi";
+import { type FormEvent, type ReactNode, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
+import { FiPlus, FiRefreshCw, FiSave, FiSearch, FiTrash2, FiX } from "react-icons/fi";
 import { PanelHeader } from "../components/PanelHeader";
 import {
   createAssetCategory,
@@ -29,29 +29,78 @@ function assetClassLabel(value: string) {
   return value;
 }
 
+function normalizeSearchText(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .replace(/đ/g, "d")
+    .replace(/Đ/g, "D")
+    .toLowerCase()
+    .trim();
+}
+
+function highlightCategoryText(text: string, query: string): ReactNode {
+  const normalizedQuery = normalizeSearchText(query);
+  if (!normalizedQuery) return text;
+
+  let normalizedText = "";
+  const positions: Array<{ start: number; end: number }> = [];
+  let offset = 0;
+  Array.from(text).forEach((char) => {
+    const charStart = offset;
+    offset += char.length;
+    const normalizedChar = normalizeSearchText(char);
+    normalizedText += normalizedChar;
+    Array.from(normalizedChar).forEach(() => {
+      positions.push({ start: charStart, end: charStart + char.length });
+    });
+  });
+
+  const index = normalizedText.indexOf(normalizedQuery);
+  if (index < 0) return text;
+  const start = positions[index]?.start;
+  const end = positions[index + normalizedQuery.length - 1]?.end;
+  if (start === undefined || end === undefined) return text;
+  return (
+    <>
+      {text.slice(0, start)}
+      <mark className="category-search-mark">{text.slice(start, end)}</mark>
+      {text.slice(end)}
+    </>
+  );
+}
+
 function matchesCategoryFilters(
   category: AssetCategory,
   assetClassFilter: AssetClassFilter,
   activeFilter: ActiveFilter,
+  searchQuery: string,
 ) {
   const matchClass = assetClassFilter === "ALL" || category.assetClass === assetClassFilter;
   const matchActive =
     activeFilter === "ALL" ||
     (activeFilter === "ACTIVE" && category.active) ||
     (activeFilter === "INACTIVE" && !category.active);
+  const normalizedQuery = normalizeSearchText(searchQuery);
+  const matchSearch =
+    !normalizedQuery ||
+    normalizeSearchText(`${category.name} ${category.code} ${category.description ?? ""}`).includes(
+      normalizedQuery,
+    );
 
-  return matchClass && matchActive;
+  return matchClass && matchActive && matchSearch;
 }
 
 function filterTree(
   nodes: AssetCategoryTree[],
   assetClassFilter: AssetClassFilter,
   activeFilter: ActiveFilter,
+  searchQuery: string,
 ): AssetCategoryTree[] {
   return nodes
     .map((node) => {
-      const children = filterTree(node.children, assetClassFilter, activeFilter);
-      const selfMatches = matchesCategoryFilters(node, assetClassFilter, activeFilter);
+      const children = filterTree(node.children, assetClassFilter, activeFilter, searchQuery);
+      const selfMatches = matchesCategoryFilters(node, assetClassFilter, activeFilter, searchQuery);
       return selfMatches || children.length > 0 ? { ...node, children } : null;
     })
     .filter((node): node is AssetCategoryTree => node !== null);
@@ -75,7 +124,9 @@ function buildCategoryTree(categories: AssetCategory[]): AssetCategoryTree[] {
 
   const sortRec = (nodes: AssetCategoryTree[]) => {
     nodes.sort((a, b) => a.name.localeCompare(b.name, "vi"));
-    nodes.forEach((node) => sortRec(node.children));
+    nodes.forEach((node) => {
+      sortRec(node.children);
+    });
   };
   sortRec(roots);
   return roots;
@@ -94,6 +145,7 @@ function CategoryNode({
   onEdit,
   onDelete,
   onCreateChild,
+  searchQuery,
 }: {
   node: AssetCategoryTree;
   depth?: number;
@@ -103,6 +155,7 @@ function CategoryNode({
   onEdit: (category: AssetCategory) => void;
   onDelete: (category: AssetCategory) => void;
   onCreateChild: (category: AssetCategory) => void;
+  searchQuery: string;
 }) {
   const open = expandedIds.has(node.id);
   const hasChildren = node.children.length > 0;
@@ -120,8 +173,8 @@ function CategoryNode({
       >
         <span className={`category-status-dot ${node.active ? "active" : "inactive"}`} />
         <div className="category-card-copy">
-          <strong title={node.name}>{node.name}</strong>
-          <span title={node.code}>{node.code}</span>
+          <strong title={node.name}>{highlightCategoryText(node.name, searchQuery)}</strong>
+          <span title={node.code}>{highlightCategoryText(node.code, searchQuery)}</span>
         </div>
 
         <div className="category-card-actions">
@@ -129,11 +182,11 @@ function CategoryNode({
             <button
               type="button"
               className="category-expand-button"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  onEdit(node);
-                  onToggle(node.id);
-                }}
+              onClick={(event) => {
+                event.stopPropagation();
+                onEdit(node);
+                onToggle(node.id);
+              }}
               title={open ? "Thu gọn" : "Mở rộng"}
             >
               {open ? "−" : `+${node.children.length}`}
@@ -188,6 +241,7 @@ function CategoryNode({
                   onEdit={onEdit}
                   onDelete={onDelete}
                   onCreateChild={onCreateChild}
+                  searchQuery={searchQuery}
                 />
               </div>
             ))}
@@ -213,12 +267,14 @@ function StructureView({
   onEdit,
   onDelete,
   onCreateChild,
+  searchQuery,
 }: {
   roots: AssetCategoryTree[];
   selectedId?: number;
   onEdit: (category: AssetCategory) => void;
   onDelete: (category: AssetCategory) => void;
   onCreateChild: (category: AssetCategory) => void;
+  searchQuery: string;
 }) {
   const [activeRootId, setActiveRootId] = useState<number | null>(null);
   const activeRoot = roots.find((root) => root.id === activeRootId) ?? roots[0] ?? null;
@@ -268,8 +324,10 @@ function StructureView({
                     onEdit(root);
                   }}
                 >
-                  <span className={`category-status-dot inline ${root.active ? "active" : "inactive"}`} />
-                  <strong title={root.name}>{root.name}</strong>
+                  <span
+                    className={`category-status-dot inline ${root.active ? "active" : "inactive"}`}
+                  />
+                  <strong title={root.name}>{highlightCategoryText(root.name, searchQuery)}</strong>
                   <small>{countTree(root.children)}</small>
                 </button>
               );
@@ -301,6 +359,7 @@ function StructureView({
                   onEdit={onEdit}
                   onDelete={onDelete}
                   onCreateChild={onCreateChild}
+                  searchQuery={searchQuery}
                 />
               ))
             )}
@@ -318,6 +377,7 @@ function StructureRow({
   onEdit,
   onDelete,
   onCreateChild,
+  searchQuery,
 }: {
   node: AssetCategoryTree;
   depth: number;
@@ -325,9 +385,12 @@ function StructureRow({
   onEdit: (category: AssetCategory) => void;
   onDelete: (category: AssetCategory) => void;
   onCreateChild: (category: AssetCategory) => void;
+  searchQuery: string;
 }) {
-  const [open, setOpen] = useState(false);
+  const [manualOpen, setManualOpen] = useState(false);
   const hasChildren = node.children.length > 0;
+  const searchActive = normalizeSearchText(searchQuery).length > 0;
+  const open = searchActive || manualOpen;
 
   return (
     <div className="category-structure-row">
@@ -337,7 +400,7 @@ function StructureRow({
         data-selected={selectedId === node.id ? "true" : undefined}
         onClick={() => {
           onEdit(node);
-          if (hasChildren) setOpen((value) => !value);
+          if (hasChildren) setManualOpen((value) => !value);
         }}
       >
         {hasChildren ? (
@@ -346,7 +409,7 @@ function StructureRow({
           <span className="category-arrow-spacer" />
         )}
         <span className="category-structure-title" title={node.name}>
-          {node.name}
+          {highlightCategoryText(node.name, searchQuery)}
         </span>
         <span className="category-structure-count">{node.children.length} nhóm con</span>
         <span
@@ -404,6 +467,7 @@ function StructureRow({
                   onEdit={onEdit}
                   onDelete={onDelete}
                   onCreateChild={onCreateChild}
+                  searchQuery={searchQuery}
                 />
               ))}
             </div>
@@ -423,11 +487,13 @@ export function AssetCategoriesPage() {
   const [viewMode, setViewMode] = useState<CategoryViewMode>("TREE");
   const [assetClassFilter, setAssetClassFilter] = useState<AssetClassFilter>("ALL");
   const [activeFilter, setActiveFilter] = useState<ActiveFilter>("ALL");
+  const [categorySearch, setCategorySearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
   const [parentFieldsLocked, setParentFieldsLocked] = useState(false);
   const [expandedTreeIds, setExpandedTreeIds] = useState<Set<number>>(new Set());
+  const effectiveSearch = viewMode === "STRUCTURE" ? categorySearch : "";
 
   const selectableParents = useMemo(
     () => categories.filter((item) => item.id !== editing?.id),
@@ -436,13 +502,14 @@ export function AssetCategoriesPage() {
   const filteredCategories = useMemo(
     () =>
       categories.filter((category) =>
-        matchesCategoryFilters(category, assetClassFilter, activeFilter),
+        matchesCategoryFilters(category, assetClassFilter, activeFilter, effectiveSearch),
       ),
-    [categories, assetClassFilter, activeFilter],
+    [categories, assetClassFilter, activeFilter, effectiveSearch],
   );
   const filteredTree = useMemo(
-    () => filterTree(buildCategoryTree(categories), assetClassFilter, activeFilter),
-    [categories, assetClassFilter, activeFilter],
+    () =>
+      filterTree(buildCategoryTree(categories), assetClassFilter, activeFilter, effectiveSearch),
+    [categories, assetClassFilter, activeFilter, effectiveSearch],
   );
   const refresh = async () => {
     setLoading(true);
@@ -579,7 +646,7 @@ export function AssetCategoriesPage() {
                   className={viewMode === "STRUCTURE" ? "active" : ""}
                   onClick={() => changeViewMode("STRUCTURE")}
                 >
-                  Cơ cấu &amp; cấp bậc
+                  Quản lý danh sách
                 </button>
               </div>
               <button
@@ -593,6 +660,19 @@ export function AssetCategoriesPage() {
             </div>
 
             <div className="category-filters">
+              {viewMode === "STRUCTURE" && (
+                <label className="category-search-field">
+                  Tìm danh mục
+                  <span>
+                    <FiSearch />
+                    <input
+                      value={categorySearch}
+                      onChange={(event) => setCategorySearch(event.target.value)}
+                      placeholder="Tìm theo tên, mã, mô tả..."
+                    />
+                  </span>
+                </label>
+              )}
               <label>
                 Loại danh mục
                 <select
@@ -634,6 +714,7 @@ export function AssetCategoriesPage() {
                       onEdit={startEdit}
                       onDelete={remove}
                       onCreateChild={startCreateChild}
+                      searchQuery={effectiveSearch}
                     />
                   ))}
                 </div>
@@ -645,6 +726,7 @@ export function AssetCategoriesPage() {
                 onEdit={startEdit}
                 onDelete={remove}
                 onCreateChild={startCreateChild}
+                searchQuery={effectiveSearch}
               />
             )}
           </div>
@@ -662,7 +744,9 @@ export function AssetCategoriesPage() {
             {!editing && form.parentId && (
               <div className="category-parent-context">
                 <span>Tạo danh mục con của</span>
-                <strong>{categories.find((category) => category.id === form.parentId)?.name}</strong>
+                <strong>
+                  {categories.find((category) => category.id === form.parentId)?.name}
+                </strong>
               </div>
             )}
 
@@ -737,9 +821,7 @@ export function AssetCategoriesPage() {
               <input
                 type="checkbox"
                 checked={form.active}
-                onChange={(event) =>
-                  setForm((prev) => ({ ...prev, active: event.target.checked }))
-                }
+                onChange={(event) => setForm((prev) => ({ ...prev, active: event.target.checked }))}
               />
               Đang sử dụng
             </label>
