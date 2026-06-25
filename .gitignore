@@ -32,3 +32,11 @@ replay_pid*.log
 CLAUDE.md
 **/CLAUDE.md
 .claude/
+
+# Agent / IDE tooling — giữ local, không đẩy lên GitLab (gỡ tracking 2026-06-25)
+.github/
+.claude/
+CLAUDE.md
+**/CLAUDE.md
+AGENTS.md
+**/AGENTS.md
