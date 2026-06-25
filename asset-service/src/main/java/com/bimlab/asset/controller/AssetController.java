@@ -5,7 +5,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 
 import com.bimlab.asset.dto.request.AssetRequest;
+import com.bimlab.asset.dto.request.AssetImportCommitRequest;
+import com.bimlab.asset.dto.request.AssetImportValidateRequest;
 import com.bimlab.asset.dto.request.DisposeAssetRequest;
+import com.bimlab.asset.dto.response.AssetImportCommitResponse;
+import com.bimlab.asset.dto.response.AssetImportValidationResponse;
 import com.bimlab.asset.dto.response.AssetResponse;
 import com.bimlab.asset.dto.response.DepreciationSnapshot;
 import com.bimlab.asset.mapper.AssetMapper;
@@ -51,6 +55,18 @@ public class AssetController {
     @PreAuthorize("hasAuthority('asset_manage')")
     public AssetResponse create(@Valid @RequestBody AssetRequest req) {
         return mapper.toResponse(service.createAsset(req));
+    }
+
+    @PostMapping("/import/validate")
+    @PreAuthorize("hasAuthority('asset_manage')")
+    public AssetImportValidationResponse validateImport(@Valid @RequestBody AssetImportValidateRequest req) {
+        return service.validateAssetImport(req);
+    }
+
+    @PostMapping("/import")
+    @PreAuthorize("hasAuthority('asset_manage')")
+    public AssetImportCommitResponse importAssets(@Valid @RequestBody AssetImportCommitRequest req) {
+        return service.importAssets(req);
     }
 
     @PutMapping("/{id}")

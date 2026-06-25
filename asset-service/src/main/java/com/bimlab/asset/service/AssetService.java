@@ -1,7 +1,11 @@
 package com.bimlab.asset.service;
 
 import com.bimlab.asset.dto.request.AssetRequest;
+import com.bimlab.asset.dto.request.AssetImportCommitRequest;
+import com.bimlab.asset.dto.request.AssetImportValidateRequest;
 import com.bimlab.asset.dto.request.DisposeAssetRequest;
+import com.bimlab.asset.dto.response.AssetImportCommitResponse;
+import com.bimlab.asset.dto.response.AssetImportValidationResponse;
 import com.bimlab.asset.dto.response.DepreciationSnapshot;
 import com.bimlab.asset.dto.response.UtilizationReportResponse;
 import com.bimlab.asset.model.AssetCatalogItem;
@@ -69,6 +73,39 @@ public class AssetService {
         AssetItem item = new AssetItem();
         applyAsset(item, req);
         return assets.save(item);
+    }
+
+    @Transactional(readOnly = true)
+    public AssetImportValidationResponse validateAssetImport(AssetImportValidateRequest req) {
+        // TODO PRACTICE IMPORT 1:
+        // Validate danh sách row JSON đã được frontend parse từ Excel.
+        //
+        // Những việc cần làm:
+        // - Kiểm tra required fields: name, categoryCode, assetClass.
+        // - Map assetClass tiếng Việt/TSCĐ/CCDC sang AssetClass enum.
+        // - Map classType sang FixedAssetType hoặc ToolUsageType.
+        // - Tìm AssetCategory theo categoryCode, kiểm tra active và node lá.
+        // - Nếu catalogItemCode có giá trị thì tìm AssetCatalogItem và kiểm tra thuộc category.
+        // - Kiểm tra số tiền/ngày/thứ tự dữ liệu nghiệp vụ.
+        // - Nếu người dùng nhập assetCode thì trả warning ASSET_CODE_IGNORED.
+        // - Trả AssetImportValidationResponse gồm uploadStatus, tổng số dòng,
+        //   số dòng hợp lệ/lỗi/cảnh báo và danh sách AssetImportRowResult.
+        throw new UnsupportedOperationException("TODO: validate asset import rows");
+    }
+
+    @Transactional
+    public AssetImportCommitResponse importAssets(AssetImportCommitRequest req) {
+        // TODO PRACTICE IMPORT 2:
+        // Import các row hợp lệ vào asset.assets.
+        //
+        // Những việc cần làm:
+        // - Gọi lại validateAssetImport(...) để re-validate phía server.
+        // - Nếu importMode = ALL_OR_NOTHING và có lỗi thì không lưu dòng nào.
+        // - Nếu importMode = VALID_ROWS_ONLY thì chỉ lưu các dòng VALID/WARNING.
+        // - Sinh assetCode bằng asset.asset_code_sequences theo category node lá.
+        // - Map AssetImportRowRequest sang AssetRequest hoặc tạo AssetItem trực tiếp.
+        // - Save theo transaction và trả AssetImportCommitResponse.
+        throw new UnsupportedOperationException("TODO: import valid asset rows");
     }
 
     @Transactional

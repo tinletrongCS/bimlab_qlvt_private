@@ -113,6 +113,68 @@ export interface AssetPayload {
   notes?: string;
 }
 
+export interface AssetImportRowPayload {
+  rowNumber: number;
+  assetCode?: string;
+  name?: string;
+  assetClass?: string;
+  classType?: string;
+  categoryCode?: string;
+  departmentName?: string;
+  siteName?: string;
+  catalogItemCode?: string;
+  depreciationMethod?: string;
+  serialNumber?: string;
+  depreciationStartDate?: string;
+  useDate?: string;
+  usefulLifeMonths?: number | null;
+  originalCost?: number | null;
+  bookValue?: number | null;
+  status?: string;
+  countryCode?: string;
+  manufactureYear?: number | null;
+  installationYear?: number | null;
+  technicalDescription?: string;
+}
+
+export interface AssetImportMessage {
+  field?: string;
+  code: string;
+  message: string;
+}
+
+export interface AssetImportRowResult {
+  rowNumber: number;
+  status: "VALID" | "INVALID" | "WARNING" | "IMPORTED" | "SKIPPED" | string;
+  assetName?: string;
+  categoryCode?: string;
+  generatedAssetCodePreview?: string | null;
+  errors: AssetImportMessage[];
+  warnings: AssetImportMessage[];
+}
+
+export interface AssetImportValidationResponse {
+  uploadStatus: "VALID" | "HAS_ERROR" | "IMPORTED" | "PARTIALLY_IMPORTED" | "FAILED" | string;
+  totalRows: number;
+  validRows: number;
+  errorRows: number;
+  warningRows: number;
+  rows: AssetImportRowResult[];
+}
+
+export interface AssetImportCommitPayload {
+  importMode: "ALL_OR_NOTHING" | "VALID_ROWS_ONLY";
+  rows: AssetImportRowPayload[];
+}
+
+export interface AssetImportCommitResponse {
+  uploadStatus: "IMPORTED" | "PARTIALLY_IMPORTED" | "FAILED" | string;
+  importedRows: number;
+  skippedRows: number;
+  errorRows: number;
+  rows: AssetImportRowResult[];
+}
+
 export interface DepreciationSnapshot {
   assetId: number;
   method: string;

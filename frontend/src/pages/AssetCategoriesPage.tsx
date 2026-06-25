@@ -1,5 +1,6 @@
 import { type FormEvent, useEffect, useMemo, useState } from "react";
 import { FiPlus, FiRefreshCw, FiSave, FiTrash2, FiX } from "react-icons/fi";
+import toast from "react-hot-toast";
 import { PanelHeader } from "../components/PanelHeader";
 import {
   createAssetCategory,
@@ -12,7 +13,6 @@ import type { AssetCategory, AssetCategoryPayload, AssetCategoryTree } from "../
 type CategoryViewMode = "TREE" | "STRUCTURE";
 type AssetClassFilter = "ALL" | "FIXED_ASSET" | "TOOL_EQUIPMENT";
 type ActiveFilter = "ALL" | "ACTIVE" | "INACTIVE";
-type ToastState = { message: string; type: "success" | "error" } | null;
 
 const emptyForm: AssetCategoryPayload = {
   code: "",
@@ -131,6 +131,7 @@ function CategoryNode({
               className="category-expand-button"
                 onClick={(event) => {
                   event.stopPropagation();
+                  onEdit(node);
                   onToggle(node.id);
                 }}
               title={open ? "Thu gọn" : "Mở rộng"}
@@ -143,6 +144,7 @@ function CategoryNode({
             className="category-icon-action"
             onClick={(event) => {
               event.stopPropagation();
+              onEdit(node);
               onCreateChild(node);
             }}
             title="Thêm danh mục con"
@@ -154,6 +156,7 @@ function CategoryNode({
             className="category-icon-action danger"
             onClick={(event) => {
               event.stopPropagation();
+              onEdit(node);
               onDelete(node);
             }}
             title="Xóa"
@@ -353,12 +356,14 @@ function StructureRow({
           title="Thêm danh mục con"
           onClick={(event) => {
             event.stopPropagation();
+            onEdit(node);
             onCreateChild(node);
           }}
           onKeyDown={(event) => {
             if (event.key !== "Enter" && event.key !== " ") return;
             event.preventDefault();
             event.stopPropagation();
+            onEdit(node);
             onCreateChild(node);
           }}
         >
@@ -371,12 +376,14 @@ function StructureRow({
           title="Xóa"
           onClick={(event) => {
             event.stopPropagation();
+            onEdit(node);
             onDelete(node);
           }}
           onKeyDown={(event) => {
             if (event.key !== "Enter" && event.key !== " ") return;
             event.preventDefault();
             event.stopPropagation();
+            onEdit(node);
             onDelete(node);
           }}
         >
@@ -418,7 +425,7 @@ export function AssetCategoriesPage() {
   const [activeFilter, setActiveFilter] = useState<ActiveFilter>("ALL");
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [toast, setToast] = useState<ToastState>(null);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
   const [parentFieldsLocked, setParentFieldsLocked] = useState(false);
   const [expandedTreeIds, setExpandedTreeIds] = useState<Set<number>>(new Set());
 
@@ -443,7 +450,7 @@ export function AssetCategoriesPage() {
       const categoryData = await loadAssetCategories();
       setCategories(categoryData);
     } catch {
-      showToast("Không tải được danh mục tài sản.", "error");
+      toast.error("Không tải được danh mục tài sản.");
     } finally {
       setLoading(false);
     }
@@ -455,12 +462,14 @@ export function AssetCategoriesPage() {
 
   const startCreate = () => {
     setEditing(null);
+    setSelectedCategoryId(null);
     setParentFieldsLocked(false);
     setForm(emptyForm);
   };
 
   const resetEditor = () => {
     setEditing(null);
+    setSelectedCategoryId(null);
     setParentFieldsLocked(false);
     setForm(emptyForm);
   };
@@ -481,6 +490,7 @@ export function AssetCategoriesPage() {
 
   const startCreateChild = (parent: AssetCategory) => {
     setEditing(null);
+    setSelectedCategoryId(parent.id);
     setParentFieldsLocked(true);
     setForm({
       ...emptyForm,
@@ -492,6 +502,7 @@ export function AssetCategoriesPage() {
 
   const startEdit = (category: AssetCategory) => {
     setEditing(category);
+    setSelectedCategoryId(category.id);
     setParentFieldsLocked(false);
     setForm({
       code: category.code,
@@ -503,47 +514,45 @@ export function AssetCategoriesPage() {
     });
   };
 
-  const showToast = (message: string, type: "success" | "error") => {
-    setToast({ message, type });
-    window.setTimeout(() => setToast(null), 2600);
-  };
-
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setSubmitting(true);
     try {
       if (editing) {
         await updateAssetCategory(editing.id, form);
-        showToast("Đã cập nhật danh mục.", "success");
+        toast.success("Đã cập nhật danh mục.");
       } else {
         await createAssetCategory(form);
-        showToast("Đã tạo danh mục.", "success");
+        toast.success("Đã tạo danh mục.");
       }
       setEditing(null);
+      setSelectedCategoryId(null);
       setForm(emptyForm);
       setParentFieldsLocked(false);
       await refresh();
     } catch {
-      showToast("Không lưu được danh mục.", "error");
+      toast.error("Không lưu được danh mục.");
     } finally {
       setSubmitting(false);
     }
   };
 
   const remove = async (category: AssetCategory) => {
+    setSelectedCategoryId(category.id);
     if (!window.confirm(`Xóa danh mục ${category.name}?`)) return;
     setSubmitting(true);
     try {
       await deleteAssetCategory(category.id);
       if (editing?.id === category.id) {
         setEditing(null);
+        setSelectedCategoryId(null);
         setForm(emptyForm);
         setParentFieldsLocked(false);
       }
       await refresh();
-      showToast("Đã xóa danh mục.", "success");
+      toast.success("Đã xóa danh mục.");
     } catch {
-      showToast("Không xóa được danh mục.", "error");
+      toast.error("Không xóa được danh mục.");
     } finally {
       setSubmitting(false);
     }
@@ -553,7 +562,6 @@ export function AssetCategoriesPage() {
     <section className="category-page">
       <div className="panel">
         <PanelHeader title="Danh mục tài sản" action={false} onAdd={startCreate} />
-        {toast && <div className={`category-toast ${toast.type}`}>{toast.message}</div>}
 
         <div className="category-workspace">
           <div className="category-tree-panel">
@@ -621,7 +629,7 @@ export function AssetCategoriesPage() {
                       key={node.id}
                       node={node}
                       expandedIds={expandedTreeIds}
-                      selectedId={editing?.id}
+                      selectedId={selectedCategoryId ?? undefined}
                       onToggle={toggleTreeNode}
                       onEdit={startEdit}
                       onDelete={remove}
@@ -633,7 +641,7 @@ export function AssetCategoriesPage() {
             ) : (
               <StructureView
                 roots={filteredTree}
-                selectedId={editing?.id}
+                selectedId={selectedCategoryId ?? undefined}
                 onEdit={startEdit}
                 onDelete={remove}
                 onCreateChild={startCreateChild}
