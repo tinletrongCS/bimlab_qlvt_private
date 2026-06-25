@@ -2,6 +2,10 @@ import axios from "axios";
 import { getAccessToken } from "../auth/oidc";
 import type {
   AssetItem,
+  AssetImportCommitPayload,
+  AssetImportCommitResponse,
+  AssetImportRowPayload,
+  AssetImportValidationResponse,
   AssetCategory,
   AssetCategoryPayload,
   AssetCategoryTree,
@@ -131,6 +135,22 @@ export async function updateAsset(id: number, payload: AssetPayload): Promise<As
 
 export async function deleteAsset(id: number): Promise<void> {
   await api.delete(`/asset/assets/${id}`);
+}
+
+export async function validateAssetImport(
+  rows: AssetImportRowPayload[],
+): Promise<AssetImportValidationResponse> {
+  const response = await api.post<AssetImportValidationResponse>("/asset/assets/import/validate", {
+    rows,
+  });
+  return response.data;
+}
+
+export async function commitAssetImport(
+  payload: AssetImportCommitPayload,
+): Promise<AssetImportCommitResponse> {
+  const response = await api.post<AssetImportCommitResponse>("/asset/assets/import", payload);
+  return response.data;
 }
 
 export async function loadAssetCategories(): Promise<AssetCategory[]> {

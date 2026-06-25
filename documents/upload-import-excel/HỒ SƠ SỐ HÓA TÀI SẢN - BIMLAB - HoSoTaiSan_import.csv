@@ -1,0 +1,40 @@
+"Không cho phép nhập thủ công, hệ thống tự sinh ra mã
+Người dùng có cố tình nhập trong excel cũng sẽ không nhận",Quy ước phân loại: theo giá trị tài sản (< 30.000.000đ -> Công cụ dụng cụ),Cấp cao nhất (TSCĐ/CCDC),(TSCĐ Hữu hình/Vô hình; CCDC dùng 1 lần/nhiều lần),"Mã danh mục cần nhập chính xác (MONITOR, LICENSE, SUBSCRIPTION,...), không được đổi danh mục sản phẩm sau khi đã nhập",,,,Có thể bỏ trống,Có thể bỏ trống,Có thể bỏ trống,Có thể bỏ trống,Có thể bỏ trống,Có thể bỏ trống,Có thể bỏ trống,Có thể bỏ trống,Có thể bỏ trống,Có thể bỏ trống,Có thể bỏ trống,Có thể bỏ trống
+assets.asset_code,assets.name,assets.asset_class,assets.fixed_asset_type/assets.tool_usage_type,assets.category_id/asset_categories.code,assets.department_id,assets.site_id,catalog_item_code,depreciation_method,series_mac_number,depreciation_start_date,use_date,useful_life_months,original_cost,book_value,status,country_code,manufacture_year,installation_year,technical_description
+Mã tài sản*,Tên tài sản*,Phân loại* ,Phân loại lớp con*,Danh mục tài sản*,Phòng ban*,Chi nhánh*,Mẫu tài sản,Phương pháp khấu hao,"Số Series/MAC
+(Nếu có)",Ngày bắt đầu khấu hao,Ngày sử dụng,Số tháng,Nguyên giá tài sản,Giá trị sổ sách,Trạng thái tài sản,Mã quốc gia/ Xuất xứ,Năm sản xuất,Năm lắp đặt/Cài đặt,Mô tả kỹ thuật
+MONITOR-00001,Màn hình ASUS,TSCĐ,TSCĐ-Hữu hình,MONITOR (Tài sản cố định > Hữu hình > Thiết bị CNTT > Màn hình),CNTT - Marketing,BIMLab,MONITOR_DELL_24_HD,,,,,,,,,,,,
+CHAIR-00056,Ghế xoay,TSCĐ,TSCĐ-Hữu hình,CHAIR,CNTT - Marketing,BIMLab,,,,,,,,,,,,,
+LICENSE-04023,Bản quyền Windows-11,TSCĐ,TSCĐ-Vô hình,LICENSE,Kết cấu,BIMLab,,,,,,,,,,,,,
+PRINTER-10900,Máy in Canon-123,TSCĐ,TSCĐ-Hữu hình,PRINTER,Nhân sự,BIMLab,,,,,,,,,,,,,
+TABLE-08788,Bàn gỗ siêu đẹp,TSCĐ,TSCĐ-Hữu hình,TABLE,Nhân sự,BIMLab,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,
+Giá trị tài sản <= 30.000.000đ là Công cụ dụng cụ (CCDC); ngược lại là Tài sản cố định (TSCĐ),,,,,,,,,,,,,,,,,,,
+,,,"Mã tài sản có thể nhập thủ công hoặc do hệ thống tự sinh
+Nếu để trống, hệ thống sẽ tự sinh theo quy tắc
+[TIỀN_TỐ_DANH_MỤC]-[SỐ_THỨ_TỰ_5_CHỮ_SỐ]
+Ví dụ: 
+MONITOR-00001
+CHAIR-00056
+LICENSE-04023
+Tiền tố lấy từ node lá trong bảng asset_categories
+Mỗi danh mục có bộ đếm riêng
+Mỗi tài sản sau khi được sinh mã không được thay đổi, kể cả khi tài sản được điều chuyển hoặc cập nhật danh mục",,,,,,,,,,,,,,,,
+,,,"Đây là sheet ban đầu khi số hóa tài sản, các thao tác như gán hóa đơn, bàn giao (luân chuyển) cho các cá nhân/ phòng ban/ đơn vị cần được thực hiện sau bước số hóa này",,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,
+Ví dụ có bảng tra cứu danh mục như sau,,,,,,,,,,,,,,,,,,,
+(asset_categories),,,,,,,,,,,,,,,,,,,
+id,code,name,parent_id,,,,,,,,,,,,,,,,
+,Mã danh mục,Tên danh mục,Danh mục cha,,,,,,,,,,,,,,,,
+1,FIXED_ASSET,Tài sản cố định,null,,,,,,,,,,,,,,,,
+2,TANGIBLE,Hữu hình,1,,,,,,,,,,,,,,,,
+3,INTANGIBLE,Vô hình,1,,,,,,,,,,,,,,,,
+4,IT_EQUIPMENT,Thiết bị CNTT,2,,,,,,,,,,,,,,,,
+5,FURNITURE,Nội thất,2,,,,,,,,,,,,,,,,
+6,MONITOR,Màn hình,4,,,,,,,,,,,,,,,,
+7,LAPTOP,Laptop,4,,,,,,,,,,,,,,,,
+8,CHAIR,Ghế,5,,,,,,,,,,,,,,,,
+9,TABLE,Bàn,5,,,,,,,,,,,,,,,,
+10,LICENSE,Gói đăng ký,3,,,,,,,,,,,,,,,,
+11,COPYRIGHT,Bản quyền,3,,,,,,,,,,,,,,,,

@@ -218,7 +218,7 @@ export function LoginPage() {
           </div>
           <div className="login-note">
             <FiShield />
-            <span>Dùng chung tài khoản HRM, phân quyền theo role hiện tại.</span>
+            <span>Sử dụng tài khoản HRM đã được cung cấp. Phân quyền theo vai trò hiện tại/</span>
           </div>
 
           <div className="login-footer-line">
