@@ -3602,7 +3602,7 @@ button:hover {
   align-items: center;
   display: grid;
   gap: 10px;
-  grid-template-columns: auto minmax(260px, 1fr) minmax(180px, 220px) minmax(180px, 240px);
+  grid-template-columns: auto auto minmax(260px, 1fr) minmax(180px, 220px) minmax(180px, 240px);
 }
 
 .asset-import-button {

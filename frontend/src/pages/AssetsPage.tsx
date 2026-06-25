@@ -1,4 +1,5 @@
 import { type ChangeEvent, type ReactNode, useEffect, useMemo, useState } from "react";
+import toast from "react-hot-toast";
 import {
   FiArchive,
   FiBox,
@@ -11,7 +12,6 @@ import {
   FiUserCheck,
   FiX,
 } from "react-icons/fi";
-import toast from "react-hot-toast";
 import { AssetActions } from "../components/AssetActions";
 import { PanelHeader } from "../components/PanelHeader";
 import { StatusBadge } from "../components/StatusBadge";
@@ -269,10 +269,10 @@ function downloadImportCsv(result: AssetImportValidationResponse) {
     "Loi",
     "Canh bao",
   ];
-  const escape = (value: string | number | null | undefined) =>
+  const escapeCsvCell = (value: string | number | null | undefined) =>
     `"${String(value ?? "").replace(/"/g, '""')}"`;
   const lines = [
-    header.map(escape).join(","),
+    header.map(escapeCsvCell).join(","),
     ...result.rows.map((row) =>
       [
         row.rowNumber,
@@ -283,7 +283,7 @@ function downloadImportCsv(result: AssetImportValidationResponse) {
         row.errors.map((item) => `${item.code}: ${item.message}`).join("; "),
         row.warnings.map((item) => `${item.code}: ${item.message}`).join("; "),
       ]
-        .map(escape)
+        .map(escapeCsvCell)
         .join(","),
     ),
   ];
@@ -292,6 +292,233 @@ function downloadImportCsv(result: AssetImportValidationResponse) {
   const link = document.createElement("a");
   link.href = url;
   link.download = "ket-qua-import-tai-san.csv";
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
+async function downloadAssetImportTemplate() {
+  const ExcelJS = await import("exceljs");
+  const workbook = new ExcelJS.Workbook();
+  workbook.creator = "BIMLab QLVT";
+  workbook.created = new Date();
+
+  const sheet = workbook.addWorksheet("HoSoTaiSan_import", {
+    views: [{ state: "frozen", ySplit: 4 }],
+  });
+  const lookup = workbook.addWorksheet("DanhMuc_ThamChieu");
+
+  const fieldKeys = [
+    "assets.asset_code",
+    "assets.name",
+    "assets.asset_class",
+    "assets.fixed_asset_type/assets.tool_usage_type",
+    "assets.category_id/asset_categories.code",
+    "assets.department_id",
+    "assets.site_id",
+    "catalog_item_code",
+    "depreciation_method",
+    "series_mac_number",
+    "depreciation_start_date",
+    "use_date",
+    "useful_life_months",
+    "original_cost",
+    "book_value",
+    "status",
+    "country_code",
+    "manufacture_year",
+    "installation_year",
+    "technical_description",
+  ];
+  const headers = [
+    "Mã tài sản",
+    "Tên tài sản*",
+    "Phân loại*",
+    "Phân loại lớp con*",
+    "Danh mục tài sản*",
+    "Phòng ban",
+    "Chi nhánh",
+    "Mẫu tài sản",
+    "Phương pháp khấu hao",
+    "Số Series/MAC",
+    "Ngày bắt đầu khấu hao",
+    "Ngày sử dụng",
+    "Số tháng",
+    "Nguyên giá tài sản",
+    "Giá trị sổ sách",
+    "Trạng thái tài sản",
+    "Mã quốc gia/Xuất xứ",
+    "Năm sản xuất",
+    "Năm lắp đặt/Cài đặt",
+    "Mô tả kỹ thuật",
+  ];
+  const examples = [
+    "MONITOR-00001",
+    "Màn hình ASUS",
+    "TSCĐ",
+    "TSCĐ-Hữu hình",
+    "MONITOR",
+    "CNTT - Marketing",
+    "BIMLab",
+    "MONITOR_DELL_24_HD",
+    "STRAIGHT_LINE",
+    "SN-MAC-001",
+    "2026-01-01",
+    "2026-01-05",
+    36,
+    6000000,
+    6000000,
+    "Trong kho",
+    "VN",
+    2025,
+    2026,
+    "Màn hình 24 inch, Full HD",
+  ];
+
+  sheet.addRow([
+    "Không bắt buộc nhập mã tài sản. Nếu để trống, hệ thống sẽ tự sinh theo danh mục node lá.",
+    "Quy ước phân loại: TSCĐ hoặc CCDC.",
+    "Cấp cao nhất.",
+    "TSCĐ-Hữu hình/TSCĐ-Vô hình/CCDC dùng 1 lần/CCDC dùng nhiều lần.",
+    "Nhập chính xác mã danh mục node lá, ví dụ MONITOR, LAPTOP, LICENSE.",
+  ]);
+  sheet.addRow(fieldKeys);
+  sheet.addRow(headers);
+  sheet.addRow(examples);
+  sheet.addRow([]);
+
+  sheet.mergeCells("A1:T1");
+  const noteCell = sheet.getCell("A1");
+  noteCell.font = { name: "Be Vietnam Pro", size: 11, bold: true, color: { argb: "FF154D7C" } };
+  noteCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFEFF6FF" } };
+  noteCell.alignment = { vertical: "middle", wrapText: true };
+  noteCell.border = {
+    top: { style: "thin", color: { argb: "FFBFDBFE" } },
+    left: { style: "thin", color: { argb: "FFBFDBFE" } },
+    bottom: { style: "thin", color: { argb: "FFBFDBFE" } },
+    right: { style: "thin", color: { argb: "FFBFDBFE" } },
+  };
+  sheet.getRow(1).height = 34;
+
+  sheet.getRow(2).height = 24;
+  sheet.getRow(2).eachCell((cell) => {
+    cell.font = { name: "Be Vietnam Pro", size: 10, color: { argb: "FF64748B" } };
+    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFF8FAFC" } };
+    cell.alignment = { vertical: "middle", wrapText: true };
+    cell.border = { bottom: { style: "thin", color: { argb: "FFE5E7EB" } } };
+  });
+
+  sheet.getRow(3).height = 42;
+  sheet.getRow(3).eachCell((cell) => {
+    cell.font = { name: "Be Vietnam Pro", size: 12, bold: true, color: { argb: "FFFFFFFF" } };
+    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF154D7C" } };
+    cell.alignment = { horizontal: "center", vertical: "middle", wrapText: true };
+    cell.border = {
+      top: { style: "thin", color: { argb: "FF154D7C" } },
+      left: { style: "thin", color: { argb: "FF93C5FD" } },
+      bottom: { style: "thin", color: { argb: "FF154D7C" } },
+      right: { style: "thin", color: { argb: "FF93C5FD" } },
+    };
+  });
+
+  sheet.getRow(4).eachCell((cell) => {
+    cell.font = { name: "Be Vietnam Pro", size: 11, color: { argb: "FF111827" } };
+    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFF8FAFC" } };
+    cell.alignment = { vertical: "middle", wrapText: true };
+  });
+
+  const widths = [16, 28, 16, 24, 22, 22, 18, 24, 20, 20, 22, 18, 12, 18, 18, 18, 18, 14, 18, 36];
+  widths.forEach((width, index) => {
+    sheet.getColumn(index + 1).width = width;
+  });
+
+  for (let rowIndex = 5; rowIndex <= 200; rowIndex += 1) {
+    sheet.getCell(`C${rowIndex}`).dataValidation = {
+      type: "list",
+      allowBlank: false,
+      formulae: ['"TSCĐ,CCDC"'],
+      showErrorMessage: true,
+      errorTitle: "Sai phân loại",
+      error: "Chọn TSCĐ hoặc CCDC.",
+    };
+    sheet.getCell(`D${rowIndex}`).dataValidation = {
+      type: "list",
+      allowBlank: false,
+      formulae: ['"TSCĐ-Hữu hình,TSCĐ-Vô hình,CCDC dùng 1 lần,CCDC dùng nhiều lần"'],
+      showErrorMessage: true,
+      errorTitle: "Sai phân loại lớp con",
+      error: "Chọn một giá trị trong danh sách.",
+    };
+    sheet.getCell(`I${rowIndex}`).dataValidation = {
+      type: "list",
+      allowBlank: true,
+      formulae: ['"STRAIGHT_LINE,DECLINING_BALANCE,NONE"'],
+    };
+    sheet.getCell(`P${rowIndex}`).dataValidation = {
+      type: "list",
+      allowBlank: true,
+      formulae: ['"Trong kho,Đã cấp phát,Bảo trì,Đã thanh lý,Mất,Chờ xử lý"'],
+    };
+  }
+
+  sheet.autoFilter = "A3:T3";
+  sheet.eachRow((row) => {
+    row.eachCell((cell) => {
+      cell.font = { name: "Be Vietnam Pro", size: cell.font?.size ?? 11, ...cell.font };
+    });
+  });
+
+  lookup.columns = [
+    { header: "Nhóm", key: "group", width: 24 },
+    { header: "Mã/Giá trị nhập", key: "code", width: 28 },
+    { header: "Diễn giải", key: "label", width: 46 },
+  ];
+  [
+    ["Phân loại", "TSCĐ", "Tài sản cố định"],
+    ["Phân loại", "CCDC", "Công cụ dụng cụ"],
+    ["Phân loại lớp con", "TSCĐ-Hữu hình", "Tài sản cố định hữu hình"],
+    ["Phân loại lớp con", "TSCĐ-Vô hình", "Tài sản cố định vô hình"],
+    ["Phân loại lớp con", "CCDC dùng 1 lần", "Công cụ dụng cụ sử dụng một lần"],
+    ["Phân loại lớp con", "CCDC dùng nhiều lần", "Công cụ dụng cụ sử dụng nhiều lần"],
+    ["Danh mục ví dụ", "MONITOR", "Màn hình"],
+    ["Danh mục ví dụ", "LAPTOP", "Laptop"],
+    ["Danh mục ví dụ", "PRINTER", "Máy in"],
+    ["Danh mục ví dụ", "CHAIR", "Ghế"],
+    ["Danh mục ví dụ", "TABLE", "Bàn"],
+    ["Danh mục ví dụ", "LICENSE", "Bản quyền/phần mềm"],
+    ["Trạng thái", "Trong kho", "IN_STOCK"],
+    ["Trạng thái", "Đã cấp phát", "ASSIGNED"],
+    ["Trạng thái", "Bảo trì", "MAINTENANCE"],
+    ["Trạng thái", "Đã thanh lý", "DISPOSED"],
+  ].forEach(([group, code, label]) => {
+    lookup.addRow({ group, code, label });
+  });
+
+  lookup.getRow(1).eachCell((cell) => {
+    cell.font = { name: "Be Vietnam Pro", size: 12, bold: true, color: { argb: "FFFFFFFF" } };
+    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF154D7C" } };
+    cell.alignment = { vertical: "middle", horizontal: "center" };
+  });
+  lookup.eachRow((row, rowNumber) => {
+    row.height = rowNumber === 1 ? 28 : 22;
+    row.eachCell((cell) => {
+      cell.font = {
+        name: "Be Vietnam Pro",
+        size: rowNumber === 1 ? 12 : 11,
+        bold: rowNumber === 1,
+        color: { argb: rowNumber === 1 ? "FFFFFFFF" : "FF111827" },
+      };
+      cell.border = { bottom: { style: "thin", color: { argb: "FFE5E7EB" } } };
+    });
+  });
+
+  const buffer = await workbook.xlsx.writeBuffer();
+  const blob = new Blob([buffer], {
+    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "mau_import_danh_sach_tai_san_bimlab.xlsx";
   link.click();
   URL.revokeObjectURL(url);
 }
@@ -438,6 +665,16 @@ export function AssetsPage() {
     }
   };
 
+  const handleDownloadTemplate = async () => {
+    const loadingToast = toast.loading("Đang tạo file mẫu Excel...");
+    try {
+      await downloadAssetImportTemplate();
+      toast.success("Đã tải file mẫu Excel.", { id: loadingToast });
+    } catch {
+      toast.error("Không tạo được file mẫu Excel.", { id: loadingToast });
+    }
+  };
+
   return (
     <section className="asset-page panel">
       <PanelHeader
@@ -455,13 +692,18 @@ export function AssetsPage() {
 
       <div className="asset-toolbar">
         {canManage && (
-          <button
-            type="button"
-            className="asset-import-button"
-            onClick={() => setImportOpen(true)}
-          >
-            <FiUpload /> Tải lên file Excel
-          </button>
+          <>
+            <button type="button" className="asset-import-button" onClick={handleDownloadTemplate}>
+              <FiDownload /> Tải mẫu Excel
+            </button>
+            <button
+              type="button"
+              className="asset-import-button"
+              onClick={() => setImportOpen(true)}
+            >
+              <FiUpload /> Tải lên file Excel
+            </button>
+          </>
         )}
         <label className="asset-search">
           <FiSearch />
@@ -481,10 +723,7 @@ export function AssetsPage() {
             </option>
           ))}
         </select>
-        <select
-          value={categoryFilter}
-          onChange={(event) => setCategoryFilter(event.target.value)}
-        >
+        <select value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)}>
           <option value="ALL">Tất cả nhóm tài sản</option>
           {categories.map((category) => (
             <option key={category} value={category}>
@@ -628,7 +867,9 @@ export function AssetsPage() {
 
               <div className="asset-import-preview">
                 {importRows.length === 0 ? (
-                  <div className="empty-state">Chọn file Excel để xem dữ liệu trước khi import.</div>
+                  <div className="empty-state">
+                    Chọn file Excel để xem dữ liệu trước khi import.
+                  </div>
                 ) : (
                   <table>
                     <thead>
@@ -653,9 +894,7 @@ export function AssetsPage() {
                             <td>{row.rowNumber}</td>
                             <td>
                               <div className="asset-name-cell">
-                                <strong>
-                                  {isResultRow ? row.assetName : source?.name || "—"}
-                                </strong>
+                                <strong>{isResultRow ? row.assetName : source?.name || "—"}</strong>
                                 {source?.assetCode && <span>{source.assetCode}</span>}
                               </div>
                             </td>
