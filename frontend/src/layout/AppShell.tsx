@@ -293,7 +293,6 @@ export function AppShell() {
                         className={({ isActive }) => (isActive ? "active" : "")}
                         onClick={() => setMobileOpen(false)}
                       >
-                        {child.icon}
                         <span>
                           <HighlightedLabel label={child.label} query={normalizedSidebarSearch} />
                         </span>
