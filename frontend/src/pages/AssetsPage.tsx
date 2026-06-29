@@ -1,18 +1,14 @@
-import { type ChangeEvent, type ReactNode, useEffect, useMemo, useState } from "react";
+import { type ChangeEvent, type MouseEvent, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import {
-  FiArchive,
-  FiBox,
-  FiCheckCircle,
+  FiChevronRight,
   FiDownload,
   FiEye,
   FiFileText,
   FiGrid,
   FiSearch,
-  FiTool,
   FiTrash2,
   FiUpload,
-  FiUserCheck,
   FiX,
 } from "react-icons/fi";
 import { PanelHeader } from "../components/PanelHeader";
@@ -40,6 +36,7 @@ import type {
 type AssetStatusFilter = "ALL" | "IN_STOCK" | "ASSIGNED" | "MAINTENANCE" | "DISPOSED";
 type AssetValueFilter = "ALL" | "UNDER_10M" | "FROM_10M_TO_50M" | "FROM_50M_TO_200M" | "FROM_200M";
 type ImportMode = AssetImportCommitPayload["importMode"];
+type ImportPreviewFilter = "ALL" | "VALID" | "INVALID" | "WARNING";
 
 const ASSET_VALUE_FILTERS: Array<{
   value: AssetValueFilter;
@@ -87,6 +84,20 @@ function findCategoryPath(nodes: AssetCategoryTree[], path: string[]): AssetCate
     current = node.children;
   }
   return result;
+}
+
+function findCategoryIdPath(
+  nodes: AssetCategoryTree[],
+  targetId: number,
+  path: string[] = [],
+): string[] {
+  for (const node of nodes) {
+    const nextPath = [...path, String(node.id)];
+    if (node.id === targetId) return nextPath;
+    const childPath = findCategoryIdPath(node.children, targetId, nextPath);
+    if (childPath.length > 0) return childPath;
+  }
+  return [];
 }
 
 function buildAssetPayload(item: AssetItem): AssetPayload {
@@ -153,6 +164,32 @@ function classLabel(value?: string) {
   return labels[value] || value;
 }
 
+function highlightSearchText(value: string, query: string) {
+  const normalizedQuery = query.trim().toLowerCase();
+  if (!normalizedQuery) return value;
+  const lower = value.toLowerCase();
+  const index = lower.indexOf(normalizedQuery);
+  if (index < 0) return value;
+  return (
+    <>
+      {value.slice(0, index)}
+      <mark className="search-match">{value.slice(index, index + normalizedQuery.length)}</mark>
+      {value.slice(index + normalizedQuery.length)}
+    </>
+  );
+}
+
+function importStatusLabel(status?: string) {
+  const labels: Record<string, string> = {
+    VALID: "Hợp lệ",
+    INVALID: "Lỗi",
+    WARNING: "Cảnh báo",
+    IMPORTED: "Đã nhập",
+    SKIPPED: "Bỏ qua",
+  };
+  return status ? labels[status] || status : "Chưa kiểm tra";
+}
+
 function dateTimeLabel(value?: string) {
   if (!value) return "—";
   const date = new Date(value);
@@ -160,24 +197,145 @@ function dateTimeLabel(value?: string) {
   return date.toLocaleString("vi-VN");
 }
 
-function AssetMetric({
-  label,
-  value,
-  icon,
-  accent,
+function assetCategoryTokens(asset: AssetItem): Set<string> {
+  return new Set(
+    [
+      asset.category,
+      asset.assetCategory?.name,
+      asset.assetCategory?.code,
+      asset.assetClass,
+      asset.fixedAssetType,
+      asset.toolUsageType,
+      classLabel(asset.assetClass),
+      classLabel(asset.fixedAssetType),
+      classLabel(asset.toolUsageType),
+    ]
+      .filter(Boolean)
+      .map((value) => normalize(String(value))),
+  );
+}
+
+function categoryNodeTerms(node: AssetCategoryTree): Set<string> {
+  const name = normalize(node.name);
+  const code = normalize(node.code);
+  const source = `${name} ${code}`;
+  const terms = new Set([name, code].filter(Boolean));
+
+  if (
+    source.includes("fixed_asset") ||
+    source.includes("tscd") ||
+    source.includes("tai san co dinh")
+  ) {
+    terms.add("fixed_asset");
+    terms.add("tai san co dinh");
+  }
+  if (
+    source.includes("tool_equipment") ||
+    source.includes("ccdc") ||
+    source.includes("cong cu dung cu")
+  ) {
+    terms.add("tool_equipment");
+    terms.add("cong cu dung cu");
+  }
+  if (source.includes("intangible") || source.includes("vo hinh")) {
+    terms.add("intangible");
+    terms.add("vo hinh");
+  } else if (source.includes("tangible") || source.includes("huu hinh")) {
+    terms.add("tangible");
+    terms.add("huu hinh");
+  }
+  if (
+    source.includes("single_use") ||
+    source.includes("dung mot lan") ||
+    source.includes("dung 1 lan")
+  ) {
+    terms.add("single_use");
+    terms.add("dung mot lan");
+  }
+  if (source.includes("multi_use") || source.includes("dung nhieu lan")) {
+    terms.add("multi_use");
+    terms.add("dung nhieu lan");
+  }
+
+  return terms;
+}
+
+function assetMatchesCategoryNode(
+  asset: AssetItem,
+  node: AssetCategoryTree,
+  descendantIds?: Set<number> | null,
+) {
+  const assetCategoryId = asset.assetCategory?.id;
+  if (assetCategoryId && descendantIds?.has(assetCategoryId)) return true;
+  const tokens = assetCategoryTokens(asset);
+  const nodeTerms = categoryNodeTerms(node);
+  return Array.from(nodeTerms).some((term) => tokens.has(term));
+}
+
+function AssetCategoryFilterNode({
+  node,
+  depth = 0,
+  selectedId,
+  selectedPathIds,
+  expandedIds,
+  assetCounts,
+  onSelect,
+  onToggle,
 }: {
-  label: string;
-  value: string | number;
-  icon: ReactNode;
-  accent?: boolean;
+  node: AssetCategoryTree;
+  depth?: number;
+  selectedId?: number;
+  selectedPathIds: Set<number>;
+  expandedIds: Set<number>;
+  assetCounts: Map<number, number>;
+  onSelect: (category: AssetCategoryTree) => void;
+  onToggle: (id: number) => void;
 }) {
+  const count = assetCounts.get(node.id) ?? 0;
+  const hasChildren = node.children.length > 0;
+  const open = expandedIds.has(node.id) || (selectedPathIds.has(node.id) && selectedId !== node.id);
+
   return (
-    <div className={`asset-metric ${accent ? "accent" : ""}`}>
-      <span>{icon}</span>
-      <div>
-        <p>{label}</p>
-        <strong>{value}</strong>
-      </div>
+    <div className="asset-category-filter-node">
+      <button
+        type="button"
+        className="asset-category-filter-item"
+        data-selected={selectedId === node.id ? "true" : undefined}
+        style={{ paddingLeft: 8 + depth * 8 }}
+        onClick={() => {
+          onSelect(node);
+          if (hasChildren) onToggle(node.id);
+        }}
+      >
+        {hasChildren ? (
+          <FiChevronRight className={`asset-category-filter-arrow ${open ? "open" : ""}`} />
+        ) : (
+          <span className="asset-category-filter-spacer" />
+        )}
+        <span className="asset-category-filter-copy">
+          <strong>{node.name}</strong>
+          <small>{node.code}</small>
+        </span>
+        <span className="asset-category-filter-count">{count}</span>
+      </button>
+
+      {hasChildren && open && (
+        <div className="asset-category-filter-children">
+          {node.children.map((child) => (
+            <AssetCategoryFilterNode
+              key={child.id}
+              node={child}
+              depth={depth + 1}
+              selectedId={selectedId}
+              selectedPathIds={selectedPathIds}
+              expandedIds={expandedIds}
+              assetCounts={assetCounts}
+              onSelect={onSelect}
+              onToggle={onToggle}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -654,6 +812,9 @@ export function AssetsPage() {
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<AssetStatusFilter>("ALL");
   const [categoryPath, setCategoryPath] = useState<string[]>([]);
+  const [expandedAssetCategoryIds, setExpandedAssetCategoryIds] = useState<Set<number>>(
+    () => new Set(),
+  );
   const [categoryTree, setCategoryTree] = useState<AssetCategoryTree[]>([]);
   const [siteFilter, setSiteFilter] = useState("ALL");
   const [valueFilter, setValueFilter] = useState<AssetValueFilter>("ALL");
@@ -669,6 +830,12 @@ export function AssetsPage() {
   const [importRows, setImportRows] = useState<AssetImportRowPayload[]>([]);
   const [importResult, setImportResult] = useState<AssetImportValidationResponse | null>(null);
   const [importMode, setImportMode] = useState<ImportMode>("VALID_ROWS_ONLY");
+  const [importPreviewFilter, setImportPreviewFilter] = useState<ImportPreviewFilter>("ALL");
+  const [importTooltip, setImportTooltip] = useState<{
+    text: string;
+    x: number;
+    y: number;
+  } | null>(null);
 
   useEffect(() => {
     void ensureAssets();
@@ -706,32 +873,36 @@ export function AssetsPage() {
     return idsByCategory;
   }, [categoryTree]);
 
-  const categoryNodesWithAssets = useMemo(() => {
-    const assetCategoryIds = new Set(
-      assets.map((asset) => asset.assetCategory?.id).filter(Boolean) as number[],
-    );
-    const fallbackNames = new Set(
-      assets
-        .flatMap((asset) => [asset.category, asset.assetCategory?.name, asset.assetCategory?.code])
-        .filter(Boolean) as string[],
-    );
-    const matched = new Set<number>();
-    const visit = (node: AssetCategoryTree): boolean => {
+  const categoryAssetCounts = useMemo(() => {
+    const counts = new Map<number, number>();
+    const visit = (node: AssetCategoryTree) => {
       const descendantIds = categoryDescendantIds.get(node.id) ?? collectCategoryIds(node);
-      const hasExactAsset = Array.from(descendantIds).some((id) => assetCategoryIds.has(id));
-      const hasFallbackAsset = fallbackNames.has(node.name) || fallbackNames.has(node.code);
-      const hasChildAsset = node.children.some(visit);
-      const hasAsset = hasExactAsset || hasFallbackAsset || hasChildAsset;
-      if (hasAsset) matched.add(node.id);
-      return hasAsset;
+      const count = assets.filter((asset) =>
+        assetMatchesCategoryNode(asset, node, descendantIds),
+      ).length;
+      counts.set(node.id, count);
+      node.children.forEach(visit);
     };
     categoryTree.forEach(visit);
-    return matched;
+    return counts;
   }, [assets, categoryDescendantIds, categoryTree]);
+
+  const resetAssetFilters = () => {
+    setCategoryPath([]);
+    setExpandedAssetCategoryIds(new Set());
+    setStatusFilter("ALL");
+    setSiteFilter("ALL");
+    setValueFilter("ALL");
+    setQuery("");
+  };
 
   const selectedCategoryNodes = useMemo(
     () => findCategoryPath(categoryTree, categoryPath),
     [categoryPath, categoryTree],
+  );
+  const selectedCategoryPathIds = useMemo(
+    () => new Set(selectedCategoryNodes.map((node) => node.id)),
+    [selectedCategoryNodes],
   );
 
   const selectedCategoryNode = selectedCategoryNodes.at(-1) ?? null;
@@ -740,15 +911,6 @@ export function AssetsPage() {
     if (!selectedAsset || !assetDraft) return false;
     return JSON.stringify(assetDraft) !== JSON.stringify(buildAssetPayload(selectedAsset));
   }, [assetDraft, selectedAsset]);
-
-  const categoryLevelOptions = useMemo(() => {
-    const levels = [categoryTree.filter((node) => categoryNodesWithAssets.has(node.id))];
-    selectedCategoryNodes.forEach((node) => {
-      const children = node.children.filter((child) => categoryNodesWithAssets.has(child.id));
-      if (children.length > 0) levels.push(children);
-    });
-    return levels;
-  }, [categoryNodesWithAssets, categoryTree, selectedCategoryNodes]);
 
   const siteOptions = useMemo(
     () =>
@@ -770,10 +932,8 @@ export function AssetsPage() {
       const assetCategoryId = asset.assetCategory?.id;
       const matchesCategory =
         !selectedCategoryNode ||
-        (assetCategoryId
-          ? selectedCategoryIds?.has(assetCategoryId)
-          : asset.category === selectedCategoryNode.name ||
-            asset.category === selectedCategoryNode.code);
+        (assetCategoryId && selectedCategoryIds?.has(assetCategoryId)) ||
+        assetMatchesCategoryNode(asset, selectedCategoryNode, selectedCategoryIds);
       const matchesSite = siteFilter === "ALL" || asset.siteId === Number(siteFilter);
       const cost = Number(asset.purchaseCost || 0);
       const matchesValue =
@@ -819,9 +979,18 @@ export function AssetsPage() {
     [filteredAssets],
   );
 
-  const assignedCount = assets.filter((asset) => asset.status === "ASSIGNED").length;
-  const inStockCount = assets.filter((asset) => asset.status === "IN_STOCK").length;
-  const maintenanceCount = assets.filter((asset) => asset.status === "MAINTENANCE").length;
+  const importPreviewRows = useMemo(() => {
+    const rows = importResult?.rows ?? importRows.slice(0, 30);
+    if (!importResult || importPreviewFilter === "ALL") return rows;
+    return rows.filter((row) => "errors" in row && row.status === importPreviewFilter);
+  }, [importPreviewFilter, importResult, importRows]);
+
+  const canCommitImport = Boolean(
+    importResult &&
+      importRows.length > 0 &&
+      importResult.validRows > 0 &&
+      (importMode === "VALID_ROWS_ONLY" || importResult.errorRows === 0),
+  );
 
   const reloadAssetList = async () => {
     setListRefreshing(true);
@@ -832,10 +1001,12 @@ export function AssetsPage() {
     }
   };
 
-  const handleCategoryLevelChange = (level: number, value: string) => {
-    setCategoryPath((current) => {
-      if (value === "ALL") return current.slice(0, level);
-      return [...current.slice(0, level), value];
+  const toggleAssetCategory = (id: number) => {
+    setExpandedAssetCategoryIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
     });
   };
 
@@ -890,6 +1061,8 @@ export function AssetsPage() {
     setImportRows([]);
     setImportResult(null);
     setImportMode("VALID_ROWS_ONLY");
+    setImportPreviewFilter("ALL");
+    setImportTooltip(null);
   };
 
   const requestCloseImport = () => {
@@ -907,6 +1080,7 @@ export function AssetsPage() {
     if (!file) return;
     setImportBusy(true);
     setImportResult(null);
+    setImportPreviewFilter("ALL");
     try {
       const rows = await parseAssetImportFile(file);
       setImportRows(rows);
@@ -930,6 +1104,7 @@ export function AssetsPage() {
     try {
       const result = await validateAssetImport(importRows);
       setImportResult(result);
+      setImportPreviewFilter("ALL");
       if (result.errorRows > 0) {
         toast.error(`Có ${result.errorRows} dòng lỗi cần kiểm tra.`);
       } else {
@@ -958,6 +1133,7 @@ export function AssetsPage() {
         warningRows: 0,
         rows: result.rows,
       });
+      setImportPreviewFilter("ALL");
       toast.success(`Đã import ${result.importedRows} tài sản.`);
       await reloadAssetList();
     } catch {
@@ -975,6 +1151,15 @@ export function AssetsPage() {
     } catch {
       toast.error("Không tạo được file mẫu Excel.", { id: loadingToast });
     }
+  };
+
+  const showImportTooltip = (event: MouseEvent<HTMLElement>, messages: string[]) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    setImportTooltip({
+      text: messages.map((message) => `- ${message}`).join("\n"),
+      x: rect.left,
+      y: rect.top,
+    });
   };
 
   const headerExtraActions = (
@@ -997,171 +1182,189 @@ export function AssetsPage() {
         extraActions={headerExtraActions}
       />
 
-      <div className="asset-summary-grid">
-        <AssetMetric label="Tổng tài sản" value={assets.length} icon={<FiBox />} accent />
-        <AssetMetric label="Đã cấp phát" value={assignedCount} icon={<FiUserCheck />} />
-        <AssetMetric label="Trong kho" value={inStockCount} icon={<FiArchive />} />
-        <AssetMetric label="Bảo trì" value={maintenanceCount} icon={<FiTool />} />
-      </div>
+      <div className="asset-list-layout">
+        <aside className="asset-category-sidebar">
+          <div className="asset-category-sidebar-head">
+            <div>
+              <span>Danh mục</span>
+              <strong>{selectedCategoryNode?.name || "Tất cả danh mục"}</strong>
+            </div>
+            <button type="button" className="asset-category-clear" onClick={resetAssetFilters}>
+              Tất cả
+            </button>
+          </div>
 
-      <div className="asset-toolbar">
-        <label className="asset-search">
-          <FiSearch />
-          <input
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="Tìm theo mã, tên, serial, nhà cung cấp..."
-          />
-        </label>
-        <select
-          value={statusFilter}
-          onChange={(event) => setStatusFilter(event.target.value as AssetStatusFilter)}
-        >
-          {(["ALL", "IN_STOCK", "ASSIGNED", "MAINTENANCE", "DISPOSED"] as const).map((status) => (
-            <option key={status} value={status}>
-              {statusLabel(status)}
-            </option>
-          ))}
-        </select>
-        <div className="asset-category-filter-chain">
-          {categoryLevelOptions.map((options, level) => (
-            <select
-              key={level === 0 ? "root" : selectedCategoryNodes[level - 1]?.id}
-              value={categoryPath[level] ?? "ALL"}
-              onChange={(event) => handleCategoryLevelChange(level, event.target.value)}
+          <div className="asset-category-filter-list">
+            <button
+              type="button"
+              className="asset-category-filter-item all"
+              data-selected={!selectedCategoryNode ? "true" : undefined}
+              onClick={resetAssetFilters}
             >
-              <option value="ALL">
-                {level === 0
-                  ? "Tất cả danh mục"
-                  : `Tất cả trong ${selectedCategoryNodes[level - 1]?.name || "danh mục"}`}
-              </option>
-              {options.map((category) => (
-                <option key={category.id} value={category.id}>
-                  {category.name}
+              <span className="asset-category-filter-spacer" />
+              <span className="asset-category-filter-copy">
+                <strong>Tất cả danh mục</strong>
+                <small>Toàn bộ tài sản</small>
+              </span>
+              <span className="asset-category-filter-count">{assets.length}</span>
+            </button>
+
+            {categoryTree.map((node) => (
+              <AssetCategoryFilterNode
+                key={node.id}
+                node={node}
+                selectedId={selectedCategoryNode?.id}
+                selectedPathIds={selectedCategoryPathIds}
+                expandedIds={expandedAssetCategoryIds}
+                assetCounts={categoryAssetCounts}
+                onSelect={(category) =>
+                  setCategoryPath(findCategoryIdPath(categoryTree, category.id))
+                }
+                onToggle={toggleAssetCategory}
+              />
+            ))}
+          </div>
+        </aside>
+
+        <div className="asset-results-column">
+          <div className="asset-toolbar">
+            <label className="asset-search">
+              <FiSearch />
+              <input
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="Tìm theo mã, tên, serial, nhà cung cấp..."
+              />
+            </label>
+            <select
+              value={statusFilter}
+              onChange={(event) => setStatusFilter(event.target.value as AssetStatusFilter)}
+            >
+              {(["ALL", "IN_STOCK", "ASSIGNED", "MAINTENANCE", "DISPOSED"] as const).map(
+                (status) => (
+                  <option key={status} value={status}>
+                    {statusLabel(status)}
+                  </option>
+                ),
+              )}
+            </select>
+            <select value={siteFilter} onChange={(event) => setSiteFilter(event.target.value)}>
+              <option value="ALL">Tất cả chi nhánh</option>
+              {siteOptions.map((siteId) => (
+                <option key={siteId} value={siteId}>
+                  {siteName(siteId)}
                 </option>
               ))}
             </select>
-          ))}
-        </div>
-        <select value={siteFilter} onChange={(event) => setSiteFilter(event.target.value)}>
-          <option value="ALL">Tất cả chi nhánh</option>
-          {siteOptions.map((siteId) => (
-            <option key={siteId} value={siteId}>
-              {siteName(siteId)}
-            </option>
-          ))}
-        </select>
-        <select
-          value={valueFilter}
-          onChange={(event) => setValueFilter(event.target.value as AssetValueFilter)}
-        >
-          {ASSET_VALUE_FILTERS.map((item) => (
-            <option key={item.value} value={item.value}>
-              {item.label}
-            </option>
-          ))}
-        </select>
-      </div>
+            <select
+              value={valueFilter}
+              onChange={(event) => setValueFilter(event.target.value as AssetValueFilter)}
+            >
+              {ASSET_VALUE_FILTERS.map((item) => (
+                <option key={item.value} value={item.value}>
+                  {item.label}
+                </option>
+              ))}
+            </select>
+          </div>
 
-      <div className={`asset-list-panel ${listRefreshing ? "is-refreshing" : ""}`}>
-        <div className="asset-list-head">
-          <div>
-            <strong>{filteredAssets.length} tài sản</strong>
-            <span>
-              Tổng giá trị đang lọc: {money.format(filteredValue)}
-              {filteredAssets.length !== assets.length
-                ? ` / ${money.format(totalValue)} toàn bộ`
-                : ""}
-            </span>
+          <div className={`asset-list-panel ${listRefreshing ? "is-refreshing" : ""}`}>
+            <div className="asset-list-head">
+              <div>
+                <strong>{filteredAssets.length} tài sản</strong>
+                <span>
+                  Tổng giá trị đang lọc: {money.format(filteredValue)}
+                  {filteredAssets.length !== assets.length
+                    ? ` / ${money.format(totalValue)} toàn bộ`
+                    : ""}
+                </span>
+              </div>
+            </div>
+
+            {filteredAssets.length === 0 ? (
+              <div className="empty-state">Không có tài sản phù hợp bộ lọc.</div>
+            ) : (
+              <div className="asset-table">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Tài sản</th>
+                      <th>Danh mục</th>
+                      <th>Giá trị</th>
+                      <th>Trạng thái</th>
+                      <th>Thao tác</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredAssets.map((item) => (
+                      <tr key={item.id}>
+                        <td>
+                          <div className="asset-name-cell">
+                            <strong>{highlightSearchText(item.name, query)}</strong>
+                            <span>{highlightSearchText(item.assetCode, query)}</span>
+                          </div>
+                        </td>
+                        <td>
+                          <div className="asset-muted-stack">
+                            <strong>
+                              {highlightSearchText(
+                                item.assetCategory?.name || item.category || "Chưa phân loại",
+                                query,
+                              )}
+                            </strong>
+                            <span>
+                              {highlightSearchText(
+                                item.assetCategory?.code || "Chưa có mã danh mục",
+                                query,
+                              )}
+                            </span>
+                          </div>
+                        </td>
+                        <td>{money.format(Number(item.purchaseCost || 0))}</td>
+                        <td>
+                          <StatusBadge value={item.status} />
+                        </td>
+                        <td>
+                          <div className="asset-row-icon-actions">
+                            <button
+                              type="button"
+                              className="asset-icon-action"
+                              title="Xem và chỉnh sửa tài sản"
+                              onClick={() => openAssetDetail(item)}
+                            >
+                              <FiEye />
+                            </button>
+                            <button
+                              type="button"
+                              className="asset-icon-action"
+                              title="Xem mã QR tài sản"
+                              onClick={() => setQrAsset(item)}
+                            >
+                              <FiGrid />
+                            </button>
+                            {canManage && (
+                              <button
+                                type="button"
+                                className="asset-icon-action danger"
+                                title="Xóa tài sản"
+                                onClick={() => void handleDeleteAsset(item)}
+                              >
+                                <FiTrash2 />
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+            {listRefreshing && (
+              <div className="asset-list-refreshing">Đang cập nhật danh sách...</div>
+            )}
           </div>
         </div>
-
-        {filteredAssets.length === 0 ? (
-          <div className="empty-state">Không có tài sản phù hợp bộ lọc.</div>
-        ) : (
-          <div className="asset-table">
-            <table>
-              <thead>
-                <tr>
-                  <th>Tài sản</th>
-                  <th>Danh mục</th>
-                  <th>Người dùng</th>
-                  <th>Vị trí</th>
-                  <th>Giá trị</th>
-                  <th>Trạng thái</th>
-                  <th>Thao tác</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredAssets.map((item) => (
-                  <tr key={item.id}>
-                    <td>
-                      <div className="asset-name-cell">
-                        <strong>{item.name}</strong>
-                        <span>{item.assetCode}</span>
-                        {item.serialNumber && <small>Serial: {item.serialNumber}</small>}
-                      </div>
-                    </td>
-                    <td>
-                      <div className="asset-muted-stack">
-                        <strong>
-                          {item.assetCategory?.name || item.category || "Chưa phân loại"}
-                        </strong>
-                        <span>{item.assetCategory?.code || "Chưa có mã danh mục"}</span>
-                      </div>
-                    </td>
-                    <td>
-                      <span className="muted-cell">{employeeName(item.assignedEmployeeId)}</span>
-                    </td>
-                    <td>
-                      <div className="asset-muted-stack">
-                        <span>{departmentName(item.departmentId)}</span>
-                        <small>
-                          {siteName(item.siteId)} · {projectName(item.projectId)}
-                        </small>
-                      </div>
-                    </td>
-                    <td>{money.format(Number(item.purchaseCost || 0))}</td>
-                    <td>
-                      <StatusBadge value={item.status} />
-                    </td>
-                    <td>
-                      <div className="asset-row-icon-actions">
-                        <button
-                          type="button"
-                          className="asset-icon-action"
-                          title="Xem và chỉnh sửa tài sản"
-                          onClick={() => openAssetDetail(item)}
-                        >
-                          <FiEye />
-                        </button>
-                        <button
-                          type="button"
-                          className="asset-icon-action"
-                          title="Xem mã QR tài sản"
-                          onClick={() => setQrAsset(item)}
-                        >
-                          <FiGrid />
-                        </button>
-                        {canManage && (
-                          <button
-                            type="button"
-                            className="asset-icon-action danger"
-                            title="Xóa tài sản"
-                            onClick={() => void handleDeleteAsset(item)}
-                          >
-                            <FiTrash2 />
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-        {listRefreshing && <div className="asset-list-refreshing">Đang cập nhật danh sách...</div>}
       </div>
 
       {selectedAsset && assetDraft && (
@@ -1666,16 +1869,15 @@ export function AssetsPage() {
             </div>
 
             <div className="asset-import-body">
-              <div className="asset-import-file-card">
-                <div>
-                  <span>File dữ liệu</span>
-                  <strong>{importFileName || "Chưa chọn file Excel"}</strong>
-                  <small>Hỗ trợ sheet HoSoTaiSan_import, định dạng .xlsx hoặc .xls</small>
-                </div>
+              <div className="asset-import-file-row">
                 <label className="asset-import-file-button">
                   <FiUpload /> Chọn file Excel
                   <input type="file" accept=".xlsx,.xls" onChange={handleImportFile} />
                 </label>
+                <div className="asset-import-file-meta">
+                  <strong>{importFileName || "Chưa chọn file Excel"}</strong>
+                  <small>Hỗ trợ sheet HoSoTaiSan_import, định dạng .xlsx hoặc .xls</small>
+                </div>
               </div>
 
               <div className="asset-import-summary">
@@ -1697,17 +1899,56 @@ export function AssetsPage() {
                 </div>
               </div>
 
-              <div className="asset-import-options">
-                <label>
-                  <span>Chế độ nhập dữ liệu</span>
-                  <select
-                    value={importMode}
-                    onChange={(event) => setImportMode(event.target.value as ImportMode)}
-                  >
-                    <option value="VALID_ROWS_ONLY">Chỉ nhập những dòng hợp lệ</option>
-                    <option value="ALL_OR_NOTHING">Tất cả dòng hợp lệ</option>
-                  </select>
-                </label>
+              <div className="asset-import-controls">
+                <div className="asset-import-options">
+                  <label>
+                    <span>Chế độ nhập dữ liệu</span>
+                    <select
+                      value={importMode}
+                      onChange={(event) => setImportMode(event.target.value as ImportMode)}
+                    >
+                      <option value="VALID_ROWS_ONLY">Chỉ nhập những dòng hợp lệ</option>
+                      <option value="ALL_OR_NOTHING">Tất cả hoặc không nhập</option>
+                    </select>
+                  </label>
+                </div>
+
+                <div className="asset-import-preview-toolbar">
+                  <span>Trạng thái dòng</span>
+                  <div>
+                    <button
+                      type="button"
+                      data-active={importPreviewFilter === "ALL" ? "true" : undefined}
+                      onClick={() => setImportPreviewFilter("ALL")}
+                    >
+                      Tất cả <strong>{importResult?.totalRows ?? importRows.length}</strong>
+                    </button>
+                    <button
+                      type="button"
+                      data-active={importPreviewFilter === "VALID" ? "true" : undefined}
+                      disabled={!importResult}
+                      onClick={() => setImportPreviewFilter("VALID")}
+                    >
+                      Hợp lệ <strong>{importResult?.validRows ?? 0}</strong>
+                    </button>
+                    <button
+                      type="button"
+                      data-active={importPreviewFilter === "INVALID" ? "true" : undefined}
+                      disabled={!importResult}
+                      onClick={() => setImportPreviewFilter("INVALID")}
+                    >
+                      Lỗi <strong>{importResult?.errorRows ?? 0}</strong>
+                    </button>
+                    <button
+                      type="button"
+                      data-active={importPreviewFilter === "WARNING" ? "true" : undefined}
+                      disabled={!importResult}
+                      onClick={() => setImportPreviewFilter("WARNING")}
+                    >
+                      Cảnh báo <strong>{importResult?.warningRows ?? 0}</strong>
+                    </button>
+                  </div>
+                </div>
               </div>
 
               <div className="asset-import-preview">
@@ -1715,6 +1956,8 @@ export function AssetsPage() {
                   <div className="empty-state">
                     Chọn file Excel để xem dữ liệu trước khi import.
                   </div>
+                ) : importPreviewRows.length === 0 ? (
+                  <div className="empty-state">Không có dòng phù hợp bộ lọc.</div>
                 ) : (
                   <table>
                     <thead>
@@ -1735,15 +1978,15 @@ export function AssetsPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {(importResult?.rows ?? importRows.slice(0, 30)).map((row) => {
+                      {importPreviewRows.map((row) => {
                         const isResultRow = "errors" in row;
                         const source: AssetImportRowPayload | undefined = isResultRow
                           ? importRows.find((item) => item.rowNumber === row.rowNumber)
                           : row;
                         const status = isResultRow ? row.status : undefined;
                         const rowMessages = isResultRow
-                          ? [...row.errors, ...row.warnings].map((item) => item.message).join("; ")
-                          : "";
+                          ? [...row.errors, ...row.warnings].map((item) => item.message)
+                          : [];
                         return (
                           <tr key={row.rowNumber} data-status={status}>
                             <td>{row.rowNumber}</td>
@@ -1767,18 +2010,26 @@ export function AssetsPage() {
                             <td>
                               {status ? (
                                 <span className="asset-import-row-status">
-                                  {status === "VALID" || status === "WARNING" ? (
-                                    <FiCheckCircle />
-                                  ) : (
-                                    <FiX />
-                                  )}
-                                  {status}
+                                  {importStatusLabel(status)}
                                 </span>
                               ) : (
                                 source?.status || "—"
                               )}
                             </td>
-                            <td className="asset-import-message-cell">{rowMessages || "—"}</td>
+                            <td className="asset-import-message-cell">
+                              {rowMessages.length > 0 ? (
+                                <span
+                                  className="asset-import-message-summary"
+                                  onMouseEnter={(event) => showImportTooltip(event, rowMessages)}
+                                  onMouseLeave={() => setImportTooltip(null)}
+                                >
+                                  - {rowMessages[0]}
+                                  {rowMessages.length > 1 ? ` (+${rowMessages.length - 1})` : ""}
+                                </span>
+                              ) : (
+                                "—"
+                              )}
+                            </td>
                           </tr>
                         );
                       })}
@@ -1787,6 +2038,15 @@ export function AssetsPage() {
                 )}
               </div>
             </div>
+
+            {importTooltip && (
+              <div
+                className="asset-import-floating-tooltip"
+                style={{ left: importTooltip.x, top: importTooltip.y }}
+              >
+                {importTooltip.text}
+              </div>
+            )}
 
             <div className="modal-actions asset-import-actions">
               <button
@@ -1819,7 +2079,7 @@ export function AssetsPage() {
                 type="button"
                 className="primary-action"
                 onClick={handleCommitImport}
-                disabled={importBusy || importRows.length === 0}
+                disabled={importBusy || !canCommitImport}
               >
                 Import
               </button>

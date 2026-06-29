@@ -8,6 +8,7 @@ const labelMap: Record<string, string> = {
   IN_STOCK: "Trong kho",
   ASSIGNED: "Đã cấp phát",
   MAINTENANCE: "Bảo trì",
+  DISPOSED: "Đã thanh lý",
   LIQUIDATED: "Đã thanh lý",
   DRAFT: "Bản nháp",
   PENDING: "Chờ duyệt",

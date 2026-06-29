@@ -1,5 +1,6 @@
 import { useEffect, useMemo } from "react";
 import {
+  FiArchive,
   FiBox,
   FiBriefcase,
   FiCheckCircle,
@@ -8,6 +9,7 @@ import {
   FiTool,
   FiTrash2,
   FiTrendingUp,
+  FiUserCheck,
   FiUsers,
 } from "react-icons/fi";
 import { Operation } from "../components/Operation";
@@ -43,6 +45,9 @@ export function DashboardPage() {
   );
   const pendingRequests = requests.filter((request) => request.status === "PENDING").length;
   const activeVendors = vendors.filter((vendor) => vendor.status === "ACTIVE").length;
+  const assignedAssets = assets.filter((asset) => asset.status === "ASSIGNED").length;
+  const inStockAssets = assets.filter((asset) => asset.status === "IN_STOCK").length;
+  const maintenanceAssets = assets.filter((asset) => asset.status === "MAINTENANCE").length;
   const subscriptionCost = useMemo(
     () => subscriptions.reduce((sum, item) => sum + Number(item.cost || 0), 0),
     [subscriptions],
@@ -101,6 +106,12 @@ export function DashboardPage() {
           icon={<FiShoppingCart />}
           tone="orange"
         />
+      </div>
+      <div className="stats-grid">
+        <StatCard label="Tổng tài sản" value={assets.length} icon={<FiBox />} tone="blue" />
+        <StatCard label="Đã cấp phát" value={assignedAssets} icon={<FiUserCheck />} tone="green" />
+        <StatCard label="Trong kho" value={inStockAssets} icon={<FiArchive />} tone="orange" />
+        <StatCard label="Bảo trì" value={maintenanceAssets} icon={<FiTool />} tone="violet" />
       </div>
       <section className="panel overview-panel">
         <div className="panel-title">

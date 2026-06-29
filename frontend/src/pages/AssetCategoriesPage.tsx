@@ -136,6 +136,10 @@ function countTree(nodes: AssetCategoryTree[]): number {
   return nodes.reduce((total, node) => total + 1 + countTree(node.children), 0);
 }
 
+function treeContainsCategory(node: AssetCategoryTree, id: number): boolean {
+  return node.id === id || node.children.some((child) => treeContainsCategory(child, id));
+}
+
 function CategoryNode({
   node,
   depth = 0,
@@ -252,28 +256,19 @@ function CategoryNode({
   );
 }
 
-function SummaryStat({ label, value, accent }: { label: string; value: number; accent?: boolean }) {
-  return (
-    <div className={`category-summary-stat ${accent ? "accent" : ""}`}>
-      <p>{label}</p>
-      <strong>{value}</strong>
-    </div>
-  );
-}
-
 function StructureView({
   roots,
   selectedId,
+  expandedIds,
   onEdit,
-  onDelete,
-  onCreateChild,
+  onToggle,
   searchQuery,
 }: {
   roots: AssetCategoryTree[];
   selectedId?: number;
+  expandedIds: Set<number>;
   onEdit: (category: AssetCategory) => void;
-  onDelete: (category: AssetCategory) => void;
-  onCreateChild: (category: AssetCategory) => void;
+  onToggle: (id: number) => void;
   searchQuery: string;
 }) {
   const [activeRootId, setActiveRootId] = useState<number | null>(null);
@@ -289,22 +284,20 @@ function StructureView({
     }
   }, [activeRoot, roots]);
 
+  useEffect(() => {
+    if (!selectedId) return;
+    const selectedRoot = roots.find((root) => treeContainsCategory(root, selectedId));
+    if (selectedRoot && selectedRoot.id !== activeRootId) {
+      setActiveRootId(selectedRoot.id);
+    }
+  }, [activeRootId, roots, selectedId]);
+
   if (!activeRoot) {
     return <div className="empty-state">Chưa có dữ liệu cơ cấu để hiển thị.</div>;
   }
 
-  const totalRoots = roots.length;
-  const totalChildren = roots.reduce((total, root) => total + root.children.length, 0);
-  const totalCategories = countTree(roots);
-
   return (
     <div className="category-structure-view">
-      <div className="category-summary-grid">
-        <SummaryStat label="Danh mục gốc" value={totalRoots} />
-        <SummaryStat label="Nhóm con trực tiếp" value={totalChildren} />
-        <SummaryStat label="Tổng danh mục" value={totalCategories} accent />
-      </div>
-
       <div className="category-structure-grid">
         <aside className="category-structure-sidebar">
           <div className="category-structure-sidebar-head">
@@ -357,8 +350,8 @@ function StructureView({
                   depth={1}
                   selectedId={selectedId}
                   onEdit={onEdit}
-                  onDelete={onDelete}
-                  onCreateChild={onCreateChild}
+                  expandedIds={expandedIds}
+                  onToggle={onToggle}
                   searchQuery={searchQuery}
                 />
               ))
@@ -374,23 +367,22 @@ function StructureRow({
   node,
   depth,
   selectedId,
+  expandedIds,
   onEdit,
-  onDelete,
-  onCreateChild,
+  onToggle,
   searchQuery,
 }: {
   node: AssetCategoryTree;
   depth: number;
   selectedId?: number;
+  expandedIds: Set<number>;
   onEdit: (category: AssetCategory) => void;
-  onDelete: (category: AssetCategory) => void;
-  onCreateChild: (category: AssetCategory) => void;
+  onToggle: (id: number) => void;
   searchQuery: string;
 }) {
-  const [manualOpen, setManualOpen] = useState(false);
   const hasChildren = node.children.length > 0;
   const searchActive = normalizeSearchText(searchQuery).length > 0;
-  const open = searchActive || manualOpen;
+  const open = searchActive || expandedIds.has(node.id);
 
   return (
     <div className="category-structure-row">
@@ -400,7 +392,7 @@ function StructureRow({
         data-selected={selectedId === node.id ? "true" : undefined}
         onClick={() => {
           onEdit(node);
-          if (hasChildren) setManualOpen((value) => !value);
+          if (hasChildren) onToggle(node.id);
         }}
       >
         {hasChildren ? (
@@ -412,46 +404,6 @@ function StructureRow({
           {highlightCategoryText(node.name, searchQuery)}
         </span>
         <span className="category-structure-count">{node.children.length} nhóm con</span>
-        <span
-          role="button"
-          tabIndex={0}
-          className="category-structure-add"
-          title="Thêm danh mục con"
-          onClick={(event) => {
-            event.stopPropagation();
-            onEdit(node);
-            onCreateChild(node);
-          }}
-          onKeyDown={(event) => {
-            if (event.key !== "Enter" && event.key !== " ") return;
-            event.preventDefault();
-            event.stopPropagation();
-            onEdit(node);
-            onCreateChild(node);
-          }}
-        >
-          <FiPlus />
-        </span>
-        <span
-          role="button"
-          tabIndex={0}
-          className="category-structure-delete"
-          title="Xóa"
-          onClick={(event) => {
-            event.stopPropagation();
-            onEdit(node);
-            onDelete(node);
-          }}
-          onKeyDown={(event) => {
-            if (event.key !== "Enter" && event.key !== " ") return;
-            event.preventDefault();
-            event.stopPropagation();
-            onEdit(node);
-            onDelete(node);
-          }}
-        >
-          <FiTrash2 />
-        </span>
       </button>
 
       {open && (
@@ -465,8 +417,8 @@ function StructureRow({
                   depth={depth + 1}
                   selectedId={selectedId}
                   onEdit={onEdit}
-                  onDelete={onDelete}
-                  onCreateChild={onCreateChild}
+                  expandedIds={expandedIds}
+                  onToggle={onToggle}
                   searchQuery={searchQuery}
                 />
               ))}
@@ -493,6 +445,7 @@ export function AssetCategoriesPage() {
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
   const [parentFieldsLocked, setParentFieldsLocked] = useState(false);
   const [expandedTreeIds, setExpandedTreeIds] = useState<Set<number>>(new Set());
+  const [expandedStructureIds, setExpandedStructureIds] = useState<Set<number>>(new Set());
   const effectiveSearch = viewMode === "STRUCTURE" ? categorySearch : "";
 
   const selectableParents = useMemo(
@@ -511,6 +464,17 @@ export function AssetCategoriesPage() {
       filterTree(buildCategoryTree(categories), assetClassFilter, activeFilter, effectiveSearch),
     [categories, assetClassFilter, activeFilter, effectiveSearch],
   );
+  const categoryFormChanged = useMemo(() => {
+    if (!editing) return true;
+    return (
+      form.code !== editing.code ||
+      form.name !== editing.name ||
+      form.parentId !== (editing.parentId ?? null) ||
+      form.assetClass !== editing.assetClass ||
+      (form.description ?? "") !== (editing.description ?? "") ||
+      form.active !== editing.active
+    );
+  }, [editing, form]);
   const refresh = async () => {
     setLoading(true);
     try {
@@ -555,10 +519,21 @@ export function AssetCategoriesPage() {
     });
   };
 
+  const toggleStructureNode = (id: number) => {
+    setExpandedStructureIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
   const startCreateChild = (parent: AssetCategory) => {
     setEditing(null);
     setSelectedCategoryId(parent.id);
     setParentFieldsLocked(true);
+    setExpandedTreeIds((prev) => new Set(prev).add(parent.id));
+    setExpandedStructureIds((prev) => new Set(prev).add(parent.id));
     setForm({
       ...emptyForm,
       parentId: parent.id,
@@ -584,6 +559,7 @@ export function AssetCategoriesPage() {
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setSubmitting(true);
+    const nextSelectedId = editing?.id ?? form.parentId ?? selectedCategoryId;
     try {
       if (editing) {
         await updateAssetCategory(editing.id, form);
@@ -593,7 +569,7 @@ export function AssetCategoriesPage() {
         toast.success("Đã tạo danh mục.");
       }
       setEditing(null);
-      setSelectedCategoryId(null);
+      setSelectedCategoryId(nextSelectedId ?? null);
       setForm(emptyForm);
       setParentFieldsLocked(false);
       await refresh();
@@ -605,16 +581,20 @@ export function AssetCategoriesPage() {
   };
 
   const remove = async (category: AssetCategory) => {
-    setSelectedCategoryId(category.id);
     if (!window.confirm(`Xóa danh mục ${category.name}?`)) return;
+    const nextSelectedId = category.parentId ?? null;
     setSubmitting(true);
     try {
       await deleteAssetCategory(category.id);
       if (editing?.id === category.id) {
         setEditing(null);
-        setSelectedCategoryId(null);
         setForm(emptyForm);
         setParentFieldsLocked(false);
+      }
+      setSelectedCategoryId(nextSelectedId);
+      if (nextSelectedId) {
+        setExpandedTreeIds((prev) => new Set(prev).add(nextSelectedId));
+        setExpandedStructureIds((prev) => new Set(prev).add(nextSelectedId));
       }
       await refresh();
       toast.success("Đã xóa danh mục.");
@@ -670,6 +650,16 @@ export function AssetCategoriesPage() {
                       onChange={(event) => setCategorySearch(event.target.value)}
                       placeholder="Tìm theo tên, mã, mô tả..."
                     />
+                    {categorySearch && (
+                      <button
+                        type="button"
+                        className="category-search-clear"
+                        onClick={() => setCategorySearch("")}
+                        aria-label="Xóa nội dung tìm kiếm"
+                      >
+                        <FiX />
+                      </button>
+                    )}
                   </span>
                 </label>
               )}
@@ -724,8 +714,8 @@ export function AssetCategoriesPage() {
                 roots={filteredTree}
                 selectedId={selectedCategoryId ?? undefined}
                 onEdit={startEdit}
-                onDelete={remove}
-                onCreateChild={startCreateChild}
+                expandedIds={expandedStructureIds}
+                onToggle={toggleStructureNode}
                 searchQuery={effectiveSearch}
               />
             )}
@@ -826,9 +816,34 @@ export function AssetCategoriesPage() {
               Đang sử dụng
             </label>
 
-            <button type="submit" disabled={submitting}>
-              <FiSave /> {editing ? "Lưu thay đổi" : "Tạo danh mục"}
-            </button>
+            <div className="category-editor-actions">
+              {editing && (
+                <>
+                  <button
+                    type="button"
+                    className="secondary"
+                    onClick={() => startCreateChild(editing)}
+                    disabled={submitting}
+                  >
+                    <FiPlus /> Thêm con
+                  </button>
+                  <button
+                    type="button"
+                    className="danger-action"
+                    onClick={() => void remove(editing)}
+                    disabled={submitting}
+                  >
+                    <FiTrash2 /> Xóa
+                  </button>
+                </>
+              )}
+              <button
+                type="submit"
+                disabled={submitting || (editing ? !categoryFormChanged : false)}
+              >
+                <FiSave /> {editing ? "Lưu" : "Tạo danh mục"}
+              </button>
+            </div>
           </form>
         </div>
       </div>
