@@ -70,7 +70,7 @@ public class AssetService {
     @Transactional(readOnly = true)
     public AssetItem getAssetById(Long id) {
         return assets.findById(id)
-                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy tài sản"));
+                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy tài sản với id: " + id));
     }
 
     @Transactional(readOnly = true)
@@ -116,22 +116,26 @@ public class AssetService {
         AssetImportValidationResponse validation = validateAssetImport(new AssetImportValidateRequest(rows));
         boolean allOrNothing = "ALL_OR_NOTHING".equalsIgnoreCase(req.importMode());
 
-        if (allOrNothing && validation.errorRows() > 0) {
+
+        if (allOrNothing && validation.errorRows() > 0)
+        {
             List<AssetImportRowResult> skipped = validation.rows().stream()
-                    .map(row -> row.errors().isEmpty()
+                        .map(row -> row.errors().isEmpty()
                             ? withStatus(row, "SKIPPED", row.generatedAssetCodePreview())
                             : row)
-                    .toList();
-            return new AssetImportCommitResponse("FAILED", 0, rows.size(), validation.errorRows(), skipped);
+                        .toList();
+                return new AssetImportCommitResponse("FAILED", 0, rows.size(), validation.errorRows(), skipped);
+                    
         }
-
         Map<Integer, AssetImportRowResult> validationByRow = validation.rows().stream()
                 .collect(Collectors.toMap(AssetImportRowResult::rowNumber, row -> row, (first, second) -> first));
+
         List<AssetImportRowResult> commitResults = new ArrayList<>();
         int importedRows = 0;
         int skippedRows = 0;
         int errorRows = 0;
 
+        // quan trong
         for (AssetImportRowRequest row : rows) {
             AssetImportRowResult validationRow = validationByRow.get(rowNumber(row));
             if (validationRow == null || !validationRow.errors().isEmpty()) {
@@ -167,9 +171,7 @@ public class AssetService {
             }
         }
 
-        String uploadStatus = errorRows > 0
-                ? importedRows > 0 ? "PARTIALLY_IMPORTED" : "FAILED"
-                : "IMPORTED";
+        String uploadStatus = errorRows > 0 ? importedRows > 0 ? "PARTIALLY_IMPORTED" : "FAILED" : "IMPORTED";
         return new AssetImportCommitResponse(uploadStatus, importedRows, skippedRows, errorRows, commitResults);
     }
 
@@ -260,7 +262,7 @@ public class AssetService {
             return;
         }
         if (assetClass == AssetClass.FIXED_ASSET && parseFixedAssetType(row.classType()) == null) {
-            errors.add(message("classType", "INVALID_FIXED_ASSET_TYPE", "Loại tài sản cố định phải là TANGIBLE hoặc INTANGIBLE"));
+            errors.add(message("classType", "INVALID_FIXED_ASSET_TYPE", "Loại tài sản cố định phải là Hữu hình hoặc Vô hình"));
         }
         if (assetClass == AssetClass.TOOL_EQUIPMENT && parseToolUsageType(row.classType()) == null) {
             errors.add(message("classType", "INVALID_TOOL_USAGE_TYPE", "Loại công cụ dụng cụ phải là SINGLE_USE hoặc MULTI_USE"));
