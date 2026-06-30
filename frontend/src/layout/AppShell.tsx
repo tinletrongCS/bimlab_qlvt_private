@@ -60,8 +60,9 @@ const NAV_GROUPS: NavGroup[] = [
     children: [
       { to: "/assets", label: "Danh sách", icon: <FiBox />, permission: "asset_access" },
       { to: "/asset-categories", label: "Danh mục", icon: <FiGrid />, permission: "asset_manage" },
-      { to: "/transfers", label: "Luân chuyển", icon: <FiRepeat />, permission: "asset_manage" },
+      { to: "/transfers", label: "Bàn giao", icon: <FiRepeat />, permission: "asset_manage" },
       { to: "/maintenance", label: "Bảo trì", icon: <FiTool />, permission: "maintenance_manage" },
+      { to: "/booking", label: "Đặt lịch", icon: <FiTool />, permission: "asset_manage" },
     ],
   },
   {
