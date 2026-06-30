@@ -7,7 +7,7 @@ import jakarta.validation.constraints.Size;
 import java.time.LocalDateTime;
 
 public record AssetBookingRequest(
-        @NotNull Long assetId,
+        @NotBlank @Size(max = 80) String assetCode,
         @NotBlank @Size(max = 255) String title,
         @Size(max = 1000) String purpose,
         @NotNull LocalDateTime startTime,

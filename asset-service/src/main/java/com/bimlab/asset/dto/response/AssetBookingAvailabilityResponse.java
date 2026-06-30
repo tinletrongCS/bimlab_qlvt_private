@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 
 public record AssetBookingAvailabilityResponse(
         Long assetId,
+        String assetCode,
         LocalDateTime startTime,
         LocalDateTime endTime,
         boolean available,

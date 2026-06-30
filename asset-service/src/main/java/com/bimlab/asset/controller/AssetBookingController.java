@@ -47,11 +47,11 @@ public class AssetBookingController {
     @GetMapping("/availability")
     @PreAuthorize("hasAnyAuthority('asset_access','asset_view_self','asset_view_team','asset_view_all','asset_manage')")
     public AssetBookingAvailabilityResponse availability(
-            @RequestParam Long assetId,
+            @RequestParam String assetCode,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startTime,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endTime
     ) {
-        return service.checkAvailability(assetId, startTime, endTime);
+        return service.checkAvailability(assetCode, startTime, endTime);
     }
 
     @PostMapping

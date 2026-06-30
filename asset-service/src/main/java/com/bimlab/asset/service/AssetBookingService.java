@@ -7,7 +7,9 @@ import com.bimlab.asset.dto.response.AssetBookingAvailabilityResponse;
 import com.bimlab.asset.dto.response.AssetBookingResponse;
 import com.bimlab.asset.mapper.AssetBookingMapper;
 import com.bimlab.asset.model.AssetBookingSession;
+import com.bimlab.asset.model.AssetItem;
 import com.bimlab.asset.model.status.AssetBookingStatus;
+import com.bimlab.asset.model.status.AssetStatus;
 import com.bimlab.asset.repository.AssetBookingSessionRepository;
 import com.bimlab.asset.repository.AssetItemRepository;
 import lombok.RequiredArgsConstructor;
@@ -16,13 +18,20 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 @Service
 @RequiredArgsConstructor
 public class AssetBookingService {
     private static final List<AssetBookingStatus> BLOCKING_STATUSES = List.of(
-            AssetBookingStatus.CONFIRMED,
-            AssetBookingStatus.IN_USE
+            AssetBookingStatus.CONFIRMED,   // sau khi đã đặt phòng thành công nhưng chưa đến giờ
+            AssetBookingStatus.IN_USE       // hiện đang được sử dụng
+    );
+
+    private static final List<AssetStatus> UNAVAILABLE_STATUSES = List.of(
+            AssetStatus.LOST,
+            AssetStatus.MAINTENANCE,
+            AssetStatus.DISPOSED
     );
 
     private final AssetBookingSessionRepository bookings;
@@ -31,46 +40,86 @@ public class AssetBookingService {
 
     @Transactional(readOnly = true)
     public List<AssetBookingResponse> listBookings(Long assetId, String status, LocalDateTime fromTime, LocalDateTime toTime) {
-        // TODO PRACTICE 1:
-        // Liệt kê phiên booking theo bộ lọc.
-        //
-        // Yêu cầu:
-        // - Nếu status != null thì parse sang AssetBookingStatus.
-        // - Dùng bookings.searchBookings(assetId, parsedStatus, fromTime, toTime).
-        // - Map từng AssetBookingSession sang AssetBookingResponse bằng mapper.toResponse(...).
-        // - Nếu status sai enum thì throw IllegalArgumentException với message dễ hiểu.
-        AssetBookingSession bookingSession = new AssetBookingSession();
-        throw new UnsupportedOperationException("TODO: list booking sessions");
+        AssetBookingStatus parsedStatus = null;
+        if (status != null && !status.trim().isEmpty()) {
+            try {
+                parsedStatus = AssetBookingStatus.valueOf(status.toUpperCase());
+            } catch (Exception e) {
+                throw new IllegalArgumentException("Trạng thái không họp lệ" + status.toUpperCase());
+            }
+        }
+
+        List<AssetBookingSession> response = bookings.searchBookings(assetId, parsedStatus, fromTime, toTime);
+        return response.stream()
+                .map(mapper::toResponse)
+                .toList();
     }
 
     @Transactional(readOnly = true)
     public AssetBookingResponse getBooking(Long id) {
-        // TODO PRACTICE 2:
-        // Tìm booking theo id.
-        //
-        // Gợi ý:
-        // - bookings.findById(id).orElseThrow(...)
-        // - return mapper.toResponse(booking)
-        throw new UnsupportedOperationException("TODO: get booking session");
+        AssetBookingSession bookingSession = bookings.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy phiên đặt phòng với mã " + id));
+        return mapper.toResponse(bookingSession);
     }
 
     @Transactional(readOnly = true)
-    public AssetBookingAvailabilityResponse checkAvailability(Long assetId, LocalDateTime startTime, LocalDateTime endTime) {
-        // TODO PRACTICE 3:
-        // Kiểm tra điều kiện trước khi hiển thị màn hình xác nhận đặt phòng.
-        //
-        // Yêu cầu nghiệp vụ:
-        // - Kiểm tra assetId tồn tại bằng assets.existsById(assetId).
-        // - Kiểm tra startTime/endTime không null và endTime > startTime.
-        // - Có thể chặn đặt lịch trong quá khứ nếu muốn.
-        // - Dùng bookings.findOverlappingBookings(assetId, startTime, endTime, BLOCKING_STATUSES).
-        // - Nếu có booking trùng giờ thì trả available = false kèm id/code booking bị trùng.
-        // - Nếu hợp lệ thì trả available = true.
-        //
-        // Lưu ý:
-        // - DB đã có exclusion constraint ở V5 để chống race condition.
-        // - Service vẫn nên check trước để trả lỗi thân thiện cho UI.
-        throw new UnsupportedOperationException("TODO: check booking availability");
+    public AssetBookingAvailabilityResponse checkAvailability(String assetCode, LocalDateTime startTime, LocalDateTime endTime) {
+        if (assetCode == null || assetCode.trim().isEmpty()) {
+            throw new IllegalArgumentException("Thiếu mã phòng họp");
+        }
+        if (startTime == null || endTime == null) {
+            throw new IllegalArgumentException("Thiếu thời gian bắt đầu hoặc kết thúc");
+        }
+        if (endTime.isBefore(startTime) || endTime.isEqual(startTime)) {
+            throw new IllegalArgumentException("Lỗi: Thời gian kết thúc phải sau thời gian bắt đầu");
+        }
+        if (startTime.isBefore(LocalDateTime.now())) {
+            throw new IllegalArgumentException("Lỗi: Không thể đặt lịch trong quá khứ");
+        }
+
+        String normalizedAssetCode = assetCode.trim();
+        AssetItem assetItem = assets.findByAssetCode(normalizedAssetCode)
+                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy phòng họp với mã " + normalizedAssetCode));
+
+        if (UNAVAILABLE_STATUSES.contains(assetItem.getStatus())) {
+            return new AssetBookingAvailabilityResponse(
+                    assetItem.getId(),
+                    assetItem.getAssetCode(),
+                    startTime,
+                    endTime,
+                    false,
+                    "Phòng họp hiện không khả dụng do trạng thái " + assetItem.getStatus(),
+                    null,
+                    null
+            );
+        }
+
+        List<AssetBookingSession> possibleOverlapSessions =
+                bookings.findOverlappingBookings(normalizedAssetCode, startTime, endTime, BLOCKING_STATUSES);
+        if (!possibleOverlapSessions.isEmpty()) {
+            AssetBookingSession conflict = possibleOverlapSessions.get(0);
+            return new AssetBookingAvailabilityResponse(
+                    assetItem.getId(),
+                    assetItem.getAssetCode(),
+                    startTime,
+                    endTime,
+                    false,
+                    "Phòng họp đã có lịch đặt trùng thời gian",
+                    conflict.getId(),
+                    conflict.getBookingCode()
+            );
+        }
+
+        return new AssetBookingAvailabilityResponse(
+                assetItem.getId(),
+                assetItem.getAssetCode(),
+                startTime,
+                endTime,
+                true,
+                null,
+                null,
+                null
+        );
     }
 
     @Transactional

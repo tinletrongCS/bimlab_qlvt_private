@@ -31,14 +31,14 @@ public interface AssetBookingSessionRepository extends JpaRepository<AssetBookin
 
     @Query("""
             select b from AssetBookingSession b
-            where b.asset.id = :assetId
+            where b.asset.assetCode = :assetCode
               and b.status in :statuses
               and b.startTime < :endTime
               and b.endTime > :startTime
             order by b.startTime asc
             """)
     List<AssetBookingSession> findOverlappingBookings(
-            @Param("assetId") Long assetId,
+            @Param("assetCode") String assetCode,
             @Param("startTime") LocalDateTime startTime,
             @Param("endTime") LocalDateTime endTime,
             @Param("statuses") List<AssetBookingStatus> statuses
