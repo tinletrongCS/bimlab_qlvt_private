@@ -2,6 +2,11 @@ import axios from "axios";
 import { getAccessToken } from "../auth/oidc";
 import type {
   AssetItem,
+  AssetBooking,
+  AssetBookingAvailability,
+  AssetBookingCancelPayload,
+  AssetBookingCheckoutPayload,
+  AssetBookingPayload,
   AssetImportCommitPayload,
   AssetImportCommitResponse,
   AssetImportRowPayload,
@@ -315,6 +320,53 @@ export async function createTransfer(payload: AssetTransferPayload): Promise<Ass
 
 export async function deleteTransfer(id: number): Promise<void> {
   await api.delete(`/asset/transfers/${id}`);
+}
+
+export async function loadAssetBookings(params?: {
+  assetId?: number;
+  status?: string;
+  fromTime?: string;
+  toTime?: string;
+}): Promise<AssetBooking[]> {
+  const response = await api.get<AssetBooking[]>("/asset/bookings", { params });
+  return response.data;
+}
+
+export async function checkAssetBookingAvailability(params: {
+  assetCode: string;
+  startTime: string;
+  endTime: string;
+}): Promise<AssetBookingAvailability> {
+  const response = await api.get<AssetBookingAvailability>("/asset/bookings/availability", {
+    params,
+  });
+  return response.data;
+}
+
+export async function createAssetBooking(payload: AssetBookingPayload): Promise<AssetBooking> {
+  const response = await api.post<AssetBooking>("/asset/bookings", payload);
+  return response.data;
+}
+
+export async function checkInAssetBooking(id: number): Promise<AssetBooking> {
+  const response = await api.post<AssetBooking>(`/asset/bookings/${id}/check-in`);
+  return response.data;
+}
+
+export async function checkOutAssetBooking(
+  id: number,
+  payload: AssetBookingCheckoutPayload,
+): Promise<AssetBooking> {
+  const response = await api.post<AssetBooking>(`/asset/bookings/${id}/check-out`, payload);
+  return response.data;
+}
+
+export async function cancelAssetBooking(
+  id: number,
+  payload: AssetBookingCancelPayload,
+): Promise<AssetBooking> {
+  const response = await api.post<AssetBooking>(`/asset/bookings/${id}/cancel`, payload);
+  return response.data;
 }
 
 export async function loadEmployees(): Promise<EmployeeLite[]> {
