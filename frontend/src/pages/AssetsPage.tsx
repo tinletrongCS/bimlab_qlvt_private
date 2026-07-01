@@ -1,4 +1,11 @@
-import { type ChangeEvent, type MouseEvent, useEffect, useMemo, useState } from "react";
+import {
+  type ChangeEvent,
+  type MouseEvent,
+  type ReactNode,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import toast from "react-hot-toast";
 import {
   FiChevronLeft,
@@ -9,7 +16,9 @@ import {
   FiEye,
   FiFileText,
   FiGrid,
+  FiRotateCcw,
   FiSearch,
+  FiSettings,
   FiTrash2,
   FiUpload,
   FiX,
@@ -40,6 +49,35 @@ type AssetStatusFilter = "ALL" | "IN_STOCK" | "ASSIGNED" | "MAINTENANCE" | "DISP
 type AssetValueFilter = "ALL" | "UNDER_10M" | "FROM_10M_TO_50M" | "FROM_50M_TO_200M" | "FROM_200M";
 type ImportMode = AssetImportCommitPayload["importMode"];
 type ImportPreviewFilter = "ALL" | "VALID" | "INVALID" | "WARNING";
+type AssetTableColumnId =
+  | "asset"
+  | "category"
+  | "serialNumber"
+  | "status"
+  | "purchaseCost"
+  | "originalCost"
+  | "bookValue"
+  | "source"
+  | "site"
+  | "department"
+  | "employee"
+  | "vendor"
+  | "project"
+  | "purchaseDate"
+  | "warrantyUntil"
+  | "actions";
+
+interface AssetTableColumnConfig {
+  id: AssetTableColumnId;
+  label: string;
+  locked?: boolean;
+  defaultVisible?: boolean;
+}
+
+interface AssetTableColumnDefinition extends AssetTableColumnConfig {
+  render: (item: AssetItem) => ReactNode;
+  align?: "right" | "center";
+}
 
 const ASSET_VALUE_FILTERS: Array<{
   value: AssetValueFilter;
@@ -53,8 +91,93 @@ const ASSET_VALUE_FILTERS: Array<{
   { value: "FROM_50M_TO_200M", label: "50 - 200 triệu", min: 50_000_000, max: 200_000_000 },
   { value: "FROM_200M", label: "Trên 200 triệu", min: 200_000_000 },
 ];
+const ASSET_TABLE_STORAGE_KEY = "qlvt.assetList.tableColumns.v1";
+const ASSET_TABLE_COLUMNS: AssetTableColumnConfig[] = [
+  { id: "asset", label: "Tài sản", locked: true, defaultVisible: true },
+  { id: "category", label: "Danh mục", locked: true, defaultVisible: true },
+  { id: "serialNumber", label: "Serial/MAC", defaultVisible: false },
+  { id: "status", label: "Trạng thái", locked: true, defaultVisible: true },
+  { id: "purchaseCost", label: "Giá trị mua", defaultVisible: true },
+  { id: "originalCost", label: "Nguyên giá", defaultVisible: false },
+  { id: "bookValue", label: "Giá trị còn lại", defaultVisible: false },
+  { id: "source", label: "Nguồn hình thành", defaultVisible: false },
+  { id: "site", label: "Chi nhánh", defaultVisible: false },
+  { id: "department", label: "Phòng ban", defaultVisible: false },
+  { id: "employee", label: "Người giữ", defaultVisible: false },
+  { id: "vendor", label: "Nhà cung cấp", defaultVisible: false },
+  { id: "project", label: "Dự án", defaultVisible: false },
+  { id: "purchaseDate", label: "Ngày mua", defaultVisible: false },
+  { id: "warrantyUntil", label: "Bảo hành đến", defaultVisible: false },
+  { id: "actions", label: "Thao tác", locked: true, defaultVisible: true },
+];
+const ASSET_TABLE_COLUMN_IDS = ASSET_TABLE_COLUMNS.map((column) => column.id);
+const DEFAULT_ASSET_TABLE_VISIBLE_COLUMNS = ASSET_TABLE_COLUMNS.filter(
+  (column) => column.defaultVisible || column.locked,
+).map((column) => column.id);
 type SheetCell = string | number | boolean | Date | null | undefined;
 type SheetRow = SheetCell[];
+
+function normalizeAssetColumnOrder(order: AssetTableColumnId[]) {
+  const middleColumns = [
+    ...order.filter(
+      (id) =>
+        ASSET_TABLE_COLUMN_IDS.includes(id) &&
+        id !== "asset" &&
+        id !== "category" &&
+        id !== "status" &&
+        id !== "actions",
+    ),
+    ...ASSET_TABLE_COLUMN_IDS.filter(
+      (id) =>
+        !order.includes(id) &&
+        id !== "asset" &&
+        id !== "category" &&
+        id !== "status" &&
+        id !== "actions",
+    ),
+  ];
+  return ["asset", "category", "status", ...middleColumns, "actions"] as AssetTableColumnId[];
+}
+
+function readAssetColumnPreferences() {
+  if (typeof window === "undefined") {
+    return {
+      order: normalizeAssetColumnOrder(ASSET_TABLE_COLUMN_IDS),
+      visible: DEFAULT_ASSET_TABLE_VISIBLE_COLUMNS,
+    };
+  }
+
+  try {
+    const raw = window.localStorage.getItem(ASSET_TABLE_STORAGE_KEY);
+    if (!raw) {
+      return {
+        order: normalizeAssetColumnOrder(ASSET_TABLE_COLUMN_IDS),
+        visible: DEFAULT_ASSET_TABLE_VISIBLE_COLUMNS,
+      };
+    }
+    const parsed = JSON.parse(raw) as Partial<{
+      order: AssetTableColumnId[];
+      visible: AssetTableColumnId[];
+    }>;
+    const knownIds = new Set(ASSET_TABLE_COLUMN_IDS);
+    const order = [
+      ...(parsed.order || []).filter((id): id is AssetTableColumnId => knownIds.has(id)),
+      ...ASSET_TABLE_COLUMN_IDS.filter((id) => !(parsed.order || []).includes(id)),
+    ];
+    const visible = Array.from(
+      new Set([
+        ...(parsed.visible || []).filter((id): id is AssetTableColumnId => knownIds.has(id)),
+        ...ASSET_TABLE_COLUMNS.filter((column) => column.locked).map((column) => column.id),
+      ]),
+    );
+    return { order: normalizeAssetColumnOrder(order), visible };
+  } catch {
+    return {
+      order: normalizeAssetColumnOrder(ASSET_TABLE_COLUMN_IDS),
+      visible: DEFAULT_ASSET_TABLE_VISIBLE_COLUMNS,
+    };
+  }
+}
 
 function statusLabel(status: AssetStatusFilter) {
   const labels: Record<AssetStatusFilter, string> = {
@@ -914,6 +1037,14 @@ export function AssetsPage() {
   const [assetPage, setAssetPage] = useState(1);
   const [assetPageSize, setAssetPageSize] = useState(20);
   const [listRefreshing, setListRefreshing] = useState(false);
+  const [assetColumnOrder, setAssetColumnOrder] = useState<AssetTableColumnId[]>(
+    () => readAssetColumnPreferences().order,
+  );
+  const [visibleAssetColumns, setVisibleAssetColumns] = useState<AssetTableColumnId[]>(
+    () => readAssetColumnPreferences().visible,
+  );
+  const [columnConfigOpen, setColumnConfigOpen] = useState(false);
+  const [draggedAssetColumn, setDraggedAssetColumn] = useState<AssetTableColumnId | null>(null);
   const [selectedAsset, setSelectedAsset] = useState<AssetItem | null>(null);
   const [assetDraft, setAssetDraft] = useState<AssetPayload | null>(null);
   const [assetSaving, setAssetSaving] = useState(false);
@@ -941,6 +1072,16 @@ export function AssetsPage() {
       .then(setCategoryTree)
       .catch(() => setCategoryTree([]));
   }, []);
+
+  useEffect(() => {
+    window.localStorage.setItem(
+      ASSET_TABLE_STORAGE_KEY,
+      JSON.stringify({
+        order: assetColumnOrder,
+        visible: visibleAssetColumns,
+      }),
+    );
+  }, [assetColumnOrder, visibleAssetColumns]);
 
   const canManage = hasPermission("asset_manage");
   const employeeName = (id?: number) =>
@@ -1263,6 +1404,185 @@ export function AssetsPage() {
     }
   };
 
+  const toggleAssetColumn = (id: AssetTableColumnId) => {
+    const column = ASSET_TABLE_COLUMNS.find((item) => item.id === id);
+    if (column?.locked) return;
+    setVisibleAssetColumns((current) =>
+      current.includes(id) ? current.filter((item) => item !== id) : [...current, id],
+    );
+  };
+
+  const resetAssetColumns = () => {
+    setAssetColumnOrder(normalizeAssetColumnOrder(ASSET_TABLE_COLUMN_IDS));
+    setVisibleAssetColumns(DEFAULT_ASSET_TABLE_VISIBLE_COLUMNS);
+  };
+
+  const dropAssetColumn = (targetId: AssetTableColumnId) => {
+    if (!draggedAssetColumn || draggedAssetColumn === targetId) return;
+    const draggedColumn = ASSET_TABLE_COLUMNS.find((item) => item.id === draggedAssetColumn);
+    const targetColumn = ASSET_TABLE_COLUMNS.find((item) => item.id === targetId);
+    if (draggedColumn?.locked || targetColumn?.locked) {
+      setDraggedAssetColumn(null);
+      return;
+    }
+    setAssetColumnOrder((current) => {
+      const withoutDragged = current.filter((id) => id !== draggedAssetColumn);
+      const targetIndex = withoutDragged.indexOf(targetId);
+      if (targetIndex < 0) return current;
+      return normalizeAssetColumnOrder([
+        ...withoutDragged.slice(0, targetIndex),
+        draggedAssetColumn,
+        ...withoutDragged.slice(targetIndex),
+      ]);
+    });
+    setDraggedAssetColumn(null);
+  };
+
+  const assetTableColumns: AssetTableColumnDefinition[] = [
+    {
+      id: "asset",
+      label: "Tài sản",
+      locked: true,
+      render: (item) => (
+        <div className="asset-name-cell">
+          <strong>{highlightSearchText(item.name, query)}</strong>
+          <span>{highlightSearchText(item.assetCode, query)}</span>
+        </div>
+      ),
+    },
+    {
+      id: "category",
+      label: "Danh mục",
+      render: (item) => (
+        <div className="asset-muted-stack">
+          <strong>
+            {highlightSearchText(
+              item.assetCategory?.name || item.category || "Chưa phân loại",
+              query,
+            )}
+          </strong>
+          <span>{highlightSearchText(item.assetCategory?.code || "Chưa có mã danh mục", query)}</span>
+        </div>
+      ),
+    },
+    {
+      id: "serialNumber",
+      label: "Serial/MAC",
+      render: (item) => item.serialNumber || "—",
+    },
+    {
+      id: "status",
+      label: "Trạng thái",
+      render: (item) => <StatusBadge value={item.status} />,
+    },
+    {
+      id: "purchaseCost",
+      label: "Giá trị mua",
+      align: "right",
+      render: (item) => money.format(Number(item.purchaseCost || 0)),
+    },
+    {
+      id: "originalCost",
+      label: "Nguyên giá",
+      align: "right",
+      render: (item) => money.format(Number(item.originalCost || 0)),
+    },
+    {
+      id: "bookValue",
+      label: "Giá trị còn lại",
+      align: "right",
+      render: (item) => money.format(Number(item.bookValue || item.residualValue || 0)),
+    },
+    {
+      id: "source",
+      label: "Nguồn hình thành",
+      render: (item) => item.source || "—",
+    },
+    {
+      id: "site",
+      label: "Chi nhánh",
+      render: (item) => siteName(item.siteId),
+    },
+    {
+      id: "department",
+      label: "Phòng ban",
+      render: (item) => departmentName(item.departmentId),
+    },
+    {
+      id: "employee",
+      label: "Người giữ",
+      render: (item) => employeeName(item.assignedEmployeeId),
+    },
+    {
+      id: "vendor",
+      label: "Nhà cung cấp",
+      render: (item) => item.vendor?.name || "—",
+    },
+    {
+      id: "project",
+      label: "Dự án",
+      render: (item) => projectName(item.projectId),
+    },
+    {
+      id: "purchaseDate",
+      label: "Ngày mua",
+      render: (item) => item.purchaseDate || "—",
+    },
+    {
+      id: "warrantyUntil",
+      label: "Bảo hành đến",
+      render: (item) => item.warrantyUntil || "—",
+    },
+    {
+      id: "actions",
+      label: "Thao tác",
+      locked: true,
+      align: "center",
+      render: (item) => (
+        <div className="asset-row-icon-actions">
+          <button
+            type="button"
+            className="asset-icon-action"
+            title="Xem và chỉnh sửa tài sản"
+            onClick={() => openAssetDetail(item)}
+          >
+            <FiEye />
+          </button>
+          <button
+            type="button"
+            className="asset-icon-action"
+            title="Xem mã QR tài sản"
+            onClick={() => setQrAsset(item)}
+          >
+            <FiGrid />
+          </button>
+          {canManage && (
+            <button
+              type="button"
+              className="asset-icon-action danger"
+              title="Xóa tài sản"
+              onClick={() => void handleDeleteAsset(item)}
+            >
+              <FiTrash2 />
+            </button>
+          )}
+        </div>
+      ),
+    },
+  ];
+  const assetColumnById = new Map(assetTableColumns.map((column) => [column.id, column]));
+  const visibleAssetColumnSet = new Set(visibleAssetColumns);
+  const configuredAssetColumns = assetColumnOrder
+    .map((id) => assetColumnById.get(id))
+    .filter((column): column is AssetTableColumnDefinition => {
+      if (!column) return false;
+      return visibleAssetColumnSet.has(column.id) || Boolean(column.locked);
+    });
+  const columnConfigOrder = [
+    ...assetColumnOrder.filter((id) => ASSET_TABLE_COLUMNS.some((column) => column.id === id && column.locked)),
+    ...assetColumnOrder.filter((id) => ASSET_TABLE_COLUMNS.some((column) => column.id === id && !column.locked)),
+  ];
+
   const closeImport = () => {
     if (importBusy) return;
     setImportOpen(false);
@@ -1564,7 +1884,92 @@ export function AssetsPage() {
                   )}
                 </span>
               </div>
+              <div className="asset-table-tools">
+                <button
+                  type="button"
+                  className="secondary asset-column-config-toggle"
+                  onClick={() => setColumnConfigOpen((open) => !open)}
+                >
+                  <FiSettings /> Cấu hình cột
+                </button>
+              </div>
             </div>
+            {columnConfigOpen && (
+              <>
+                <button
+                  type="button"
+                  className="asset-column-backdrop"
+                  aria-label="Đóng cấu hình cột"
+                  onClick={() => setColumnConfigOpen(false)}
+                />
+                <div
+                  className="asset-column-popover"
+                  role="dialog"
+                  aria-modal="true"
+                  aria-labelledby="asset-column-config-title"
+                >
+                  <div className="asset-column-popover-head">
+                    <div>
+                      <strong id="asset-column-config-title">Cấu hình cột</strong>
+                      <span>
+                        Bật/tắt cột cần xem. Các cột cố định luôn hiển thị trong bảng.
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      className="icon-button"
+                      onClick={() => setColumnConfigOpen(false)}
+                    >
+                      <FiX />
+                    </button>
+                  </div>
+                  <div className="asset-column-list">
+                    {columnConfigOrder.map((id) => {
+                      const column = ASSET_TABLE_COLUMNS.find((item) => item.id === id);
+                      if (!column) return null;
+                      const locked = Boolean(column.locked);
+                      const checked = visibleAssetColumnSet.has(id) || Boolean(column.locked);
+                      return (
+                        <label
+                          key={id}
+                          className={`asset-column-option ${
+                            draggedAssetColumn === id ? "is-dragging" : ""
+                          } ${locked ? "is-locked" : ""}`}
+                          draggable={!locked}
+                          onDragStart={() => {
+                            if (!locked) setDraggedAssetColumn(id);
+                          }}
+                          onDragOver={(event) => event.preventDefault()}
+                          onDrop={() => dropAssetColumn(id)}
+                          onDragEnd={() => setDraggedAssetColumn(null)}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            disabled={locked}
+                            onChange={() => toggleAssetColumn(id)}
+                          />
+                          <span>{column.label}</span>
+                          {locked && <em>Bắt buộc</em>}
+                        </label>
+                      );
+                    })}
+                  </div>
+                  <div className="asset-column-popover-actions">
+                    <button type="button" className="secondary" onClick={resetAssetColumns}>
+                      <FiRotateCcw /> Mặc định
+                    </button>
+                    <button
+                      type="button"
+                      className="primary"
+                      onClick={() => setColumnConfigOpen(false)}
+                    >
+                      Áp dụng
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
 
             {filteredAssets.length === 0 ? (
               <div className="empty-state">Không có tài sản phù hợp bộ lọc.</div>
@@ -1573,72 +1978,39 @@ export function AssetsPage() {
                 <table>
                   <thead>
                     <tr>
-                      <th>Tài sản</th>
-                      <th>Danh mục</th>
-                      <th>Giá trị</th>
-                      <th>Trạng thái</th>
-                      <th>Thao tác</th>
+                      {configuredAssetColumns.map((column) => (
+                        <th
+                          key={column.id}
+                          className={`asset-table-col-${column.id} ${
+                            ["asset", "category", "status"].includes(column.id)
+                              ? `asset-table-sticky-left asset-table-sticky-${column.id}`
+                              : ""
+                          } ${column.id === "actions" ? "asset-table-sticky-right" : ""} ${
+                            column.align ? `align-${column.align}` : ""
+                          }`}
+                        >
+                          {column.label}
+                        </th>
+                      ))}
                     </tr>
                   </thead>
                   <tbody>
                     {pagedAssets.map((item) => (
                       <tr key={item.id}>
-                        <td>
-                          <div className="asset-name-cell">
-                            <strong>{highlightSearchText(item.name, query)}</strong>
-                            <span>{highlightSearchText(item.assetCode, query)}</span>
-                          </div>
-                        </td>
-                        <td>
-                          <div className="asset-muted-stack">
-                            <strong>
-                              {highlightSearchText(
-                                item.assetCategory?.name || item.category || "Chưa phân loại",
-                                query,
-                              )}
-                            </strong>
-                            <span>
-                              {highlightSearchText(
-                                item.assetCategory?.code || "Chưa có mã danh mục",
-                                query,
-                              )}
-                            </span>
-                          </div>
-                        </td>
-                        <td>{money.format(Number(item.purchaseCost || 0))}</td>
-                        <td>
-                          <StatusBadge value={item.status} />
-                        </td>
-                        <td>
-                          <div className="asset-row-icon-actions">
-                            <button
-                              type="button"
-                              className="asset-icon-action"
-                              title="Xem và chỉnh sửa tài sản"
-                              onClick={() => openAssetDetail(item)}
-                            >
-                              <FiEye />
-                            </button>
-                            <button
-                              type="button"
-                              className="asset-icon-action"
-                              title="Xem mã QR tài sản"
-                              onClick={() => setQrAsset(item)}
-                            >
-                              <FiGrid />
-                            </button>
-                            {canManage && (
-                              <button
-                                type="button"
-                                className="asset-icon-action danger"
-                                title="Xóa tài sản"
-                                onClick={() => void handleDeleteAsset(item)}
-                              >
-                                <FiTrash2 />
-                              </button>
-                            )}
-                          </div>
-                        </td>
+                        {configuredAssetColumns.map((column) => (
+                          <td
+                            key={column.id}
+                            className={`asset-table-col-${column.id} ${
+                              ["asset", "category", "status"].includes(column.id)
+                                ? `asset-table-sticky-left asset-table-sticky-${column.id}`
+                                : ""
+                            } ${column.id === "actions" ? "asset-table-sticky-right" : ""} ${
+                              column.align ? `align-${column.align}` : ""
+                            }`}
+                          >
+                            {column.render(item)}
+                          </td>
+                        ))}
                       </tr>
                     ))}
                   </tbody>
