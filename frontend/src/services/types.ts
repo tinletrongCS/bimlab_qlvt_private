@@ -433,6 +433,82 @@ export interface AssetTransferPayload {
   applyToAsset?: boolean;
 }
 
+export type AssetBookingStatus =
+  | "DRAFT"
+  | "PENDING_APPROVAL"
+  | "CONFIRMED"
+  | "IN_USE"
+  | "COMPLETED"
+  | "CANCELLED"
+  | "REJECTED"
+  | "EXPIRED"
+  | string;
+
+export interface AssetBooking {
+  id: number;
+  assetId: number;
+  assetCode?: string;
+  assetName?: string;
+  bookingCode: string;
+  title: string;
+  purpose?: string;
+  startTime: string;
+  endTime: string;
+  requestedByEmployeeId?: number;
+  departmentId?: number;
+  siteId?: number;
+  projectId?: number;
+  status: AssetBookingStatus;
+  autoRelease: boolean;
+  checkedInAt?: string;
+  checkedOutAt?: string;
+  approvedBy?: string;
+  cancelledBy?: string;
+  cancelledAt?: string;
+  cancelReason?: string;
+  notes?: string;
+  createdBy?: string;
+  updatedBy?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface AssetBookingPayload {
+  assetCode: string;
+  title: string;
+  purpose?: string;
+  startTime: string;
+  endTime: string;
+  requestedByEmployeeId?: number | null;
+  departmentId?: number | null;
+  siteId?: number | null;
+  projectId?: number | null;
+  autoRelease?: boolean;
+  notes?: string;
+  createdBy?: string;
+}
+
+export interface AssetBookingAvailability {
+  assetId: number;
+  assetCode: string;
+  startTime: string;
+  endTime: string;
+  available: boolean;
+  reason?: string;
+  conflictingBookingId?: number;
+  conflictingBookingCode?: string;
+}
+
+export interface AssetBookingCancelPayload {
+  cancelledBy: string;
+  cancelReason: string;
+}
+
+export interface AssetBookingCheckoutPayload {
+  completedBy?: string;
+  notes?: string;
+}
+
 export interface UtilizationReport {
   totalAssets: number;
   assignedAssets: number;

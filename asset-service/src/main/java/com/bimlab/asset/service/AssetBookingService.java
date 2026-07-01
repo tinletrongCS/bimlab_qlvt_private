@@ -13,11 +13,17 @@ import com.bimlab.asset.model.status.AssetStatus;
 import com.bimlab.asset.repository.AssetBookingSessionRepository;
 import com.bimlab.asset.repository.AssetItemRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import jakarta.persistence.criteria.Predicate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.NoSuchElementException;
 
 @Service
@@ -34,6 +40,9 @@ public class AssetBookingService {
             AssetStatus.DISPOSED
     );
 
+    private static final DateTimeFormatter BOOKING_CODE_FORMAT =
+            DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
+
     private final AssetBookingSessionRepository bookings;
     private final AssetItemRepository assets;
     private final AssetBookingMapper mapper;
@@ -43,13 +52,34 @@ public class AssetBookingService {
         AssetBookingStatus parsedStatus = null;
         if (status != null && !status.trim().isEmpty()) {
             try {
-                parsedStatus = AssetBookingStatus.valueOf(status.toUpperCase());
+                parsedStatus = AssetBookingStatus.valueOf(status.trim().toUpperCase(Locale.ROOT));
             } catch (Exception e) {
-                throw new IllegalArgumentException("Trạng thái không họp lệ" + status.toUpperCase());
+                throw new IllegalArgumentException("Trạng thái booking không hợp lệ: " + status);
             }
         }
 
-        List<AssetBookingSession> response = bookings.searchBookings(assetId, parsedStatus, fromTime, toTime);
+        AssetBookingStatus finalParsedStatus = parsedStatus;
+        Specification<AssetBookingSession> specification = (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            if (assetId != null) {
+                predicates.add(cb.equal(root.get("asset").get("id"), assetId));
+            }
+            if (finalParsedStatus != null) {
+                predicates.add(cb.equal(root.get("status"), finalParsedStatus));
+            }
+            if (fromTime != null) {
+                predicates.add(cb.greaterThanOrEqualTo(root.get("endTime"), fromTime));
+            }
+            if (toTime != null) {
+                predicates.add(cb.lessThanOrEqualTo(root.get("startTime"), toTime));
+            }
+            return cb.and(predicates.toArray(Predicate[]::new));
+        };
+
+        List<AssetBookingSession> response = bookings.findAll(
+                specification,
+                Sort.by(Sort.Direction.DESC, "startTime")
+        );
         return response.stream()
                 .map(mapper::toResponse)
                 .toList();
@@ -64,22 +94,8 @@ public class AssetBookingService {
 
     @Transactional(readOnly = true)
     public AssetBookingAvailabilityResponse checkAvailability(String assetCode, LocalDateTime startTime, LocalDateTime endTime) {
-        if (assetCode == null || assetCode.trim().isEmpty()) {
-            throw new IllegalArgumentException("Thiếu mã phòng họp");
-        }
-        if (startTime == null || endTime == null) {
-            throw new IllegalArgumentException("Thiếu thời gian bắt đầu hoặc kết thúc");
-        }
-        if (endTime.isBefore(startTime) || endTime.isEqual(startTime)) {
-            throw new IllegalArgumentException("Lỗi: Thời gian kết thúc phải sau thời gian bắt đầu");
-        }
-        if (startTime.isBefore(LocalDateTime.now())) {
-            throw new IllegalArgumentException("Lỗi: Không thể đặt lịch trong quá khứ");
-        }
-
-        String normalizedAssetCode = assetCode.trim();
-        AssetItem assetItem = assets.findByAssetCode(normalizedAssetCode)
-                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy phòng họp với mã " + normalizedAssetCode));
+        AssetItem assetItem = findBookableAsset(assetCode);
+        validateBookingTime(startTime, endTime);
 
         if (UNAVAILABLE_STATUSES.contains(assetItem.getStatus())) {
             return new AssetBookingAvailabilityResponse(
@@ -94,10 +110,8 @@ public class AssetBookingService {
             );
         }
 
-        List<AssetBookingSession> possibleOverlapSessions =
-                bookings.findOverlappingBookings(normalizedAssetCode, startTime, endTime, BLOCKING_STATUSES);
-        if (!possibleOverlapSessions.isEmpty()) {
-            AssetBookingSession conflict = possibleOverlapSessions.get(0);
+        AssetBookingSession conflict = findFirstConflict(assetItem.getAssetCode(), startTime, endTime);
+        if (conflict != null) {
             return new AssetBookingAvailabilityResponse(
                     assetItem.getId(),
                     assetItem.getAssetCode(),
@@ -124,23 +138,36 @@ public class AssetBookingService {
 
     @Transactional
     public AssetBookingResponse createBooking(AssetBookingRequest req) {
-        // TODO PRACTICE 4:
-        // Tạo phiên booking phòng họp sau khi người dùng bấm xác nhận.
-        //
-        // Flow theo sơ đồ:
-        // 1. Tìm AssetItem theo req.assetId(), nếu không có thì throw NoSuchElementException.
-        // 2. Validate thời gian: endTime phải lớn hơn startTime.
-        // 3. Kiểm tra trùng lịch bằng findOverlappingBookings(..., BLOCKING_STATUSES).
-        // 4. Sinh bookingCode, ví dụ BK-yyyyMMdd-HHmmss-{assetId}; sau này có thể đổi sang sequence.
-        // 5. Tạo AssetBookingSession với status CONFIRMED.
-        // 6. Set title, purpose, requestedByEmployeeId, departmentId, siteId, projectId, autoRelease, notes, createdBy.
-        // 7. Save bằng bookings.save(...).
-        // 8. Return mapper.toResponse(saved).
-        //
-        // Gợi ý thêm:
-        // - Nếu asset không phải phòng họp/bookable asset thì nên chặn ở đây.
-        // - Khi DB ném lỗi exclusion constraint do race condition, bắt ở layer handler hoặc để Spring trả lỗi 409 sau này.
-        throw new UnsupportedOperationException("TODO: create booking session");
+        AssetItem assetItem = findBookableAsset(req.assetCode());
+        validateBookingTime(req.startTime(), req.endTime());
+        List<AssetBookingSession> conflicts = bookings.findOverlappingBookings(
+                assetItem.getAssetCode(),
+                req.startTime(),
+                req.endTime(),
+                BLOCKING_STATUSES
+        );
+
+        if (conflicts.size() > 0) {
+            throw new IllegalArgumentException("Phòng họp đã có lịch đặt trùng thời gian");
+        }
+        AssetBookingSession booking = AssetBookingSession.builder()
+                .asset(assetItem)
+                .bookingCode(generateBookingCode(assetItem))
+                .title(req.title())
+                .purpose(req.purpose())
+                .startTime(req.startTime())
+                .endTime(req.endTime())
+                .requestedByEmployeeId(req.requestedByEmployeeId())
+                .departmentId(req.departmentId())
+                .siteId(req.siteId())
+                .projectId(req.projectId())
+                .status(AssetBookingStatus.CONFIRMED)
+                .autoRelease(req.autoRelease() == null ? Boolean.TRUE : req.autoRelease())
+                .notes(req.notes())
+                .createdBy(req.createdBy())
+                .build();
+
+        return mapper.toResponse(bookings.save(booking));
     }
 
     @Transactional
@@ -201,4 +228,58 @@ public class AssetBookingService {
         // - Nếu autoRelease = false, flow sẽ chờ người phụ trách xác nhận trả phòng.
         throw new UnsupportedOperationException("TODO: auto release due booking sessions");
     }
+
+    private AssetItem findBookableAsset(String assetCode) {
+        if (assetCode == null || assetCode.trim().isEmpty()) {
+            throw new IllegalArgumentException("Thiếu mã phòng họp");
+        }
+
+        String normalizedAssetCode = assetCode.trim();
+
+        AssetItem asset = assets.findByAssetCode(normalizedAssetCode)
+                .orElseThrow(() -> new NoSuchElementException(
+                        "Không tìm thấy phòng họp với mã " + normalizedAssetCode
+                ));
+
+
+        if (UNAVAILABLE_STATUSES.contains(asset.getStatus())) {
+            throw new IllegalArgumentException(
+                    "Phòng họp hiện không khả dụng do trạng thái " + asset.getStatus()
+            );
+        }
+
+        return asset;
+    }
+
+    private void validateBookingTime(LocalDateTime startTime, LocalDateTime endTime) {
+        if (startTime == null || endTime == null) {
+            throw new IllegalArgumentException("Thiếu thời gian bắt đầu hoặc kết thúc");
+        }
+
+        if (!endTime.isAfter(startTime)) {
+            throw new IllegalArgumentException("Thời gian kết thúc phải sau thời gian bắt đầu");
+        }
+
+        if (startTime.isBefore(LocalDateTime.now())) {
+            throw new IllegalArgumentException("Không thể đặt lịch trong quá khứ");
+        }
+    }
+
+    private AssetBookingSession findFirstConflict(
+            String assetCode,
+            LocalDateTime startTime,
+            LocalDateTime endTime
+    ) {
+        return bookings.findOverlappingBookings(
+                assetCode,
+                startTime,
+                endTime,
+                BLOCKING_STATUSES
+        ).stream().findFirst().orElse(null);
+    }
+
+    private String generateBookingCode(AssetItem asset) {
+        return "MEETING-ROOM-" + LocalDateTime.now().format(BOOKING_CODE_FORMAT) + "-" + asset.getAssetCode();
+    }
 }
+

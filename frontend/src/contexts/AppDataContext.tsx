@@ -81,6 +81,7 @@ interface AppDataContextValue {
   ensureMaintenance: () => Promise<void>;
   ensureTransfers: () => Promise<void>;
   ensureLookups: () => Promise<void>;
+  ensureAssetDetailLookups: () => Promise<void>;
   clearError: () => void;
   setError: (message: string) => void;
 }
@@ -134,15 +135,17 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     setErrorState("");
   }, [user]);
 
-  const loadKeys = useCallback(async (keys: DataKey[], force = false) => {
+  const loadKeys = useCallback(async (keys: DataKey[], force = false, silent = false) => {
     const uniqueKeys = Array.from(new Set(keys));
     const pendingKeys = force
       ? uniqueKeys
       : uniqueKeys.filter((key) => !loadedRef.current.has(key));
     if (pendingKeys.length === 0) return;
 
-    setLoading(true);
-    setErrorState("");
+    if (!silent) {
+      setLoading(true);
+      setErrorState("");
+    }
     try {
       await Promise.all(
         pendingKeys.map(async (key) => {
@@ -164,12 +167,17 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         }),
       );
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, []);
 
   const ensureLookups = useCallback(
     () => loadKeys(["vendors", "employees", "departments", "workSites", "projects"]),
+    [loadKeys],
+  );
+
+  const ensureAssetDetailLookups = useCallback(
+    () => loadKeys(["employees", "departments", "workSites", "projects"], false, true),
     [loadKeys],
   );
 
@@ -181,7 +189,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   const ensureAssets = useCallback(
     (force = false) =>
       loadKeys(
-        force ? ["assets"] : ["assets", "employees", "departments", "workSites", "projects"],
+        force ? ["assets"] : ["assets", "employees", "departments", "workSites"],
         force,
       ),
     [loadKeys],
@@ -239,6 +247,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       ensureMaintenance,
       ensureTransfers,
       ensureLookups,
+      ensureAssetDetailLookups,
       clearError,
       setError,
     }),
@@ -268,6 +277,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       ensureMaintenance,
       ensureTransfers,
       ensureLookups,
+      ensureAssetDetailLookups,
       clearError,
       setError,
     ],

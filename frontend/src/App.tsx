@@ -6,6 +6,7 @@ import { AuthProvider } from "./contexts/AuthContext";
 import { AppShell } from "./layout/AppShell";
 import { AssetsPage } from "./pages/AssetsPage";
 import { AssetCategoriesPage } from "./pages/AssetCategoriesPage";
+import { BookingPage } from "./pages/BookingPage";
 import { ContractsPage } from "./pages/ContractsPage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { LoginPage } from "./pages/LoginPage";
@@ -98,6 +99,14 @@ function App() {
                   element={
                     <ProtectedRoute permission="maintenance_manage">
                       <MaintenancePage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/booking"
+                  element={
+                    <ProtectedRoute permission="asset_manage">
+                      <BookingPage />
                     </ProtectedRoute>
                   }
                 />
