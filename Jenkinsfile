@@ -185,6 +185,47 @@ BUILD_NUMBER=${env.BUILD_NUMBER ?: ''}
       }
     }
 
+    stage('Smoke: run + healthcheck') {
+      steps {
+        sh '''
+          set -eu
+          IMAGE="bimlab-ci/bimlab-asset-service:$IMAGE_TAG"
+          SUF="$IMAGE_TAG"
+          NET="smoke-qlvt-$SUF"; PG="smoke-pg-$SUF"; MINIO="smoke-minio-$SUF"; APP="smoke-app-$SUF"
+          CURL="curlimages/curl:latest"
+          cleanup() { docker rm -f "$APP" "$MINIO" "$PG" >/dev/null 2>&1 || true; docker network rm "$NET" >/dev/null 2>&1 || true; }
+          trap cleanup EXIT
+          cleanup
+          docker network create "$NET" >/dev/null
+          echo "[smoke] start postgres + minio"
+          docker run -d --name "$PG" --network "$NET" -e POSTGRES_DB=bimlab -e POSTGRES_USER=smoke -e POSTGRES_PASSWORD=smokepass postgres:16-alpine >/dev/null
+          docker run -d --name "$MINIO" --network "$NET" -e MINIO_ROOT_USER=smokeminio -e MINIO_ROOT_PASSWORD=smokeminiopass minio/minio server /data >/dev/null
+          echo "[smoke] wait postgres"; for i in $(seq 1 30); do docker exec "$PG" pg_isready -U smoke -d bimlab >/dev/null 2>&1 && break; sleep 2; done
+          echo "[smoke] wait minio"; for i in $(seq 1 30); do docker run --rm --network "$NET" "$CURL" -sf "http://$MINIO:9000/minio/health/live" >/dev/null 2>&1 && break; sleep 2; done
+          echo "[smoke] start asset-service"
+          docker run -d --name "$APP" --network "$NET" \
+            -e SPRING_DATASOURCE_URL="jdbc:postgresql://$PG:5432/bimlab?currentSchema=asset" \
+            -e SPRING_DATASOURCE_USERNAME=smoke -e SPRING_DATASOURCE_PASSWORD=smokepass \
+            -e AUTH_KEYCLOAK_ISSUER=http://kc.smoke.local/realms/bimlab \
+            -e AUTH_KEYCLOAK_JWK_SET_URI=http://kc.smoke.local/realms/bimlab/protocol/openid-connect/certs \
+            -e MINIO_ENDPOINT="http://$MINIO:9000" -e MINIO_ACCESS_KEY=smokeminio -e MINIO_SECRET_KEY=smokeminiopass \
+            -e INTERNAL_API_KEY=smoke \
+            "$IMAGE" >/dev/null
+          echo "[smoke] poll /actuator/health"
+          ok=false
+          for i in $(seq 1 40); do
+            body=$(docker run --rm --network "$NET" "$CURL" -sf "http://$APP:8086/actuator/health" 2>/dev/null || true)
+            case "$body" in *'"status":"UP"'*) ok=true; break;; esac
+            running=$(docker inspect -f '{{.State.Running}}' "$APP" 2>/dev/null || echo false)
+            if [ "$running" != "true" ]; then echo "[smoke] app thoat som:"; docker logs --tail 60 "$APP"; exit 1; fi
+            sleep 3
+          done
+          [ "$ok" = "true" ] || { echo "[smoke] FAILED: health khong UP"; docker logs --tail 80 "$APP"; exit 1; }
+          echo "[smoke] OK - asset-service /actuator/health = UP (DB migrate + MinIO wiring on)"
+        '''
+      }
+    }
+
     stage('Push images (armed)') {
       when {
         expression {
