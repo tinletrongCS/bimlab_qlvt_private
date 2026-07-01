@@ -45,6 +45,36 @@ pipeline {
   }
 
   stages {
+    stage('Validate branch policy') {
+      steps {
+        script {
+          // Chốt phòng thủ lớp 2 (SCM regex đã lọc ^(test|production)$): chỉ 2 nhánh này chạy pipeline.
+          if (!(env.BRANCH_NAME in ['test', 'production'])) {
+            error("Nhánh '${env.BRANCH_NAME}' không được phép chạy pipeline (chỉ test/production).")
+          }
+          // Production BẮT BUỘC do SCM event/scan — chặn Build Now/Replay thủ công (tránh deploy nhầm tay).
+          if (env.BRANCH_NAME == 'production') {
+            def scmDriven = !currentBuild.getBuildCauses('jenkins.branch.BranchEventCause').isEmpty() ||
+                            !currentBuild.getBuildCauses('jenkins.branch.BranchIndexingCause').isEmpty() ||
+                            !currentBuild.getBuildCauses('hudson.triggers.SCMTrigger$SCMTriggerCause').isEmpty()
+            if (!scmDriven) {
+              error('Build production phải đến từ SCM branch event, không phải Build Now/Replay.')
+            }
+          }
+          // DEPLOY_TARGET (nếu chọn) phải khớp nhánh — chặn deploy chéo nhánh.
+          def target = params.DEPLOY_TARGET ?: 'none'
+          if (target != 'none' && target != env.BRANCH_NAME) {
+            error("DEPLOY_TARGET='${target}' phải khớp BRANCH_NAME='${env.BRANCH_NAME}'.")
+          }
+          // Chỉ test được publish image; production tiêu thụ tag đã publish từ test.
+          if (params.PUSH_IMAGES && env.BRANCH_NAME != 'test') {
+            error('Chỉ nhánh test được publish image (PUSH_IMAGES).')
+          }
+          echo "Branch policy OK: branch=${env.BRANCH_NAME}, deploy=${target}."
+        }
+      }
+    }
+
     stage('Prepare metadata') {
       steps {
         sh 'mkdir -p ci-artifacts .jenkins-cache/m2'
