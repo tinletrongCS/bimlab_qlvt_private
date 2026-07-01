@@ -1,5 +1,6 @@
 import { useEffect, useMemo } from "react";
 import {
+  FiAlertTriangle,
   FiArchive,
   FiBox,
   FiBriefcase,
@@ -16,10 +17,92 @@ import { Operation } from "../components/Operation";
 import { StatCard } from "../components/StatCard";
 import { useAppData } from "../contexts/AppDataContext";
 import { money } from "../lib/format";
+import type { AssetItem } from "../services/types";
+
+interface ChartDatum {
+  label: string;
+  value: number;
+}
+
+const STATUS_LABELS: Record<string, string> = {
+  IN_STOCK: "Trong kho",
+  ASSIGNED: "Đã cấp phát",
+  MAINTENANCE: "Đang bảo trì",
+  LOST: "Hỏng / mất",
+  DISPOSED: "Thanh lý",
+  PENDING: "Chờ xử lý",
+};
+
+const STATUS_ORDER = ["IN_STOCK", "ASSIGNED", "MAINTENANCE", "LOST", "DISPOSED"];
+
+function countBy<T>(items: T[], getLabel: (item: T) => string): ChartDatum[] {
+  const countMap = new Map<string, number>();
+  items.forEach((item) => {
+    const label = getLabel(item).trim() || "Chưa phân loại";
+    countMap.set(label, (countMap.get(label) || 0) + 1);
+  });
+  return Array.from(countMap.entries())
+    .map(([label, value]) => ({ label, value }))
+    .sort((a, b) => b.value - a.value || a.label.localeCompare(b.label, "vi"));
+}
+
+function topWithOther(data: ChartDatum[], limit = 6): ChartDatum[] {
+  if (data.length <= limit) return data;
+  const visible = data.slice(0, limit - 1);
+  const other = data.slice(limit - 1).reduce((sum, item) => sum + item.value, 0);
+  return [...visible, { label: "Khác", value: other }];
+}
+
+function assetCategoryLabel(asset: AssetItem): string {
+  return asset.assetCategory?.name || asset.category || asset.fixedAssetType || "Chưa phân loại";
+}
+
+function MiniBarChart({ title, caption, data }: { title: string; caption: string; data: ChartDatum[] }) {
+  const total = data.reduce((sum, item) => sum + item.value, 0);
+  const maxValue = Math.max(...data.map((item) => item.value), 1);
+
+  return (
+    <article className="dashboard-chart-card">
+      <div className="dashboard-chart-heading">
+        <div>
+          <h3>{title}</h3>
+          <p>{caption}</p>
+        </div>
+        <strong>{total}</strong>
+      </div>
+      <div className="dashboard-bar-list">
+        {data.length === 0 ? (
+          <div className="dashboard-empty-chart">Chưa có dữ liệu</div>
+        ) : (
+          data.map((item) => (
+            <div className="dashboard-bar-row" key={item.label}>
+              <div className="dashboard-bar-label">
+                <span>{item.label}</span>
+                <strong>{item.value}</strong>
+              </div>
+              <div className="dashboard-bar-track" aria-hidden="true">
+                <span style={{ width: `${Math.max((item.value / maxValue) * 100, 4)}%` }} />
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+    </article>
+  );
+}
 
 export function DashboardPage() {
-  const { summary, assets, subscriptions, vendors, requests, utilization, ensureDashboard } =
-    useAppData();
+  const {
+    summary,
+    assets,
+    subscriptions,
+    vendors,
+    requests,
+    utilization,
+    departments,
+    workSites,
+    ensureDashboard,
+  } = useAppData();
 
   useEffect(() => {
     void ensureDashboard();
@@ -48,9 +131,57 @@ export function DashboardPage() {
   const assignedAssets = assets.filter((asset) => asset.status === "ASSIGNED").length;
   const inStockAssets = assets.filter((asset) => asset.status === "IN_STOCK").length;
   const maintenanceAssets = assets.filter((asset) => asset.status === "MAINTENANCE").length;
+  const lostAssets = assets.filter((asset) => asset.status === "LOST").length;
+  const disposedAssets = assets.filter((asset) => asset.status === "DISPOSED").length;
   const subscriptionCost = useMemo(
     () => subscriptions.reduce((sum, item) => sum + Number(item.cost || 0), 0),
     [subscriptions],
+  );
+  const statusDistribution = useMemo(() => {
+    const countMap = new Map<string, number>();
+    assets.forEach((asset) => countMap.set(asset.status, (countMap.get(asset.status) || 0) + 1));
+
+    const ordered = STATUS_ORDER.map((status) => ({
+      label: STATUS_LABELS[status] || status,
+      value: countMap.get(status) || 0,
+    }));
+    const other = Array.from(countMap.entries())
+      .filter(([status]) => !STATUS_ORDER.includes(status))
+      .map(([status, value]) => ({ label: STATUS_LABELS[status] || status, value }));
+
+    return [...ordered, ...other].filter((item) => item.value > 0);
+  }, [assets]);
+  const departmentNameById = useMemo(
+    () => new Map(departments.map((department) => [department.id, department.name])),
+    [departments],
+  );
+  const workSiteNameById = useMemo(
+    () => new Map(workSites.map((site) => [site.id, site.name])),
+    [workSites],
+  );
+  const categoryDistribution = useMemo(
+    () => topWithOther(countBy(assets, assetCategoryLabel)),
+    [assets],
+  );
+  const siteDistribution = useMemo(
+    () =>
+      topWithOther(
+        countBy(assets, (asset) =>
+          asset.siteId ? workSiteNameById.get(asset.siteId) || `Chi nhánh #${asset.siteId}` : "Chưa gán chi nhánh",
+        ),
+      ),
+    [assets, workSiteNameById],
+  );
+  const departmentDistribution = useMemo(
+    () =>
+      topWithOther(
+        countBy(assets, (asset) =>
+          asset.departmentId
+            ? departmentNameById.get(asset.departmentId) || `Phòng ban #${asset.departmentId}`
+            : "Chưa gán phòng ban",
+        ),
+      ),
+    [assets, departmentNameById],
   );
 
   return (
@@ -107,12 +238,44 @@ export function DashboardPage() {
           tone="orange"
         />
       </div>
-      <div className="stats-grid">
+      <div className="stats-grid asset-status-grid">
         <StatCard label="Tổng tài sản" value={assets.length} icon={<FiBox />} tone="blue" />
         <StatCard label="Đã cấp phát" value={assignedAssets} icon={<FiUserCheck />} tone="green" />
         <StatCard label="Trong kho" value={inStockAssets} icon={<FiArchive />} tone="orange" />
         <StatCard label="Bảo trì" value={maintenanceAssets} icon={<FiTool />} tone="violet" />
+        <StatCard label="Hỏng / mất" value={lostAssets} icon={<FiAlertTriangle />} tone="red" />
+        <StatCard label="Thanh lý" value={disposedAssets} icon={<FiTrash2 />} tone="slate" />
       </div>
+      <section className="panel dashboard-analytics-panel">
+        <div className="panel-title">
+          <div>
+            <h2>Tình trạng và phân bổ tài sản</h2>
+            <p>Thống kê nhanh theo trạng thái, danh mục, chi nhánh và phòng ban.</p>
+          </div>
+        </div>
+        <div className="dashboard-chart-grid">
+          <MiniBarChart
+            title="Theo trạng thái"
+            caption="Tỷ trọng vận hành hiện tại"
+            data={statusDistribution}
+          />
+          <MiniBarChart
+            title="Theo danh mục"
+            caption="Top nhóm tài sản đang quản lý"
+            data={categoryDistribution}
+          />
+          <MiniBarChart
+            title="Theo chi nhánh"
+            caption="Phân bổ theo nơi sử dụng"
+            data={siteDistribution}
+          />
+          <MiniBarChart
+            title="Theo phòng ban"
+            caption="Phân bổ theo đơn vị sử dụng"
+            data={departmentDistribution}
+          />
+        </div>
+      </section>
       <section className="panel overview-panel">
         <div className="panel-title">
           <div>

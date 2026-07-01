@@ -1546,10 +1546,22 @@ export function AssetsPage() {
               <div>
                 <strong>{filteredAssets.length} tài sản</strong>
                 <span>
-                  Tổng giá trị của tài sản đang hiển thị: {money.format(filteredValue)}
-                  {filteredAssets.length !== assets.length
-                    ? ` / ${money.format(totalValue)} toàn bộ`
-                    : ""}
+                  Tổng giá trị của tài sản đang hiển thị:{" "}
+                  <span style={{ color: "#007bff", fontWeight: "600" }}>
+                    {money.format(filteredValue)}
+                  </span>
+                  {filteredAssets.length !== assets.length ? (
+                    <>
+                      {" "}
+                      /{" "}
+                      <span style={{ color: "#007bff", fontWeight: "600" }}>
+                        {money.format(totalValue)}
+                      </span>{" "}
+                      toàn bộ
+                    </>
+                  ) : (
+                    ""
+                  )}
                 </span>
               </div>
             </div>
