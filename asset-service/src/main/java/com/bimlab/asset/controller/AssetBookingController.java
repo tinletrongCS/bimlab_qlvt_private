@@ -5,6 +5,7 @@ import com.bimlab.asset.dto.request.AssetBookingCheckoutRequest;
 import com.bimlab.asset.dto.request.AssetBookingRequest;
 import com.bimlab.asset.dto.response.AssetBookingAvailabilityResponse;
 import com.bimlab.asset.dto.response.AssetBookingResponse;
+import com.bimlab.asset.security.AssetAccessService;
 import com.bimlab.asset.service.AssetBookingService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +27,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class AssetBookingController {
     private final AssetBookingService service;
+    private final AssetAccessService access;
 
     @GetMapping
     @PreAuthorize("hasAnyAuthority('asset_access','asset_view_self','asset_view_team','asset_view_all','asset_manage')")
@@ -57,25 +59,26 @@ public class AssetBookingController {
     @PostMapping
     @PreAuthorize("hasAnyAuthority('asset_access','asset_manage')")
     public AssetBookingResponse create(@Valid @RequestBody AssetBookingRequest req) {
-        return service.createBooking(req);
+        // Danh tính người đặt do server đóng dấu từ JWT (chống mạo danh), KHÔNG lấy từ body.
+        return service.createBooking(req, access.getCurrentEmployeeId(), access.getCurrentUsername());
     }
 
     @PostMapping("/{id}/check-in")
     @PreAuthorize("hasAnyAuthority('asset_access','asset_manage')")
     public AssetBookingResponse checkIn(@PathVariable Long id) {
-        return service.checkIn(id);
+        return service.checkIn(id, access.getCurrentEmployeeId(), access.getCurrentUsername());
     }
 
     @PostMapping("/{id}/check-out")
     @PreAuthorize("hasAnyAuthority('asset_access','asset_manage')")
     public AssetBookingResponse checkOut(@PathVariable Long id, @Valid @RequestBody AssetBookingCheckoutRequest req) {
-        return service.checkOut(id, req);
+        return service.checkOut(id, req, access.getCurrentEmployeeId(), access.getCurrentUsername());
     }
 
     @PostMapping("/{id}/cancel")
     @PreAuthorize("hasAnyAuthority('asset_access','asset_manage')")
     public AssetBookingResponse cancel(@PathVariable Long id, @Valid @RequestBody AssetBookingCancelRequest req) {
-        return service.cancel(id, req);
+        return service.cancel(id, req, access.getCurrentEmployeeId(), access.getCurrentUsername());
     }
 
     @PostMapping("/auto-release-due")

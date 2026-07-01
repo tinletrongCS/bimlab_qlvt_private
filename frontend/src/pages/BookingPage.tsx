@@ -412,12 +412,10 @@ export function BookingPage() {
             <label>
               Người phụ trách
               <input
-                inputMode="numeric"
-                value={form.requestedByEmployeeId}
-                onChange={(event) =>
-                  setForm((prev) => ({ ...prev, requestedByEmployeeId: event.target.value }))
-                }
-                placeholder="ID nhân viên"
+                value={user?.username || "Tài khoản hiện tại"}
+                readOnly
+                disabled
+                title="Hệ thống tự ghi nhận người đặt theo tài khoản đăng nhập"
               />
             </label>
 
