@@ -73,9 +73,10 @@ BUILD_NUMBER=${env.BUILD_NUMBER ?: ''}
             mkdir -p reports
             docker run --rm \
               --user "$(id -u):$(id -g)" \
-              -v "$PWD":/app \
-              -w /app \
+              --volumes-from "$HOSTNAME" \
+              -w "$PWD" \
               -e CI=true \
+              -e WORKSPACE="$WORKSPACE" \
               -e RUN_SECURITY_AUDIT="$RUN_SECURITY_AUDIT" \
               -e HOME=/tmp \
               -e NPM_CONFIG_CACHE=/tmp/npm \
@@ -109,10 +110,9 @@ BUILD_NUMBER=${env.BUILD_NUMBER ?: ''}
             --user "$(id -u):$(id -g)" \
             -e HOME=/tmp \
             -e MAVEN_CONFIG=/tmp/.m2 \
-            -v "$PWD/asset-service":/app \
-            -v "$PWD/.jenkins-cache/m2":/m2 \
-            -w /app \
-            "$MAVEN_IMAGE" mvn -Dmaven.repo.local=/m2/repository -ntp -B verify
+            --volumes-from "$HOSTNAME" \
+            -w "$PWD/asset-service" \
+            "$MAVEN_IMAGE" mvn -Dmaven.repo.local="$PWD/.jenkins-cache/m2/repository" -ntp -B verify
         '''
       }
     }
