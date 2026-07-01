@@ -3,6 +3,7 @@ import { ProtectedRoute } from "./auth/ProtectedRoute";
 import { ActionsProvider } from "./contexts/ActionsContext";
 import { AppDataProvider } from "./contexts/AppDataContext";
 import { AuthProvider } from "./contexts/AuthContext";
+import "./enhancers/assetBulkActions";
 import { AppShell } from "./layout/AppShell";
 import { AssetsPage } from "./pages/AssetsPage";
 import { AssetCategoriesPage } from "./pages/AssetCategoriesPage";
@@ -15,6 +16,7 @@ import { PurchaseRequestsPage } from "./pages/PurchaseRequestsPage";
 import { SubscriptionsPage } from "./pages/SubscriptionsPage";
 import { TransfersPage } from "./pages/TransfersPage";
 import { VendorsPage } from "./pages/VendorsPage";
+import "./styles/asset-bulk-actions.css";
 
 /**
  * Q6: thin router shell. State lives in AuthProvider + AppDataProvider +
