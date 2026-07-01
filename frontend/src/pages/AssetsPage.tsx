@@ -1,7 +1,10 @@
 import { type ChangeEvent, type MouseEvent, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import {
+  FiChevronLeft,
   FiChevronRight,
+  FiChevronsLeft,
+  FiChevronsRight,
   FiDownload,
   FiEye,
   FiFileText,
@@ -197,6 +200,14 @@ function dateTimeLabel(value?: string) {
   return date.toLocaleString("vi-VN");
 }
 
+function dateKey(value?: string) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (!Number.isNaN(date.getTime())) return date.toISOString().slice(0, 10);
+  const normalized = value.trim();
+  return normalized.length >= 10 ? normalized.slice(0, 10) : normalized;
+}
+
 function assetCategoryTokens(asset: AssetItem): Set<string> {
   return new Set(
     [
@@ -336,6 +347,75 @@ function AssetCategoryFilterNode({
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+function AssetListPagination({
+  page,
+  pageSize,
+  total,
+  onPageChange,
+  onPageSizeChange,
+}: {
+  page: number;
+  pageSize: number;
+  total: number;
+  onPageChange: (page: number) => void;
+  onPageSizeChange: (pageSize: number) => void;
+}) {
+  const pageCount = Math.max(1, Math.ceil(total / pageSize));
+  const safePage = Math.min(page, pageCount);
+  const start = total === 0 ? 0 : (safePage - 1) * pageSize + 1;
+  const end = Math.min(safePage * pageSize, total);
+
+  if (total === 0) return null;
+
+  return (
+    <div className="table-pagination asset-list-pagination">
+      <div className="table-pagination-summary">
+        Hiển thị <strong>{start}-{end}</strong> / <strong>{total}</strong> tài sản
+      </div>
+      <div className="table-pagination-controls">
+        <select
+          value={pageSize}
+          onChange={(event) => onPageSizeChange(Number(event.target.value))}
+          aria-label="Số dòng mỗi trang"
+        >
+          {[10, 20, 50, 100].map((option) => (
+            <option key={option} value={option}>
+              {option}/trang
+            </option>
+          ))}
+        </select>
+        <button type="button" onClick={() => onPageChange(1)} disabled={safePage <= 1}>
+          <FiChevronsLeft />
+        </button>
+        <button
+          type="button"
+          onClick={() => onPageChange(Math.max(1, safePage - 1))}
+          disabled={safePage <= 1}
+        >
+          <FiChevronLeft />
+        </button>
+        <span>
+          {safePage} / {pageCount}
+        </span>
+        <button
+          type="button"
+          onClick={() => onPageChange(Math.min(pageCount, safePage + 1))}
+          disabled={safePage >= pageCount}
+        >
+          <FiChevronRight />
+        </button>
+        <button
+          type="button"
+          onClick={() => onPageChange(pageCount)}
+          disabled={safePage >= pageCount}
+        >
+          <FiChevronsRight />
+        </button>
+      </div>
     </div>
   );
 }
@@ -807,7 +887,15 @@ async function downloadAssetImportTemplate() {
 
 export function AssetsPage() {
   const { hasPermission } = useAuth();
-  const { assets, employees, departments, workSites, projects, ensureAssets } = useAppData();
+  const {
+    assets,
+    employees,
+    departments,
+    workSites,
+    projects,
+    ensureAssets,
+    ensureAssetDetailLookups,
+  } = useAppData();
   const { openModal } = useActions();
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<AssetStatusFilter>("ALL");
@@ -817,7 +905,14 @@ export function AssetsPage() {
   );
   const [categoryTree, setCategoryTree] = useState<AssetCategoryTree[]>([]);
   const [siteFilter, setSiteFilter] = useState("ALL");
+  const [departmentFilter, setDepartmentFilter] = useState("ALL");
+  const [employeeFilter, setEmployeeFilter] = useState("ALL");
+  const [sourceFilter, setSourceFilter] = useState("ALL");
+  const [useDateFrom, setUseDateFrom] = useState("");
+  const [useDateTo, setUseDateTo] = useState("");
   const [valueFilter, setValueFilter] = useState<AssetValueFilter>("ALL");
+  const [assetPage, setAssetPage] = useState(1);
+  const [assetPageSize, setAssetPageSize] = useState(20);
   const [listRefreshing, setListRefreshing] = useState(false);
   const [selectedAsset, setSelectedAsset] = useState<AssetItem | null>(null);
   const [assetDraft, setAssetDraft] = useState<AssetPayload | null>(null);
@@ -892,7 +987,13 @@ export function AssetsPage() {
     setExpandedAssetCategoryIds(new Set());
     setStatusFilter("ALL");
     setSiteFilter("ALL");
+    setDepartmentFilter("ALL");
+    setEmployeeFilter("ALL");
+    setSourceFilter("ALL");
+    setUseDateFrom("");
+    setUseDateTo("");
     setValueFilter("ALL");
+    setAssetPage(1);
     setQuery("");
   };
 
@@ -920,6 +1021,53 @@ export function AssetsPage() {
     [assets, workSites],
   );
 
+  const departmentOptions = useMemo(() => {
+    const ids = new Set<number>();
+    assets.forEach((asset) => {
+      if (siteFilter !== "ALL" && asset.siteId !== Number(siteFilter)) return;
+      if (asset.departmentId) ids.add(asset.departmentId);
+    });
+    return Array.from(ids).sort((a, b) => departmentName(a).localeCompare(departmentName(b), "vi"));
+  }, [assets, departments, siteFilter]);
+
+  const employeeOptions = useMemo(() => {
+    const ids = new Set<number>();
+    assets.forEach((asset) => {
+      if (siteFilter !== "ALL" && asset.siteId !== Number(siteFilter)) return;
+      if (departmentFilter !== "ALL" && asset.departmentId !== Number(departmentFilter)) return;
+      if (asset.assignedEmployeeId) ids.add(asset.assignedEmployeeId);
+    });
+    return Array.from(ids).sort((a, b) => employeeName(a).localeCompare(employeeName(b), "vi"));
+  }, [assets, departmentFilter, employees, siteFilter]);
+
+  const sourceOptions = useMemo(
+    () =>
+      Array.from(new Set(assets.map((asset) => asset.source?.trim()).filter(Boolean) as string[]))
+        .sort((a, b) => a.localeCompare(b, "vi")),
+    [assets],
+  );
+
+  useEffect(() => {
+    if (departmentFilter === "ALL") return;
+    if (!departmentOptions.includes(Number(departmentFilter))) {
+      setDepartmentFilter("ALL");
+      setEmployeeFilter("ALL");
+    }
+  }, [departmentFilter, departmentOptions]);
+
+  useEffect(() => {
+    if (employeeFilter === "ALL") return;
+    if (!employeeOptions.includes(Number(employeeFilter))) {
+      setEmployeeFilter("ALL");
+    }
+  }, [employeeFilter, employeeOptions]);
+
+  useEffect(() => {
+    if (useDateFrom && useDateTo && useDateFrom > useDateTo) {
+      setUseDateTo("");
+    }
+  }, [useDateFrom, useDateTo]);
+
   const filteredAssets = useMemo(() => {
     const normalized = query.trim().toLowerCase();
     const valueRange = ASSET_VALUE_FILTERS.find((item) => item.value === valueFilter);
@@ -935,6 +1083,14 @@ export function AssetsPage() {
         (assetCategoryId && selectedCategoryIds?.has(assetCategoryId)) ||
         assetMatchesCategoryNode(asset, selectedCategoryNode, selectedCategoryIds);
       const matchesSite = siteFilter === "ALL" || asset.siteId === Number(siteFilter);
+      const matchesDepartment =
+        departmentFilter === "ALL" || asset.departmentId === Number(departmentFilter);
+      const matchesEmployee =
+        employeeFilter === "ALL" || asset.assignedEmployeeId === Number(employeeFilter);
+      const matchesSource = sourceFilter === "ALL" || asset.source?.trim() === sourceFilter;
+      const assetUseDate = dateKey(asset.useDate);
+      const matchesUseDateFrom = !useDateFrom || (assetUseDate && assetUseDate >= useDateFrom);
+      const matchesUseDateTo = !useDateTo || (assetUseDate && assetUseDate <= useDateTo);
       const cost = Number(asset.purchaseCost || 0);
       const matchesValue =
         valueFilter === "ALL" ||
@@ -952,22 +1108,75 @@ export function AssetsPage() {
         asset.serialNumber,
         asset.vendor?.name,
         employeeName(asset.assignedEmployeeId),
+        departmentName(asset.departmentId),
+        siteName(asset.siteId),
+        projectName(asset.projectId),
       ]
         .filter(Boolean)
         .join(" ")
         .toLowerCase();
       const matchesQuery = !normalized || searchable.includes(normalized);
-      return matchesStatus && matchesCategory && matchesSite && matchesValue && matchesQuery;
+      return (
+        matchesStatus &&
+        matchesCategory &&
+        matchesSite &&
+        matchesDepartment &&
+        matchesEmployee &&
+        matchesSource &&
+        matchesUseDateFrom &&
+        matchesUseDateTo &&
+        matchesValue &&
+        matchesQuery
+      );
     });
   }, [
     assets,
     categoryDescendantIds,
+    departments,
+    employees,
+    projects,
     query,
     selectedCategoryNode,
+    departmentFilter,
+    employeeFilter,
     siteFilter,
+    sourceFilter,
     statusFilter,
+    useDateFrom,
+    useDateTo,
+    valueFilter,
+    workSites,
+  ]);
+
+  useEffect(() => {
+    setAssetPage(1);
+  }, [
+    categoryPath,
+    departmentFilter,
+    employeeFilter,
+    query,
+    siteFilter,
+    sourceFilter,
+    statusFilter,
+    useDateFrom,
+    useDateTo,
     valueFilter,
   ]);
+
+  const assetPageCount = Math.max(1, Math.ceil(filteredAssets.length / assetPageSize));
+  const safeAssetPage = Math.min(assetPage, assetPageCount);
+  const pagedAssets = useMemo(
+    () =>
+      filteredAssets.slice(
+        (safeAssetPage - 1) * assetPageSize,
+        safeAssetPage * assetPageSize,
+      ),
+    [assetPageSize, filteredAssets, safeAssetPage],
+  );
+
+  useEffect(() => {
+    if (assetPage > assetPageCount) setAssetPage(assetPageCount);
+  }, [assetPage, assetPageCount]);
 
   const totalValue = useMemo(
     () => assets.reduce((sum, item) => sum + Number(item.purchaseCost || 0), 0),
@@ -1013,6 +1222,7 @@ export function AssetsPage() {
   const openAssetDetail = (item: AssetItem) => {
     setSelectedAsset(item);
     setAssetDraft(buildAssetPayload(item));
+    void ensureAssetDetailLookups();
   };
 
   const closeAssetDetail = () => {
@@ -1236,6 +1446,48 @@ export function AssetsPage() {
                 placeholder="Tìm theo mã, tên, serial, nhà cung cấp..."
               />
             </label>
+            {/* <select
+              value={siteFilter}
+              onChange={(event) => {
+                setSiteFilter(event.target.value);
+                setDepartmentFilter("ALL");
+                setEmployeeFilter("ALL");
+              }}
+            >
+              <option value="ALL">Tất cả chi nhánh</option>
+              {siteOptions.map((siteId) => (
+                <option key={siteId} value={siteId}>
+                  {siteName(siteId)}
+                </option>
+              ))}
+            </select> */}
+            {/* <select
+              value={departmentFilter}
+              onChange={(event) => {
+                setDepartmentFilter(event.target.value);
+                setEmployeeFilter("ALL");
+              }}
+              disabled={departmentOptions.length === 0}
+            >
+              <option value="ALL">Tất cả phòng ban</option>
+              {departmentOptions.map((departmentId) => (
+                <option key={departmentId} value={departmentId}>
+                  {departmentName(departmentId)}
+                </option>
+              ))}
+            </select> */}
+            {/* <select
+              value={employeeFilter}
+              onChange={(event) => setEmployeeFilter(event.target.value)}
+              disabled={employeeOptions.length === 0}
+            >
+              <option value="ALL">Tất cả nhân sự</option>
+              {employeeOptions.map((employeeId) => (
+                <option key={employeeId} value={employeeId}>
+                  {employeeName(employeeId)}
+                </option>
+              ))}
+            </select> */}
             <select
               value={statusFilter}
               onChange={(event) => setStatusFilter(event.target.value as AssetStatusFilter)}
@@ -1248,14 +1500,6 @@ export function AssetsPage() {
                 ),
               )}
             </select>
-            <select value={siteFilter} onChange={(event) => setSiteFilter(event.target.value)}>
-              <option value="ALL">Tất cả chi nhánh</option>
-              {siteOptions.map((siteId) => (
-                <option key={siteId} value={siteId}>
-                  {siteName(siteId)}
-                </option>
-              ))}
-            </select>
             <select
               value={valueFilter}
               onChange={(event) => setValueFilter(event.target.value as AssetValueFilter)}
@@ -1266,6 +1510,35 @@ export function AssetsPage() {
                 </option>
               ))}
             </select>
+            {/* <select
+              value={sourceFilter}
+              onChange={(event) => setSourceFilter(event.target.value)}
+              disabled={sourceOptions.length === 0}
+            >
+              <option value="ALL">Tất cả nguồn hình thành</option>
+              {sourceOptions.map((source) => (
+                <option key={source} value={source}>
+                  {source}
+                </option>
+              ))}
+            </select> */}
+            <label className="asset-date-filter">
+              <span>Từ ngày sử dụng</span>
+              <input
+                type="date"
+                value={useDateFrom}
+                onChange={(event) => setUseDateFrom(event.target.value)}
+              />
+            </label>
+            <label className="asset-date-filter">
+              <span>Đến ngày sử dụng</span>
+              <input
+                type="date"
+                value={useDateTo}
+                min={useDateFrom || undefined}
+                onChange={(event) => setUseDateTo(event.target.value)}
+              />
+            </label>
           </div>
 
           <div className={`asset-list-panel ${listRefreshing ? "is-refreshing" : ""}`}>
@@ -1296,7 +1569,7 @@ export function AssetsPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredAssets.map((item) => (
+                    {pagedAssets.map((item) => (
                       <tr key={item.id}>
                         <td>
                           <div className="asset-name-cell">
@@ -1360,6 +1633,16 @@ export function AssetsPage() {
                 </table>
               </div>
             )}
+            <AssetListPagination
+              page={safeAssetPage}
+              pageSize={assetPageSize}
+              total={filteredAssets.length}
+              onPageChange={setAssetPage}
+              onPageSizeChange={(nextPageSize) => {
+                setAssetPageSize(nextPageSize);
+                setAssetPage(1);
+              }}
+            />
             {listRefreshing && (
               <div className="asset-list-refreshing">Đang cập nhật danh sách...</div>
             )}
@@ -1506,26 +1789,78 @@ export function AssetsPage() {
                     </label>
                   </div>
                 </section>
-
                 <section className="asset-detail-section">
                   <h3>Sử dụng, đơn vị và vị trí</h3>
-                  <div className="asset-detail-readonly-grid">
-                    <div>
-                      <span>Người/nhân sự đang giữ</span>
-                      <strong>{employeeName(selectedAsset.assignedEmployeeId)}</strong>
-                    </div>
-                    <div>
-                      <span>Đơn vị/phòng ban quản lý</span>
-                      <strong>{departmentName(selectedAsset.departmentId)}</strong>
-                    </div>
-                    <div>
-                      <span>Site/chi nhánh hiện tại</span>
-                      <strong>{siteName(selectedAsset.siteId)}</strong>
-                    </div>
-                    <div>
+                  <div className="asset-detail-fields">
+                    
+                    <label>
+                      <span>Site hiện tại</span>
+                      <select
+                        value={assetDraft.siteId ?? ""}
+                        onChange={(event) =>
+                          updateAssetDraft("siteId", optionalNumber(event.target.value))
+                        }
+                        disabled={!canManage || assetSaving}
+                      >
+                        <option value="">Chưa gán chi nhánh</option>
+                        {workSites.map((site) => (
+                          <option key={site.id} value={site.id}>
+                            {site.name}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label>
+                      <span>Phòng ban quản lý</span>
+                      <select
+                        value={assetDraft.departmentId ?? ""}
+                        onChange={(event) =>
+                          updateAssetDraft("departmentId", optionalNumber(event.target.value))
+                        }
+                        disabled={!canManage || assetSaving}
+                      >
+                        <option value="">Chưa gán phòng ban</option>
+                        {departments.map((department) => (
+                          <option key={department.id} value={department.id}>
+                            {department.name}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label>
+                      <span>Nhân sự đang giữ</span>
+                      <select
+                        value={assetDraft.assignedEmployeeId ?? ""}
+                        onChange={(event) =>
+                          updateAssetDraft("assignedEmployeeId", optionalNumber(event.target.value))
+                        }
+                        disabled={!canManage || assetSaving}
+                      >
+                        <option value="">Chưa gán người giữ</option>
+                        {employees.map((employee) => (
+                          <option key={employee.id} value={employee.id}>
+                            {employeeLabel(employee)}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label>
                       <span>Dự án</span>
-                      <strong>{projectName(selectedAsset.projectId)}</strong>
-                    </div>
+                      <select
+                        value={assetDraft.projectId ?? ""}
+                        onChange={(event) =>
+                          updateAssetDraft("projectId", optionalNumber(event.target.value))
+                        }
+                        disabled={!canManage || assetSaving}
+                      >
+                        <option value="">Chưa gán dự án</option>
+                        {projects.map((project) => (
+                          <option key={project.id} value={project.id}>
+                            {projectLabel(project)}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
                     <div>
                       <span>Ngày đưa vào sử dụng</span>
                       <strong>{selectedAsset.useDate || "—"}</strong>
