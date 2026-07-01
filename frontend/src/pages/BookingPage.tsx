@@ -319,12 +319,8 @@ export function BookingPage() {
     <section className="booking-page page-grid">
       <div className="booking-hero panel">
         <div>
-          <p className="eyebrow">BOOKING</p>
+          {/* <p className="eyebrow">BOOKING</p> */}
           <h2>Đặt lịch phòng họp</h2>
-          <p>
-            Chọn phòng họp, kiểm tra khung giờ khả dụng, xác nhận booking và theo dõi trạng thái
-            nhận/trả phòng.
-          </p>
         </div>
         <div className="booking-hero-metrics">
           <div>
@@ -350,8 +346,7 @@ export function BookingPage() {
         <section className="panel booking-form-panel">
           <div className="panel-title">
             <div>
-              <h2>Tạo lịch đặt</h2>
-              <p>Thông tin này tương ứng bước chọn phòng, nhập mục đích và xác nhận trong flow.</p>
+              <h2>Tạo lịch đặt phòng họp</h2>
             </div>
           </div>
 

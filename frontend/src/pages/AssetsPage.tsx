@@ -1273,7 +1273,7 @@ export function AssetsPage() {
               <div>
                 <strong>{filteredAssets.length} tài sản</strong>
                 <span>
-                  Tổng giá trị đang lọc: {money.format(filteredValue)}
+                  Tổng giá trị của tài sản đang hiển thị: {money.format(filteredValue)}
                   {filteredAssets.length !== assets.length
                     ? ` / ${money.format(totalValue)} toàn bộ`
                     : ""}
