@@ -1,0 +1,301 @@
+/* Đồng bộ giao diện trang Tài sản > Đặt lịch với Tài sản > Danh sách.
+   File này được import sau app.css để override riêng nhóm booking mà không đụng các màn khác. */
+
+.booking-page {
+  display: grid;
+  gap: 12px;
+}
+
+.booking-page .panel {
+  border-color: #e5e7eb;
+  border-radius: 8px;
+  box-shadow: none;
+}
+
+.booking-hero {
+  align-items: center;
+  background: #ffffff;
+  display: grid;
+  gap: 14px;
+  grid-template-columns: minmax(0, 1fr) minmax(360px, 0.48fr);
+  padding: 18px 20px;
+}
+
+.booking-hero h2 {
+  color: #111827;
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  margin: 0;
+}
+
+.booking-hero p:not(.eyebrow) {
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.55;
+  margin: 6px 0 0;
+}
+
+.booking-hero-metrics {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.booking-hero-metrics > div {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  min-width: 0;
+  padding: 10px 12px;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.booking-hero-metrics > div:hover {
+  background: #f8fafc;
+  border-color: #bfdbfe;
+  box-shadow: 0 8px 24px -20px rgba(21, 77, 124, 0.65);
+}
+
+.booking-hero-metrics span {
+  color: #64748b;
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.booking-hero-metrics strong {
+  color: #111827;
+  display: block;
+  font-size: 18px;
+  font-weight: 700;
+  margin-top: 2px;
+}
+
+.booking-layout {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 0.32fr);
+}
+
+.booking-form-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.booking-form-grid label,
+.booking-filters label,
+.booking-confirm-body label {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 600;
+  gap: 5px;
+}
+
+.booking-form-grid input,
+.booking-form-grid select,
+.booking-form-grid textarea,
+.booking-filters input,
+.booking-filters select,
+.booking-confirm-body textarea {
+  border-radius: 8px;
+  font-size: 12.5px;
+  min-height: 34px;
+  padding: 7px 10px;
+}
+
+.booking-form-grid input:hover:not(:disabled),
+.booking-form-grid select:hover:not(:disabled),
+.booking-form-grid textarea:hover:not(:disabled),
+.booking-filters input:hover:not(:disabled),
+.booking-filters select:hover:not(:disabled),
+.booking-confirm-body textarea:hover:not(:disabled) {
+  background: #ffffff;
+  border-color: #bfdbfe;
+}
+
+.booking-form-grid textarea {
+  resize: vertical;
+}
+
+.booking-option-row,
+.booking-form-actions,
+.booking-table-head {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: space-between;
+  margin-top: 14px;
+}
+
+.booking-checkbox {
+  align-items: center;
+  color: #334155;
+  display: inline-flex;
+  flex-direction: row;
+  gap: 8px;
+}
+
+.booking-checkbox input {
+  accent-color: #154d7c;
+  height: 16px;
+  min-height: 16px;
+  width: 16px;
+}
+
+.booking-availability {
+  align-items: center;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  display: inline-flex;
+  font-size: 12px;
+  font-weight: 700;
+  gap: 7px;
+  padding: 7px 10px;
+}
+
+.booking-availability.available {
+  background: #ecfdf5;
+  border-color: #a7f3d0;
+  color: #047857;
+}
+
+.booking-availability.blocked {
+  background: #fff1f2;
+  border-color: #fecdd3;
+  color: #be123c;
+}
+
+.booking-form-actions {
+  justify-content: flex-end;
+}
+
+.booking-form-actions button,
+.booking-table-head button {
+  border-radius: 8px;
+  font-size: 12px;
+  min-height: 34px;
+  padding: 7px 10px;
+}
+
+.booking-flow-list {
+  display: grid;
+  gap: 8px;
+}
+
+.booking-flow-list > div {
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  display: flex;
+  gap: 9px;
+  padding: 10px;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.booking-flow-list > div:hover {
+  background: #f8fafc;
+  border-color: #bfdbfe;
+}
+
+.booking-flow-list svg {
+  color: #154d7c;
+  flex: 0 0 auto;
+}
+
+.booking-flow-list span {
+  color: #334155;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.booking-filters {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: minmax(220px, 1.4fr) repeat(3, minmax(140px, 1fr));
+  margin-bottom: 12px;
+}
+
+.booking-table {
+  overflow: hidden;
+}
+
+.booking-table .table-wrap {
+  border-radius: 8px;
+}
+
+.booking-table table {
+  min-width: 920px;
+}
+
+.booking-table th {
+  font-size: 11px;
+  padding: 8px 10px;
+}
+
+.booking-table td {
+  font-size: 12px;
+  padding: 7px 10px;
+}
+
+.booking-table tbody tr:hover {
+  background: #f8fafc;
+}
+
+.badge-in_use {
+  background: #dcfce7;
+  color: #047857;
+}
+
+.badge-cancelled,
+.badge-expired,
+.badge-rejected {
+  background: #fee2e2;
+  color: #be123c;
+}
+
+.booking-detail-summary > div,
+.booking-detail-grid > div {
+  background: #ffffff;
+  border-color: #e5e7eb;
+  border-radius: 8px;
+}
+
+.booking-detail-body span {
+  color: #64748b;
+  font-weight: 600;
+}
+
+.booking-detail-body strong {
+  color: #111827;
+  font-weight: 600;
+}
+
+@media (max-width: 1120px) {
+  .booking-hero,
+  .booking-layout,
+  .booking-filters {
+    grid-template-columns: 1fr;
+  }
+
+  .booking-hero-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .booking-form-grid,
+  .booking-detail-summary,
+  .booking-detail-grid {
+    grid-template-columns: 1fr;
+  }
+}
