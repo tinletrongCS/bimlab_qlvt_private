@@ -37,6 +37,7 @@ pipeline {
 
   environment {
     APP_SLUG = 'qlvt'
+    RUN_SECURITY_AUDIT = "${params.RUN_SECURITY_AUDIT ?: false}"
     MAVEN_IMAGE = 'maven:3.9.9-eclipse-temurin-17'
     NODE_IMAGE = 'node:22-alpine'
     DOCKER_BUILDKIT = '1'
