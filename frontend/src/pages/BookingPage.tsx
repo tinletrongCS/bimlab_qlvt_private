@@ -83,7 +83,8 @@ function formatDateTime(value?: string) {
 
 function errorMessage(error: unknown, fallback: string) {
   if (typeof error === "object" && error && "response" in error) {
-    const response = (error as { response?: { data?: { message?: string; error?: string } } }).response;
+    const response = (error as { response?: { data?: { message?: string; error?: string } } })
+      .response;
     return response?.data?.message || response?.data?.error || fallback;
   }
   return error instanceof Error ? error.message : fallback;
@@ -108,7 +109,11 @@ function canCancel(booking: AssetBooking) {
 }
 
 function BookingStatusBadge({ status }: { status: string }) {
-  return <span className={`badge badge-${status.toLowerCase()}`}>{BOOKING_STATUS_LABELS[status] || status}</span>;
+  return (
+    <span className={`badge badge-${status.toLowerCase()}`}>
+      {BOOKING_STATUS_LABELS[status] || status}
+    </span>
+  );
 }
 
 export function BookingPage() {
@@ -309,7 +314,9 @@ export function BookingPage() {
       setCancelReason("");
       await loadBookings();
     } catch (error) {
-      toast.error(errorMessage(error, `Backend ${actionLabel(confirmAction.type)} đang chờ hoàn thiện.`));
+      toast.error(
+        errorMessage(error, `Backend ${actionLabel(confirmAction.type)} đang chờ hoàn thiện.`),
+      );
     } finally {
       setSubmitting(false);
     }
@@ -459,7 +466,9 @@ export function BookingPage() {
               Tự động trả phòng khi hết giờ
             </label>
             {availability && (
-              <div className={`booking-availability ${availability.available ? "available" : "blocked"}`}>
+              <div
+                className={`booking-availability ${availability.available ? "available" : "blocked"}`}
+              >
                 {availability.available ? <FiCheckCircle /> : <FiXCircle />}
                 <span>{availability.available ? "Khung giờ khả dụng" : availability.reason}</span>
               </div>
@@ -533,7 +542,9 @@ export function BookingPage() {
             Phòng họp
             <select
               value={filters.assetCode}
-              onChange={(event) => setFilters((prev) => ({ ...prev, assetCode: event.target.value }))}
+              onChange={(event) =>
+                setFilters((prev) => ({ ...prev, assetCode: event.target.value }))
+              }
             >
               <option value="">Tất cả phòng</option>
               {assetOptions.map((asset) => (
@@ -561,7 +572,9 @@ export function BookingPage() {
             <input
               type="datetime-local"
               value={filters.fromTime}
-              onChange={(event) => setFilters((prev) => ({ ...prev, fromTime: event.target.value }))}
+              onChange={(event) =>
+                setFilters((prev) => ({ ...prev, fromTime: event.target.value }))
+              }
             />
           </label>
           <label>
@@ -669,8 +682,15 @@ export function BookingPage() {
       </section>
 
       {selectedBooking && (
-        <div className="modal-backdrop" role="presentation" onMouseDown={() => setSelectedBooking(null)}>
-          <div className="crud-modal booking-detail-modal" onMouseDown={(event) => event.stopPropagation()}>
+        <div
+          className="modal-backdrop"
+          role="presentation"
+          onMouseDown={() => setSelectedBooking(null)}
+        >
+          <div
+            className="crud-modal booking-detail-modal"
+            onMouseDown={(event) => event.stopPropagation()}
+          >
             <div className="modal-head">
               <div className="modal-title-group">
                 <span className="modal-title-icon edit">
@@ -681,7 +701,11 @@ export function BookingPage() {
                   <p>{selectedBooking.bookingCode}</p>
                 </div>
               </div>
-              <button type="button" className="icon-button" onClick={() => setSelectedBooking(null)}>
+              <button
+                type="button"
+                className="icon-button"
+                onClick={() => setSelectedBooking(null)}
+              >
                 <FiXCircle />
               </button>
             </div>
@@ -725,7 +749,11 @@ export function BookingPage() {
                 <div>
                   <span>Phòng ban / site / dự án</span>
                   <strong>
-                    {[selectedBooking.departmentId, selectedBooking.siteId, selectedBooking.projectId]
+                    {[
+                      selectedBooking.departmentId,
+                      selectedBooking.siteId,
+                      selectedBooking.projectId,
+                    ]
                       .filter(Boolean)
                       .join(" · ") || "—"}
                   </strong>
@@ -745,8 +773,15 @@ export function BookingPage() {
       )}
 
       {confirmAction && (
-        <div className="modal-backdrop" role="presentation" onMouseDown={() => setConfirmAction(null)}>
-          <div className="crud-modal booking-confirm-modal" onMouseDown={(event) => event.stopPropagation()}>
+        <div
+          className="modal-backdrop"
+          role="presentation"
+          onMouseDown={() => setConfirmAction(null)}
+        >
+          <div
+            className="crud-modal booking-confirm-modal"
+            onMouseDown={(event) => event.stopPropagation()}
+          >
             <div className="modal-head">
               <div className="modal-title-group">
                 <span className="modal-title-icon create">

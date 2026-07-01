@@ -374,7 +374,11 @@ function AssetListPagination({
   return (
     <div className="table-pagination asset-list-pagination">
       <div className="table-pagination-summary">
-        Hiển thị <strong>{start}-{end}</strong> / <strong>{total}</strong> tài sản
+        Hiển thị{" "}
+        <strong>
+          {start}-{end}
+        </strong>{" "}
+        / <strong>{total}</strong> tài sản
       </div>
       <div className="table-pagination-controls">
         <select
@@ -1042,8 +1046,9 @@ export function AssetsPage() {
 
   const sourceOptions = useMemo(
     () =>
-      Array.from(new Set(assets.map((asset) => asset.source?.trim()).filter(Boolean) as string[]))
-        .sort((a, b) => a.localeCompare(b, "vi")),
+      Array.from(
+        new Set(assets.map((asset) => asset.source?.trim()).filter(Boolean) as string[]),
+      ).sort((a, b) => a.localeCompare(b, "vi")),
     [assets],
   );
 
@@ -1166,11 +1171,7 @@ export function AssetsPage() {
   const assetPageCount = Math.max(1, Math.ceil(filteredAssets.length / assetPageSize));
   const safeAssetPage = Math.min(assetPage, assetPageCount);
   const pagedAssets = useMemo(
-    () =>
-      filteredAssets.slice(
-        (safeAssetPage - 1) * assetPageSize,
-        safeAssetPage * assetPageSize,
-      ),
+    () => filteredAssets.slice((safeAssetPage - 1) * assetPageSize, safeAssetPage * assetPageSize),
     [assetPageSize, filteredAssets, safeAssetPage],
   );
 
@@ -1792,7 +1793,6 @@ export function AssetsPage() {
                 <section className="asset-detail-section">
                   <h3>Sử dụng, đơn vị và vị trí</h3>
                   <div className="asset-detail-fields">
-                    
                     <label>
                       <span>Site hiện tại</span>
                       <select

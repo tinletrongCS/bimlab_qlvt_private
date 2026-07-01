@@ -188,10 +188,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
 
   const ensureAssets = useCallback(
     (force = false) =>
-      loadKeys(
-        force ? ["assets"] : ["assets", "employees", "departments", "workSites"],
-        force,
-      ),
+      loadKeys(force ? ["assets"] : ["assets", "employees", "departments", "workSites"], force),
     [loadKeys],
   );
 

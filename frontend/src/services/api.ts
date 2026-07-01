@@ -1,19 +1,19 @@
 import axios from "axios";
 import { getAccessToken } from "../auth/oidc";
 import type {
-  AssetItem,
   AssetBooking,
   AssetBookingAvailability,
   AssetBookingCancelPayload,
   AssetBookingCheckoutPayload,
   AssetBookingPayload,
+  AssetCategory,
+  AssetCategoryPayload,
+  AssetCategoryTree,
   AssetImportCommitPayload,
   AssetImportCommitResponse,
   AssetImportRowPayload,
   AssetImportValidationResponse,
-  AssetCategory,
-  AssetCategoryPayload,
-  AssetCategoryTree,
+  AssetItem,
   AssetPayload,
   AssetTransfer,
   AssetTransferPayload,
@@ -168,9 +168,7 @@ export async function loadAssetCategoryTree(): Promise<AssetCategoryTree[]> {
   return response.data;
 }
 
-export async function createAssetCategory(
-  payload: AssetCategoryPayload,
-): Promise<AssetCategory> {
+export async function createAssetCategory(payload: AssetCategoryPayload): Promise<AssetCategory> {
   const response = await api.post<AssetCategory>("/asset/categories", payload);
   return response.data;
 }
