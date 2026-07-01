@@ -49,6 +49,7 @@ type AssetStatusFilter = "ALL" | "IN_STOCK" | "ASSIGNED" | "MAINTENANCE" | "DISP
 type AssetValueFilter = "ALL" | "UNDER_10M" | "FROM_10M_TO_50M" | "FROM_50M_TO_200M" | "FROM_200M";
 type ImportMode = AssetImportCommitPayload["importMode"];
 type ImportPreviewFilter = "ALL" | "VALID" | "INVALID" | "WARNING";
+type AssetBulkAction = "status" | "move" | "assign" | "return" | null;
 type AssetTableColumnId =
   | "asset"
   | "category"
@@ -64,8 +65,7 @@ type AssetTableColumnId =
   | "vendor"
   | "project"
   | "purchaseDate"
-  | "warrantyUntil"
-  | "actions";
+  | "warrantyUntil";
 
 interface AssetTableColumnConfig {
   id: AssetTableColumnId;
@@ -91,6 +91,13 @@ const ASSET_VALUE_FILTERS: Array<{
   { value: "FROM_50M_TO_200M", label: "50 - 200 triệu", min: 50_000_000, max: 200_000_000 },
   { value: "FROM_200M", label: "Trên 200 triệu", min: 200_000_000 },
 ];
+const ASSET_MUTABLE_STATUSES = [
+  "IN_STOCK",
+  "ASSIGNED",
+  "MAINTENANCE",
+  "DISPOSED",
+  "LOST",
+] as const;
 const ASSET_TABLE_STORAGE_KEY = "qlvt.assetList.tableColumns.v1";
 const ASSET_TABLE_COLUMNS: AssetTableColumnConfig[] = [
   { id: "asset", label: "Tài sản", locked: true, defaultVisible: true },
@@ -108,7 +115,6 @@ const ASSET_TABLE_COLUMNS: AssetTableColumnConfig[] = [
   { id: "project", label: "Dự án", defaultVisible: false },
   { id: "purchaseDate", label: "Ngày mua", defaultVisible: false },
   { id: "warrantyUntil", label: "Bảo hành đến", defaultVisible: false },
-  { id: "actions", label: "Thao tác", locked: true, defaultVisible: true },
 ];
 const ASSET_TABLE_COLUMN_IDS = ASSET_TABLE_COLUMNS.map((column) => column.id);
 const DEFAULT_ASSET_TABLE_VISIBLE_COLUMNS = ASSET_TABLE_COLUMNS.filter(
@@ -124,19 +130,17 @@ function normalizeAssetColumnOrder(order: AssetTableColumnId[]) {
         ASSET_TABLE_COLUMN_IDS.includes(id) &&
         id !== "asset" &&
         id !== "category" &&
-        id !== "status" &&
-        id !== "actions",
+        id !== "status",
     ),
     ...ASSET_TABLE_COLUMN_IDS.filter(
       (id) =>
         !order.includes(id) &&
         id !== "asset" &&
         id !== "category" &&
-        id !== "status" &&
-        id !== "actions",
+        id !== "status",
     ),
   ];
-  return ["asset", "category", "status", ...middleColumns, "actions"] as AssetTableColumnId[];
+  return ["asset", "category", "status", ...middleColumns] as AssetTableColumnId[];
 }
 
 function readAssetColumnPreferences() {
@@ -179,15 +183,16 @@ function readAssetColumnPreferences() {
   }
 }
 
-function statusLabel(status: AssetStatusFilter) {
-  const labels: Record<AssetStatusFilter, string> = {
+function statusLabel(status: string) {
+  const labels: Record<string, string> = {
     ALL: "Tất cả trạng thái",
     IN_STOCK: "Trong kho",
     ASSIGNED: "Đã cấp phát",
     MAINTENANCE: "Bảo trì",
     DISPOSED: "Đã thanh lý",
+    LOST: "Mất/hỏng",
   };
-  return labels[status];
+  return labels[status] || status;
 }
 
 function collectCategoryIds(node: AssetCategoryTree): Set<number> {
@@ -1037,6 +1042,15 @@ export function AssetsPage() {
   const [assetPage, setAssetPage] = useState(1);
   const [assetPageSize, setAssetPageSize] = useState(20);
   const [listRefreshing, setListRefreshing] = useState(false);
+  const [bulkActionBusy, setBulkActionBusy] = useState(false);
+  const [selectedAssetIds, setSelectedAssetIds] = useState<Set<number>>(() => new Set());
+  const [assetMultiSelectMode, setAssetMultiSelectMode] = useState(false);
+  const [assetCategoryCollapsed, setAssetCategoryCollapsed] = useState(false);
+  const [bulkPanelAction, setBulkPanelAction] = useState<AssetBulkAction>(null);
+  const [bulkStatus, setBulkStatus] = useState<(typeof ASSET_MUTABLE_STATUSES)[number]>("IN_STOCK");
+  const [bulkSiteId, setBulkSiteId] = useState("");
+  const [bulkDepartmentId, setBulkDepartmentId] = useState("");
+  const [bulkEmployeeId, setBulkEmployeeId] = useState("");
   const [assetColumnOrder, setAssetColumnOrder] = useState<AssetTableColumnId[]>(
     () => readAssetColumnPreferences().order,
   );
@@ -1314,10 +1328,41 @@ export function AssetsPage() {
       ),
     [assetPageSize, filteredAssets, safeAssetPage],
   );
+  const selectedAssets = useMemo(
+    () => assets.filter((asset) => selectedAssetIds.has(asset.id)),
+    [assets, selectedAssetIds],
+  );
+  const pageSelectableIds = useMemo(() => pagedAssets.map((asset) => asset.id), [pagedAssets]);
+  const selectedOnPageCount = useMemo(
+    () => pageSelectableIds.filter((id) => selectedAssetIds.has(id)).length,
+    [pageSelectableIds, selectedAssetIds],
+  );
+  const allPageSelected =
+    pageSelectableIds.length > 0 && selectedOnPageCount === pageSelectableIds.length;
+  const somePageSelected = selectedOnPageCount > 0 && !allPageSelected;
+  const selectedAssetsValue = useMemo(
+    () => selectedAssets.reduce((sum, asset) => sum + Number(asset.purchaseCost || 0), 0),
+    [selectedAssets],
+  );
 
   useEffect(() => {
     if (assetPage > assetPageCount) setAssetPage(assetPageCount);
   }, [assetPage, assetPageCount]);
+
+  useEffect(() => {
+    setSelectedAssetIds((current) => {
+      if (current.size === 0) return current;
+      const validIds = new Set(assets.map((asset) => asset.id));
+      const next = new Set(Array.from(current).filter((id) => validIds.has(id)));
+      return next.size === current.size ? current : next;
+    });
+  }, [assets]);
+
+  useEffect(() => {
+    if (selectedAssets.length === 0) {
+      setBulkPanelAction(null);
+    }
+  }, [selectedAssets.length]);
 
   const totalValue = useMemo(
     () => assets.reduce((sum, item) => sum + Number(item.purchaseCost || 0), 0),
@@ -1398,10 +1443,152 @@ export function AssetsPage() {
     try {
       await deleteAsset(item.id);
       toast.success("Đã xóa tài sản.");
+      setSelectedAssetIds((current) => {
+        const next = new Set(current);
+        next.delete(item.id);
+        return next;
+      });
       await reloadAssetList();
     } catch {
       toast.error("Không xóa được tài sản.");
     }
+  };
+
+  const toggleAssetSelected = (id: number) => {
+    setSelectedAssetIds((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleCurrentPageSelected = () => {
+    setSelectedAssetIds((current) => {
+      const next = new Set(current);
+      if (allPageSelected) {
+        pageSelectableIds.forEach((id) => next.delete(id));
+      } else {
+        pageSelectableIds.forEach((id) => next.add(id));
+      }
+      return next;
+    });
+  };
+
+  const clearSelectedAssets = () => {
+    setSelectedAssetIds(new Set());
+    setBulkPanelAction(null);
+  };
+
+  const handleBulkDeleteAssets = async () => {
+    if (selectedAssets.length === 0 || bulkActionBusy) return;
+    const confirmed = window.confirm(`Xóa ${selectedAssets.length} tài sản đã chọn?`);
+    if (!confirmed) return;
+    setBulkActionBusy(true);
+    try {
+      await Promise.all(selectedAssets.map((asset) => deleteAsset(asset.id)));
+      toast.success(`Đã xóa ${selectedAssets.length} tài sản.`);
+      clearSelectedAssets();
+      await reloadAssetList();
+    } catch {
+      toast.error("Không xóa được một số tài sản đã chọn.");
+    } finally {
+      setBulkActionBusy(false);
+    }
+  };
+
+  const openBulkPanelAction = (action: AssetBulkAction) => {
+    if (selectedAssets.length === 0) return;
+    setBulkPanelAction((current) => (current === action ? null : action));
+    if (action === "move" || action === "assign") {
+      void ensureAssetDetailLookups();
+    }
+  };
+
+  const updateSelectedAssets = async (
+    buildPayload: (asset: AssetItem) => AssetPayload,
+    successMessage: string,
+  ) => {
+    if (selectedAssets.length === 0 || bulkActionBusy) return;
+    const count = selectedAssets.length;
+    setBulkActionBusy(true);
+    try {
+      await Promise.all(selectedAssets.map((asset) => updateAsset(asset.id, buildPayload(asset))));
+      toast.success(successMessage);
+      setBulkPanelAction(null);
+      await reloadAssetList();
+      setSelectedAssetIds((current) => {
+        const next = new Set(current);
+        selectedAssets.forEach((asset) => next.delete(asset.id));
+        return next;
+      });
+    } catch {
+      toast.error(`Không cập nhật được ${count} tài sản đã chọn.`);
+    } finally {
+      setBulkActionBusy(false);
+    }
+  };
+
+  const handleBulkUpdateStatus = async () => {
+    await updateSelectedAssets(
+      (asset) => ({ ...buildAssetPayload(asset), status: bulkStatus }),
+      `Đã cập nhật trạng thái ${selectedAssets.length} tài sản.`,
+    );
+  };
+
+  const handleBulkMoveAssets = async () => {
+    if (!bulkSiteId && !bulkDepartmentId && !bulkEmployeeId) {
+      toast.error("Chọn ít nhất một thông tin vị trí hoặc người giữ cần cập nhật.");
+      return;
+    }
+    await updateSelectedAssets(
+      (asset) => ({
+        ...buildAssetPayload(asset),
+        siteId: bulkSiteId ? Number(bulkSiteId) : (asset.siteId ?? null),
+        departmentId: bulkDepartmentId ? Number(bulkDepartmentId) : (asset.departmentId ?? null),
+        assignedEmployeeId: bulkEmployeeId ? Number(bulkEmployeeId) : (asset.assignedEmployeeId ?? null),
+      }),
+      `Đã chuyển vị trí ${selectedAssets.length} tài sản.`,
+    );
+  };
+
+  const handleBulkAssignAssets = async () => {
+    if (!bulkEmployeeId) {
+      toast.error("Chọn nhân sự nhận tài sản trước khi cấp phát.");
+      return;
+    }
+    await updateSelectedAssets(
+      (asset) => ({
+        ...buildAssetPayload(asset),
+        status: "ASSIGNED",
+        siteId: bulkSiteId ? Number(bulkSiteId) : (asset.siteId ?? null),
+        departmentId: bulkDepartmentId ? Number(bulkDepartmentId) : (asset.departmentId ?? null),
+        assignedEmployeeId: Number(bulkEmployeeId),
+      }),
+      `Đã cấp phát ${selectedAssets.length} tài sản.`,
+    );
+  };
+
+  const handleBulkReturnAssets = async () => {
+    const confirmed = window.confirm(`Thu hồi ${selectedAssets.length} tài sản đã chọn về trạng thái trong kho?`);
+    if (!confirmed) return;
+    await updateSelectedAssets(
+      (asset) => ({
+        ...buildAssetPayload(asset),
+        status: "IN_STOCK",
+        assignedEmployeeId: null,
+      }),
+      `Đã thu hồi ${selectedAssets.length} tài sản.`,
+    );
+  };
+
+  const handlePrintQr = () => {
+    if (selectedAssets.length !== 1) {
+      toast.error("Chọn đúng 1 tài sản để xem hoặc in QR.");
+      return;
+    }
+    setQrAsset(selectedAssets[0]);
+    toast.success("Đã mở khung QR tài sản.");
   };
 
   const toggleAssetColumn = (id: AssetTableColumnId) => {
@@ -1532,42 +1719,6 @@ export function AssetsPage() {
       id: "warrantyUntil",
       label: "Bảo hành đến",
       render: (item) => item.warrantyUntil || "—",
-    },
-    {
-      id: "actions",
-      label: "Thao tác",
-      locked: true,
-      align: "center",
-      render: (item) => (
-        <div className="asset-row-icon-actions">
-          <button
-            type="button"
-            className="asset-icon-action"
-            title="Xem và chỉnh sửa tài sản"
-            onClick={() => openAssetDetail(item)}
-          >
-            <FiEye />
-          </button>
-          <button
-            type="button"
-            className="asset-icon-action"
-            title="Xem mã QR tài sản"
-            onClick={() => setQrAsset(item)}
-          >
-            <FiGrid />
-          </button>
-          {canManage && (
-            <button
-              type="button"
-              className="asset-icon-action danger"
-              title="Xóa tài sản"
-              onClick={() => void handleDeleteAsset(item)}
-            >
-              <FiTrash2 />
-            </button>
-          )}
-        </div>
-      ),
     },
   ];
   const assetColumnById = new Map(assetTableColumns.map((column) => [column.id, column]));
@@ -1712,19 +1863,31 @@ export function AssetsPage() {
         extraActions={headerExtraActions}
       />
 
-      <div className="asset-list-layout">
-        <aside className="asset-category-sidebar">
+      <div className={`asset-list-layout ${assetCategoryCollapsed ? "category-collapsed" : ""}`}>
+        <aside className={`asset-category-sidebar ${assetCategoryCollapsed ? "collapsed" : ""}`}>
           <div className="asset-category-sidebar-head">
-            <div>
-              <span>Danh mục</span>
-              <strong>{selectedCategoryNode?.name || "Tất cả danh mục"}</strong>
-            </div>
-            <button type="button" className="asset-category-clear" onClick={resetAssetFilters}>
-              Tất cả
+            {!assetCategoryCollapsed && (
+              <div>
+                <span>Danh mục</span>
+                <strong>{selectedCategoryNode?.name || "Tất cả danh mục"}</strong>
+              </div>
+            )}
+            {!assetCategoryCollapsed && (
+              <button type="button" className="asset-category-clear" onClick={resetAssetFilters}>
+                Tất cả
+              </button>
+            )}
+            <button
+              type="button"
+              className="asset-category-collapse"
+              title={assetCategoryCollapsed ? "Mở bộ lọc danh mục" : "Thu bộ lọc danh mục"}
+              onClick={() => setAssetCategoryCollapsed((value) => !value)}
+            >
+              {assetCategoryCollapsed ? <FiChevronRight /> : <FiChevronLeft />}
             </button>
           </div>
 
-          <div className="asset-category-filter-list">
+          {!assetCategoryCollapsed && <div className="asset-category-filter-list">
             <button
               type="button"
               className="asset-category-filter-item all"
@@ -1753,7 +1916,7 @@ export function AssetsPage() {
                 onToggle={toggleAssetCategory}
               />
             ))}
-          </div>
+          </div>}
         </aside>
 
         <div className="asset-results-column">
@@ -1808,28 +1971,34 @@ export function AssetsPage() {
                 </option>
               ))}
             </select> */}
-            <select
-              value={statusFilter}
-              onChange={(event) => setStatusFilter(event.target.value as AssetStatusFilter)}
-            >
-              {(["ALL", "IN_STOCK", "ASSIGNED", "MAINTENANCE", "DISPOSED"] as const).map(
-                (status) => (
-                  <option key={status} value={status}>
-                    {statusLabel(status)}
+            <label className="asset-filter-field">
+              <span>Trạng thái</span>
+              <select
+                value={statusFilter}
+                onChange={(event) => setStatusFilter(event.target.value as AssetStatusFilter)}
+              >
+                {(["ALL", "IN_STOCK", "ASSIGNED", "MAINTENANCE", "DISPOSED"] as const).map(
+                  (status) => (
+                    <option key={status} value={status}>
+                      {statusLabel(status)}
+                    </option>
+                  ),
+                )}
+              </select>
+            </label>
+            <label className="asset-filter-field">
+              <span>Giá trị</span>
+              <select
+                value={valueFilter}
+                onChange={(event) => setValueFilter(event.target.value as AssetValueFilter)}
+              >
+                {ASSET_VALUE_FILTERS.map((item) => (
+                  <option key={item.value} value={item.value}>
+                    {item.label}
                   </option>
-                ),
-              )}
-            </select>
-            <select
-              value={valueFilter}
-              onChange={(event) => setValueFilter(event.target.value as AssetValueFilter)}
-            >
-              {ASSET_VALUE_FILTERS.map((item) => (
-                <option key={item.value} value={item.value}>
-                  {item.label}
-                </option>
-              ))}
-            </select>
+                ))}
+              </select>
+            </label>
             {/* <select
               value={sourceFilter}
               onChange={(event) => setSourceFilter(event.target.value)}
@@ -1867,27 +2036,43 @@ export function AssetsPage() {
                 <strong>{filteredAssets.length} tài sản</strong>
                 <span>
                   Tổng giá trị của tài sản đang hiển thị:{" "}
-                  <span style={{ color: "#007bff", fontWeight: "600" }}>
-                    {money.format(filteredValue)}
+                  <span style={{ whiteSpace: "nowrap" }}>
+                    <span style={{ color: "#007bff", fontWeight: 600 }}>
+                      {money.format(filteredValue)}
+                    </span>
+
+                    {filteredAssets.length !== assets.length && (
+                      <>
+                        {" / "}
+                        <span style={{ color: "#007bff", fontWeight: 600 }}>
+                          {money.format(totalValue)}
+                        </span>{" "}
+                        toàn bộ
+                      </>
+                    )}
                   </span>
-                  {filteredAssets.length !== assets.length ? (
-                    <>
-                      {" "}
-                      /{" "}
-                      <span style={{ color: "#007bff", fontWeight: "600" }}>
-                        {money.format(totalValue)}
-                      </span>{" "}
-                      toàn bộ
-                    </>
-                  ) : (
-                    ""
-                  )}
                 </span>
               </div>
+
               <div className="asset-table-tools">
                 <button
                   type="button"
+                  className="secondary asset-multi-select-toggle"
+                  data-active={assetMultiSelectMode ? "true" : undefined}
+                  onClick={() => {
+                    setAssetMultiSelectMode((enabled) => {
+                      if (enabled) clearSelectedAssets();
+                      return !enabled;
+                    });
+                  }}
+                >
+                  {assetMultiSelectMode ? "Tắt chọn nhiều" : "Chọn nhiều"}
+                </button>
+                <button
+                  type="button"
                   className="secondary asset-column-config-toggle"
+                  aria-expanded={columnConfigOpen}
+                  onMouseDown={(event) => event.preventDefault()}
                   onClick={() => setColumnConfigOpen((open) => !open)}
                 >
                   <FiSettings /> Cấu hình cột
@@ -1975,9 +2160,22 @@ export function AssetsPage() {
               <div className="empty-state">Không có tài sản phù hợp bộ lọc.</div>
             ) : (
               <div className="asset-table">
-                <table>
+                <table className={assetMultiSelectMode ? "is-multi-select" : "is-single-select"}>
                   <thead>
                     <tr>
+                      {assetMultiSelectMode && <th className="asset-table-select-col asset-table-sticky-select">
+                        <label className="asset-table-checkbox" title="Chọn toàn bộ dòng trên trang">
+                          <input
+                            type="checkbox"
+                            checked={allPageSelected}
+                            ref={(input) => {
+                              if (input) input.indeterminate = somePageSelected;
+                            }}
+                            onChange={toggleCurrentPageSelected}
+                          />
+                          <span />
+                        </label>
+                      </th>}
                       {configuredAssetColumns.map((column) => (
                         <th
                           key={column.id}
@@ -1985,18 +2183,35 @@ export function AssetsPage() {
                             ["asset", "category", "status"].includes(column.id)
                               ? `asset-table-sticky-left asset-table-sticky-${column.id}`
                               : ""
-                          } ${column.id === "actions" ? "asset-table-sticky-right" : ""} ${
-                            column.align ? `align-${column.align}` : ""
-                          }`}
+                          } ${column.align ? `align-${column.align}` : ""}`}
                         >
                           {column.label}
                         </th>
                       ))}
+                      <th className="asset-table-actions-col asset-table-sticky-right">
+                        Thao tác
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
                     {pagedAssets.map((item) => (
-                      <tr key={item.id}>
+                      <tr
+                        key={item.id}
+                        className={selectedAssetIds.has(item.id) ? "is-selected" : undefined}
+                      >
+                        {assetMultiSelectMode && <td className="asset-table-select-col asset-table-sticky-select">
+                          <label
+                            className="asset-table-checkbox"
+                            title={`Chọn ${item.assetCode}`}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={selectedAssetIds.has(item.id)}
+                              onChange={() => toggleAssetSelected(item.id)}
+                            />
+                            <span />
+                          </label>
+                        </td>}
                         {configuredAssetColumns.map((column) => (
                           <td
                             key={column.id}
@@ -2004,13 +2219,41 @@ export function AssetsPage() {
                               ["asset", "category", "status"].includes(column.id)
                                 ? `asset-table-sticky-left asset-table-sticky-${column.id}`
                                 : ""
-                            } ${column.id === "actions" ? "asset-table-sticky-right" : ""} ${
-                              column.align ? `align-${column.align}` : ""
-                            }`}
+                            } ${column.align ? `align-${column.align}` : ""}`}
                           >
                             {column.render(item)}
                           </td>
                         ))}
+                        <td className="asset-table-actions-col asset-table-sticky-right">
+                          <div className="asset-row-icon-actions">
+                            <button
+                              type="button"
+                              className="asset-row-text-action"
+                              title="Xem và chỉnh sửa tài sản"
+                              onClick={() => openAssetDetail(item)}
+                            >
+                              Xem
+                            </button>
+                            <button
+                              type="button"
+                              className="asset-row-text-action"
+                              title="Xem mã QR tài sản"
+                              onClick={() => setQrAsset(item)}
+                            >
+                              QR
+                            </button>
+                            {canManage && (
+                              <button
+                                type="button"
+                                className="asset-row-text-action danger"
+                                title="Xóa tài sản"
+                                onClick={() => void handleDeleteAsset(item)}
+                              >
+                                Xóa
+                              </button>
+                            )}
+                          </div>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -2031,6 +2274,284 @@ export function AssetsPage() {
               <div className="asset-list-refreshing">Đang cập nhật danh sách...</div>
             )}
           </div>
+
+          {canManage && (
+            <div
+              className={`asset-selection-workspace ${
+                selectedAssets.length > 0 ? "is-active" : ""
+              }`}
+            >
+              <div className="asset-selection-head">
+                <div>
+                  <strong>
+                    {selectedAssets.length > 0
+                      ? `${selectedAssets.length} tài sản đã chọn`
+                      : "Chọn tài sản để thao tác"}
+                  </strong>
+                  <span>
+                    {selectedAssets.length > 0
+                      ? `Tổng giá trị: ${money.format(selectedAssetsValue)}`
+                      : "Tick checkbox trong bảng để mở danh sách thao tác phía dưới."}
+                  </span>
+                </div>
+                <div className="asset-selection-actions">
+                  <label className="asset-bulk-action-select">
+                    <span>Thao tác</span>
+                    <select
+                      value={bulkPanelAction || ""}
+                      disabled={selectedAssets.length === 0 || bulkActionBusy}
+                      onChange={(event) => {
+                        const action = event.target.value as Exclude<AssetBulkAction, null> | "";
+                        if (!action) {
+                          setBulkPanelAction(null);
+                          return;
+                        }
+                        openBulkPanelAction(action);
+                      }}
+                    >
+                      <option value="">Chọn thao tác</option>
+                      <option value="status">Cập nhật trạng thái</option>
+                      <option value="move">Chuyển vị trí</option>
+                      <option value="assign">Cấp phát</option>
+                      <option value="return">Thu hồi</option>
+                      <option value="qr" disabled>
+                        In QR theo nhóm
+                      </option>
+                    </select>
+                  </label>
+                  <button
+                    type="button"
+                    className="danger-action"
+                    disabled={selectedAssets.length === 0 || bulkActionBusy}
+                    onClick={() => void handleBulkDeleteAssets()}
+                  >
+                    <FiTrash2 /> Xóa
+                  </button>
+                  {selectedAssets.length > 0 && (
+                    <button
+                      type="button"
+                      className="secondary"
+                      disabled={bulkActionBusy}
+                      onClick={clearSelectedAssets}
+                    >
+                      Bỏ chọn
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {selectedAssets.length > 0 && (
+                <div className="asset-selection-body">
+                  <div className="asset-selection-stack" aria-label="Danh sách tài sản đã chọn">
+                    {selectedAssets.map((asset) => (
+                      <div className="asset-selection-card" key={asset.id}>
+                        <div>
+                          <strong>{asset.name}</strong>
+                          <span>
+                            {asset.assetCode} ·{" "}
+                            {asset.assetCategory?.name || asset.category || "Chưa phân loại"}
+                          </span>
+                        </div>
+                        <StatusBadge value={asset.status} />
+                        <button
+                          type="button"
+                          className="icon-button"
+                          title="Bỏ chọn tài sản này"
+                          onClick={() => toggleAssetSelected(asset.id)}
+                        >
+                          <FiX />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+
+                  {bulkPanelAction && (
+                    <div className={`asset-bulk-panel asset-bulk-panel-${bulkPanelAction}`}>
+                      {bulkPanelAction === "status" && (
+                        <>
+                          <div className="asset-bulk-panel-copy">
+                            <strong>Cập nhật trạng thái</strong>
+                            <span>Áp dụng cùng một trạng thái cho các tài sản đã chọn.</span>
+                          </div>
+                          <div className="asset-bulk-form-row">
+                            <label>
+                              <span>Trạng thái mới</span>
+                              <select
+                                value={bulkStatus}
+                                onChange={(event) =>
+                                  setBulkStatus(
+                                    event.target.value as (typeof ASSET_MUTABLE_STATUSES)[number],
+                                  )
+                                }
+                              >
+                                {ASSET_MUTABLE_STATUSES.map((status) => (
+                                  <option key={status} value={status}>
+                                    {statusLabel(status)}
+                                  </option>
+                                ))}
+                              </select>
+                            </label>
+                            <button
+                              type="button"
+                              className="primary-action"
+                              disabled={bulkActionBusy}
+                              onClick={() => void handleBulkUpdateStatus()}
+                            >
+                              Lưu trạng thái
+                            </button>
+                          </div>
+                        </>
+                      )}
+
+                      {bulkPanelAction === "move" && (
+                        <>
+                          <div className="asset-bulk-panel-copy">
+                            <strong>Chuyển vị trí</strong>
+                            <span>Bỏ trống trường nào thì hệ thống giữ nguyên giá trị hiện tại.</span>
+                          </div>
+                          <div className="asset-bulk-form-row three">
+                            <label>
+                              <span>Chi nhánh mới</span>
+                              <select
+                                value={bulkSiteId}
+                                onChange={(event) => setBulkSiteId(event.target.value)}
+                              >
+                                <option value="">Giữ nguyên chi nhánh</option>
+                                {workSites.map((site) => (
+                                  <option key={site.id} value={site.id}>
+                                    {site.name}
+                                  </option>
+                                ))}
+                              </select>
+                            </label>
+                            <label>
+                              <span>Phòng ban mới</span>
+                              <select
+                                value={bulkDepartmentId}
+                                onChange={(event) => setBulkDepartmentId(event.target.value)}
+                              >
+                                <option value="">Giữ nguyên phòng ban</option>
+                                {departments.map((department) => (
+                                  <option key={department.id} value={department.id}>
+                                    {department.name}
+                                  </option>
+                                ))}
+                              </select>
+                            </label>
+                            <label>
+                              <span>Người giữ mới</span>
+                              <select
+                                value={bulkEmployeeId}
+                                onChange={(event) => setBulkEmployeeId(event.target.value)}
+                              >
+                                <option value="">Giữ nguyên người giữ</option>
+                                {employees.map((employee) => (
+                                  <option key={employee.id} value={employee.id}>
+                                    {employeeLabel(employee)}
+                                  </option>
+                                ))}
+                              </select>
+                            </label>
+                            <button
+                              type="button"
+                              className="primary-action"
+                              disabled={bulkActionBusy}
+                              onClick={() => void handleBulkMoveAssets()}
+                            >
+                              Lưu vị trí
+                            </button>
+                          </div>
+                        </>
+                      )}
+
+                      {bulkPanelAction === "assign" && (
+                        <>
+                          <div className="asset-bulk-panel-copy">
+                            <strong>Cấp phát tài sản</strong>
+                            <span>Cập nhật người giữ và chuyển trạng thái sang đã cấp phát.</span>
+                          </div>
+                          <div className="asset-bulk-form-row three">
+                            <label>
+                              <span>Chi nhánh</span>
+                              <select
+                                value={bulkSiteId}
+                                onChange={(event) => setBulkSiteId(event.target.value)}
+                              >
+                                <option value="">Giữ nguyên chi nhánh</option>
+                                {workSites.map((site) => (
+                                  <option key={site.id} value={site.id}>
+                                    {site.name}
+                                  </option>
+                                ))}
+                              </select>
+                            </label>
+                            <label>
+                              <span>Phòng ban</span>
+                              <select
+                                value={bulkDepartmentId}
+                                onChange={(event) => setBulkDepartmentId(event.target.value)}
+                              >
+                                <option value="">Giữ nguyên phòng ban</option>
+                                {departments.map((department) => (
+                                  <option key={department.id} value={department.id}>
+                                    {department.name}
+                                  </option>
+                                ))}
+                              </select>
+                            </label>
+                            <label>
+                              <span>Nhân sự nhận</span>
+                              <select
+                                value={bulkEmployeeId}
+                                onChange={(event) => setBulkEmployeeId(event.target.value)}
+                              >
+                                <option value="">Chọn nhân sự</option>
+                                {employees.map((employee) => (
+                                  <option key={employee.id} value={employee.id}>
+                                    {employeeLabel(employee)}
+                                  </option>
+                                ))}
+                              </select>
+                            </label>
+                            <button
+                              type="button"
+                              className="primary-action"
+                              disabled={bulkActionBusy}
+                              onClick={() => void handleBulkAssignAssets()}
+                            >
+                              Cấp phát
+                            </button>
+                          </div>
+                        </>
+                      )}
+
+                      {bulkPanelAction === "return" && (
+                        <>
+                          <div className="asset-bulk-panel-copy">
+                            <strong>Thu hồi tài sản</strong>
+                            <span>
+                              Xóa người giữ hiện tại và chuyển các tài sản đã chọn về trạng thái
+                              trong kho.
+                            </span>
+                          </div>
+                          <div className="asset-bulk-form-row compact">
+                            <button
+                              type="button"
+                              className="primary-action"
+                              disabled={bulkActionBusy}
+                              onClick={() => void handleBulkReturnAssets()}
+                            >
+                              Xác nhận thu hồi
+                            </button>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
