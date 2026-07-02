@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import { ToastBar, Toaster, toast } from "react-hot-toast";
 import App from "./App";
 import "./styles/app.css";
+import "./styles/booking-overrides.css";
 
 // oidc-client-ts silent-renew (prompt=none) load lại SPA này trong IFRAME ẩn tại redirect_uri.
 // Trong iframe chỉ relay kết quả (?state + code|error) về tab cha rồi DỪNG — KHÔNG render app

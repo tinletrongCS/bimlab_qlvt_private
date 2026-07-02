@@ -10,7 +10,7 @@
 networks:
   bimlab-net:
     external: true
-    name: bimlab-net
+    name: ${BIMLAB_NET_NAME:-bimlab-net}
 
 x-sec-strict: &sec_strict
   security_opt:
