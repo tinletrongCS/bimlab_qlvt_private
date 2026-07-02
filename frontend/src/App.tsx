@@ -9,6 +9,7 @@ import { AssetsPage } from "./pages/AssetsPage";
 import { BookingPage } from "./pages/BookingPage";
 import { ContractsPage } from "./pages/ContractsPage";
 import { DashboardPage } from "./pages/DashboardPage";
+import { HelpPage } from "./pages/HelpPage";
 import { LoginPage } from "./pages/LoginPage";
 import { MaintenancePage } from "./pages/MaintenancePage";
 import { PurchaseRequestsPage } from "./pages/PurchaseRequestsPage";
@@ -118,6 +119,7 @@ function App() {
                     </ProtectedRoute>
                   }
                 />
+                <Route path="/help" element={<HelpPage />} />
                 <Route path="/" element={<Navigate to="/dashboard" replace />} />
               </Route>
               <Route path="*" element={<Navigate to="/dashboard" replace />} />
