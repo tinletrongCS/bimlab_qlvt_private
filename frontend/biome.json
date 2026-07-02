@@ -72,6 +72,9 @@
         "useExhaustiveDependencies": "off",
         "noUnusedVariables": "off",
         "noUnusedFunctionParameters": "off"
+      },
+      "complexity": {
+        "noImportantStyles": "off"
       }
     }
   },

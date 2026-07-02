@@ -154,7 +154,9 @@ export function DashboardPage() {
   );
   const statusDistribution = useMemo(() => {
     const countMap = new Map<string, number>();
-    assets.forEach((asset) => countMap.set(asset.status, (countMap.get(asset.status) || 0) + 1));
+    assets.forEach((asset) => {
+      countMap.set(asset.status, (countMap.get(asset.status) || 0) + 1);
+    });
 
     const ordered = STATUS_ORDER.map((status) => ({
       label: STATUS_LABELS[status] || status,

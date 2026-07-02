@@ -1464,9 +1464,13 @@ export function AssetsPage() {
     setSelectedAssetIds((current) => {
       const next = new Set(current);
       if (allPageSelected) {
-        pageSelectableIds.forEach((id) => next.delete(id));
+        pageSelectableIds.forEach((id) => {
+          next.delete(id);
+        });
       } else {
-        pageSelectableIds.forEach((id) => next.add(id));
+        pageSelectableIds.forEach((id) => {
+          next.add(id);
+        });
       }
       return next;
     });
@@ -1516,7 +1520,9 @@ export function AssetsPage() {
       await reloadAssetList();
       setSelectedAssetIds((current) => {
         const next = new Set(current);
-        selectedAssets.forEach((asset) => next.delete(asset.id));
+        selectedAssets.forEach((asset) => {
+          next.delete(asset.id);
+        });
         return next;
       });
     } catch {
@@ -2367,7 +2373,11 @@ export function AssetsPage() {
 
               {selectedAssets.length > 0 && (
                 <div className="asset-selection-body">
-                  <div className="asset-selection-stack" aria-label="Danh sách tài sản đã chọn">
+                  <div
+                    className="asset-selection-stack"
+                    role="list"
+                    aria-label="Danh sách tài sản đã chọn"
+                  >
                     {selectedAssets.map((asset) => (
                       <div className="asset-selection-card" key={asset.id}>
                         <div>
