@@ -116,24 +116,24 @@ const ASSET_TABLE_COLUMNS: AssetTableColumnConfig[] = [
   { id: "warrantyUntil", label: "Bảo hành đến", defaultVisible: false },
 ];
 const ASSET_TABLE_COLUMN_WIDTHS: Record<AssetTableColumnId, number> = {
-  asset: 230,
-  category: 190,
-  serialNumber: 160,
-  status: 128,
-  purchaseCost: 138,
-  originalCost: 138,
-  bookValue: 138,
-  source: 160,
-  site: 160,
-  department: 160,
-  employee: 160,
-  vendor: 160,
-  project: 160,
-  purchaseDate: 138,
-  warrantyUntil: 138,
+  asset: 150,
+  category: 140,
+  serialNumber: 150,
+  status: 100,
+  purchaseCost: 130,
+  originalCost: 130,
+  bookValue: 130,
+  source: 140,
+  site: 140,
+  department: 140,
+  employee: 140,
+  vendor: 140,
+  project: 140,
+  purchaseDate: 120,
+  warrantyUntil: 120,
 };
 const ASSET_TABLE_SELECT_WIDTH = 42;
-const ASSET_TABLE_ACTIONS_WIDTH = 118;
+const ASSET_TABLE_ACTIONS_WIDTH = 180;
 const ASSET_TABLE_COLUMN_IDS = ASSET_TABLE_COLUMNS.map((column) => column.id);
 const DEFAULT_ASSET_TABLE_VISIBLE_COLUMNS = ASSET_TABLE_COLUMNS.filter(
   (column) => column.defaultVisible || column.locked,

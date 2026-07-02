@@ -121,22 +121,22 @@ const BOOKING_TABLE_COLUMNS: BookingTableColumnConfig[] = [
   { id: "actions", label: "Thao tác", locked: true, defaultVisible: true },
 ];
 const BOOKING_TABLE_COLUMN_WIDTHS: Record<BookingTableColumnId, number> = {
-  booking: 220,
-  asset: 220,
-  time: 260,
-  status: 140,
-  owner: 180,
-  purpose: 240,
-  department: 180,
-  site: 170,
-  project: 170,
-  autoRelease: 170,
-  checked: 190,
-  createdBy: 170,
-  updatedAt: 180,
-  actions: 168,
+  booking: 110,
+  asset: 110,
+  time: 130,
+  status: 70,
+  owner: 90,
+  purpose: 120,
+  department: 90,
+  site: 85,
+  project: 85,
+  autoRelease: 85,
+  checked: 95,
+  createdBy: 85,
+  updatedAt: 90,
+  actions: 100,
 };
-const BOOKING_TABLE_MIN_SCROLL_WIDTH = 1280;
+const BOOKING_TABLE_MIN_SCROLL_WIDTH = 900;
 const BOOKING_TABLE_COLUMN_IDS = BOOKING_TABLE_COLUMNS.map((column) => column.id);
 const DEFAULT_BOOKING_TABLE_VISIBLE_COLUMNS = BOOKING_TABLE_COLUMNS.filter(
   (column) => column.defaultVisible || column.locked,
