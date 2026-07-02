@@ -11207,3 +11207,954 @@ body,
   max-width: none !important;
   table-layout: fixed !important;
 }
+#root .asset-list-layout.category-collapsed {
+  grid-template-columns: 36px minmax(0, 1fr) !important;
+}
+
+#root .asset-list-layout.category-collapsed .asset-category-sidebar.collapsed {
+  display: flex !important;
+  width: 36px !important;
+  min-width: 36px !important;
+  max-width: 36px !important;
+  flex: 0 0 36px !important;
+  padding: 4px !important;
+  overflow: hidden !important;
+}
+
+#root .asset-list-layout.category-collapsed .asset-category-sidebar-head {
+  justify-content: center !important;
+  padding: 4px 0 !important;
+}
+
+#root .asset-list-layout.category-collapsed .asset-category-collapse {
+  width: 26px !important;
+  min-width: 26px !important;
+  height: 26px !important;
+}
+
+#root .category-workspace {
+  grid-template-columns: minmax(0, 1fr) 340px !important;
+  align-items: start !important;
+  overflow: visible !important;
+}
+
+#root .category-main-column,
+#root .category-editor {
+  min-width: 0 !important;
+}
+
+#root .category-editor {
+  position: sticky !important;
+  top: 12px !important;
+  width: 340px !important;
+  max-width: 340px !important;
+  align-self: start !important;
+}
+
+#root .category-main-column > .category-tree-panel:not(.category-management-section) {
+  overflow: hidden !important;
+}
+
+#root .category-org-viewport {
+  height: clamp(260px, 36vh, 390px) !important;
+  min-height: 260px !important;
+  max-height: 390px !important;
+  overflow: auto !important;
+}
+
+#root .category-management-section .category-structure-grid {
+  grid-template-columns: 220px minmax(0, 1fr) !important;
+}
+
+#root .category-management-section .category-structure-sidebar {
+  width: 220px !important;
+  min-width: 220px !important;
+  max-width: 220px !important;
+  position: sticky !important;
+  top: 12px !important;
+  align-self: start !important;
+}
+
+#root .asset-page .asset-column-popover {
+  position: fixed !important;
+  top: 112px !important;
+  right: 24px !important;
+  left: auto !important;
+  transform: none !important;
+  width: min(420px, calc(100vw - 48px)) !important;
+  max-height: min(560px, calc(100vh - 136px)) !important;
+  overflow: hidden !important;
+  z-index: 120 !important;
+}
+
+#root .asset-page .asset-column-popover .asset-column-list {
+  max-height: 380px !important;
+  overflow: auto !important;
+}
+
+@media (max-width: 1080px) {
+  #root .category-workspace,
+  #root .category-management-section .category-structure-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  #root .category-editor,
+  #root .category-management-section .category-structure-sidebar {
+    position: static !important;
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: none !important;
+  }
+}
+
+/* Final compact action menus, table containment and category layout tuning. */
+#root .sidebar nav a svg,
+#root .sidebar-group-button svg {
+  width: 16px !important;
+  height: 16px !important;
+}
+
+#root .sidebar-submenu a {
+  min-height: 28px !important;
+  padding-block: 5px !important;
+  font-size: 12.5px !important;
+}
+
+#root .row-action-menu {
+  position: relative;
+  display: inline-flex;
+  justify-content: center;
+}
+
+#root .row-action-menu summary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  list-style: none;
+  border: 1px solid transparent;
+  color: #15507f;
+  cursor: pointer;
+}
+
+#root .row-action-menu summary::-webkit-details-marker {
+  display: none;
+}
+
+#root .row-action-menu summary:hover {
+  border-color: #cbd5e1;
+  background: #f6f8fa;
+}
+
+#root .row-action-menu summary svg {
+  width: 16px;
+  height: 16px;
+}
+
+#root .row-action-menu-list {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 90;
+  display: grid;
+  min-width: 142px;
+  padding: 4px;
+  border: 1px solid #d7dde5;
+  background: #ffffff;
+  box-shadow: 0 12px 26px rgba(15, 23, 42, 0.12);
+}
+
+#root .row-action-menu-list button {
+  justify-content: flex-start;
+  min-height: 28px !important;
+  padding: 5px 8px !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: #25384f !important;
+  font-size: 12.5px !important;
+  font-weight: 600 !important;
+  text-align: left;
+}
+
+#root .row-action-menu-list button:hover:not(:disabled) {
+  background: #eef4fa !important;
+  color: #15507f !important;
+  transform: none !important;
+}
+
+#root .row-action-menu-list button.danger {
+  color: #b42318 !important;
+}
+
+#root .row-action-menu-list button:disabled {
+  color: #98a2b3 !important;
+  opacity: 1;
+}
+
+#root .asset-table,
+#root .booking-table .table-wrap {
+  overflow-x: auto !important;
+  overflow-y: visible !important;
+}
+
+#root .asset-table table,
+#root .booking-table .table-wrap table {
+  width: var(--qlvt-table-min-width, 100%) !important;
+  min-width: var(--qlvt-table-min-width, 100%) !important;
+  max-width: none !important;
+  table-layout: fixed !important;
+}
+
+#root .asset-table-col-asset {
+  width: 190px !important;
+  min-width: 190px !important;
+}
+
+#root .asset-table-col-category {
+  width: 150px !important;
+  min-width: 150px !important;
+}
+
+#root .asset-table-col-status {
+  width: 118px !important;
+  min-width: 118px !important;
+}
+
+#root .asset-table-actions-col {
+  width: 54px !important;
+  min-width: 54px !important;
+  text-align: center !important;
+  overflow: visible !important;
+}
+
+#root .asset-table .asset-table-sticky-category {
+  left: 232px !important;
+}
+
+#root .asset-table .asset-table-sticky-status {
+  left: 382px !important;
+}
+
+#root .asset-table table.is-single-select .asset-table-sticky-category {
+  left: 190px !important;
+}
+
+#root .asset-table table.is-single-select .asset-table-sticky-status {
+  left: 340px !important;
+}
+
+#root .booking-table-col-booking {
+  width: 230px !important;
+  min-width: 230px !important;
+}
+
+#root .booking-table-col-asset {
+  width: 230px !important;
+  min-width: 230px !important;
+}
+
+#root .booking-table-col-status {
+  width: 140px !important;
+  min-width: 140px !important;
+}
+
+#root .booking-table-actions-col {
+  width: 56px !important;
+  min-width: 56px !important;
+  text-align: center !important;
+  overflow: visible !important;
+}
+
+#root .booking-table .booking-table-sticky-asset {
+  left: 230px !important;
+}
+
+#root .booking-table .booking-table-sticky-status {
+  left: 460px !important;
+}
+
+#root .booking-table .booking-table-sticky-time {
+  left: 600px !important;
+}
+
+#root .asset-list-insights {
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 5px !important;
+}
+
+#root .asset-insight-card {
+  display: grid !important;
+  gap: 8px !important;
+  padding: 9px !important;
+}
+
+#root .asset-insight-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+#root .asset-insight-head strong {
+  color: #25384f;
+  font-size: 13px;
+}
+
+#root .asset-insight-head span {
+  color: #667085;
+  font-size: 11.5px;
+  white-space: nowrap;
+}
+
+#root .asset-insight-visual {
+  display: grid;
+  grid-template-columns: 68px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+}
+
+#root .asset-insight-donut {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 62px;
+  height: 62px;
+  border-radius: 50%;
+  background: conic-gradient(var(--asset-donut));
+}
+
+#root .asset-insight-donut::after {
+  position: absolute;
+  inset: 14px;
+  border-radius: 50%;
+  background: #ffffff;
+  content: "";
+}
+
+#root .asset-insight-donut span {
+  position: relative;
+  z-index: 1;
+  color: #25384f;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+#root .asset-insight-bars {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+#root .asset-insight-bars p {
+  display: grid !important;
+  grid-template-columns: 8px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 6px;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+#root .asset-insight-bars i {
+  width: 8px;
+  height: 8px;
+}
+
+#root .asset-insight-bars span {
+  overflow: hidden;
+  color: #52677a !important;
+  font-size: 11.5px !important;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#root .asset-insight-bars b {
+  color: #25384f;
+  font-size: 11.5px;
+}
+
+#root .category-workspace {
+  grid-template-columns: minmax(0, 1fr) 340px !important;
+}
+
+#root .category-main-column {
+  overflow: hidden !important;
+}
+
+#root .category-main-column > .category-tree-panel:not(.category-management-section) {
+  min-height: 0 !important;
+}
+
+#root .category-org-viewport {
+  height: clamp(240px, 32vh, 330px) !important;
+  min-height: 240px !important;
+  max-height: 330px !important;
+  overflow: auto !important;
+}
+
+#root .category-org-forest {
+  width: max-content !important;
+  min-width: 100% !important;
+}
+
+#root .panel .category-org-card {
+  grid-template-columns: auto minmax(120px, max-content) auto !important;
+  width: fit-content !important;
+  min-width: 190px !important;
+  max-width: 340px !important;
+  min-height: 42px !important;
+  padding: 6px 7px !important;
+}
+
+#root .category-card-copy {
+  width: auto !important;
+  max-width: 230px !important;
+}
+
+#root .category-card-copy strong,
+#root .category-card-copy span {
+  max-width: 230px !important;
+}
+
+#root .category-card-actions {
+  gap: 2px !important;
+  margin-left: 4px !important;
+}
+
+#root .category-icon-action,
+#root .category-expand-button {
+  width: 24px !important;
+  min-width: 24px !important;
+  height: 24px !important;
+  min-height: 24px !important;
+}
+
+#root .category-management-section {
+  min-height: 440px !important;
+  max-height: none !important;
+}
+
+#root .category-management-section .category-structure-grid {
+  min-height: 390px !important;
+  grid-template-columns: 220px minmax(0, 1fr) !important;
+}
+
+#root .category-management-section .category-structure-sidebar,
+#root .category-management-section .category-structure-detail,
+#root .category-management-section .category-structure-sidebar nav,
+#root .category-management-section .category-structure-rows {
+  max-height: none !important;
+  overflow: visible !important;
+}
+
+@media (max-width: 1180px) {
+  #root .asset-list-insights {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+/* Final table action and insight layout fixes. */
+.overflow-actions-backdrop {
+  position: fixed;
+  inset: 0;
+  display: block;
+  width: 100vw;
+  height: 100vh;
+  z-index: 9990;
+  background: transparent !important;
+  cursor: default;
+  pointer-events: auto;
+}
+
+.overflow-actions-menu {
+  position: fixed !important;
+  z-index: 9991 !important;
+  display: grid;
+  min-width: 168px;
+  padding: 4px;
+  border: 1px solid #d7dde5;
+  background: #ffffff;
+  box-shadow: 0 16px 34px rgba(15, 23, 42, 0.18);
+}
+
+.overflow-actions-menu button {
+  justify-content: flex-start;
+  min-height: 30px !important;
+  padding: 6px 9px !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: #25384f !important;
+  font-size: 12.5px !important;
+  font-weight: 600 !important;
+  text-align: left;
+}
+
+.overflow-actions-menu button:hover:not(:disabled) {
+  background: #eef4fa !important;
+  color: #15507f !important;
+  transform: none !important;
+}
+
+.overflow-actions-menu button.danger {
+  color: #b42318 !important;
+}
+
+.overflow-actions-menu button:disabled {
+  color: #98a2b3 !important;
+  opacity: 1;
+}
+
+#root .overflow-actions-trigger {
+  width: 28px !important;
+  min-width: 28px !important;
+  height: 28px !important;
+  min-height: 28px !important;
+  padding: 0 !important;
+  border: 1px solid transparent !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: #15507f !important;
+}
+
+#root .overflow-actions-trigger:hover {
+  border-color: #cbd5e1 !important;
+  background: #f6f8fa !important;
+  transform: none !important;
+}
+
+#root .asset-table,
+#root .booking-table .table-wrap {
+  position: relative !important;
+  overflow-x: auto !important;
+  overflow-y: auto !important;
+}
+
+#root .asset-table table,
+#root .booking-table .table-wrap table {
+  width: max(100%, var(--qlvt-table-min-width, 100%)) !important;
+  min-width: max(100%, var(--qlvt-table-min-width, 100%)) !important;
+  max-width: none !important;
+  table-layout: fixed !important;
+}
+
+#root .asset-table-actions-col,
+#root .booking-table-actions-col {
+  width: 86px !important;
+  min-width: 86px !important;
+  max-width: 86px !important;
+  overflow: visible !important;
+  text-align: center !important;
+}
+
+#root .asset-table .asset-table-sticky-right,
+#root .booking-table .booking-table-sticky-right {
+  position: sticky !important;
+  right: 0 !important;
+  z-index: 24 !important;
+  background: #ffffff !important;
+  box-shadow: -8px 0 14px -16px rgba(15, 23, 42, 0.55) !important;
+}
+
+#root .asset-table th.asset-table-sticky-right,
+#root .booking-table th.booking-table-sticky-right {
+  z-index: 34 !important;
+  background: #eef2f6 !important;
+}
+
+#root .asset-table .asset-table-sticky-asset {
+  left: 42px !important;
+}
+
+#root .asset-table .asset-table-sticky-category {
+  left: 232px !important;
+}
+
+#root .asset-table .asset-table-sticky-status {
+  left: 382px !important;
+}
+
+#root .asset-table table.is-single-select .asset-table-sticky-asset {
+  left: 0 !important;
+}
+
+#root .asset-table table.is-single-select .asset-table-sticky-category {
+  left: 190px !important;
+}
+
+#root .asset-table table.is-single-select .asset-table-sticky-status {
+  left: 340px !important;
+}
+
+#root .booking-table .booking-table-sticky-booking {
+  left: 0 !important;
+}
+
+#root .booking-table .booking-table-sticky-asset {
+  left: 230px !important;
+}
+
+#root .booking-table .booking-table-sticky-status {
+  left: 460px !important;
+}
+
+#root .booking-table .booking-table-sticky-time {
+  left: 600px !important;
+}
+
+#root .booking-table .booking-table-sticky-left,
+#root .booking-table .booking-table-sticky-right {
+  position: sticky !important;
+  background: #ffffff !important;
+}
+
+#root .booking-table th.booking-table-sticky-left,
+#root .booking-table th.booking-table-sticky-right {
+  background: #eef2f6 !important;
+}
+
+#root .booking-table-col-booking {
+  width: 230px !important;
+  min-width: 230px !important;
+  max-width: 230px !important;
+}
+
+#root .booking-table-col-asset {
+  width: 230px !important;
+  min-width: 230px !important;
+  max-width: 230px !important;
+}
+
+#root .booking-table-col-status {
+  width: 140px !important;
+  min-width: 140px !important;
+  max-width: 140px !important;
+}
+
+#root .booking-table-col-time {
+  width: 260px !important;
+  min-width: 260px !important;
+  max-width: 260px !important;
+}
+
+#root .asset-list-insights {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 8px !important;
+  padding: 8px !important;
+  border: 1px solid #d7dde5 !important;
+  background: #f6f8fa !important;
+}
+
+#root .asset-insights-title {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 2px 2px 4px;
+}
+
+#root .asset-insights-title strong {
+  display: block;
+  color: #25384f;
+  font-size: 14px;
+}
+
+#root .asset-insights-title span,
+#root .asset-insights-title small {
+  color: #667085;
+  font-size: 12px;
+}
+
+#root .asset-insight-card {
+  min-height: 150px !important;
+  padding: 12px !important;
+  border: 1px solid #e1e7ef !important;
+  background: #ffffff !important;
+}
+
+#root .asset-insight-visual {
+  grid-template-columns: 112px minmax(0, 1fr) !important;
+  gap: 14px !important;
+}
+
+#root .asset-insight-donut {
+  width: 104px !important;
+  height: 104px !important;
+}
+
+#root .asset-insight-donut::after {
+  inset: 24px !important;
+}
+
+#root .asset-insight-donut span {
+  font-size: 18px !important;
+}
+
+#root .asset-insight-bars {
+  gap: 7px !important;
+}
+
+#root .asset-insight-bars p {
+  grid-template-columns: 10px minmax(0, 1fr) auto !important;
+}
+
+#root .asset-insight-bars i {
+  width: 10px !important;
+  height: 10px !important;
+}
+
+#root .asset-insight-bars span,
+#root .asset-insight-bars b {
+  font-size: 12px !important;
+}
+
+@media (max-width: 1180px) {
+  #root .asset-list-insights {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Final sticky column borders and sober status colors. */
+#root .asset-table th,
+#root .asset-table td,
+#root .booking-table th,
+#root .booking-table td {
+  position: relative;
+  z-index: 1;
+}
+
+#root .asset-table .asset-table-sticky-select,
+#root .asset-table .asset-table-sticky-left,
+#root .booking-table .booking-table-sticky-left {
+  position: sticky !important;
+  z-index: 42 !important;
+  background-clip: padding-box !important;
+}
+
+#root .asset-table th.asset-table-sticky-select,
+#root .asset-table th.asset-table-sticky-left,
+#root .booking-table th.booking-table-sticky-left {
+  z-index: 58 !important;
+}
+
+#root .asset-table .asset-table-sticky-right,
+#root .booking-table .booking-table-sticky-right {
+  z-index: 46 !important;
+  border-left: 1px solid #d7dde5 !important;
+}
+
+#root .asset-table th.asset-table-sticky-right,
+#root .booking-table th.booking-table-sticky-right {
+  z-index: 62 !important;
+}
+
+#root .asset-table .asset-table-sticky-asset,
+#root .asset-table .asset-table-sticky-category,
+#root .booking-table .booking-table-sticky-booking,
+#root .booking-table .booking-table-sticky-asset {
+  border-right: 1px solid #e1e7ef !important;
+}
+
+#root .asset-table .asset-table-sticky-status,
+#root .booking-table .booking-table-sticky-status,
+#root .booking-table .booking-table-sticky-time {
+  border-right: 1px solid #cfd8e3 !important;
+  box-shadow: 10px 0 14px -16px rgba(15, 23, 42, 0.55) !important;
+}
+
+#root .asset-table-col-status,
+#root .booking-table-col-status {
+  border-left: 1px solid #e1e7ef !important;
+  border-right: 1px solid #d7dde5 !important;
+}
+
+#root .asset-table-actions-col,
+#root .booking-table-actions-col {
+  border-left: 1px solid #d7dde5 !important;
+}
+
+#root .asset-table td:not(.asset-table-sticky-left):not(.asset-table-sticky-select):not(.asset-table-sticky-right),
+#root .booking-table td:not(.booking-table-sticky-left):not(.booking-table-sticky-right),
+#root .asset-table th:not(.asset-table-sticky-left):not(.asset-table-sticky-select):not(.asset-table-sticky-right),
+#root .booking-table th:not(.booking-table-sticky-left):not(.booking-table-sticky-right) {
+  z-index: 1 !important;
+}
+
+#root .asset-table .badge,
+#root .booking-table .badge,
+#root .asset-selection-card .badge,
+#root .asset-detail-hero .badge,
+#root .booking-detail-modal .badge {
+  border: 0 !important;
+  box-shadow: none !important;
+  font-size: 11.5px !important;
+  font-weight: 700 !important;
+  line-height: 1.1 !important;
+  padding: 5px 8px !important;
+}
+
+#root .badge-in_stock,
+#root .badge-confirmed,
+#root .badge-approved {
+  background: #e8f1f8 !important;
+  color: #15507f !important;
+}
+
+#root .badge-assigned,
+#root .badge-in_use,
+#root .badge-active {
+  background: #e7f3ed !important;
+  color: #166534 !important;
+}
+
+#root .badge-maintenance,
+#root .badge-pending,
+#root .badge-pending_approval,
+#root .badge-draft {
+  background: #f6efe2 !important;
+  color: #92400e !important;
+}
+
+#root .badge-disposed,
+#root .badge-liquidated,
+#root .badge-rejected,
+#root .badge-cancelled,
+#root .badge-expired {
+  background: #f5e8e8 !important;
+  color: #991b1b !important;
+}
+
+#root .badge-completed {
+  background: #e9eef3 !important;
+  color: #334155 !important;
+}
+
+#root .badge-inactive {
+  background: #eef1f4 !important;
+  color: #475569 !important;
+}
+
+/* Final asset insight chart polish. */
+#root .asset-insight-donut {
+  border-radius: 9999px !important;
+  cursor: help;
+  overflow: hidden !important;
+  box-shadow:
+    inset 0 0 0 1px rgba(21, 80, 127, 0.12),
+    0 8px 18px rgba(21, 80, 127, 0.08) !important;
+}
+
+#root .asset-insight-donut::after {
+  border-radius: 9999px !important;
+  box-shadow: inset 0 0 0 1px #edf2f7 !important;
+}
+
+#root .asset-insight-donut span {
+  display: none !important;
+}
+
+#root .asset-insight-bars i {
+  border-radius: 9999px !important;
+}
+
+/* EOF asset status column fix: keep row separators visible inside the sticky status column. */
+#root .asset-table .asset-table-col-status {
+  width: 118px !important;
+  min-width: 118px !important;
+  max-width: 118px !important;
+  border-left: 1px solid #e1e7ef !important;
+  border-right: 1px solid #d7dde5 !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+  box-shadow:
+    inset 1px 0 0 #e1e7ef,
+    inset -1px 0 0 #d7dde5,
+    inset 0 -1px 0 #e2e8f0 !important;
+}
+
+#root .asset-table tbody td.asset-table-col-status {
+  background: #ffffff !important;
+}
+
+#root .asset-table tbody td.asset-table-col-status::after {
+  background: #e2e8f0;
+  bottom: 0;
+  content: "";
+  height: 1px;
+  left: 0;
+  pointer-events: none;
+  position: absolute;
+  right: 0;
+  z-index: 2;
+}
+
+#root .asset-table tbody tr:hover td.asset-table-col-status {
+  background: #f8fbff !important;
+}
+
+#root .asset-table tbody tr.is-selected td.asset-table-col-status,
+#root .asset-table tbody tr.is-selected:hover td.asset-table-col-status {
+  background: #e9f0f7 !important;
+}
+
+#root .asset-table .asset-table-sticky-status {
+  border-right: 1px solid #cfd8e3 !important;
+  box-shadow:
+    inset 1px 0 0 #e1e7ef,
+    inset -1px 0 0 #cfd8e3,
+    inset 0 -1px 0 #e2e8f0,
+    10px 0 14px -16px rgba(15, 23, 42, 0.55) !important;
+}
+
+#root .asset-table th.asset-table-col-status {
+  background: #eef2f6 !important;
+}
+
+/* EOF asset status normal column: status is visible by default but no longer locked/sticky. */
+#root .asset-table .asset-table-sticky-status,
+#root .asset-table table.is-single-select .asset-table-sticky-status {
+  left: auto !important;
+  position: relative !important;
+  z-index: 1 !important;
+  box-shadow: none !important;
+}
+
+#root .asset-table .asset-table-col-status {
+  background: inherit !important;
+  border-left: 1px solid #e5e9ef !important;
+  border-right: 1px solid #e5e9ef !important;
+  border-bottom: 1px solid #e5e9ef !important;
+  box-shadow: none !important;
+}
+
+#root .asset-table th.asset-table-col-status {
+  background: #f5f7fa !important;
+  color: #334155 !important;
+}
+
+#root .asset-table tbody td.asset-table-col-status {
+  background: #ffffff !important;
+}
+
+#root .asset-table tbody td.asset-table-col-status::after {
+  background: #e5e9ef !important;
+  bottom: 0;
+  content: "";
+  height: 1px;
+  left: 0;
+  pointer-events: none;
+  position: absolute;
+  right: 0;
+  z-index: 2;
+}
+
+#root .asset-table tbody tr:hover td.asset-table-col-status {
+  background: #f8fbff !important;
+}
+
+#root .asset-table tbody tr.is-selected td.asset-table-col-status,
+#root .asset-table tbody tr.is-selected:hover td.asset-table-col-status {
+  background: #e9f0f7 !important;
+}
