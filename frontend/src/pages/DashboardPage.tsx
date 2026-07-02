@@ -16,6 +16,7 @@ import {
 import { Operation } from "../components/Operation";
 import { StatCard } from "../components/StatCard";
 import { useAppData } from "../contexts/AppDataContext";
+import { useAuth } from "../contexts/AuthContext";
 import { money } from "../lib/format";
 import type { AssetItem } from "../services/types";
 
@@ -57,7 +58,15 @@ function assetCategoryLabel(asset: AssetItem): string {
   return asset.assetCategory?.name || asset.category || asset.fixedAssetType || "Chưa phân loại";
 }
 
-function MiniBarChart({ title, caption, data }: { title: string; caption: string; data: ChartDatum[] }) {
+function MiniBarChart({
+  title,
+  caption,
+  data,
+}: {
+  title: string;
+  caption: string;
+  data: ChartDatum[];
+}) {
   const total = data.reduce((sum, item) => sum + item.value, 0);
   const maxValue = Math.max(...data.map((item) => item.value), 1);
 
@@ -103,6 +112,12 @@ export function DashboardPage() {
     workSites,
     ensureDashboard,
   } = useAppData();
+  const { hasPermission } = useAuth();
+  // Khớp BE: chỉ nhóm có quyền tài chính mới thấy tổng giá trị (BE null purchaseCost khi thiếu quyền).
+  const canViewFinance =
+    hasPermission("asset_finance_view") ||
+    hasPermission("asset_finance_manage") ||
+    hasPermission("asset_manage");
 
   useEffect(() => {
     void ensureDashboard();
@@ -167,7 +182,9 @@ export function DashboardPage() {
     () =>
       topWithOther(
         countBy(assets, (asset) =>
-          asset.siteId ? workSiteNameById.get(asset.siteId) || `Chi nhánh #${asset.siteId}` : "Chưa gán chi nhánh",
+          asset.siteId
+            ? workSiteNameById.get(asset.siteId) || `Chi nhánh #${asset.siteId}`
+            : "Chưa gán chi nhánh",
         ),
       ),
     [assets, workSiteNameById],
@@ -194,10 +211,12 @@ export function DashboardPage() {
           <p>Quản lý tài sản</p>
           <p>{todayLabel}</p>
         </div>
-        <div className="hero-summary">
-          <span>Tổng giá trị tài sản</span>
-          <strong>{money.format(assetValue)}</strong>
-        </div>
+        {canViewFinance && (
+          <div className="hero-summary">
+            <span>Tổng giá trị tài sản</span>
+            <strong>{money.format(assetValue)}</strong>
+          </div>
+        )}
         <svg className="hero-equipment-art" aria-hidden="true" viewBox="0 0 360 190">
           <g className="hero-art-line">
             <rect x="24" y="76" width="118" height="72" rx="6" />
@@ -332,16 +351,20 @@ export function DashboardPage() {
               value={utilization.maintenanceAssets}
             />
             <Operation icon={<FiTrash2 />} label="Đã thanh lý" value={utilization.disposedAssets} />
-            <Operation
-              icon={<FiCreditCard />}
-              label="Tổng giá trị (active)"
-              value={money.format(Number(utilization.totalPurchaseValue || 0))}
-            />
-            <Operation
-              icon={<FiBriefcase />}
-              label="Giá trị idle"
-              value={money.format(Number(utilization.totalIdleValue || 0))}
-            />
+            {canViewFinance && (
+              <Operation
+                icon={<FiCreditCard />}
+                label="Tổng giá trị (active)"
+                value={money.format(Number(utilization.totalPurchaseValue || 0))}
+              />
+            )}
+            {canViewFinance && (
+              <Operation
+                icon={<FiBriefcase />}
+                label="Giá trị idle"
+                value={money.format(Number(utilization.totalIdleValue || 0))}
+              />
+            )}
           </div>
           <div className="operations-grid">
             {Object.entries(utilization.byCategory).map(([category, count]) => (

@@ -13,6 +13,7 @@ export type Permission =
   | "contract_manage"
   | "maintenance_manage"
   | "asset_finance_manage"
+  | "asset_finance_view"
   | "asset_report_view";
 
 export interface AuthUser {

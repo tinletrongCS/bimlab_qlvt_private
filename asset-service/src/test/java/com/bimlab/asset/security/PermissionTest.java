@@ -25,6 +25,7 @@ class PermissionTest {
         assertEquals("asset_view_all", Permission.ASSET_VIEW_ALL.code());
         assertEquals("asset_manage", Permission.ASSET_MANAGE.code());
         assertEquals("asset_finance_manage", Permission.ASSET_FINANCE_MANAGE.code());
+        assertEquals("asset_finance_view", Permission.ASSET_FINANCE_VIEW.code());
         assertEquals("asset_report_view", Permission.ASSET_REPORT_VIEW.code());
         assertEquals("vendor_manage", Permission.VENDOR_MANAGE.code());
         assertEquals("subscription_manage", Permission.SUBSCRIPTION_MANAGE.code());
@@ -37,7 +38,17 @@ class PermissionTest {
     @Test
     void allValuesCovered_noStrayEnumEntries() {
         // Lock total count so adding a value without updating tests fails loudly.
-        assertEquals(13, Permission.values().length);
+        assertEquals(14, Permission.values().length);
+    }
+
+    @Test
+    void financeViewers_locksMaskingScope() {
+        Set<Permission> set = Permission.Sets.FINANCE_VIEWERS;
+        assertEquals(3, set.size());
+        assertTrue(set.contains(Permission.ASSET_FINANCE_VIEW));
+        assertTrue(set.contains(Permission.ASSET_FINANCE_MANAGE));
+        // asset_manage nhập/sửa trường tiền tệ nên phải thấy tài chính.
+        assertTrue(set.contains(Permission.ASSET_MANAGE));
     }
 
     @Test

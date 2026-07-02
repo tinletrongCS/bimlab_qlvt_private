@@ -90,13 +90,15 @@ public class MaintenanceController {
     // F2: cap days to a sane range. Warranty-expiring is an asset-domain query
     // exposed via the maintenance controller for FE convenience.
     @GetMapping("/warranty-expiring")
-    @PreAuthorize("hasAnyAuthority('asset_access','asset_view_self','asset_view_team','asset_view_all','asset_manage','asset_finance_manage')")
+    @PreAuthorize("hasAnyAuthority('asset_access','asset_view_self','asset_view_team','asset_view_all','asset_manage','asset_finance_manage','asset_finance_view')")
     public List<AssetResponse> warrantyExpiring(
             @RequestParam(defaultValue = "30") @Min(1) @Max(365) int days
     ) {
+        boolean finance = access.hasAnyPermission(
+                Permission.Sets.FINANCE_VIEWERS.toArray(Permission[]::new));
         return assetService.listAssetsWithWarrantyExpiringWithin(days)
                 .stream()
-                .map(assetMapper::toResponse)
+                .map(a -> assetMapper.toResponse(a, finance))
                 .toList();
     }
 }
