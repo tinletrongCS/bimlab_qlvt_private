@@ -227,15 +227,16 @@ export function HelpPage() {
     () => filterGuideTree(GUIDE_TREE, normalizedGuideSearch),
     [normalizedGuideSearch],
   );
-  const visibleGuideCount = useMemo(() => flattenGuides(visibleGuideTree).length, [visibleGuideTree]);
+  const visibleGuideCount = useMemo(
+    () => flattenGuides(visibleGuideTree).length,
+    [visibleGuideTree],
+  );
   const activeGuide = allGuides.find((item) => item.id === activeId) || allGuides[0];
-  const activeDetails =
-    activeGuide.details ||
-    [
-      "Đọc mô tả nghiệp vụ trước, sau đó thao tác theo thứ tự các bước bên dưới để tránh chọn sai màn hình hoặc sai dữ liệu.",
-      "Nếu một nút hoặc API phụ thuộc phân quyền, hãy kiểm tra lại vai trò đăng nhập và quyền tương ứng trước khi kết luận là lỗi hệ thống.",
-      "Sau khi cập nhật dữ liệu, ưu tiên làm mới đúng khu vực nghiệp vụ thay vì reload toàn trang để giữ lại bộ lọc và ngữ cảnh đang thao tác.",
-    ];
+  const activeDetails = activeGuide.details || [
+    "Đọc mô tả nghiệp vụ trước, sau đó thao tác theo thứ tự các bước bên dưới để tránh chọn sai màn hình hoặc sai dữ liệu.",
+    "Nếu một nút hoặc API phụ thuộc phân quyền, hãy kiểm tra lại vai trò đăng nhập và quyền tương ứng trước khi kết luận là lỗi hệ thống.",
+    "Sau khi cập nhật dữ liệu, ưu tiên làm mới đúng khu vực nghiệp vụ thay vì reload toàn trang để giữ lại bộ lọc và ngữ cảnh đang thao tác.",
+  ];
 
   return (
     <section className="help-page page-grid">
@@ -262,7 +263,9 @@ export function HelpPage() {
               </button>
             )}
           </label>
-          {guideSearch && <span className="help-search-count">{visibleGuideCount} kết quả phù hợp</span>}
+          {guideSearch && (
+            <span className="help-search-count">{visibleGuideCount} kết quả phù hợp</span>
+          )}
           <div className="help-nav-tree">
             {visibleGuideTree.length === 0 && (
               <div className="empty-state">Không tìm thấy hướng dẫn phù hợp.</div>

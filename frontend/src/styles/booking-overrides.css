@@ -2401,7 +2401,9 @@
   max-width: 140px !important;
   border-left: 1px solid #e1e7ef !important;
   border-right: 1px solid #d7dde5 !important;
-  box-shadow: inset 1px 0 0 #e1e7ef, inset -1px 0 0 #d7dde5 !important;
+  box-shadow:
+    inset 1px 0 0 #e1e7ef,
+    inset -1px 0 0 #d7dde5 !important;
 }
 
 #root .booking-table-actions-col {
@@ -2459,7 +2461,9 @@
   max-width: 140px !important;
   border-left: 1px solid #e1e7ef !important;
   border-right: 1px solid #cfd8e3 !important;
-  box-shadow: inset 1px 0 0 #e1e7ef, inset -1px 0 0 #cfd8e3 !important;
+  box-shadow:
+    inset 1px 0 0 #e1e7ef,
+    inset -1px 0 0 #cfd8e3 !important;
 }
 
 #root .booking-table-col-time {
@@ -2495,7 +2499,9 @@
 #root .booking-table .booking-table-sticky-status {
   left: 460px !important;
   z-index: 82 !important;
-  box-shadow: inset 1px 0 0 #e1e7ef, inset -1px 0 0 #cfd8e3 !important;
+  box-shadow:
+    inset 1px 0 0 #e1e7ef,
+    inset -1px 0 0 #cfd8e3 !important;
 }
 
 #root .booking-table .booking-table-sticky-time {
