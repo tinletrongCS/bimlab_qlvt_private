@@ -144,11 +144,7 @@ const DEFAULT_BOOKING_TABLE_VISIBLE_COLUMNS = BOOKING_TABLE_COLUMNS.filter(
 ).map((column) => column.id);
 const BOOKING_HOUR_HEIGHT = 52;
 const BOOKING_HOURS = Array.from({ length: 24 }, (_, hour) => hour);
-const BOOKING_LOCKED_COLUMN_ORDER: BookingTableColumnId[] = [
-  "booking",
-  "asset",
-  "actions",
-];
+const BOOKING_LOCKED_COLUMN_ORDER: BookingTableColumnId[] = ["booking", "asset", "actions"];
 
 function normalizeBookingColumnOrder(order: BookingTableColumnId[]) {
   const middleColumns = [
@@ -159,12 +155,7 @@ function normalizeBookingColumnOrder(order: BookingTableColumnId[]) {
       (id) => !order.includes(id) && !BOOKING_LOCKED_COLUMN_ORDER.includes(id),
     ),
   ];
-  return [
-    "booking",
-    "asset",
-    ...middleColumns,
-    "actions",
-  ] as BookingTableColumnId[];
+  return ["booking", "asset", ...middleColumns, "actions"] as BookingTableColumnId[];
 }
 
 function readBookingColumnPreferences() {
@@ -1087,7 +1078,9 @@ export function BookingPage() {
             </label>
           </div>
         </div>
-        <div className="booking-calendar-title">{formatCalendarTitle(calendarDate, calendarView)}</div>
+        <div className="booking-calendar-title">
+          {formatCalendarTitle(calendarDate, calendarView)}
+        </div>
         <div className="booking-calendar-shell">
           <aside className="booking-calendar-sidebar">
             <div className="booking-mini-calendar">
@@ -1121,7 +1114,9 @@ export function BookingPage() {
                 <span>Phòng họp</span>
                 <select
                   value={filters.assetCode}
-                  onChange={(event) => setFilters((prev) => ({ ...prev, assetCode: event.target.value }))}
+                  onChange={(event) =>
+                    setFilters((prev) => ({ ...prev, assetCode: event.target.value }))
+                  }
                 >
                   <option value="">Tất cả phòng</option>
                   {assetOptions.map((asset) => (
@@ -1135,7 +1130,9 @@ export function BookingPage() {
                 <span>Trạng thái</span>
                 <select
                   value={filters.status}
-                  onChange={(event) => setFilters((prev) => ({ ...prev, status: event.target.value }))}
+                  onChange={(event) =>
+                    setFilters((prev) => ({ ...prev, status: event.target.value }))
+                  }
                 >
                   {BOOKING_STATUS_OPTIONS.map((option) => (
                     <option key={option.value || "all"} value={option.value}>
@@ -1235,7 +1232,9 @@ export function BookingPage() {
                   </div>
                   <div
                     className="booking-time-columns"
-                    style={{ gridTemplateColumns: `repeat(${calendarDays.length}, minmax(150px, 1fr))` }}
+                    style={{
+                      gridTemplateColumns: `repeat(${calendarDays.length}, minmax(150px, 1fr))`,
+                    }}
                   >
                     {calendarDays.map((day) => {
                       const dayBookings = bookingsForDay(day);
@@ -1252,7 +1251,11 @@ export function BookingPage() {
                           onClick={() => setCalendarDate(day)}
                         >
                           {BOOKING_HOURS.map((hour) => (
-                            <div key={hour} className="booking-time-slot" style={{ height: BOOKING_HOUR_HEIGHT }} />
+                            <div
+                              key={hour}
+                              className="booking-time-slot"
+                              style={{ height: BOOKING_HOUR_HEIGHT }}
+                            />
                           ))}
                           {isToday && (
                             <div className="booking-current-time-line" style={{ top: currentTop }}>
@@ -1281,7 +1284,9 @@ export function BookingPage() {
                                 <strong>{layout.booking.title}</strong>
                                 <span>{bookingTimeRange(layout.booking)}</span>
                                 <small>
-                                  {layout.booking.assetName || layout.booking.assetCode || "Phòng họp"}
+                                  {layout.booking.assetName ||
+                                    layout.booking.assetCode ||
+                                    "Phòng họp"}
                                 </small>
                               </button>
                             );
