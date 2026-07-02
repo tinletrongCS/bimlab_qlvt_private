@@ -121,21 +121,22 @@ const BOOKING_TABLE_COLUMNS: BookingTableColumnConfig[] = [
   { id: "actions", label: "Thao tác", locked: true, defaultVisible: true },
 ];
 const BOOKING_TABLE_COLUMN_WIDTHS: Record<BookingTableColumnId, number> = {
-  booking: 190,
-  asset: 190,
-  time: 230,
-  status: 130,
-  owner: 150,
-  purpose: 150,
-  department: 150,
-  site: 150,
-  project: 150,
-  autoRelease: 150,
-  checked: 150,
-  createdBy: 150,
-  updatedAt: 150,
-  actions: 156,
+  booking: 220,
+  asset: 220,
+  time: 260,
+  status: 140,
+  owner: 180,
+  purpose: 240,
+  department: 180,
+  site: 170,
+  project: 170,
+  autoRelease: 170,
+  checked: 190,
+  createdBy: 170,
+  updatedAt: 180,
+  actions: 168,
 };
+const BOOKING_TABLE_MIN_SCROLL_WIDTH = 1280;
 const BOOKING_TABLE_COLUMN_IDS = BOOKING_TABLE_COLUMNS.map((column) => column.id);
 const DEFAULT_BOOKING_TABLE_VISIBLE_COLUMNS = BOOKING_TABLE_COLUMNS.filter(
   (column) => column.defaultVisible || column.locked,
@@ -816,9 +817,12 @@ export function BookingPage() {
       if (!column) return false;
       return visibleBookingColumnSet.has(column.id) || Boolean(column.locked);
     });
-  const bookingTableMinWidth = configuredBookingColumns.reduce(
-    (total, column) => total + (BOOKING_TABLE_COLUMN_WIDTHS[column.id] ?? 150),
-    0,
+  const bookingTableMinWidth = Math.max(
+    BOOKING_TABLE_MIN_SCROLL_WIDTH,
+    configuredBookingColumns.reduce(
+      (total, column) => total + (BOOKING_TABLE_COLUMN_WIDTHS[column.id] ?? 150),
+      0,
+    ),
   );
   const bookingColumnConfigOrder = [
     ...bookingColumnOrder.filter((id) =>

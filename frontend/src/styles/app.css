@@ -10951,34 +10951,63 @@ textarea,
 }
 
 #root .booking-table-col-booking {
-  width: 190px !important;
-  min-width: 190px !important;
+  width: 220px !important;
+  min-width: 220px !important;
 }
 
 #root .booking-table-col-asset {
+  width: 220px !important;
+  min-width: 220px !important;
+}
+
+#root .booking-table-col-status {
+  width: 140px !important;
+  min-width: 140px !important;
+}
+
+#root .booking-table-col-time {
+  width: 260px !important;
+  min-width: 260px !important;
+}
+
+#root .booking-table-actions-col {
+  width: 168px !important;
+  min-width: 168px !important;
+}
+
+#root .booking-table-col-owner,
+#root .booking-table-col-department {
+  width: 180px !important;
+  min-width: 180px !important;
+}
+
+#root .booking-table-col-purpose {
+  width: 240px !important;
+  min-width: 240px !important;
+}
+
+#root .booking-table-col-site,
+#root .booking-table-col-project,
+#root .booking-table-col-autoRelease,
+#root .booking-table-col-createdBy {
+  width: 170px !important;
+  min-width: 170px !important;
+}
+
+#root .booking-table-col-checked {
   width: 190px !important;
   min-width: 190px !important;
 }
 
-#root .booking-table-col-status {
-  width: 130px !important;
-  min-width: 130px !important;
-}
-
-#root .booking-table-col-time {
-  width: 230px !important;
-  min-width: 230px !important;
-}
-
-#root .booking-table-actions-col {
-  width: 156px !important;
-  min-width: 156px !important;
+#root .booking-table-col-updatedAt {
+  width: 180px !important;
+  min-width: 180px !important;
 }
 
 #root .booking-table td:not(.booking-table-sticky-left):not(.booking-table-sticky-right),
 #root .booking-table th:not(.booking-table-sticky-left):not(.booking-table-sticky-right) {
-  width: 150px !important;
-  min-width: 150px !important;
+  width: 170px !important;
+  min-width: 170px !important;
 }
 
 #root .booking-table .booking-table-sticky-booking {
@@ -10987,17 +11016,17 @@ textarea,
 }
 
 #root .booking-table .booking-table-sticky-asset {
-  left: 190px !important;
+  left: 220px !important;
   z-index: 7 !important;
 }
 
 #root .booking-table .booking-table-sticky-status {
-  left: 380px !important;
+  left: 440px !important;
   z-index: 7 !important;
 }
 
 #root .booking-table .booking-table-sticky-time {
-  left: 510px !important;
+  left: 580px !important;
   z-index: 7 !important;
   box-shadow: 8px 0 16px -16px rgba(15, 23, 42, 0.5) !important;
 }
