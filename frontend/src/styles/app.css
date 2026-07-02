@@ -141,21 +141,23 @@ textarea:focus {
 }
 
 .sidebar {
-  background: #fff;
-  border-right: 1px solid #e5e7eb;
-  color: #111827;
+  background: #0a1f36;
+  border-right: 1px solid #061220;
+  color: #ffffff;
   display: flex;
   flex-direction: column;
   min-height: 100vh;
   position: sticky;
   top: 0;
   z-index: 30;
+  width: 260px;
+  flex: 0 0 260px;
 }
 
 .brand {
   align-items: center;
   background: transparent;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid #061220;
   border-radius: 0;
   box-shadow: none;
   color: inherit;
@@ -169,7 +171,7 @@ textarea:focus {
 }
 
 .brand:hover {
-  background: #f9fafb;
+  background: #0d2540;
   box-shadow: none;
   transform: none;
 }
@@ -180,7 +182,7 @@ textarea:focus {
 }
 
 .brand p {
-  color: #6b7280;
+  color: #9ca3b8;
   font-size: 12px;
   font-weight: 600;
   margin: 6px 0 0;
@@ -196,7 +198,7 @@ textarea:focus {
 .sidebar nav a {
   align-items: center;
   border-radius: 10px;
-  color: #4b5563;
+  color: #cbd5e1;
   display: flex;
   font-size: 14px;
   font-weight: 600;
@@ -217,13 +219,13 @@ textarea:focus {
 
 .sidebar nav a.active,
 .sidebar nav a:hover {
-  background: #eff6ff;
-  color: #154d7c;
+  background: #1d4a7a;
+  color: #ffffff;
 }
 
 .user-card {
   align-items: center;
-  border-top: 1px solid #e5e7eb;
+  border-top: 1px solid #061220;
   display: flex;
   gap: 12px;
   margin-top: auto;
@@ -232,9 +234,9 @@ textarea:focus {
 }
 
 .user-card > svg {
-  background: #f0f7fc;
+  background: #1d4a7a;
   border-radius: 12px;
-  color: #154d7c;
+  color: #ffffff;
   flex: 0 0 auto;
   height: 38px;
   padding: 9px;
@@ -246,7 +248,7 @@ textarea:focus {
 }
 
 .user-card strong {
-  color: #111827;
+  color: #ffffff;
   display: block;
   font-size: 14px;
   font-weight: 700;
@@ -256,22 +258,24 @@ textarea:focus {
 }
 
 .user-card span {
-  color: #6b7280;
+  color: #9ca3b8;
   display: block;
   font-size: 12px;
   margin-top: 2px;
 }
 
 .logout-button {
-  color: #64748b;
+  background: #1d4a7a;
+  border: 1px solid #0f2a45;
+  color: #ffffff;
   flex: 0 0 auto;
   margin-left: auto;
 }
 
 .logout-button:hover {
-  background: #fff1f2;
-  border-color: #fecdd3;
-  color: #be123c;
+  background: #dc2626;
+  border-color: #991b1b;
+  color: #ffffff;
 }
 
 .content {
@@ -1129,14 +1133,14 @@ tbody tr:last-child td {
 
 .modal-backdrop {
   align-items: center;
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(4px);
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
   display: flex;
   inset: 0;
   justify-content: center;
   padding: 16px;
   position: fixed;
-  z-index: 50;
+  z-index: 100;
 }
 
 .crud-modal {
@@ -3930,6 +3934,10 @@ button:hover {
   min-height: 0;
 }
 
+.asset-list-layout.category-collapsed {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .asset-category-sidebar {
   background: #ffffff;
   border: 1px solid #e5e7eb;
@@ -3939,8 +3947,14 @@ button:hover {
   align-self: stretch;
   max-height: none;
   min-height: 100%;
-  min-width: 0;
+  min-width: 250px;
+  width: 250px;
+  flex: 0 0 250px;
   overflow: hidden;
+}
+
+.asset-category-sidebar.collapsed {
+  display: none;
 }
 
 .asset-category-sidebar-head {
@@ -4003,6 +4017,7 @@ button:hover {
   overflow: auto;
   padding: 4px;
   scrollbar-gutter: stable;
+  max-height: 320px;
 }
 
 .asset-category-filter-node,
@@ -4521,7 +4536,7 @@ button:hover {
   top: 50%;
   transform: translate(-50%, -50%);
   width: min(560px, calc(100vw - 32px));
-  z-index: 81;
+  z-index: 101;
 }
 
 .asset-column-popover-head {
@@ -4661,8 +4676,9 @@ button:hover {
 }
 
 .asset-table table {
-  min-width: 100%;
-  width: max-content;
+  width: 100%;
+  table-layout: auto;
+  border-collapse: collapse;
 }
 
 .asset-table th {
@@ -4819,20 +4835,20 @@ button:hover {
 
 .asset-table .asset-table-sticky-asset {
   left: 42px;
-  min-width: 230px;
-  width: 230px;
+  min-width: 150px;
+  width: 150px;
 }
 
 .asset-table .asset-table-sticky-category {
-  left: 272px;
-  min-width: 190px;
-  width: 190px;
+  left: 192px;
+  min-width: 140px;
+  width: 140px;
 }
 
 .asset-table .asset-table-sticky-status {
-  left: 462px;
-  min-width: 128px;
-  width: 128px;
+  left: 332px;
+  min-width: 100px;
+  width: 100px;
 }
 
 .asset-table th.asset-table-sticky-left {
@@ -4850,10 +4866,10 @@ button:hover {
 
 .asset-table .asset-table-sticky-right {
   box-shadow: -8px 0 16px -16px rgba(15, 23, 42, 0.5);
-  min-width: 118px;
+  min-width: 180px;
   position: sticky;
   right: 0;
-  width: 118px;
+  width: 180px;
   z-index: 4;
 }
 
@@ -5760,10 +5776,15 @@ tr[data-status="WARNING"] .asset-import-row-status {
 
 .booking-table .table-wrap {
   border-radius: 8px;
+  overflow-x: auto;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
 }
 
 .booking-table table {
-  min-width: 920px;
+  width: 100%;
+  table-layout: auto;
+  border-collapse: collapse;
 }
 
 .booking-table th {
@@ -6878,9 +6899,9 @@ tr[data-status="WARNING"] .asset-import-row-status {
 }
 
 .asset-table-actions-col {
-  min-width: 118px;
+  min-width: 180px;
   text-align: center;
-  width: 118px;
+  width: 180px;
 }
 
 .asset-table .asset-table-sticky-right {
@@ -6994,6 +7015,10 @@ tr[data-status="INVALID"] .asset-import-row-status {
 .asset-row-icon-actions {
   gap: 10px;
   justify-content: center;
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  width: 100%;
 }
 
 .asset-row-text-action {
@@ -7028,8 +7053,8 @@ tr[data-status="INVALID"] .asset-import-row-status {
 }
 
 .asset-table-actions-col {
-  min-width: 132px;
-  width: 132px;
+  min-width: 180px;
+  width: 180px;
 }
 
 @media (max-width: 1180px) {
@@ -7369,11 +7394,13 @@ textarea,
   border: 0;
   background: transparent;
   color: #175cd3;
-  padding: 0;
-  font-size: 11.5px;
+  padding: 4px 8px;
+  font-size: 12px;
   font-weight: 600;
   text-decoration: underline;
   box-shadow: none;
+  display: inline-block;
+  white-space: nowrap;
 }
 
 .asset-row-text-action:hover {
@@ -10797,12 +10824,12 @@ textarea,
 
 #root .asset-table table,
 #root .booking-table table {
-  width: max-content !important;
-  inline-size: max-content !important;
+  width: 100% !important;
+  inline-size: auto !important;
   min-width: 100% !important;
-  max-width: none !important;
-  table-layout: fixed !important;
-  border-collapse: separate !important;
+  max-width: 100% !important;
+  table-layout: auto !important;
+  border-collapse: collapse !important;
   border-spacing: 0 !important;
 }
 
@@ -10870,8 +10897,8 @@ textarea,
 }
 
 #root .asset-table-actions-col {
-  width: 118px !important;
-  min-width: 118px !important;
+  width: 180px !important;
+  min-width: 180px !important;
 }
 
 #root .asset-table .asset-table-sticky-select,
