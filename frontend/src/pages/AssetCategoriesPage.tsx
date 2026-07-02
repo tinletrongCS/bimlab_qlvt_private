@@ -684,7 +684,7 @@ export function AssetCategoriesPage() {
             </div>
 
             {!loading && filteredCategories.length > 0 && (
-              <div className="category-management-section">
+              <div className="category-tree-panel category-management-section">
                 <div className="category-section-heading">
                   <h3>Quản lý danh sách</h3>
                 </div>

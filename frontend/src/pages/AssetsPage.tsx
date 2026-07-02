@@ -1,4 +1,5 @@
 import {
+  type CSSProperties,
   type ChangeEvent,
   type MouseEvent,
   type ReactNode,
@@ -114,6 +115,25 @@ const ASSET_TABLE_COLUMNS: AssetTableColumnConfig[] = [
   { id: "purchaseDate", label: "Ngày mua", defaultVisible: false },
   { id: "warrantyUntil", label: "Bảo hành đến", defaultVisible: false },
 ];
+const ASSET_TABLE_COLUMN_WIDTHS: Record<AssetTableColumnId, number> = {
+  asset: 230,
+  category: 190,
+  serialNumber: 160,
+  status: 128,
+  purchaseCost: 138,
+  originalCost: 138,
+  bookValue: 138,
+  source: 160,
+  site: 160,
+  department: 160,
+  employee: 160,
+  vendor: 160,
+  project: 160,
+  purchaseDate: 138,
+  warrantyUntil: 138,
+};
+const ASSET_TABLE_SELECT_WIDTH = 42;
+const ASSET_TABLE_ACTIONS_WIDTH = 118;
 const ASSET_TABLE_COLUMN_IDS = ASSET_TABLE_COLUMNS.map((column) => column.id);
 const DEFAULT_ASSET_TABLE_VISIBLE_COLUMNS = ASSET_TABLE_COLUMNS.filter(
   (column) => column.defaultVisible || column.locked,
@@ -1761,6 +1781,10 @@ export function AssetsPage() {
       if (!column) return false;
       return visibleAssetColumnSet.has(column.id) || Boolean(column.locked);
     });
+  const assetTableMinWidth = configuredAssetColumns.reduce(
+    (total, column) => total + (ASSET_TABLE_COLUMN_WIDTHS[column.id] ?? 150),
+    ASSET_TABLE_ACTIONS_WIDTH + (assetMultiSelectMode ? ASSET_TABLE_SELECT_WIDTH : 0),
+  );
   const columnConfigOrder = [
     ...assetColumnOrder.filter((id) => ASSET_TABLE_COLUMNS.some((column) => column.id === id && column.locked)),
     ...assetColumnOrder.filter((id) => ASSET_TABLE_COLUMNS.some((column) => column.id === id && !column.locked)),
@@ -2143,7 +2167,12 @@ export function AssetsPage() {
             {filteredAssets.length === 0 ? (
               <div className="empty-state">Không có tài sản phù hợp bộ lọc.</div>
             ) : (
-              <div className="asset-table">
+              <div
+                className="asset-table"
+                style={
+                  { "--qlvt-table-min-width": `${assetTableMinWidth}px` } as CSSProperties
+                }
+              >
                 <table className={assetMultiSelectMode ? "is-multi-select" : "is-single-select"}>
                   <thead>
                     <tr>

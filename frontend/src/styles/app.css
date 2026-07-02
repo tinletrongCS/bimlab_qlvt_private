@@ -10235,6 +10235,11 @@ textarea,
   --qlvt-control-radius: 2px;
   --qlvt-border-soft: #d7dde5;
   --qlvt-focus-blue: #2e82b6;
+  --qlvt-sidebar-blue: #0b3f63;
+  --qlvt-sidebar-blue-hover: #155f8a;
+  --qlvt-nav-blue-soft: #e3f2f9;
+  --qlvt-nav-blue-soft-2: #f2f9fc;
+  --qlvt-link-blue: #15507f;
 }
 
 #root .app-shell {
@@ -10247,6 +10252,8 @@ textarea,
 
 #root .content {
   padding: 8px 10px 12px !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
 }
 
 #root button,
@@ -10308,6 +10315,7 @@ textarea,
   padding-right: 4px !important;
   padding-left: 4px !important;
   background: var(--qlvt-sidebar-blue) !important;
+  color: #f8fbff !important;
 }
 
 #root .sidebar.compact {
@@ -10379,6 +10387,19 @@ textarea,
   gap: 7px !important;
   padding-right: 5px !important;
   padding-left: 6px !important;
+  border: 0 !important;
+  background: transparent !important;
+  color: rgba(248, 251, 255, 0.88) !important;
+  box-shadow: none !important;
+}
+
+#root .sidebar nav a:hover,
+#root .sidebar-group-button:hover,
+#root .sidebar nav a.active,
+#root .sidebar-group-button.active {
+  background: rgba(255, 255, 255, 0.12) !important;
+  color: #ffffff !important;
+  box-shadow: none !important;
 }
 
 #root .sidebar-submenu {
@@ -10393,11 +10414,16 @@ textarea,
 #root .sidebar-search {
   min-height: 26px !important;
   padding: 2px 3px !important;
+  border-color: rgba(255, 255, 255, 0.18) !important;
+  background: rgba(255, 255, 255, 0.1) !important;
 }
 
 #root .sidebar-search input {
   min-height: 24px !important;
   padding: 3px 23px 3px 27px !important;
+  border: 0 !important;
+  background: transparent !important;
+  color: #ffffff !important;
   font-size: 11px !important;
 }
 
@@ -10405,6 +10431,7 @@ textarea,
   left: 7px !important;
   width: 13px !important;
   height: 13px !important;
+  color: rgba(255, 255, 255, 0.78) !important;
 }
 
 #root .sidebar-search button {
@@ -10413,6 +10440,63 @@ textarea,
   min-width: 20px !important;
   height: 20px !important;
   min-height: 20px !important;
+  border: 0 !important;
+  background: transparent !important;
+  color: #ffffff !important;
+  box-shadow: none !important;
+}
+
+#root .section-tabs {
+  margin-bottom: 5px !important;
+  padding: 4px !important;
+  border: 1px solid #b8d7e8 !important;
+  background: var(--qlvt-nav-blue-soft) !important;
+  box-shadow: none !important;
+}
+
+#root .section-tabs nav {
+  gap: 3px !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+
+#root .section-tabs-parent {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 8px 0 4px;
+  color: #164d73;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+#root .section-tabs a {
+  min-height: 28px !important;
+  padding: 5px 9px !important;
+  border: 0 !important;
+  background: transparent !important;
+  color: #31556d !important;
+  box-shadow: none !important;
+}
+
+#root .section-tabs a:hover,
+#root .section-tabs a.active {
+  background: #ffffff !important;
+  color: var(--qlvt-link-blue) !important;
+  box-shadow: inset 0 -2px 0 var(--qlvt-link-blue) !important;
+}
+
+#root .section-tabs .secondary {
+  min-height: 28px !important;
+  border: 0 !important;
+  background: #ffffff !important;
+  color: var(--qlvt-link-blue) !important;
+  box-shadow: none !important;
+}
+
+#root .mobile-topbar {
+  border-bottom: 1px solid #b8d7e8 !important;
+  background: var(--qlvt-nav-blue-soft) !important;
 }
 
 #root .user-card {
@@ -10459,14 +10543,49 @@ textarea,
   overflow: visible !important;
 }
 
+#root .category-workspace {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) minmax(290px, 340px) !important;
+  align-items: start !important;
+  gap: 6px !important;
+  min-width: 0 !important;
+  overflow: visible !important;
+}
+
+#root .category-main-column {
+  display: grid !important;
+  align-content: start !important;
+  gap: 6px !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+
+#root .category-tree-panel,
+#root .category-management-section,
+#root .category-editor {
+  border: 1px solid var(--qlvt-border-soft) !important;
+  background: #ffffff !important;
+}
+
+#root .category-main-column > .category-tree-panel:not(.category-management-section) {
+  min-width: 0 !important;
+  max-width: 100% !important;
+  overflow: hidden !important;
+}
+
+#root .category-editor {
+  min-width: 0 !important;
+}
+
 #root .category-org-viewport {
   box-sizing: border-box !important;
   width: 100% !important;
   max-width: 100% !important;
-  height: clamp(500px, 64vh, 720px) !important;
-  max-height: 720px !important;
-  min-height: 500px !important;
+  height: clamp(360px, 48vh, 540px) !important;
+  max-height: 540px !important;
+  min-height: 360px !important;
   overflow: auto !important;
+  contain: layout paint !important;
   overscroll-behavior: contain !important;
   scrollbar-gutter: stable both-edges !important;
   background: #f8fafc !important;
@@ -10508,10 +10627,52 @@ textarea,
   overflow: visible !important;
 }
 
+#root .category-management-section {
+  display: block !important;
+  margin-top: 0 !important;
+  padding: 6px !important;
+}
+
 #root .category-management-section .category-structure-grid {
   display: grid !important;
   grid-template-columns: minmax(180px, 0.26fr) minmax(0, 1fr) !important;
   align-items: start !important;
+  gap: 6px !important;
+}
+
+#root .asset-list-layout,
+#root .asset-results-column,
+#root .asset-list-panel,
+#root .asset-toolbar,
+#root .asset-list-insights,
+#root .asset-selection-body {
+  border: 0 !important;
+  box-shadow: none !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+
+#root .asset-list-layout {
+  background: transparent !important;
+  padding: 0 !important;
+  overflow-x: hidden !important;
+}
+
+#root .asset-toolbar {
+  padding: 5px !important;
+  background: var(--qlvt-nav-blue-soft-2) !important;
+}
+
+#root .asset-list-panel {
+  background: transparent !important;
+  overflow: visible !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+
+#root .asset-list-panel .table-wrap {
+  border: 1px solid var(--qlvt-border-soft) !important;
+  background: #ffffff !important;
 }
 
 #root .panel .category-list-card,
@@ -10540,9 +10701,8 @@ textarea,
   align-items: center !important;
   justify-content: space-between !important;
   gap: 10px !important;
-  padding: 6px 0 !important;
+  padding: 6px 0 4px !important;
   border: 0 !important;
-  border-bottom: 1px solid #d7dde5 !important;
   background: transparent !important;
 }
 
@@ -10624,6 +10784,235 @@ textarea,
   border-width: 0 !important;
 }
 
+#root .asset-table,
+#root .booking-table .table-wrap {
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  overflow-x: auto !important;
+  overflow-y: auto !important;
+  scrollbar-gutter: stable !important;
+}
+
+#root .asset-table table,
+#root .booking-table table {
+  width: max-content !important;
+  inline-size: max-content !important;
+  min-width: 100% !important;
+  max-width: none !important;
+  table-layout: fixed !important;
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+}
+
+#root .booking-page,
+#root .booking-page > .panel,
+#root .booking-table {
+  min-width: 0 !important;
+  max-width: 100% !important;
+  overflow-x: hidden !important;
+}
+
+#root .booking-table .table-wrap {
+  overflow-x: auto !important;
+  overflow-y: auto !important;
+}
+
+#root .asset-table th,
+#root .asset-table td,
+#root .booking-table th,
+#root .booking-table td {
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+#root .asset-table-col-asset {
+  width: 230px !important;
+  min-width: 230px !important;
+}
+
+#root .asset-table-col-category {
+  width: 190px !important;
+  min-width: 190px !important;
+}
+
+#root .asset-table-col-status {
+  width: 128px !important;
+  min-width: 128px !important;
+}
+
+#root .asset-table-col-serialNumber,
+#root .asset-table-col-source,
+#root .asset-table-col-site,
+#root .asset-table-col-department,
+#root .asset-table-col-employee,
+#root .asset-table-col-vendor,
+#root .asset-table-col-project {
+  width: 160px !important;
+  min-width: 160px !important;
+}
+
+#root .asset-table-col-purchaseCost,
+#root .asset-table-col-originalCost,
+#root .asset-table-col-bookValue,
+#root .asset-table-col-purchaseDate,
+#root .asset-table-col-warrantyUntil {
+  width: 138px !important;
+  min-width: 138px !important;
+}
+
+#root .asset-table-select-col {
+  width: 42px !important;
+  min-width: 42px !important;
+}
+
+#root .asset-table-actions-col {
+  width: 118px !important;
+  min-width: 118px !important;
+}
+
+#root .asset-table .asset-table-sticky-select,
+#root .asset-table .asset-table-sticky-left,
+#root .asset-table .asset-table-sticky-right,
+#root .booking-table .booking-table-sticky-left,
+#root .booking-table .booking-table-sticky-right {
+  position: sticky !important;
+  background: #ffffff !important;
+}
+
+#root .asset-table th.asset-table-sticky-select,
+#root .asset-table th.asset-table-sticky-left,
+#root .asset-table th.asset-table-sticky-right,
+#root .booking-table th.booking-table-sticky-left,
+#root .booking-table th.booking-table-sticky-right {
+  background: #eef2f6 !important;
+}
+
+#root .asset-table .asset-table-sticky-select {
+  left: 0 !important;
+  z-index: 8 !important;
+}
+
+#root .asset-table .asset-table-sticky-asset {
+  left: 42px !important;
+  z-index: 7 !important;
+}
+
+#root .asset-table .asset-table-sticky-category {
+  left: 272px !important;
+  z-index: 7 !important;
+}
+
+#root .asset-table .asset-table-sticky-status {
+  left: 462px !important;
+  z-index: 7 !important;
+  box-shadow: 8px 0 16px -16px rgba(15, 23, 42, 0.5) !important;
+}
+
+#root .asset-table table.is-single-select .asset-table-sticky-asset {
+  left: 0 !important;
+}
+
+#root .asset-table table.is-single-select .asset-table-sticky-category {
+  left: 230px !important;
+}
+
+#root .asset-table table.is-single-select .asset-table-sticky-status {
+  left: 420px !important;
+}
+
+#root .asset-table .asset-table-sticky-right {
+  right: 0 !important;
+  z-index: 8 !important;
+  box-shadow: -8px 0 16px -16px rgba(15, 23, 42, 0.5) !important;
+}
+
+#root .asset-table th.asset-table-sticky-select,
+#root .asset-table th.asset-table-sticky-left,
+#root .asset-table th.asset-table-sticky-right {
+  z-index: 11 !important;
+}
+
+#root .asset-table tbody tr:hover td.asset-table-sticky-select,
+#root .asset-table tbody tr:hover td.asset-table-sticky-left,
+#root .asset-table tbody tr:hover td.asset-table-sticky-right,
+#root .booking-table tbody tr:hover td.booking-table-sticky-left,
+#root .booking-table tbody tr:hover td.booking-table-sticky-right {
+  background: #f5f7fa !important;
+}
+
+#root .asset-table tbody tr.is-selected td.asset-table-sticky-select,
+#root .asset-table tbody tr.is-selected td.asset-table-sticky-left,
+#root .asset-table tbody tr.is-selected td.asset-table-sticky-right {
+  background: #e9f0f7 !important;
+}
+
+#root .booking-table-col-booking {
+  width: 190px !important;
+  min-width: 190px !important;
+}
+
+#root .booking-table-col-asset {
+  width: 190px !important;
+  min-width: 190px !important;
+}
+
+#root .booking-table-col-status {
+  width: 130px !important;
+  min-width: 130px !important;
+}
+
+#root .booking-table-col-time {
+  width: 230px !important;
+  min-width: 230px !important;
+}
+
+#root .booking-table-actions-col {
+  width: 156px !important;
+  min-width: 156px !important;
+}
+
+#root .booking-table td:not(.booking-table-sticky-left):not(.booking-table-sticky-right),
+#root .booking-table th:not(.booking-table-sticky-left):not(.booking-table-sticky-right) {
+  width: 150px !important;
+  min-width: 150px !important;
+}
+
+#root .booking-table .booking-table-sticky-booking {
+  left: 0 !important;
+  z-index: 7 !important;
+}
+
+#root .booking-table .booking-table-sticky-asset {
+  left: 190px !important;
+  z-index: 7 !important;
+}
+
+#root .booking-table .booking-table-sticky-status {
+  left: 380px !important;
+  z-index: 7 !important;
+}
+
+#root .booking-table .booking-table-sticky-time {
+  left: 510px !important;
+  z-index: 7 !important;
+  box-shadow: 8px 0 16px -16px rgba(15, 23, 42, 0.5) !important;
+}
+
+#root .booking-table .booking-table-sticky-right {
+  right: 0 !important;
+  z-index: 8 !important;
+  box-shadow: -8px 0 16px -16px rgba(15, 23, 42, 0.5) !important;
+}
+
+#root .booking-table th.booking-table-sticky-left,
+#root .booking-table th.booking-table-sticky-right {
+  z-index: 11 !important;
+}
+
 #root .booking-calendar-shell {
   align-items: start !important;
 }
@@ -10685,4 +11074,80 @@ textarea,
   #root .category-management-section .category-structure-grid {
     grid-template-columns: 1fr !important;
   }
+}
+
+/* Final scroll containment: wide tables scroll inside their own frame only. */
+html,
+body,
+#root {
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow-x: hidden !important;
+}
+
+#root .app-shell {
+  height: 100vh !important;
+  max-width: 100vw !important;
+  overflow: hidden !important;
+}
+
+#root .content {
+  min-width: 0 !important;
+  max-width: 100% !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+}
+
+#root .mobile-topbar,
+#root .section-tabs {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 80 !important;
+}
+
+#root .asset-page,
+#root .booking-page,
+#root .asset-page > .panel,
+#root .booking-page > .panel,
+#root .asset-list-layout,
+#root .asset-results-column,
+#root .asset-list-panel,
+#root .booking-table {
+  box-sizing: border-box !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  overflow-x: hidden !important;
+}
+
+#root .asset-list-layout {
+  grid-template-columns: minmax(0, 260px) minmax(0, 1fr) !important;
+}
+
+#root .asset-list-layout.category-collapsed {
+  grid-template-columns: 36px minmax(0, 1fr) !important;
+}
+
+#root .asset-list-panel {
+  overflow-y: visible !important;
+}
+
+#root .asset-table,
+#root .booking-table .table-wrap {
+  box-sizing: border-box !important;
+  display: block !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  overflow-x: auto !important;
+  overflow-y: auto !important;
+  overscroll-behavior-x: contain !important;
+}
+
+#root .asset-table table,
+#root .booking-table .table-wrap table {
+  width: max(100%, var(--qlvt-table-min-width, 100%)) !important;
+  min-width: max(100%, var(--qlvt-table-min-width, 100%)) !important;
+  max-width: none !important;
+  table-layout: fixed !important;
 }

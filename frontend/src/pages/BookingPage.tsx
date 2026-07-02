@@ -120,6 +120,22 @@ const BOOKING_TABLE_COLUMNS: BookingTableColumnConfig[] = [
   { id: "updatedAt", label: "Cập nhật", defaultVisible: false },
   { id: "actions", label: "Thao tác", locked: true, defaultVisible: true },
 ];
+const BOOKING_TABLE_COLUMN_WIDTHS: Record<BookingTableColumnId, number> = {
+  booking: 190,
+  asset: 190,
+  time: 230,
+  status: 130,
+  owner: 150,
+  purpose: 150,
+  department: 150,
+  site: 150,
+  project: 150,
+  autoRelease: 150,
+  checked: 150,
+  createdBy: 150,
+  updatedAt: 150,
+  actions: 156,
+};
 const BOOKING_TABLE_COLUMN_IDS = BOOKING_TABLE_COLUMNS.map((column) => column.id);
 const DEFAULT_BOOKING_TABLE_VISIBLE_COLUMNS = BOOKING_TABLE_COLUMNS.filter(
   (column) => column.defaultVisible || column.locked,
@@ -800,6 +816,10 @@ export function BookingPage() {
       if (!column) return false;
       return visibleBookingColumnSet.has(column.id) || Boolean(column.locked);
     });
+  const bookingTableMinWidth = configuredBookingColumns.reduce(
+    (total, column) => total + (BOOKING_TABLE_COLUMN_WIDTHS[column.id] ?? 150),
+    0,
+  );
   const bookingColumnConfigOrder = [
     ...bookingColumnOrder.filter((id) =>
       BOOKING_TABLE_COLUMNS.some((column) => column.id === id && column.locked),
@@ -1443,6 +1463,7 @@ export function BookingPage() {
             getRowKey={(item) => item.id}
             emptyText={loading ? "Đang tải lịch đặt phòng..." : "Chưa có lịch đặt phòng"}
             itemLabel="lịch đặt"
+            tableMinWidth={bookingTableMinWidth}
             columns={configuredBookingColumns.map((column) => ({
               key: column.id,
               title: column.label,
