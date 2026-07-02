@@ -947,6 +947,12 @@ export function AssetsPage() {
   }, []);
 
   const canManage = hasPermission("asset_manage");
+  // Ai được thấy dữ liệu tài chính — khớp BE (Permission.Sets.FINANCE_VIEWERS);
+  // BE đã null các trường tiền tệ khi thiếu quyền, FE ẩn luôn cột/section để không hiện 0 ₫.
+  const canViewFinance =
+    hasPermission("asset_finance_view") ||
+    hasPermission("asset_finance_manage") ||
+    hasPermission("asset_manage");
   const employeeName = (id?: number) =>
     id ? employeeLabel(employees.find((employee) => employee.id === id)) : "Chưa gán người dùng";
   const departmentName = (id?: number) =>
@@ -1501,16 +1507,18 @@ export function AssetsPage() {
                 ),
               )}
             </select>
-            <select
-              value={valueFilter}
-              onChange={(event) => setValueFilter(event.target.value as AssetValueFilter)}
-            >
-              {ASSET_VALUE_FILTERS.map((item) => (
-                <option key={item.value} value={item.value}>
-                  {item.label}
-                </option>
-              ))}
-            </select>
+            {canViewFinance && (
+              <select
+                value={valueFilter}
+                onChange={(event) => setValueFilter(event.target.value as AssetValueFilter)}
+              >
+                {ASSET_VALUE_FILTERS.map((item) => (
+                  <option key={item.value} value={item.value}>
+                    {item.label}
+                  </option>
+                ))}
+              </select>
+            )}
             {/* <select
               value={sourceFilter}
               onChange={(event) => setSourceFilter(event.target.value)}
@@ -1546,12 +1554,14 @@ export function AssetsPage() {
             <div className="asset-list-head">
               <div>
                 <strong>{filteredAssets.length} tài sản</strong>
-                <span>
-                  Tổng giá trị của tài sản đang hiển thị: {money.format(filteredValue)}
-                  {filteredAssets.length !== assets.length
-                    ? ` / ${money.format(totalValue)} toàn bộ`
-                    : ""}
-                </span>
+                {canViewFinance && (
+                  <span>
+                    Tổng giá trị của tài sản đang hiển thị: {money.format(filteredValue)}
+                    {filteredAssets.length !== assets.length
+                      ? ` / ${money.format(totalValue)} toàn bộ`
+                      : ""}
+                  </span>
+                )}
               </div>
             </div>
 
@@ -1564,7 +1574,7 @@ export function AssetsPage() {
                     <tr>
                       <th>Tài sản</th>
                       <th>Danh mục</th>
-                      <th>Giá trị</th>
+                      {canViewFinance && <th>Giá trị</th>}
                       <th>Trạng thái</th>
                       <th>Thao tác</th>
                     </tr>
@@ -1594,7 +1604,7 @@ export function AssetsPage() {
                             </span>
                           </div>
                         </td>
-                        <td>{money.format(Number(item.purchaseCost || 0))}</td>
+                        {canViewFinance && <td>{money.format(Number(item.purchaseCost || 0))}</td>}
                         <td>
                           <StatusBadge value={item.status} />
                         </td>
@@ -1872,141 +1882,145 @@ export function AssetsPage() {
                   </div>
                 </section>
 
-                <section className="asset-detail-section">
-                  <h3>Tài chính và khấu hao</h3>
-                  <div className="asset-detail-fields">
-                    <label>
-                      <span>Nguyên giá</span>
-                      <input
-                        type="number"
-                        value={assetDraft.originalCost ?? ""}
-                        onChange={(event) =>
-                          updateAssetDraft("originalCost", optionalNumber(event.target.value))
-                        }
-                        disabled={!canManage || assetSaving}
-                      />
-                    </label>
-                    <label>
-                      <span>Giá mua/ghi nhận</span>
-                      <input
-                        type="number"
-                        value={assetDraft.purchaseCost ?? ""}
-                        onChange={(event) =>
-                          updateAssetDraft("purchaseCost", optionalNumber(event.target.value))
-                        }
-                        disabled={!canManage || assetSaving}
-                      />
-                    </label>
-                    <label>
-                      <span>Hao mòn lũy kế</span>
-                      <input
-                        type="number"
-                        value={assetDraft.accumulatedDepreciation ?? ""}
-                        onChange={(event) =>
-                          updateAssetDraft(
-                            "accumulatedDepreciation",
-                            optionalNumber(event.target.value),
-                          )
-                        }
-                        disabled={!canManage || assetSaving}
-                      />
-                    </label>
-                    <label>
-                      <span>Giá trị sổ sách</span>
-                      <input
-                        type="number"
-                        value={assetDraft.bookValue ?? ""}
-                        onChange={(event) =>
-                          updateAssetDraft("bookValue", optionalNumber(event.target.value))
-                        }
-                        disabled={!canManage || assetSaving}
-                      />
-                    </label>
-                    <label>
-                      <span>Giá trị còn lại</span>
-                      <input
-                        type="number"
-                        value={assetDraft.residualValue ?? ""}
-                        onChange={(event) =>
-                          updateAssetDraft("residualValue", optionalNumber(event.target.value))
-                        }
-                        disabled={!canManage || assetSaving}
-                      />
-                    </label>
-                    <label>
-                      <span>Ngày mua</span>
-                      <input
-                        type="date"
-                        value={assetDraft.purchaseDate || ""}
-                        onChange={(event) => updateAssetDraft("purchaseDate", event.target.value)}
-                        disabled={!canManage || assetSaving}
-                      />
-                    </label>
-                    <label>
-                      <span>Ngày bắt đầu khấu hao</span>
-                      <input
-                        type="date"
-                        value={assetDraft.depreciationStartDate || ""}
-                        onChange={(event) =>
-                          updateAssetDraft("depreciationStartDate", event.target.value)
-                        }
-                        disabled={!canManage || assetSaving}
-                      />
-                    </label>
-                    <label>
-                      <span>Bảo hành đến</span>
-                      <input
-                        type="date"
-                        value={assetDraft.warrantyUntil || ""}
-                        onChange={(event) => updateAssetDraft("warrantyUntil", event.target.value)}
-                        disabled={!canManage || assetSaving}
-                      />
-                    </label>
-                    <label>
-                      <span>Phương pháp khấu hao</span>
-                      <input
-                        value={assetDraft.depreciationMethod || ""}
-                        onChange={(event) =>
-                          updateAssetDraft("depreciationMethod", event.target.value)
-                        }
-                        disabled={!canManage || assetSaving}
-                      />
-                    </label>
-                    <label>
-                      <span>Số tháng sử dụng</span>
-                      <input
-                        type="number"
-                        value={assetDraft.usefulLifeMonths ?? ""}
-                        onChange={(event) =>
-                          updateAssetDraft("usefulLifeMonths", optionalNumber(event.target.value))
-                        }
-                        disabled={!canManage || assetSaving}
-                      />
-                    </label>
-                    <label>
-                      <span>Số năm sử dụng</span>
-                      <input
-                        type="number"
-                        value={assetDraft.usefulLifeYears ?? ""}
-                        onChange={(event) =>
-                          updateAssetDraft("usefulLifeYears", optionalNumber(event.target.value))
-                        }
-                        disabled={!canManage || assetSaving}
-                      />
-                    </label>
-                    <label>
-                      <span>Tỷ lệ khấu hao</span>
-                      <input
-                        type="number"
-                        value={assetDraft.depreciationRate ?? ""}
-                        onChange={(event) =>
-                          updateAssetDraft("depreciationRate", optionalNumber(event.target.value))
-                        }
-                        disabled={!canManage || assetSaving}
-                      />
-                    </label>
-                  </div>
-                </section>
+                {canViewFinance && (
+                  <section className="asset-detail-section">
+                    <h3>Tài chính và khấu hao</h3>
+                    <div className="asset-detail-fields">
+                      <label>
+                        <span>Nguyên giá</span>
+                        <input
+                          type="number"
+                          value={assetDraft.originalCost ?? ""}
+                          onChange={(event) =>
+                            updateAssetDraft("originalCost", optionalNumber(event.target.value))
+                          }
+                          disabled={!canManage || assetSaving}
+                        />
+                      </label>
+                      <label>
+                        <span>Giá mua/ghi nhận</span>
+                        <input
+                          type="number"
+                          value={assetDraft.purchaseCost ?? ""}
+                          onChange={(event) =>
+                            updateAssetDraft("purchaseCost", optionalNumber(event.target.value))
+                          }
+                          disabled={!canManage || assetSaving}
+                        />
+                      </label>
+                      <label>
+                        <span>Hao mòn lũy kế</span>
+                        <input
+                          type="number"
+                          value={assetDraft.accumulatedDepreciation ?? ""}
+                          onChange={(event) =>
+                            updateAssetDraft(
+                              "accumulatedDepreciation",
+                              optionalNumber(event.target.value),
+                            )
+                          }
+                          disabled={!canManage || assetSaving}
+                        />
+                      </label>
+                      <label>
+                        <span>Giá trị sổ sách</span>
+                        <input
+                          type="number"
+                          value={assetDraft.bookValue ?? ""}
+                          onChange={(event) =>
+                            updateAssetDraft("bookValue", optionalNumber(event.target.value))
+                          }
+                          disabled={!canManage || assetSaving}
+                        />
+                      </label>
+                      <label>
+                        <span>Giá trị còn lại</span>
+                        <input
+                          type="number"
+                          value={assetDraft.residualValue ?? ""}
+                          onChange={(event) =>
+                            updateAssetDraft("residualValue", optionalNumber(event.target.value))
+                          }
+                          disabled={!canManage || assetSaving}
+                        />
+                      </label>
+                      <label>
+                        <span>Ngày mua</span>
+                        <input
+                          type="date"
+                          value={assetDraft.purchaseDate || ""}
+                          onChange={(event) => updateAssetDraft("purchaseDate", event.target.value)}
+                          disabled={!canManage || assetSaving}
+                        />
+                      </label>
+                      <label>
+                        <span>Ngày bắt đầu khấu hao</span>
+                        <input
+                          type="date"
+                          value={assetDraft.depreciationStartDate || ""}
+                          onChange={(event) =>
+                            updateAssetDraft("depreciationStartDate", event.target.value)
+                          }
+                          disabled={!canManage || assetSaving}
+                        />
+                      </label>
+                      <label>
+                        <span>Bảo hành đến</span>
+                        <input
+                          type="date"
+                          value={assetDraft.warrantyUntil || ""}
+                          onChange={(event) =>
+                            updateAssetDraft("warrantyUntil", event.target.value)
+                          }
+                          disabled={!canManage || assetSaving}
+                        />
+                      </label>
+                      <label>
+                        <span>Phương pháp khấu hao</span>
+                        <input
+                          value={assetDraft.depreciationMethod || ""}
+                          onChange={(event) =>
+                            updateAssetDraft("depreciationMethod", event.target.value)
+                          }
+                          disabled={!canManage || assetSaving}
+                        />
+                      </label>
+                      <label>
+                        <span>Số tháng sử dụng</span>
+                        <input
+                          type="number"
+                          value={assetDraft.usefulLifeMonths ?? ""}
+                          onChange={(event) =>
+                            updateAssetDraft("usefulLifeMonths", optionalNumber(event.target.value))
+                          }
+                          disabled={!canManage || assetSaving}
+                        />
+                      </label>
+                      <label>
+                        <span>Số năm sử dụng</span>
+                        <input
+                          type="number"
+                          value={assetDraft.usefulLifeYears ?? ""}
+                          onChange={(event) =>
+                            updateAssetDraft("usefulLifeYears", optionalNumber(event.target.value))
+                          }
+                          disabled={!canManage || assetSaving}
+                        />
+                      </label>
+                      <label>
+                        <span>Tỷ lệ khấu hao</span>
+                        <input
+                          type="number"
+                          value={assetDraft.depreciationRate ?? ""}
+                          onChange={(event) =>
+                            updateAssetDraft("depreciationRate", optionalNumber(event.target.value))
+                          }
+                          disabled={!canManage || assetSaving}
+                        />
+                      </label>
+                    </div>
+                  </section>
+                )}
 
                 <section className="asset-detail-section">
                   <h3>Thông số kỹ thuật</h3>
@@ -2092,14 +2106,16 @@ export function AssetsPage() {
                       <span>Ngày thanh lý</span>
                       <strong>{selectedAsset.disposalDate || "—"}</strong>
                     </div>
-                    <div>
-                      <span>Giá thanh lý</span>
-                      <strong>
-                        {selectedAsset.disposalPrice
-                          ? money.format(Number(selectedAsset.disposalPrice))
-                          : "—"}
-                      </strong>
-                    </div>
+                    {canViewFinance && (
+                      <div>
+                        <span>Giá thanh lý</span>
+                        <strong>
+                          {selectedAsset.disposalPrice
+                            ? money.format(Number(selectedAsset.disposalPrice))
+                            : "—"}
+                        </strong>
+                      </div>
+                    )}
                     <div>
                       <span>Lý do thanh lý</span>
                       <strong>{selectedAsset.disposalReason || "—"}</strong>
