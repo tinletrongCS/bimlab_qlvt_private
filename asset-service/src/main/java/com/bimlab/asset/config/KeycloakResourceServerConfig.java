@@ -84,7 +84,7 @@ public class KeycloakResourceServerConfig {
                 .build();
         OAuth2TokenValidator<Jwt> validators = new DelegatingOAuth2TokenValidator<>(
                 new JwtTimestampValidator(Duration.ofSeconds(clockSkewSeconds)),
-                new JwtIssuerValidator(keycloakIssuer),
+                new JwtIssuerValidator(resolveIssuer(keycloakIssuer, keycloakJwkSetUri)),
                 new AudienceValidator(keycloakAudience),
                 new AzpValidator(parseAllowedClients(allowedClientsCsv)));
         decoder.setJwtValidator(validators);
@@ -100,5 +100,30 @@ public class KeycloakResourceServerConfig {
                 .map(String::trim)
                 .filter(s -> !s.isEmpty())
                 .collect(Collectors.toCollection(LinkedHashSet::new));
+    }
+
+    /**
+     * Issuer LUÔN được validate: ưu tiên {@code auth.keycloak.issuer}; nếu rỗng thì derive từ
+     * jwk-set-uri dạng Keycloak. Không resolve được → FAIL-CLOSED (chặn startup) thay vì
+     * {@code new JwtIssuerValidator("")} vốn từ chối MỌI token (401 hàng loạt). Đồng bộ pattern
+     * HRM/CDS ({@code InternalServiceTokenAuthenticator}).
+     */
+    static String resolveIssuer(String issuer, String jwkSetUri) {
+        String iss = (issuer != null && !issuer.isBlank()) ? issuer : deriveIssuer(jwkSetUri);
+        if (iss == null || iss.isBlank()) {
+            throw new IllegalStateException(
+                    "auth.keycloak.issuer BẮT BUỘC khi jwk-set-uri được set — set AUTH_KEYCLOAK_ISSUER, "
+                            + "hoặc dùng jwk-set-uri dạng Keycloak `.../protocol/...` để derive. Fail-closed.");
+        }
+        return iss;
+    }
+
+    /** http://kc/realms/bimlab/protocol/openid-connect/certs → http://kc/realms/bimlab. Không phải dạng Keycloak → null. */
+    static String deriveIssuer(String jwkSetUri) {
+        if (jwkSetUri == null) {
+            return null;
+        }
+        int i = jwkSetUri.indexOf("/protocol/");
+        return i > 0 ? jwkSetUri.substring(0, i) : null;
     }
 }

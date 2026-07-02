@@ -1,10 +1,5 @@
 import { type ReactNode, useEffect, useMemo, useState } from "react";
-import {
-  FiChevronLeft,
-  FiChevronRight,
-  FiChevronsLeft,
-  FiChevronsRight,
-} from "react-icons/fi";
+import { FiChevronLeft, FiChevronRight, FiChevronsLeft, FiChevronsRight } from "react-icons/fi";
 
 interface Column<T> {
   key: string;
@@ -85,7 +80,11 @@ export function DataTable<T>({
       {pagination && data.length > 0 && (
         <div className="table-pagination">
           <div className="table-pagination-summary">
-            Hiển thị <strong>{start}-{end}</strong> / <strong>{data.length}</strong> {itemLabel}
+            Hiển thị{" "}
+            <strong>
+              {start}-{end}
+            </strong>{" "}
+            / <strong>{data.length}</strong> {itemLabel}
           </div>
           <div className="table-pagination-controls">
             <select

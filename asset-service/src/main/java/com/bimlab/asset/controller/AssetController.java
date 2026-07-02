@@ -32,24 +32,31 @@ public class AssetController {
     private final AssetAccessService access;
     private final AssetMapper mapper;
 
+    /** Caller có được thấy trường tài chính không (asset_finance_view/finance_manage/manage). */
+    private boolean canViewFinance() {
+        return access.hasAnyPermission(Permission.Sets.FINANCE_VIEWERS.toArray(Permission[]::new));
+    }
+
     @GetMapping
-    @PreAuthorize("hasAnyAuthority('asset_access','asset_view_self','asset_view_team','asset_view_all','asset_manage','asset_finance_manage')")
+    @PreAuthorize("hasAnyAuthority('asset_access','asset_view_self','asset_view_team','asset_view_all','asset_manage','asset_finance_manage','asset_finance_view')")
     public List<AssetResponse> list() {
-        return service.listAssets().stream().map(mapper::toResponse).toList();
+        boolean finance = canViewFinance();
+        return service.listAssets().stream().map(a -> mapper.toResponse(a, finance)).toList();
     }
 
     @GetMapping("/paged")
-    @PreAuthorize("hasAnyAuthority('asset_access','asset_view_self','asset_view_team','asset_view_all','asset_manage','asset_finance_manage')")
+    @PreAuthorize("hasAnyAuthority('asset_access','asset_view_self','asset_view_team','asset_view_all','asset_manage','asset_finance_manage','asset_finance_view')")
     public Page<AssetResponse> listPaged(@PageableDefault(size = 20) Pageable pageable) {
-        return service.listAssetsPaged(pageable).map(mapper::toResponse);
+        boolean finance = canViewFinance();
+        return service.listAssetsPaged(pageable).map(a -> mapper.toResponse(a, finance));
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('asset_access', 'asset_view_self', 'asset_view_team', 'asset_view_all', 'asset_manage', 'asset_finance_manage')")
+    @PreAuthorize("hasAnyAuthority('asset_access', 'asset_view_self', 'asset_view_team', 'asset_view_all', 'asset_manage', 'asset_finance_manage', 'asset_finance_view')")
     public AssetResponse get(@PathVariable Long id) {
         AssetItem item = service.getAssetById(id);
         access.ensureSelfOrAny(item.getAssignedEmployeeId(), Permission.Sets.ASSET_ADMIN);
-        return mapper.toResponse(item);
+        return mapper.toResponse(item, canViewFinance());
     }
     @PostMapping
     @PreAuthorize("hasAuthority('asset_manage')")
@@ -87,8 +94,10 @@ public class AssetController {
     /*
     TODO tính khấu hao theo từng danh mục tài sản -> để làm sau khi có công thức tính
      */
+    // Snapshot khấu hao là dữ liệu thuần tài chính → chỉ nhóm xem được tài chính
+    // (asset_finance_view/finance_manage; asset_manage nhập liệu tài chính nên giữ).
     @GetMapping("/{id}/depreciation")
-    @PreAuthorize("hasAnyAuthority('asset_access','asset_view_self','asset_view_team','asset_view_all','asset_manage','asset_finance_manage')")
+    @PreAuthorize("hasAnyAuthority('asset_finance_view','asset_finance_manage','asset_manage')")
     public DepreciationSnapshot depreciation(@PathVariable Long id) {
         AssetItem item = service.getAssetById(id);
         access.ensureSelfOrAny(item.getAssignedEmployeeId(), Permission.Sets.ASSET_ADMIN);

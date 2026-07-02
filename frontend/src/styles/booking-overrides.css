@@ -1021,7 +1021,10 @@
   color: #344054;
   cursor: pointer;
   font-size: 12px;
-  transition: background-color 0.14s ease, border-color 0.14s ease, box-shadow 0.14s ease;
+  transition:
+    background-color 0.14s ease,
+    border-color 0.14s ease,
+    box-shadow 0.14s ease;
 }
 
 .booking-calendar-filter-row input:hover,
@@ -1042,7 +1045,9 @@
 }
 
 .booking-calendar-view-month .booking-calendar-day {
-  transition: background-color 0.14s ease, box-shadow 0.14s ease;
+  transition:
+    background-color 0.14s ease,
+    box-shadow 0.14s ease;
 }
 
 .booking-calendar-view-month .booking-calendar-day:hover {
@@ -1062,7 +1067,9 @@
 
 .booking-agenda-day {
   cursor: pointer;
-  transition: background-color 0.14s ease, box-shadow 0.14s ease;
+  transition:
+    background-color 0.14s ease,
+    box-shadow 0.14s ease;
 }
 
 .booking-agenda-day:hover {

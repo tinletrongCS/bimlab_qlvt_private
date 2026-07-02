@@ -12,9 +12,12 @@ import com.bimlab.asset.model.status.AssetBookingStatus;
 import com.bimlab.asset.model.status.AssetStatus;
 import com.bimlab.asset.repository.AssetBookingSessionRepository;
 import com.bimlab.asset.repository.AssetItemRepository;
+import com.bimlab.asset.security.AssetAccessService;
+import com.bimlab.asset.security.Permission;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -46,6 +49,7 @@ public class AssetBookingService {
     private final AssetBookingSessionRepository bookings;
     private final AssetItemRepository assets;
     private final AssetBookingMapper mapper;
+    private final AssetAccessService access;
 
     @Transactional(readOnly = true)
     public List<AssetBookingResponse> listBookings(Long assetId, String status, LocalDateTime fromTime, LocalDateTime toTime) {
@@ -137,8 +141,15 @@ public class AssetBookingService {
     }
 
     @Transactional
-    public AssetBookingResponse createBooking(AssetBookingRequest req) {
+    public AssetBookingResponse createBooking(AssetBookingRequest req, Long callerEmployeeId, String callerUsername) {
+        // Danh tính người đặt PHẢI lấy từ principal (JWT), không tin req.requestedByEmployeeId/createdBy
+        // để tránh mạo danh + hỏng audit trail. Tài khoản chưa liên kết nhân viên thì không được đặt.
+        if (callerEmployeeId == null) {
+            throw new AccessDeniedException("Tài khoản chưa liên kết nhân viên nên không thể đặt phòng");
+        }
         AssetItem assetItem = findBookableAsset(req.assetCode());
+        // Khoá bi quan hàng asset: serialize các lượt tạo booking đồng thời cùng phòng (chống đặt trùng do race).
+        assets.findByAssetCodeForUpdate(assetItem.getAssetCode());
         validateBookingTime(req.startTime(), req.endTime());
         List<AssetBookingSession> conflicts = bookings.findOverlappingBookings(
                 assetItem.getAssetCode(),
@@ -157,76 +168,81 @@ public class AssetBookingService {
                 .purpose(req.purpose())
                 .startTime(req.startTime())
                 .endTime(req.endTime())
-                .requestedByEmployeeId(req.requestedByEmployeeId())
+                .requestedByEmployeeId(callerEmployeeId)
                 .departmentId(req.departmentId())
                 .siteId(req.siteId())
                 .projectId(req.projectId())
                 .status(AssetBookingStatus.CONFIRMED)
                 .autoRelease(req.autoRelease() == null ? Boolean.TRUE : req.autoRelease())
                 .notes(req.notes())
-                .createdBy(req.createdBy())
+                .createdBy(callerUsername)
                 .build();
 
         return mapper.toResponse(bookings.save(booking));
     }
 
     @Transactional
-    public AssetBookingResponse checkIn(Long id) {
-        // TODO PRACTICE 5:
-        // Chuyển booking từ CONFIRMED sang IN_USE khi đến giờ/nhận phòng.
-        //
-        // Yêu cầu:
-        // - Tìm booking theo id.
-        // - Chỉ cho check-in nếu status hiện tại là CONFIRMED.
-        // - Có thể kiểm tra thời gian hiện tại nằm gần startTime/endTime.
-        // - Set status = IN_USE, checkedInAt = LocalDateTime.now().
-        // - Save và return response.
-        throw new UnsupportedOperationException("TODO: check in booking session");
+    public AssetBookingResponse checkIn(Long id, Long callerEmployeeId, String callerUsername) {
+        AssetBookingSession booking = findBookingOrThrow(id);
+        // Chỉ người đặt phòng (hoặc admin QLVT) mới được thao tác vòng đời phiên đặt.
+        access.ensureSelfOrAny(booking.getRequestedByEmployeeId(), Permission.Sets.ASSET_ADMIN);
+        if (booking.getStatus() != AssetBookingStatus.CONFIRMED) {
+            throw new IllegalStateException("Chỉ nhận phòng khi phiên đặt đang ở trạng thái CONFIRMED");
+        }
+        booking.setStatus(AssetBookingStatus.IN_USE);
+        booking.setCheckedInAt(LocalDateTime.now());
+        booking.setUpdatedBy(callerUsername);
+        return mapper.toResponse(bookings.save(booking));
     }
 
     @Transactional
-    public AssetBookingResponse checkOut(Long id, AssetBookingCheckoutRequest req) {
-        // TODO PRACTICE 6:
-        // Hoàn tất phiên booking và trả phòng thủ công.
-        //
-        // Yêu cầu:
-        // - Tìm booking theo id.
-        // - Chỉ cho checkout nếu status là IN_USE hoặc CONFIRMED tùy rule bạn chọn.
-        // - Set status = COMPLETED, checkedOutAt = LocalDateTime.now().
-        // - Nếu req.completedBy() có dữ liệu thì có thể lưu vào updatedBy.
-        // - Nếu req.notes() có dữ liệu thì append/cập nhật notes.
-        // - Save và return response.
-        throw new UnsupportedOperationException("TODO: check out booking session");
+    public AssetBookingResponse checkOut(Long id, AssetBookingCheckoutRequest req, Long callerEmployeeId, String callerUsername) {
+        AssetBookingSession booking = findBookingOrThrow(id);
+        access.ensureSelfOrAny(booking.getRequestedByEmployeeId(), Permission.Sets.ASSET_ADMIN);
+        if (booking.getStatus() != AssetBookingStatus.IN_USE && booking.getStatus() != AssetBookingStatus.CONFIRMED) {
+            throw new IllegalStateException("Chỉ trả phòng khi phiên đặt đang IN_USE hoặc CONFIRMED");
+        }
+        booking.setStatus(AssetBookingStatus.COMPLETED);
+        booking.setCheckedOutAt(LocalDateTime.now());
+        // updatedBy đóng dấu từ principal — KHÔNG tin req.completedBy() (audit chống mạo danh).
+        booking.setUpdatedBy(callerUsername);
+        if (req != null && req.notes() != null && !req.notes().isBlank()) {
+            booking.setNotes(req.notes());
+        }
+        return mapper.toResponse(bookings.save(booking));
     }
 
     @Transactional
-    public AssetBookingResponse cancel(Long id, AssetBookingCancelRequest req) {
-        // TODO PRACTICE 7:
-        // Hủy booking khi người dùng không xác nhận hoặc chủ động hủy lịch.
-        //
-        // Yêu cầu:
-        // - Tìm booking theo id.
-        // - Không cho hủy nếu status đã COMPLETED/CANCELLED.
-        // - Set status = CANCELLED, cancelledBy, cancelledAt, cancelReason.
-        // - Save và return response.
-        throw new UnsupportedOperationException("TODO: cancel booking session");
+    public AssetBookingResponse cancel(Long id, AssetBookingCancelRequest req, Long callerEmployeeId, String callerUsername) {
+        AssetBookingSession booking = findBookingOrThrow(id);
+        access.ensureSelfOrAny(booking.getRequestedByEmployeeId(), Permission.Sets.ASSET_ADMIN);
+        if (booking.getStatus() == AssetBookingStatus.COMPLETED || booking.getStatus() == AssetBookingStatus.CANCELLED) {
+            throw new IllegalStateException("Không thể hủy phiên đặt đã hoàn tất hoặc đã hủy");
+        }
+        booking.setStatus(AssetBookingStatus.CANCELLED);
+        // cancelledBy đóng dấu từ principal — KHÔNG tin req.cancelledBy(). cancelReason là dữ liệu người dùng hợp lệ.
+        booking.setCancelledBy(callerUsername);
+        booking.setCancelledAt(LocalDateTime.now());
+        booking.setCancelReason(req.cancelReason());
+        booking.setUpdatedBy(callerUsername);
+        return mapper.toResponse(bookings.save(booking));
     }
 
     @Transactional
     public List<AssetBookingResponse> autoReleaseDue(LocalDateTime now) {
-        // TODO PRACTICE 8:
-        // Tự động trả phòng cho các phiên đã quá endTime và autoRelease = true.
-        //
-        // Yêu cầu:
-        // - Nếu now == null thì dùng LocalDateTime.now().
-        // - Dùng bookings.findAutoReleaseDue(AssetBookingStatus.IN_USE, now).
-        // - Với từng booking: set status = COMPLETED, checkedOutAt = now, updatedBy = "system".
-        // - Save tất cả rồi map sang response.
-        //
-        // Gợi ý:
-        // - Sau này method này nên được gọi bởi @Scheduled thay vì endpoint thủ công.
-        // - Nếu autoRelease = false, flow sẽ chờ người phụ trách xác nhận trả phòng.
-        throw new UnsupportedOperationException("TODO: auto release due booking sessions");
+        LocalDateTime at = (now == null) ? LocalDateTime.now() : now;
+        List<AssetBookingSession> due = bookings.findAutoReleaseDue(AssetBookingStatus.IN_USE, at);
+        for (AssetBookingSession booking : due) {
+            booking.setStatus(AssetBookingStatus.COMPLETED);
+            booking.setCheckedOutAt(at);
+            booking.setUpdatedBy("system");
+        }
+        return bookings.saveAll(due).stream().map(mapper::toResponse).toList();
+    }
+
+    private AssetBookingSession findBookingOrThrow(Long id) {
+        return bookings.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy phiên đặt phòng"));
     }
 
     private AssetItem findBookableAsset(String assetCode) {
