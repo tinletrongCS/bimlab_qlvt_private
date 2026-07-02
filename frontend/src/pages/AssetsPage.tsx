@@ -23,6 +23,7 @@ import {
   FiUpload,
   FiX,
 } from "react-icons/fi";
+import { OverflowActions } from "../components/OverflowActions";
 import { StatusBadge } from "../components/StatusBadge";
 import { useActions } from "../contexts/ActionsContext";
 import { useAppData } from "../contexts/AppDataContext";
@@ -102,7 +103,7 @@ const ASSET_TABLE_COLUMNS: AssetTableColumnConfig[] = [
   { id: "asset", label: "Tài sản", locked: true, defaultVisible: true },
   { id: "category", label: "Danh mục", locked: true, defaultVisible: true },
   { id: "serialNumber", label: "Serial/MAC", defaultVisible: false },
-  { id: "status", label: "Trạng thái", locked: true, defaultVisible: true },
+  { id: "status", label: "Trạng thái", defaultVisible: true },
   { id: "purchaseCost", label: "Giá trị mua", defaultVisible: true },
   { id: "originalCost", label: "Nguyên giá", defaultVisible: false },
   { id: "bookValue", label: "Giá trị còn lại", defaultVisible: false },
@@ -116,24 +117,24 @@ const ASSET_TABLE_COLUMNS: AssetTableColumnConfig[] = [
   { id: "warrantyUntil", label: "Bảo hành đến", defaultVisible: false },
 ];
 const ASSET_TABLE_COLUMN_WIDTHS: Record<AssetTableColumnId, number> = {
-  asset: 150,
-  category: 140,
-  serialNumber: 150,
-  status: 100,
-  purchaseCost: 130,
-  originalCost: 130,
-  bookValue: 130,
-  source: 140,
-  site: 140,
-  department: 140,
-  employee: 140,
-  vendor: 140,
-  project: 140,
-  purchaseDate: 120,
-  warrantyUntil: 120,
+  asset: 190,
+  category: 150,
+  serialNumber: 160,
+  status: 118,
+  purchaseCost: 138,
+  originalCost: 138,
+  bookValue: 138,
+  source: 160,
+  site: 160,
+  department: 160,
+  employee: 160,
+  vendor: 160,
+  project: 160,
+  purchaseDate: 138,
+  warrantyUntil: 138,
 };
 const ASSET_TABLE_SELECT_WIDTH = 42;
-const ASSET_TABLE_ACTIONS_WIDTH = 180;
+const ASSET_TABLE_ACTIONS_WIDTH = 86;
 const ASSET_TABLE_COLUMN_IDS = ASSET_TABLE_COLUMNS.map((column) => column.id);
 const DEFAULT_ASSET_TABLE_VISIBLE_COLUMNS = ASSET_TABLE_COLUMNS.filter(
   (column) => column.defaultVisible || column.locked,
@@ -147,18 +148,16 @@ function normalizeAssetColumnOrder(order: AssetTableColumnId[]) {
       (id) =>
         ASSET_TABLE_COLUMN_IDS.includes(id) &&
         id !== "asset" &&
-        id !== "category" &&
-        id !== "status",
+        id !== "category",
     ),
     ...ASSET_TABLE_COLUMN_IDS.filter(
       (id) =>
         !order.includes(id) &&
         id !== "asset" &&
-        id !== "category" &&
-        id !== "status",
+        id !== "category",
     ),
   ];
-  return ["asset", "category", "status", ...middleColumns] as AssetTableColumnId[];
+  return ["asset", "category", ...middleColumns] as AssetTableColumnId[];
 }
 
 function readAssetColumnPreferences() {
@@ -2193,7 +2192,7 @@ export function AssetsPage() {
                         <th
                           key={column.id}
                           className={`asset-table-col-${column.id} ${
-                            ["asset", "category", "status"].includes(column.id)
+                            ["asset", "category"].includes(column.id)
                               ? `asset-table-sticky-left asset-table-sticky-${column.id}`
                               : ""
                           } ${column.align ? `align-${column.align}` : ""}`}
@@ -2229,7 +2228,7 @@ export function AssetsPage() {
                           <td
                             key={column.id}
                             className={`asset-table-col-${column.id} ${
-                              ["asset", "category", "status"].includes(column.id)
+                              ["asset", "category"].includes(column.id)
                                 ? `asset-table-sticky-left asset-table-sticky-${column.id}`
                                 : ""
                             } ${column.align ? `align-${column.align}` : ""}`}
@@ -2238,34 +2237,30 @@ export function AssetsPage() {
                           </td>
                         ))}
                         <td className="asset-table-actions-col asset-table-sticky-right">
-                          <div className="asset-row-icon-actions">
-                            <button
-                              type="button"
-                              className="asset-row-text-action"
-                              title="Xem và chỉnh sửa tài sản"
-                              onClick={() => openAssetDetail(item)}
-                            >
-                              Xem
-                            </button>
-                            <button
-                              type="button"
-                              className="asset-row-text-action"
-                              title="Xem mã QR tài sản"
-                              onClick={() => setQrAsset(item)}
-                            >
-                              QR
-                            </button>
-                            {canManage && (
-                              <button
-                                type="button"
-                                className="asset-row-text-action danger"
-                                title="Xóa tài sản"
-                                onClick={() => void handleDeleteAsset(item)}
-                              >
-                                Xóa
-                              </button>
-                            )}
-                          </div>
+                          <OverflowActions
+                            label={`Mở thao tác cho ${item.assetCode}`}
+                            actions={[
+                              {
+                                label: "Xem chi tiết",
+                                onClick: () => openAssetDetail(item),
+                              },
+                              {
+                                label: "Xem QR",
+                                onClick: () => setQrAsset(item),
+                              },
+                              ...(canManage
+                                ? [
+                                    {
+                                      label: "Xóa",
+                                      danger: true,
+                                      onClick: () => {
+                                        void handleDeleteAsset(item);
+                                      },
+                                    },
+                                  ]
+                                : []),
+                            ]}
+                          />
                         </td>
                       </tr>
                     ))}
@@ -2567,28 +2562,66 @@ export function AssetsPage() {
           )}
 
           <section className="asset-list-insights" aria-label="Thống kê tài sản đang hiển thị">
+            <div className="asset-insights-title">
+              <div>
+                <strong>Phân tích nhanh tài sản</strong>
+                <span>Trực quan theo dữ liệu đang hiển thị trong danh sách.</span>
+              </div>
+              <small>{filteredAssets.length} tài sản</small>
+            </div>
             {[
               ["Theo trạng thái", assetListInsights.statuses],
               ["Theo danh mục", assetListInsights.categories],
               ["Theo giá trị", assetListInsights.values],
               ["Theo chi nhánh", assetListInsights.sites],
-            ].map(([title, items]) => (
-              <article className="asset-insight-card" key={title as string}>
-                <strong>{title as string}</strong>
-                {(items as Array<{ label: string; value: number }>).length === 0 ? (
-                  <span>Chưa có dữ liệu</span>
-                ) : (
-                  <div>
-                    {(items as Array<{ label: string; value: number }>).map((item) => (
-                      <p key={item.label}>
-                        <span>{item.label}</span>
-                        <b>{item.value}</b>
-                      </p>
-                    ))}
+            ].map(([title, items]) => {
+              const insightItems = items as Array<{ label: string; value: number }>;
+              const total = insightItems.reduce((sum, item) => sum + item.value, 0);
+              let accumulated = 0;
+              const palette = ["#15507f", "#2e82b6", "#65a9cf", "#94c8df", "#d0e7f3"];
+              const segments =
+                total > 0
+                  ? insightItems
+                      .map((item, index) => {
+                        const start = accumulated;
+                        accumulated += (item.value / total) * 100;
+                        return `${palette[index % palette.length]} ${start}% ${accumulated}%`;
+                      })
+                      .join(", ")
+                  : "#e5e7eb 0 100%";
+
+              return (
+                <article className="asset-insight-card" key={title as string}>
+                  <div className="asset-insight-head">
+                    <strong>{title as string}</strong>
+                    <span>{total} mục</span>
                   </div>
-                )}
-              </article>
-            ))}
+                  {insightItems.length === 0 ? (
+                    <span>Chưa có dữ liệu</span>
+                  ) : (
+                    <div className="asset-insight-visual">
+                      <div
+                        className="asset-insight-donut"
+                        style={{ "--asset-donut": segments } as CSSProperties}
+                        title={insightItems
+                          .map((item) => `${item.label}: ${item.value}`)
+                          .join("\n")}
+                        aria-hidden="true"
+                      />
+                      <div className="asset-insight-bars">
+                        {insightItems.map((item, index) => (
+                          <p key={item.label}>
+                            <i style={{ background: palette[index % palette.length] }} />
+                            <span>{item.label}</span>
+                            <b>{item.value}</b>
+                          </p>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </article>
+              );
+            })}
           </section>
         </div>
       </div>

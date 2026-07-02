@@ -16,6 +16,7 @@ import {
   FiXCircle,
 } from "react-icons/fi";
 import { DataTable } from "../components/DataTable";
+import { OverflowActions } from "../components/OverflowActions";
 import { useAuth } from "../contexts/AuthContext";
 import {
   cancelAssetBooking,
@@ -103,12 +104,12 @@ const EMPTY_FORM = {
   notes: "",
 };
 
-const BOOKING_TABLE_STORAGE_KEY = "qlvt.bookingList.tableColumns.v1";
+const BOOKING_TABLE_STORAGE_KEY = "qlvt.bookingList.tableColumns.v2";
 const BOOKING_TABLE_COLUMNS: BookingTableColumnConfig[] = [
-  { id: "booking", label: "Phiên booking", locked: true, defaultVisible: true },
+  { id: "booking", label: "Phiên đặt lịch", locked: true, defaultVisible: true },
   { id: "asset", label: "Phòng họp", locked: true, defaultVisible: true },
-  { id: "time", label: "Khung giờ", locked: true, defaultVisible: true },
-  { id: "status", label: "Trạng thái", locked: true, defaultVisible: true },
+  { id: "status", label: "Trạng thái", defaultVisible: true },
+  { id: "time", label: "Khung giờ", defaultVisible: true },
   { id: "owner", label: "Phụ trách", defaultVisible: true },
   { id: "purpose", label: "Mục đích", defaultVisible: false },
   { id: "department", label: "Phòng ban", defaultVisible: false },
@@ -121,22 +122,22 @@ const BOOKING_TABLE_COLUMNS: BookingTableColumnConfig[] = [
   { id: "actions", label: "Thao tác", locked: true, defaultVisible: true },
 ];
 const BOOKING_TABLE_COLUMN_WIDTHS: Record<BookingTableColumnId, number> = {
-  booking: 110,
-  asset: 110,
-  time: 130,
-  status: 70,
-  owner: 90,
-  purpose: 120,
-  department: 90,
-  site: 85,
-  project: 85,
-  autoRelease: 85,
-  checked: 95,
-  createdBy: 85,
-  updatedAt: 90,
-  actions: 100,
+  booking: 230,
+  asset: 230,
+  time: 260,
+  status: 140,
+  owner: 170,
+  purpose: 190,
+  department: 170,
+  site: 160,
+  project: 160,
+  autoRelease: 170,
+  checked: 170,
+  createdBy: 160,
+  updatedAt: 170,
+  actions: 86,
 };
-const BOOKING_TABLE_MIN_SCROLL_WIDTH = 900;
+const BOOKING_TABLE_MIN_SCROLL_WIDTH = 1420;
 const BOOKING_TABLE_COLUMN_IDS = BOOKING_TABLE_COLUMNS.map((column) => column.id);
 const DEFAULT_BOOKING_TABLE_VISIBLE_COLUMNS = BOOKING_TABLE_COLUMNS.filter(
   (column) => column.defaultVisible || column.locked,
@@ -146,8 +147,6 @@ const BOOKING_HOURS = Array.from({ length: 24 }, (_, hour) => hour);
 const BOOKING_LOCKED_COLUMN_ORDER: BookingTableColumnId[] = [
   "booking",
   "asset",
-  "status",
-  "time",
   "actions",
 ];
 
@@ -163,8 +162,6 @@ function normalizeBookingColumnOrder(order: BookingTableColumnId[]) {
   return [
     "booking",
     "asset",
-    "status",
-    "time",
     ...middleColumns,
     "actions",
   ] as BookingTableColumnId[];
@@ -681,7 +678,7 @@ export function BookingPage() {
   const bookingTableColumns: BookingTableColumnDefinition[] = [
     {
       id: "booking",
-      label: "Phiên booking",
+      label: "Phiên đặt lịch",
       locked: true,
       render: (item) => (
         <div className="asset-name-cell">
@@ -704,7 +701,6 @@ export function BookingPage() {
     {
       id: "time",
       label: "Khung giờ",
-      locked: true,
       render: (item) => (
         <div className="asset-muted-stack">
           <strong>{formatDateTime(item.startTime)}</strong>
@@ -715,7 +711,6 @@ export function BookingPage() {
     {
       id: "status",
       label: "Trạng thái",
-      locked: true,
       render: (item) => <BookingStatusBadge status={item.status} />,
     },
     {
@@ -773,39 +768,31 @@ export function BookingPage() {
       label: "Thao tác",
       locked: true,
       render: (item) => (
-        <div className="asset-row-text-actions">
-          <button
-            type="button"
-            className="asset-row-text-action"
-            onClick={() => setSelectedBooking(item)}
-          >
-            Xem
-          </button>
-          <button
-            type="button"
-            className="asset-row-text-action"
-            disabled={!canCheckIn(item)}
-            onClick={() => setConfirmAction({ type: "check-in", booking: item })}
-          >
-            Nhận
-          </button>
-          <button
-            type="button"
-            className="asset-row-text-action"
-            disabled={!canCheckOut(item)}
-            onClick={() => setConfirmAction({ type: "check-out", booking: item })}
-          >
-            Trả
-          </button>
-          <button
-            type="button"
-            className="asset-row-text-action danger"
-            disabled={!canCancel(item)}
-            onClick={() => setConfirmAction({ type: "cancel", booking: item })}
-          >
-            Hủy
-          </button>
-        </div>
+        <OverflowActions
+          label={`Mở thao tác cho ${item.bookingCode}`}
+          actions={[
+            {
+              label: "Xem chi tiết",
+              onClick: () => setSelectedBooking(item),
+            },
+            {
+              label: "Nhận phòng",
+              disabled: !canCheckIn(item),
+              onClick: () => setConfirmAction({ type: "check-in", booking: item }),
+            },
+            {
+              label: "Trả phòng",
+              disabled: !canCheckOut(item),
+              onClick: () => setConfirmAction({ type: "check-out", booking: item }),
+            },
+            {
+              label: "Hủy lịch",
+              danger: true,
+              disabled: !canCancel(item),
+              onClick: () => setConfirmAction({ type: "cancel", booking: item }),
+            },
+          ]}
+        />
       ),
     },
   ];
@@ -1316,15 +1303,83 @@ export function BookingPage() {
             <h2>Danh sách lịch đặt</h2>
           </div>
           <div className="booking-table-tools">
-            <button
-              type="button"
-              className="secondary asset-column-config-toggle booking-column-config-toggle"
-              aria-expanded={bookingColumnConfigOpen}
-              onMouseDown={(event) => event.preventDefault()}
-              onClick={() => setBookingColumnConfigOpen((open) => !open)}
-            >
-              <FiSettings /> Cấu hình cột
-            </button>
+            <div className="booking-column-dropdown">
+              <button
+                type="button"
+                className="asset-table-text-action asset-column-config-toggle booking-column-config-toggle"
+                aria-haspopup="menu"
+                aria-expanded={bookingColumnConfigOpen}
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={() => setBookingColumnConfigOpen((open) => !open)}
+              >
+                <FiSettings /> Cấu hình cột
+              </button>
+              {bookingColumnConfigOpen && (
+                <div
+                  className="asset-column-popover booking-column-popover"
+                  role="menu"
+                  aria-labelledby="booking-column-config-title"
+                >
+                  <div className="asset-column-popover-head">
+                    <div>
+                      <strong id="booking-column-config-title">Cấu hình cột</strong>
+                      <span>Bật/tắt cột cần xem. Các cột bắt buộc được cố định trong bảng.</span>
+                    </div>
+                    <button
+                      type="button"
+                      className="icon-button"
+                      onClick={() => setBookingColumnConfigOpen(false)}
+                    >
+                      <FiX />
+                    </button>
+                  </div>
+                  <div className="asset-column-list">
+                    {bookingColumnConfigOrder.map((id) => {
+                      const column = BOOKING_TABLE_COLUMNS.find((item) => item.id === id);
+                      if (!column) return null;
+                      const locked = Boolean(column.locked);
+                      const checked = visibleBookingColumnSet.has(id) || locked;
+                      return (
+                        <label
+                          key={id}
+                          className={`asset-column-option ${
+                            draggedBookingColumn === id ? "is-dragging" : ""
+                          } ${locked ? "is-locked" : ""}`}
+                          draggable={!locked}
+                          onDragStart={() => {
+                            if (!locked) setDraggedBookingColumn(id);
+                          }}
+                          onDragOver={(event) => event.preventDefault()}
+                          onDrop={() => dropBookingColumn(id)}
+                          onDragEnd={() => setDraggedBookingColumn(null)}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            disabled={locked}
+                            onChange={() => toggleBookingColumn(id)}
+                          />
+                          <span>{column.label}</span>
+                          {locked && <em>Bắt buộc</em>}
+                        </label>
+                      );
+                    })}
+                  </div>
+                  <div className="asset-column-popover-actions">
+                    <button type="button" className="secondary" onClick={resetBookingColumns}>
+                      <FiRotateCcw /> Mặc định
+                    </button>
+                    <button
+                      type="button"
+                      className="primary"
+                      onClick={() => setBookingColumnConfigOpen(false)}
+                    >
+                      Áp dụng
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
             <button
               type="button"
               className="secondary"
@@ -1386,81 +1441,6 @@ export function BookingPage() {
           </label>
         </div>
 
-        {bookingColumnConfigOpen && (
-          <>
-            <button
-              type="button"
-              className="asset-column-backdrop"
-              aria-label="Đóng cấu hình cột"
-              onClick={() => setBookingColumnConfigOpen(false)}
-            />
-            <div
-              className="asset-column-popover booking-column-popover"
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby="booking-column-config-title"
-            >
-              <div className="asset-column-popover-head">
-                <div>
-                  <strong id="booking-column-config-title">Cấu hình cột</strong>
-                  <span>Bật/tắt cột cần xem. Các cột bắt buộc được cố định trong bảng.</span>
-                </div>
-                <button
-                  type="button"
-                  className="icon-button"
-                  onClick={() => setBookingColumnConfigOpen(false)}
-                >
-                  <FiX />
-                </button>
-              </div>
-              <div className="asset-column-list">
-                {bookingColumnConfigOrder.map((id) => {
-                  const column = BOOKING_TABLE_COLUMNS.find((item) => item.id === id);
-                  if (!column) return null;
-                  const locked = Boolean(column.locked);
-                  const checked = visibleBookingColumnSet.has(id) || locked;
-                  return (
-                    <label
-                      key={id}
-                      className={`asset-column-option ${
-                        draggedBookingColumn === id ? "is-dragging" : ""
-                      } ${locked ? "is-locked" : ""}`}
-                      draggable={!locked}
-                      onDragStart={() => {
-                        if (!locked) setDraggedBookingColumn(id);
-                      }}
-                      onDragOver={(event) => event.preventDefault()}
-                      onDrop={() => dropBookingColumn(id)}
-                      onDragEnd={() => setDraggedBookingColumn(null)}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={checked}
-                        disabled={locked}
-                        onChange={() => toggleBookingColumn(id)}
-                      />
-                      <span>{column.label}</span>
-                      {locked && <em>Bắt buộc</em>}
-                    </label>
-                  );
-                })}
-              </div>
-              <div className="asset-column-popover-actions">
-                <button type="button" className="secondary" onClick={resetBookingColumns}>
-                  <FiRotateCcw /> Mặc định
-                </button>
-                <button
-                  type="button"
-                  className="primary"
-                  onClick={() => setBookingColumnConfigOpen(false)}
-                >
-                  Áp dụng
-                </button>
-              </div>
-            </div>
-          </>
-        )}
-
         <div className="booking-table">
           <DataTable
             data={bookings}
@@ -1473,7 +1453,7 @@ export function BookingPage() {
               title: column.label,
               render: column.render,
               className: `booking-table-col-${column.id} ${
-                ["booking", "asset", "status", "time"].includes(column.id)
+                ["booking", "asset"].includes(column.id)
                   ? `booking-table-sticky-left booking-table-sticky-${column.id}`
                   : column.id === "actions"
                     ? "booking-table-sticky-right booking-table-actions-col"
