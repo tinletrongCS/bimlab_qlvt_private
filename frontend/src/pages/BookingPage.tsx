@@ -128,9 +128,7 @@ const BOOKING_LOCKED_COLUMN_ORDER: BookingTableColumnId[] = [
 function normalizeBookingColumnOrder(order: BookingTableColumnId[]) {
   const middleColumns = [
     ...order.filter(
-      (id) =>
-        BOOKING_TABLE_COLUMN_IDS.includes(id) &&
-        !BOOKING_LOCKED_COLUMN_ORDER.includes(id),
+      (id) => BOOKING_TABLE_COLUMN_IDS.includes(id) && !BOOKING_LOCKED_COLUMN_ORDER.includes(id),
     ),
     ...BOOKING_TABLE_COLUMN_IDS.filter(
       (id) => !order.includes(id) && !BOOKING_LOCKED_COLUMN_ORDER.includes(id),
@@ -359,7 +357,9 @@ export function BookingPage() {
     () => readBookingColumnPreferences().visible,
   );
   const [bookingColumnConfigOpen, setBookingColumnConfigOpen] = useState(false);
-  const [draggedBookingColumn, setDraggedBookingColumn] = useState<BookingTableColumnId | null>(null);
+  const [draggedBookingColumn, setDraggedBookingColumn] = useState<BookingTableColumnId | null>(
+    null,
+  );
   const [calendarView, setCalendarView] = useState<BookingCalendarView>("week");
   const [calendarDate, setCalendarDate] = useState(() => new Date());
 
@@ -689,7 +689,11 @@ export function BookingPage() {
       locked: true,
       render: (item) => (
         <div className="asset-row-text-actions">
-          <button type="button" className="asset-row-text-action" onClick={() => setSelectedBooking(item)}>
+          <button
+            type="button"
+            className="asset-row-text-action"
+            onClick={() => setSelectedBooking(item)}
+          >
             Xem
           </button>
           <button
@@ -729,8 +733,12 @@ export function BookingPage() {
       return visibleBookingColumnSet.has(column.id) || Boolean(column.locked);
     });
   const bookingColumnConfigOrder = [
-    ...bookingColumnOrder.filter((id) => BOOKING_TABLE_COLUMNS.some((column) => column.id === id && column.locked)),
-    ...bookingColumnOrder.filter((id) => BOOKING_TABLE_COLUMNS.some((column) => column.id === id && !column.locked)),
+    ...bookingColumnOrder.filter((id) =>
+      BOOKING_TABLE_COLUMNS.some((column) => column.id === id && column.locked),
+    ),
+    ...bookingColumnOrder.filter((id) =>
+      BOOKING_TABLE_COLUMNS.some((column) => column.id === id && !column.locked),
+    ),
   ];
 
   const calendarStep = calendarView === "month" ? "month" : "day";
@@ -748,9 +756,11 @@ export function BookingPage() {
   const calendarDays =
     calendarView === "month"
       ? monthDays
-      : Array.from(
-          { length: calendarView === "week" ? 7 : 1 },
-          (_, index) => addDays(calendarView === "week" ? startOfWeek(calendarDate) : startOfDay(calendarDate), index),
+      : Array.from({ length: calendarView === "week" ? 7 : 1 }, (_, index) =>
+          addDays(
+            calendarView === "week" ? startOfWeek(calendarDate) : startOfDay(calendarDate),
+            index,
+          ),
         );
   const bookingsForDay = (day: Date) =>
     bookings
@@ -991,7 +1001,9 @@ export function BookingPage() {
             </div>
           </div>
         </div>
-        <div className="booking-calendar-title">{formatCalendarTitle(calendarDate, calendarView)}</div>
+        <div className="booking-calendar-title">
+          {formatCalendarTitle(calendarDate, calendarView)}
+        </div>
         <div className="booking-calendar-filter-row">
           <label className="asset-date-filter">
             <span>Ngày lịch</span>
@@ -1008,7 +1020,9 @@ export function BookingPage() {
             <span>Phòng họp</span>
             <select
               value={filters.assetCode}
-              onChange={(event) => setFilters((prev) => ({ ...prev, assetCode: event.target.value }))}
+              onChange={(event) =>
+                setFilters((prev) => ({ ...prev, assetCode: event.target.value }))
+              }
             >
               <option value="">Tất cả phòng</option>
               {assetOptions.map((asset) => (
