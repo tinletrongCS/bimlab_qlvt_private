@@ -38,13 +38,13 @@ if (isSilentRenewIframe) {
                   alignItems: "center",
                   gap: "10px",
                   background: "#fff",
-                  borderRadius: "12px",
-                  padding: "10px 14px",
-                  boxShadow: "0 4px 20px rgba(0,0,0,0.08), 0 1px 6px rgba(0,0,0,0.04)",
+                  borderRadius: 0,
+                  padding: "8px 12px",
+                  boxShadow: "none",
                   cursor: "pointer",
                   minWidth: "260px",
                   maxWidth: "380px",
-                  border: "1px solid #e5e7eb",
+                  border: "1px solid #d7dde5",
                   userSelect: "none",
                 }}
               >

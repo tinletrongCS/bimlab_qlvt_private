@@ -1,4 +1,4 @@
-import { type ReactNode, useEffect, useMemo, useState } from "react";
+import { type CSSProperties, type ReactNode, useEffect, useMemo, useState } from "react";
 import { FiChevronLeft, FiChevronRight, FiChevronsLeft, FiChevronsRight } from "react-icons/fi";
 
 interface Column<T> {
@@ -16,6 +16,7 @@ interface DataTableProps<T> {
   pageSizeOptions?: number[];
   itemLabel?: string;
   pagination?: boolean;
+  tableMinWidth?: number;
 }
 
 export function DataTable<T>({
@@ -26,6 +27,7 @@ export function DataTable<T>({
   pageSizeOptions = [10, 20, 50, 100],
   itemLabel = "mục",
   pagination = true,
+  tableMinWidth,
 }: DataTableProps<T>) {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(pageSizeOptions[0] ?? 10);
@@ -44,7 +46,14 @@ export function DataTable<T>({
 
   return (
     <>
-      <div className="table-wrap">
+      <div
+        className="table-wrap"
+        style={
+          tableMinWidth
+            ? ({ "--qlvt-table-min-width": `${tableMinWidth}px` } as CSSProperties)
+            : undefined
+        }
+      >
         <table>
           <thead>
             <tr>
