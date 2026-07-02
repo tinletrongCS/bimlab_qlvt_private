@@ -10,6 +10,7 @@ import {
   FiCreditCard,
   FiFileText,
   FiGrid,
+  FiHelpCircle,
   FiLogOut,
   FiMenu,
   FiRefreshCw,
@@ -88,6 +89,13 @@ const NAV_GROUPS: NavGroup[] = [
     label: "Gói đăng ký",
     icon: <FiCreditCard />,
     permission: "subscription_manage",
+    children: [],
+  },
+  {
+    key: "help",
+    to: "/help",
+    label: "Hướng dẫn sử dụng",
+    icon: <FiHelpCircle />,
     children: [],
   },
 ];
@@ -196,7 +204,7 @@ export function AppShell() {
   const toggleGroup = (key: string) => setOpenGroups((prev) => ({ ...prev, [key]: !prev[key] }));
 
   return (
-    <main className="app-shell">
+    <main className={`app-shell ${sidebarCompact ? "sidebar-compact" : ""}`}>
       {mobileOpen && (
         <button
           type="button"

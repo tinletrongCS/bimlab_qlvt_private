@@ -10,7 +10,6 @@ import {
 } from "../services/api";
 import type { AssetCategory, AssetCategoryPayload, AssetCategoryTree } from "../services/types";
 
-type CategoryViewMode = "TREE" | "STRUCTURE";
 type AssetClassFilter = "ALL" | "FIXED_ASSET" | "TOOL_EQUIPMENT";
 type ActiveFilter = "ALL" | "ACTIVE" | "INACTIVE";
 
@@ -436,7 +435,6 @@ export function AssetCategoriesPage() {
   const [categories, setCategories] = useState<AssetCategory[]>([]);
   const [form, setForm] = useState<AssetCategoryPayload>(emptyForm);
   const [editing, setEditing] = useState<AssetCategory | null>(null);
-  const [viewMode, setViewMode] = useState<CategoryViewMode>("TREE");
   const [assetClassFilter, setAssetClassFilter] = useState<AssetClassFilter>("ALL");
   const [activeFilter, setActiveFilter] = useState<ActiveFilter>("ALL");
   const [categorySearch, setCategorySearch] = useState("");
@@ -446,7 +444,6 @@ export function AssetCategoriesPage() {
   const [parentFieldsLocked, setParentFieldsLocked] = useState(false);
   const [expandedTreeIds, setExpandedTreeIds] = useState<Set<number>>(new Set());
   const [expandedStructureIds, setExpandedStructureIds] = useState<Set<number>>(new Set());
-  const effectiveSearch = viewMode === "STRUCTURE" ? categorySearch : "";
 
   const selectableParents = useMemo(
     () => categories.filter((item) => item.id !== editing?.id),
@@ -455,14 +452,14 @@ export function AssetCategoriesPage() {
   const filteredCategories = useMemo(
     () =>
       categories.filter((category) =>
-        matchesCategoryFilters(category, assetClassFilter, activeFilter, effectiveSearch),
+        matchesCategoryFilters(category, assetClassFilter, activeFilter, categorySearch),
       ),
-    [categories, assetClassFilter, activeFilter, effectiveSearch],
+    [categories, assetClassFilter, activeFilter, categorySearch],
   );
   const filteredTree = useMemo(
     () =>
-      filterTree(buildCategoryTree(categories), assetClassFilter, activeFilter, effectiveSearch),
-    [categories, assetClassFilter, activeFilter, effectiveSearch],
+      filterTree(buildCategoryTree(categories), assetClassFilter, activeFilter, categorySearch),
+    [categories, assetClassFilter, activeFilter, categorySearch],
   );
   const categoryFormChanged = useMemo(() => {
     if (!editing) return true;
@@ -496,18 +493,6 @@ export function AssetCategoriesPage() {
     setSelectedCategoryId(null);
     setParentFieldsLocked(false);
     setForm(emptyForm);
-  };
-
-  const resetEditor = () => {
-    setEditing(null);
-    setSelectedCategoryId(null);
-    setParentFieldsLocked(false);
-    setForm(emptyForm);
-  };
-
-  const changeViewMode = (nextMode: CategoryViewMode) => {
-    setViewMode(nextMode);
-    resetEditor();
   };
 
   const toggleTreeNode = (id: number) => {
@@ -613,21 +598,8 @@ export function AssetCategoriesPage() {
         <div className="category-workspace">
           <div className="category-tree-panel">
             <div className="category-panel-controls">
-              <div className="category-view-tabs">
-                <button
-                  type="button"
-                  className={viewMode === "TREE" ? "active" : ""}
-                  onClick={() => changeViewMode("TREE")}
-                >
-                  Sơ đồ phân cấp
-                </button>
-                <button
-                  type="button"
-                  className={viewMode === "STRUCTURE" ? "active" : ""}
-                  onClick={() => changeViewMode("STRUCTURE")}
-                >
-                  Quản lý danh sách
-                </button>
+              <div className="category-section-heading">
+                <h3>Sơ đồ phân cấp</h3>
               </div>
               <button
                 type="button"
@@ -640,29 +612,27 @@ export function AssetCategoriesPage() {
             </div>
 
             <div className="category-filters">
-              {viewMode === "STRUCTURE" && (
-                <label className="category-search-field">
-                  Tìm danh mục
-                  <span>
-                    <FiSearch />
-                    <input
-                      value={categorySearch}
-                      onChange={(event) => setCategorySearch(event.target.value)}
-                      placeholder="Tìm theo tên, mã, mô tả..."
-                    />
-                    {categorySearch && (
-                      <button
-                        type="button"
-                        className="category-search-clear"
-                        onClick={() => setCategorySearch("")}
-                        aria-label="Xóa nội dung tìm kiếm"
-                      >
-                        <FiX />
-                      </button>
-                    )}
-                  </span>
-                </label>
-              )}
+              <label className="category-search-field">
+                Tìm danh mục
+                <span>
+                  <FiSearch />
+                  <input
+                    value={categorySearch}
+                    onChange={(event) => setCategorySearch(event.target.value)}
+                    placeholder="Tìm theo tên, mã, mô tả..."
+                  />
+                  {categorySearch && (
+                    <button
+                      type="button"
+                      className="category-search-clear"
+                      onClick={() => setCategorySearch("")}
+                      aria-label="Xóa nội dung tìm kiếm"
+                    >
+                      <FiX />
+                    </button>
+                  )}
+                </span>
+              </label>
               <label>
                 Loại danh mục
                 <select
@@ -691,33 +661,39 @@ export function AssetCategoriesPage() {
               <div className="loading">Đang tải dữ liệu...</div>
             ) : filteredCategories.length === 0 ? (
               <div className="empty-state">Chưa có danh mục.</div>
-            ) : viewMode === "TREE" ? (
-              <div className="category-org-viewport">
-                <div className="category-org-forest">
-                  {filteredTree.map((node) => (
-                    <CategoryNode
-                      key={node.id}
-                      node={node}
-                      expandedIds={expandedTreeIds}
-                      selectedId={selectedCategoryId ?? undefined}
-                      onToggle={toggleTreeNode}
-                      onEdit={startEdit}
-                      onDelete={remove}
-                      onCreateChild={startCreateChild}
-                      searchQuery={effectiveSearch}
-                    />
-                  ))}
-                </div>
-              </div>
             ) : (
-              <StructureView
-                roots={filteredTree}
-                selectedId={selectedCategoryId ?? undefined}
-                onEdit={startEdit}
-                expandedIds={expandedStructureIds}
-                onToggle={toggleStructureNode}
-                searchQuery={effectiveSearch}
-              />
+              <>
+                <div className="category-org-viewport">
+                  <div className="category-org-forest">
+                    {filteredTree.map((node) => (
+                      <CategoryNode
+                        key={node.id}
+                        node={node}
+                        expandedIds={expandedTreeIds}
+                        selectedId={selectedCategoryId ?? undefined}
+                        onToggle={toggleTreeNode}
+                        onEdit={startEdit}
+                        onDelete={remove}
+                        onCreateChild={startCreateChild}
+                        searchQuery={categorySearch}
+                      />
+                    ))}
+                  </div>
+                </div>
+                <div className="category-management-section">
+                  <div className="category-section-heading">
+                    <h3>Quản lý danh sách</h3>
+                  </div>
+                  <StructureView
+                    roots={filteredTree}
+                    selectedId={selectedCategoryId ?? undefined}
+                    onEdit={startEdit}
+                    expandedIds={expandedStructureIds}
+                    onToggle={toggleStructureNode}
+                    searchQuery={categorySearch}
+                  />
+                </div>
+              </>
             )}
           </div>
 

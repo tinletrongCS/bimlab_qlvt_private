@@ -18,12 +18,10 @@ import {
   FiGrid,
   FiRotateCcw,
   FiSearch,
-  FiSettings,
   FiTrash2,
   FiUpload,
   FiX,
 } from "react-icons/fi";
-import { PanelHeader } from "../components/PanelHeader";
 import { StatusBadge } from "../components/StatusBadge";
 import { useActions } from "../contexts/ActionsContext";
 import { useAppData } from "../contexts/AppDataContext";
@@ -1374,6 +1372,40 @@ export function AssetsPage() {
     [filteredAssets],
   );
 
+  const assetListInsights = useMemo(() => {
+    const countMap = (values: string[]) => {
+      const map = new Map<string, number>();
+      values.forEach((value) => map.set(value, (map.get(value) || 0) + 1));
+      return Array.from(map.entries())
+        .map(([label, value]) => ({ label, value }))
+        .sort((a, b) => b.value - a.value || a.label.localeCompare(b.label, "vi"))
+        .slice(0, 5);
+    };
+
+    const valueBuckets = ASSET_VALUE_FILTERS.filter((item) => item.value !== "ALL").map((bucket) => ({
+      label: bucket.label,
+      value: filteredAssets.filter((asset) => {
+        const value = Number(asset.purchaseCost || 0);
+        if (bucket.min !== undefined && value < bucket.min) return false;
+        if (bucket.max !== undefined && value >= bucket.max) return false;
+        return true;
+      }).length,
+    })).filter((item) => item.value > 0);
+
+    return {
+      statuses: countMap(filteredAssets.map((asset) => statusLabel(asset.status))),
+      categories: countMap(
+        filteredAssets.map((asset) => asset.assetCategory?.name || asset.category || "Chưa phân loại"),
+      ),
+      values: valueBuckets,
+      sites: countMap(
+        filteredAssets.map((asset) =>
+          asset.siteId ? siteName(asset.siteId) : "Chưa gán chi nhánh",
+        ),
+      ),
+    };
+  }, [filteredAssets, workSites]);
+
   const importPreviewRows = useMemo(() => {
     const rows = importResult?.rows ?? importRows.slice(0, 30);
     if (!importResult || importPreviewFilter === "ALL") return rows;
@@ -1843,25 +1875,31 @@ export function AssetsPage() {
     });
   };
 
-  const headerExtraActions = (
-    <>
-      <button type="button" className="asset-template-button" onClick={handleDownloadTemplate}>
-        <FiDownload /> Tải mẫu Excel
-      </button>
-      <button type="button" className="asset-import-button" onClick={() => setImportOpen(true)}>
-        <FiUpload /> Tải lên file Excel
-      </button>
-    </>
-  );
-
   return (
     <section className="asset-page panel">
-      <PanelHeader
-        title="Danh sách tài sản"
-        action={canManage}
-        onAdd={() => openModal({ type: "asset", mode: "create" })}
-        extraActions={headerExtraActions}
-      />
+      <header className="asset-page-header">
+        <div>
+          <h2>Danh sách tài sản</h2>
+        </div>
+      </header>
+
+      <div className="asset-page-actions">
+        <button type="button" className="asset-template-button" onClick={handleDownloadTemplate}>
+          <FiDownload /> Tải mẫu Excel
+        </button>
+        <button type="button" className="asset-import-button" onClick={() => setImportOpen(true)}>
+          <FiUpload /> Tải lên file Excel
+        </button>
+        {canManage && (
+          <button
+            type="button"
+            className="asset-add-button"
+            onClick={() => openModal({ type: "asset", mode: "create" })}
+          >
+            Thêm mới
+          </button>
+        )}
+      </div>
 
       <div className={`asset-list-layout ${assetCategoryCollapsed ? "category-collapsed" : ""}`}>
         <aside className={`asset-category-sidebar ${assetCategoryCollapsed ? "collapsed" : ""}`}>
@@ -1929,48 +1967,6 @@ export function AssetsPage() {
                 placeholder="Tìm theo mã, tên, serial, nhà cung cấp..."
               />
             </label>
-            {/* <select
-              value={siteFilter}
-              onChange={(event) => {
-                setSiteFilter(event.target.value);
-                setDepartmentFilter("ALL");
-                setEmployeeFilter("ALL");
-              }}
-            >
-              <option value="ALL">Tất cả chi nhánh</option>
-              {siteOptions.map((siteId) => (
-                <option key={siteId} value={siteId}>
-                  {siteName(siteId)}
-                </option>
-              ))}
-            </select> */}
-            {/* <select
-              value={departmentFilter}
-              onChange={(event) => {
-                setDepartmentFilter(event.target.value);
-                setEmployeeFilter("ALL");
-              }}
-              disabled={departmentOptions.length === 0}
-            >
-              <option value="ALL">Tất cả phòng ban</option>
-              {departmentOptions.map((departmentId) => (
-                <option key={departmentId} value={departmentId}>
-                  {departmentName(departmentId)}
-                </option>
-              ))}
-            </select> */}
-            {/* <select
-              value={employeeFilter}
-              onChange={(event) => setEmployeeFilter(event.target.value)}
-              disabled={employeeOptions.length === 0}
-            >
-              <option value="ALL">Tất cả nhân sự</option>
-              {employeeOptions.map((employeeId) => (
-                <option key={employeeId} value={employeeId}>
-                  {employeeName(employeeId)}
-                </option>
-              ))}
-            </select> */}
             <label className="asset-filter-field">
               <span>Trạng thái</span>
               <select
@@ -1999,18 +1995,6 @@ export function AssetsPage() {
                 ))}
               </select>
             </label>
-            {/* <select
-              value={sourceFilter}
-              onChange={(event) => setSourceFilter(event.target.value)}
-              disabled={sourceOptions.length === 0}
-            >
-              <option value="ALL">Tất cả nguồn hình thành</option>
-              {sourceOptions.map((source) => (
-                <option key={source} value={source}>
-                  {source}
-                </option>
-              ))}
-            </select> */}
             <label className="asset-date-filter">
               <span>Từ ngày sử dụng</span>
               <input
@@ -2032,19 +2016,18 @@ export function AssetsPage() {
 
           <div className={`asset-list-panel ${listRefreshing ? "is-refreshing" : ""}`}>
             <div className="asset-list-head">
-              <div>
-                <strong>{filteredAssets.length} tài sản</strong>
-                <span>
+              <div className="asset-list-summary">
+                <span className="asset-total-value-line">
                   Tổng giá trị của tài sản đang hiển thị:{" "}
-                  <span style={{ whiteSpace: "nowrap" }}>
-                    <span style={{ color: "#007bff", fontWeight: 600 }}>
+                  <span className="asset-total-value">
+                    <span>
                       {money.format(filteredValue)}
                     </span>
 
                     {filteredAssets.length !== assets.length && (
                       <>
                         {" / "}
-                        <span style={{ color: "#007bff", fontWeight: 600 }}>
+                        <span>
                           {money.format(totalValue)}
                         </span>{" "}
                         toàn bộ
@@ -2054,10 +2037,10 @@ export function AssetsPage() {
                 </span>
               </div>
 
-              <div className="asset-table-tools">
+              <div className="asset-table-text-actions">
                 <button
                   type="button"
-                  className="secondary asset-multi-select-toggle"
+                  className="asset-table-text-action"
                   data-active={assetMultiSelectMode ? "true" : undefined}
                   onClick={() => {
                     setAssetMultiSelectMode((enabled) => {
@@ -2070,12 +2053,12 @@ export function AssetsPage() {
                 </button>
                 <button
                   type="button"
-                  className="secondary asset-column-config-toggle"
+                  className="asset-table-text-action"
                   aria-expanded={columnConfigOpen}
                   onMouseDown={(event) => event.preventDefault()}
                   onClick={() => setColumnConfigOpen((open) => !open)}
                 >
-                  <FiSettings /> Cấu hình cột
+                  Cấu hình cột
                 </button>
               </div>
             </div>
@@ -2552,6 +2535,43 @@ export function AssetsPage() {
               )}
             </div>
           )}
+
+          <section className="asset-list-insights" aria-label="Thống kê tài sản đang hiển thị">
+            {[
+              ["Theo trạng thái", assetListInsights.statuses],
+              ["Theo danh mục", assetListInsights.categories],
+              ["Theo giá trị", assetListInsights.values],
+              ["Theo chi nhánh", assetListInsights.sites],
+            ].map(([title, items], groupIndex) => {
+              const insightItems = items as Array<{ label: string; value: number }>;
+              const maxValue = Math.max(...insightItems.map((item) => item.value), 1);
+              return (
+                <article className="asset-insight-card" key={title as string}>
+                  <strong>{title as string}</strong>
+                  {insightItems.length === 0 ? (
+                    <span>Chưa có dữ liệu</span>
+                  ) : (
+                    <div className="asset-insight-bars">
+                      {insightItems.map((item, index) => (
+                        <div className="asset-insight-bar-row" key={item.label}>
+                          <p>
+                            <span>{item.label}</span>
+                            <b>{item.value}</b>
+                          </p>
+                          <div className="asset-insight-track" aria-hidden="true">
+                            <span
+                              data-tone={`${groupIndex}-${index}`}
+                              style={{ width: `${Math.max((item.value / maxValue) * 100, 6)}%` }}
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </article>
+              );
+            })}
+          </section>
         </div>
       </div>
 

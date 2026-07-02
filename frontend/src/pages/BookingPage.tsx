@@ -1,4 +1,4 @@
-import { type ReactNode, useEffect, useMemo, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import {
   FiCalendar,
@@ -35,6 +35,13 @@ import type {
 
 type BookingAction = "check-in" | "check-out" | "cancel";
 type BookingCalendarView = "day" | "week" | "month";
+interface TimedBookingLayout {
+  booking: AssetBooking;
+  top: number;
+  height: number;
+  column: number;
+  columnCount: number;
+}
 type BookingTableColumnId =
   | "booking"
   | "asset"
@@ -117,6 +124,8 @@ const BOOKING_TABLE_COLUMN_IDS = BOOKING_TABLE_COLUMNS.map((column) => column.id
 const DEFAULT_BOOKING_TABLE_VISIBLE_COLUMNS = BOOKING_TABLE_COLUMNS.filter(
   (column) => column.defaultVisible || column.locked,
 ).map((column) => column.id);
+const BOOKING_HOUR_HEIGHT = 52;
+const BOOKING_HOURS = Array.from({ length: 24 }, (_, hour) => hour);
 const BOOKING_LOCKED_COLUMN_ORDER: BookingTableColumnId[] = [
   "booking",
   "asset",
@@ -202,30 +211,13 @@ function formatDateTime(value?: string) {
   });
 }
 
+function formatWeekdayShort(value: Date) {
+  const labels = ["CN", "Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7"];
+  return labels[value.getDay()];
+}
+
 function formatShortDate(value: Date) {
   return value.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit" });
-}
-
-function formatDateInput(value: Date) {
-  const year = value.getFullYear();
-  const month = String(value.getMonth() + 1).padStart(2, "0");
-  const day = String(value.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
-
-function parseDateInput(value: string) {
-  if (!value) return null;
-  const [year, month, day] = value.split("-").map(Number);
-  if (!year || !month || !day) return null;
-  return new Date(year, month - 1, day);
-}
-
-function formatCalendarDayHeader(value: Date) {
-  return value.toLocaleDateString("vi-VN", {
-    weekday: "short",
-    day: "2-digit",
-    month: "2-digit",
-  });
 }
 
 function formatCalendarTitle(value: Date, view: BookingCalendarView) {
@@ -297,6 +289,81 @@ function bookingTimeRange(value: AssetBooking) {
   return `${startLabel} - ${endLabel}`;
 }
 
+function formatHourLabel(hour: number) {
+  const value = hour % 12 || 12;
+  return `${value}${hour < 12 ? "AM" : "PM"}`;
+}
+
+function minutesSinceDayStart(value: Date) {
+  return value.getHours() * 60 + value.getMinutes();
+}
+
+function bookingTimeBlockStyle(booking: AssetBooking) {
+  const start = new Date(booking.startTime);
+  const end = new Date(booking.endTime);
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+    return { top: 0, height: 28 };
+  }
+  const startMinutes = Math.max(0, Math.min(1439, minutesSinceDayStart(start)));
+  const rawEndMinutes = isSameDay(start, end) ? minutesSinceDayStart(end) : 1440;
+  const endMinutes = Math.max(startMinutes + 15, Math.min(1440, rawEndMinutes));
+  return {
+    top: (startMinutes / 60) * BOOKING_HOUR_HEIGHT,
+    height: Math.max(28, ((endMinutes - startMinutes) / 60) * BOOKING_HOUR_HEIGHT),
+  };
+}
+
+function buildTimedBookingLayouts(bookings: AssetBooking[]): TimedBookingLayout[] {
+  const entries = bookings
+    .map((booking) => {
+      const style = bookingTimeBlockStyle(booking);
+      return {
+        booking,
+        top: Number(style.top),
+        height: Number(style.height),
+      };
+    })
+    .sort((a, b) => a.top - b.top || a.height - b.height);
+
+  const result: TimedBookingLayout[] = [];
+  let cluster: typeof entries = [];
+  let clusterEnd = 0;
+
+  const flushCluster = () => {
+    if (cluster.length === 0) return;
+    const columnEnds: number[] = [];
+    const clusterLayouts = cluster.map((entry) => {
+      const freeColumn = columnEnds.findIndex((end) => end <= entry.top + 1);
+      const column = freeColumn >= 0 ? freeColumn : columnEnds.length;
+      columnEnds[column] = entry.top + entry.height;
+      return {
+        booking: entry.booking,
+        top: entry.top,
+        height: entry.height,
+        column,
+        columnCount: 1,
+      };
+    });
+    const columnCount = Math.max(columnEnds.length, 1);
+    clusterLayouts.forEach((layout) => {
+      result.push({ ...layout, columnCount });
+    });
+    cluster = [];
+    clusterEnd = 0;
+  };
+
+  entries.forEach((entry) => {
+    if (cluster.length > 0 && entry.top >= clusterEnd) {
+      flushCluster();
+    }
+    cluster.push(entry);
+    clusterEnd = Math.max(clusterEnd, entry.top + entry.height);
+  });
+  flushCluster();
+
+  return result;
+}
+
 function errorMessage(error: unknown, fallback: string) {
   if (typeof error === "object" && error && "response" in error) {
     const response = (error as { response?: { data?: { message?: string; error?: string } } }).response;
@@ -329,6 +396,7 @@ function BookingStatusBadge({ status }: { status: string }) {
 
 export function BookingPage() {
   const { user } = useAuth();
+  const timeGridScrollRef = useRef<HTMLDivElement | null>(null);
   const [assets, setAssets] = useState<AssetItem[]>([]);
   const [bookings, setBookings] = useState<AssetBooking[]>([]);
   const [loading, setLoading] = useState(true);
@@ -737,7 +805,6 @@ export function BookingPage() {
   const monthStart = startOfMonth(calendarDate);
   const monthGridStart = startOfWeek(monthStart);
   const monthDays = Array.from({ length: 42 }, (_, index) => addDays(monthGridStart, index));
-  const calendarDateValue = formatDateInput(calendarDate);
   const calendarDays =
     calendarView === "month"
       ? monthDays
@@ -745,6 +812,20 @@ export function BookingPage() {
           { length: calendarView === "week" ? 7 : 1 },
           (_, index) => addDays(calendarView === "week" ? startOfWeek(calendarDate) : startOfDay(calendarDate), index),
         );
+
+  useEffect(() => {
+    if (calendarView === "month") return;
+    const scrollEl = timeGridScrollRef.current;
+    if (!scrollEl) return;
+    const todayVisible = calendarDays.some((day) => isSameDay(day, new Date()));
+    if (!todayVisible) return;
+    const currentTop = (minutesSinceDayStart(new Date()) / 60) * BOOKING_HOUR_HEIGHT;
+    const targetTop = Math.max(0, currentTop - scrollEl.clientHeight * 0.38);
+    window.requestAnimationFrame(() => {
+      scrollEl.scrollTop = targetTop;
+    });
+  }, [calendarDate, calendarDays, calendarView]);
+
   const bookingsForDay = (day: Date) =>
     bookings
       .filter((booking) => {
@@ -925,8 +1006,8 @@ export function BookingPage() {
         <section className="panel booking-flow-panel">
           <div className="panel-title">
             <div>
-              <h2>Luồng xử lý</h2>
-              <p>Các nút thao tác đã đặt sẵn để nối tiếp service backend sau này.</p>
+              <h2>Hướng dẫn đặt lịch</h2>
+              <p>Quy trình thao tác với các chức năng hiện có trên màn hình.</p>
             </div>
           </div>
           <div className="booking-flow-list">
@@ -966,168 +1047,226 @@ export function BookingPage() {
             <button type="button" className="secondary" onClick={() => moveCalendar(1)}>
               Sau <FiChevronRight />
             </button>
-            <div className="booking-calendar-switch" role="tablist" aria-label="Chế độ xem lịch">
-              {[
-                ["day", "Ngày"],
-                ["week", "Tuần"],
-                ["month", "Tháng"],
-              ].map(([value, label]) => (
-                <button
-                  key={value}
-                  type="button"
-                  className={calendarView === value ? "active" : ""}
-                  onClick={() => setCalendarView(value as BookingCalendarView)}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
+            <label className="booking-calendar-view-select">
+              <span>Chế độ xem</span>
+              <select
+                value={calendarView}
+                onChange={(event) => setCalendarView(event.target.value as BookingCalendarView)}
+              >
+                <option value="day">Ngày</option>
+                <option value="week">Tuần</option>
+                <option value="month">Tháng</option>
+              </select>
+            </label>
           </div>
         </div>
         <div className="booking-calendar-title">{formatCalendarTitle(calendarDate, calendarView)}</div>
-        <div className="booking-calendar-filter-row">
-          <label className="asset-date-filter">
-            <span>Ngày lịch</span>
-            <input
-              type="date"
-              value={calendarDateValue}
-              onChange={(event) => {
-                const next = parseDateInput(event.target.value);
-                if (next) setCalendarDate(next);
-              }}
-            />
-          </label>
-          <label className="asset-filter-field">
-            <span>Phòng họp</span>
-            <select
-              value={filters.assetCode}
-              onChange={(event) => setFilters((prev) => ({ ...prev, assetCode: event.target.value }))}
-            >
-              <option value="">Tất cả phòng</option>
-              {assetOptions.map((asset) => (
-                <option key={asset.id} value={asset.assetCode}>
-                  {asset.assetCode} · {asset.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="asset-filter-field">
-            <span>Trạng thái</span>
-            <select
-              value={filters.status}
-              onChange={(event) => setFilters((prev) => ({ ...prev, status: event.target.value }))}
-            >
-              {BOOKING_STATUS_OPTIONS.map((option) => (
-                <option key={option.value || "all"} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
-        <div className={`booking-calendar-grid booking-calendar-view-${calendarView}`}>
-          <div className="booking-calendar-weekdays">
-            {["T2", "T3", "T4", "T5", "T6", "T7", "CN"].map((label) => (
-              <span key={label}>{label}</span>
-            ))}
-          </div>
-
-          {calendarView === "month" ? (
-            <div className="booking-calendar-days">
-              {calendarDays.map((day) => {
-                const dayBookings = bookingsForDay(day);
-                return (
-                  <div
+        <div className="booking-calendar-shell">
+          <aside className="booking-calendar-sidebar">
+            <div className="booking-mini-calendar">
+              <div className="booking-mini-calendar-head">
+                <strong>
+                  {calendarDate.toLocaleDateString("vi-VN", { month: "long", year: "numeric" })}
+                </strong>
+              </div>
+              <div className="booking-mini-weekdays">
+                {["T2", "T3", "T4", "T5", "T6", "T7", "CN"].map((label) => (
+                  <span key={label}>{label}</span>
+                ))}
+              </div>
+              <div className="booking-mini-days">
+                {monthDays.map((day) => (
+                  <button
                     key={day.toISOString()}
-                    className="booking-calendar-day"
+                    type="button"
                     data-muted={day.getMonth() !== calendarDate.getMonth()}
                     data-selected={isSameDay(day, calendarDate) || undefined}
                     data-today={isSameDay(day, new Date()) || undefined}
+                    onClick={() => setCalendarDate(day)}
                   >
-                    <button
-                      type="button"
-                      className="booking-calendar-day-number"
-                      onClick={() => {
-                        setCalendarDate(day);
-                        setCalendarView("day");
-                      }}
-                    >
-                      {day.getDate()}
-                    </button>
-                    <div className="booking-calendar-events">
-                      {dayBookings.slice(0, 2).map((booking) => (
+                    {day.getDate()}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="booking-calendar-sidebar-filters">
+              <label className="asset-filter-field">
+                <span>Phòng họp</span>
+                <select
+                  value={filters.assetCode}
+                  onChange={(event) => setFilters((prev) => ({ ...prev, assetCode: event.target.value }))}
+                >
+                  <option value="">Tất cả phòng</option>
+                  {assetOptions.map((asset) => (
+                    <option key={asset.id} value={asset.assetCode}>
+                      {asset.assetCode} · {asset.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="asset-filter-field">
+                <span>Trạng thái</span>
+                <select
+                  value={filters.status}
+                  onChange={(event) => setFilters((prev) => ({ ...prev, status: event.target.value }))}
+                >
+                  {BOOKING_STATUS_OPTIONS.map((option) => (
+                    <option key={option.value || "all"} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+          </aside>
+          <div className={`booking-calendar-grid booking-calendar-view-${calendarView}`}>
+            {calendarView === "month" ? (
+              <>
+                <div className="booking-calendar-weekdays">
+                  {["T2", "T3", "T4", "T5", "T6", "T7", "CN"].map((label) => (
+                    <span key={label}>{label}</span>
+                  ))}
+                </div>
+                <div className="booking-calendar-days">
+                  {calendarDays.map((day) => {
+                    const dayBookings = bookingsForDay(day);
+                    return (
+                      <div
+                        key={day.toISOString()}
+                        className="booking-calendar-day"
+                        data-muted={day.getMonth() !== calendarDate.getMonth()}
+                        data-selected={isSameDay(day, calendarDate) || undefined}
+                        data-today={isSameDay(day, new Date()) || undefined}
+                      >
                         <button
-                          key={booking.id}
                           type="button"
-                          className="booking-calendar-event"
-                          data-status={booking.status}
-                          onClick={() => setSelectedBooking(booking)}
-                          title={`${bookingTimeRange(booking)} · ${booking.title}`}
-                        >
-                          <span>{bookingTimeRange(booking)}</span>
-                          <strong>{booking.title}</strong>
-                        </button>
-                      ))}
-                      {dayBookings.length > 2 && (
-                        <button
-                          type="button"
-                          className="booking-calendar-more"
+                          className="booking-calendar-day-number"
                           onClick={() => {
                             setCalendarDate(day);
                             setCalendarView("day");
                           }}
                         >
-                          +{dayBookings.length - 2} lịch khác
+                          {day.getDate()}
                         </button>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="booking-agenda-grid">
-              {calendarDays.map((day) => {
-                const dayBookings = bookingsForDay(day);
-                return (
-                  <section
-                    key={day.toISOString()}
-                    className="booking-agenda-day"
-                    data-selected={isSameDay(day, calendarDate) || undefined}
-                    data-today={isSameDay(day, new Date()) || undefined}
-                    onClick={() => setCalendarDate(day)}
-                  >
-                    <div className="booking-agenda-day-head">
-                      <strong>{formatCalendarDayHeader(day)}</strong>
-                      <span>{dayBookings.length} cuộc họp</span>
-                    </div>
-                    <div className="booking-agenda-events">
-                      {dayBookings.length === 0 ? (
-                        <div className="booking-agenda-empty">Chưa có lịch đặt phòng.</div>
-                      ) : (
-                        dayBookings.map((booking) => (
-                          <button
-                            key={booking.id}
-                            type="button"
-                            className="booking-agenda-event"
-                            data-status={booking.status}
-                            onClick={() => setSelectedBooking(booking)}
-                          >
-                            <span className="booking-agenda-time">{bookingTimeRange(booking)}</span>
-                            <span className="booking-agenda-copy">
+                        <div className="booking-calendar-events">
+                          {dayBookings.slice(0, 2).map((booking) => (
+                            <button
+                              key={booking.id}
+                              type="button"
+                              className="booking-calendar-event"
+                              data-status={booking.status}
+                              onClick={() => setSelectedBooking(booking)}
+                              title={`${bookingTimeRange(booking)} · ${booking.title}`}
+                            >
+                              <span>{bookingTimeRange(booking)}</span>
                               <strong>{booking.title}</strong>
-                              <small>{booking.assetName || booking.assetCode || "Phòng họp"}</small>
-                            </span>
-                            <BookingStatusBadge status={booking.status} />
-                          </button>
-                        ))
-                      )}
-                    </div>
-                  </section>
-                );
-              })}
-            </div>
-          )}
+                            </button>
+                          ))}
+                          {dayBookings.length > 2 && (
+                            <button
+                              type="button"
+                              className="booking-calendar-more"
+                              onClick={() => {
+                                setCalendarDate(day);
+                                setCalendarView("day");
+                              }}
+                            >
+                              +{dayBookings.length - 2} lịch khác
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
+            ) : (
+              <div className={`booking-time-grid booking-time-grid-${calendarView}`}>
+                <div className="booking-time-grid-head">
+                  <div className="booking-time-corner" />
+                  {calendarDays.map((day) => (
+                    <button
+                      key={day.toISOString()}
+                      type="button"
+                      className="booking-time-day-label"
+                      data-selected={isSameDay(day, calendarDate) || undefined}
+                      data-today={isSameDay(day, new Date()) || undefined}
+                      onClick={() => setCalendarDate(day)}
+                    >
+                      <span>{formatWeekdayShort(day)}</span>
+                      <strong>{day.getDate()}</strong>
+                    </button>
+                  ))}
+                </div>
+                <div className="booking-time-grid-scroll" ref={timeGridScrollRef}>
+                  <div className="booking-time-axis">
+                    {BOOKING_HOURS.map((hour) => (
+                      <div key={hour} style={{ height: BOOKING_HOUR_HEIGHT }}>
+                        <span>{formatHourLabel(hour)}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div
+                    className="booking-time-columns"
+                    style={{ gridTemplateColumns: `repeat(${calendarDays.length}, minmax(150px, 1fr))` }}
+                  >
+                    {calendarDays.map((day) => {
+                      const dayBookings = bookingsForDay(day);
+                      const timedLayouts = buildTimedBookingLayouts(dayBookings);
+                      const isToday = isSameDay(day, new Date());
+                      const now = new Date();
+                      const currentTop = (minutesSinceDayStart(now) / 60) * BOOKING_HOUR_HEIGHT;
+                      return (
+                        <div
+                          key={day.toISOString()}
+                          className="booking-time-column"
+                          data-selected={isSameDay(day, calendarDate) || undefined}
+                          data-today={isToday || undefined}
+                          onClick={() => setCalendarDate(day)}
+                        >
+                          {BOOKING_HOURS.map((hour) => (
+                            <div key={hour} className="booking-time-slot" style={{ height: BOOKING_HOUR_HEIGHT }} />
+                          ))}
+                          {isToday && (
+                            <div className="booking-current-time-line" style={{ top: currentTop }}>
+                              <span />
+                            </div>
+                          )}
+                          {timedLayouts.map((layout) => {
+                            const columnWidth = 100 / layout.columnCount;
+                            return (
+                              <button
+                                key={layout.booking.id}
+                                type="button"
+                                className="booking-time-event"
+                                data-status={layout.booking.status}
+                                style={{
+                                  top: layout.top,
+                                  height: layout.height,
+                                  left: `calc(${layout.column * columnWidth}% + 3px)`,
+                                  width: `calc(${columnWidth}% - 6px)`,
+                                }}
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  setSelectedBooking(layout.booking);
+                                }}
+                              >
+                                <strong>{layout.booking.title}</strong>
+                                <span>{bookingTimeRange(layout.booking)}</span>
+                                <small>
+                                  {layout.booking.assetName || layout.booking.assetCode || "Phòng họp"}
+                                </small>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </section>
 

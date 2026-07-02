@@ -7495,3 +7495,2920 @@ textarea,
   border-color: #98a2b3;
   color: #101828;
 }
+
+/* Hard-edge density pass requested for QLVT shell and asset list. */
+.sidebar,
+.sidebar.compact,
+.topbar,
+.mobile-topbar,
+.brand,
+.sidebar nav a,
+.sidebar-group-button,
+.sidebar-submenu a,
+.collapse-row button,
+.logout-button,
+.menu-button,
+.icon-button,
+.sidebar-search input,
+.sidebar-search button {
+  border-radius: 0 !important;
+}
+
+.content {
+  padding: 10px 12px 16px;
+}
+
+.panel,
+.asset-page > .panel,
+.category-page > .panel,
+.booking-page .panel {
+  padding: 12px;
+}
+
+.asset-page,
+.category-page,
+.booking-page,
+.asset-selection-body,
+.asset-list-layout,
+.asset-toolbar,
+.category-panel-controls,
+.booking-layout,
+.booking-hero-metrics {
+  gap: 6px;
+}
+
+.asset-list-panel {
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+.asset-list-head {
+  border-bottom: 1px solid #e4e7ec;
+  padding: 10px 0;
+}
+
+.asset-category-sidebar,
+.asset-selection-workspace,
+.category-tree-panel,
+.category-editor,
+.category-structure-sidebar,
+.category-structure-detail,
+.booking-form-panel,
+.booking-flow-panel,
+.booking-calendar-panel {
+  border-radius: 0 !important;
+}
+
+.asset-category-sidebar,
+.asset-selection-workspace {
+  padding: 10px;
+}
+
+/* Absolute hard-edge UI reset for QLVT: no rounded corners anywhere inside the app shell. */
+.app-shell,
+.app-shell *,
+.app-shell *::before,
+.app-shell *::after {
+  border-radius: 0 !important;
+}
+
+.app-shell button,
+.app-shell input,
+.app-shell select,
+.app-shell textarea,
+.app-shell .panel,
+.app-shell .card,
+.app-shell .table-wrap,
+.app-shell .crud-modal,
+.app-shell .modal-backdrop,
+.app-shell .badge,
+.app-shell .status-badge,
+.app-shell [class*="badge"],
+.app-shell [class*="modal"],
+.app-shell [class*="popover"],
+.app-shell [class*="tooltip"],
+.app-shell [class*="calendar"],
+.app-shell [class*="chip"],
+.app-shell [class*="pill"],
+.app-shell [class*="avatar"],
+.app-shell [class*="icon"],
+.app-shell [class*="button"],
+.app-shell [class*="card"] {
+  border-radius: 0 !important;
+}
+
+.app-shell {
+  grid-template-columns: 244px minmax(0, 1fr);
+}
+
+.sidebar {
+  padding: 10px 8px !important;
+}
+
+.sidebar.compact {
+  padding: 10px 6px !important;
+  width: 64px;
+}
+
+.brand {
+  min-height: 42px;
+  padding: 7px 8px !important;
+}
+
+.brand img {
+  max-height: 24px;
+}
+
+.brand p {
+  font-size: 11px;
+}
+
+.sidebar-search {
+  padding: 5px 6px !important;
+}
+
+.sidebar-search input {
+  min-height: 30px;
+  padding: 6px 28px 6px 30px !important;
+}
+
+.sidebar nav {
+  gap: 1px !important;
+  padding: 6px 2px !important;
+}
+
+.sidebar nav a,
+.sidebar-group-button {
+  gap: 8px !important;
+  min-height: 34px;
+  padding: 7px 8px !important;
+}
+
+.sidebar-submenu {
+  gap: 1px !important;
+  margin-left: 16px;
+  padding-left: 0 !important;
+}
+
+.sidebar-submenu a {
+  min-height: 28px;
+  padding: 5px 8px !important;
+}
+
+.collapse-row {
+  padding: 5px 6px !important;
+}
+
+.collapse-row button,
+.logout-button,
+.menu-button,
+.icon-button {
+  min-height: 30px;
+  padding: 0 8px !important;
+}
+
+.user-card {
+  gap: 7px !important;
+  padding: 8px !important;
+}
+
+.user-card [class*="avatar"],
+.brand-compact-mark,
+.booking-mini-days button,
+.booking-time-day-label span,
+.booking-current-time-line span {
+  border-radius: 0 !important;
+}
+
+.content {
+  padding: 8px 10px 12px !important;
+}
+
+.mobile-topbar,
+.section-tabs,
+.section-tabs nav {
+  border-radius: 0 !important;
+  padding: 6px 8px !important;
+}
+
+.panel,
+.asset-page > .panel,
+.category-page > .panel,
+.booking-page .panel,
+.crud-modal,
+.asset-column-popover {
+  border-radius: 0 !important;
+}
+
+.panel,
+.asset-page > .panel,
+.category-page > .panel,
+.booking-page .panel {
+  padding: 10px !important;
+}
+
+.modal-head,
+.modal-body,
+.modal-actions,
+.asset-detail-section,
+.asset-import-section,
+.category-editor,
+.booking-form-panel,
+.booking-calendar-panel,
+.booking-flow-panel {
+  border-radius: 0 !important;
+}
+
+.modal-body,
+.asset-detail-fields,
+.booking-form-grid,
+.booking-filters,
+.asset-toolbar,
+.category-filters {
+  gap: 6px !important;
+}
+
+.app-shell input,
+.app-shell select,
+.app-shell textarea {
+  min-height: 30px;
+  padding: 5px 8px !important;
+}
+
+.app-shell button {
+  min-height: 30px;
+}
+
+.badge,
+.status-badge,
+[class^="badge-"],
+[class*=" badge-"],
+.asset-import-row-status {
+  border-radius: 0 !important;
+  padding: 2px 6px !important;
+}
+
+.asset-list-layout,
+.asset-selection-body,
+.booking-layout,
+.category-workspace,
+.category-panel-controls,
+.booking-calendar-shell {
+  gap: 6px !important;
+}
+
+.asset-list-panel,
+.asset-category-sidebar,
+.asset-selection-workspace,
+.category-tree-panel,
+.category-editor,
+.category-structure-sidebar,
+.category-structure-detail {
+  border-radius: 0 !important;
+}
+
+.asset-column-option,
+.category-list-card,
+.category-org-card,
+.asset-category-filter-item,
+.booking-calendar-event,
+.booking-time-event,
+.asset-selection-card {
+  border-radius: 0 !important;
+}
+
+/* Final QLVT hard-edge enforcement: applies to login, skeletons, portals and every app page. */
+:root {
+  --qlvt-radius-xs: 0 !important;
+  --qlvt-radius-sm: 0 !important;
+  --qlvt-radius-md: 0 !important;
+  --qlvt-shadow: none !important;
+}
+
+#root,
+#root *,
+#root *::before,
+#root *::after,
+.go2072408551,
+.go2072408551 *,
+.react-hot-toast,
+.react-hot-toast * {
+  border-radius: 0 !important;
+}
+
+#root button,
+#root input,
+#root select,
+#root textarea,
+#root table,
+#root th,
+#root td,
+#root .panel,
+#root .card,
+#root .table-wrap,
+#root .modal,
+#root .modal-backdrop,
+#root .crud-modal,
+#root .asset-column-popover,
+#root .dropdown,
+#root .popover,
+#root .tooltip,
+#root .badge,
+#root .status-badge,
+#root [class*="badge"],
+#root [class*="button"],
+#root [class*="btn"],
+#root [class*="card"],
+#root [class*="modal"],
+#root [class*="popover"],
+#root [class*="dropdown"],
+#root [class*="calendar"],
+#root [class*="chip"],
+#root [class*="pill"],
+#root [class*="avatar"],
+#root [class*="skeleton"],
+#root [class*="toast"] {
+  border-radius: 0 !important;
+}
+
+#root .panel,
+#root .card,
+#root .table-wrap,
+#root .crud-modal,
+#root .modal,
+#root .asset-column-popover,
+#root .asset-import-tooltip,
+#root .login-card,
+#root .skeleton-login-card,
+#root .booking-column-popover,
+#root .booking-calendar-event,
+#root .booking-agenda-event,
+#root .booking-time-event {
+  box-shadow: none !important;
+}
+
+#root .panel,
+#root .card,
+#root .table-wrap,
+#root .crud-modal,
+#root .asset-column-popover,
+#root .category-tree-panel,
+#root .category-editor,
+#root .category-structure-sidebar,
+#root .category-structure-detail,
+#root .asset-category-sidebar,
+#root .asset-selection-workspace,
+#root .booking-form-panel,
+#root .booking-flow-panel,
+#root .booking-calendar-panel,
+#root .login-card,
+#root .skeleton-login-card {
+  border: 1px solid #d7dde5 !important;
+}
+
+#root button,
+#root input,
+#root select,
+#root textarea {
+  border-width: 1px !important;
+  min-height: 30px;
+}
+
+#root button,
+#root .button,
+#root [class*="btn"],
+#root .login-btn {
+  padding: 6px 10px !important;
+}
+
+#root .icon-button,
+#root [class*="icon-button"],
+#root button[class*="icon"] {
+  min-width: 30px;
+  min-height: 30px;
+  padding: 0 7px !important;
+}
+
+#root .badge,
+#root .status-badge,
+#root [class^="badge-"],
+#root [class*=" badge-"],
+#root [class*="status"] {
+  border: 0 !important;
+  box-shadow: none !important;
+  font-weight: 500;
+}
+
+#root input:focus,
+#root select:focus,
+#root textarea:focus,
+#root button:focus-visible,
+#root a:focus-visible {
+  outline: 1px solid #52677a !important;
+  outline-offset: 1px !important;
+  box-shadow: none !important;
+}
+
+#root .sidebar {
+  padding: 8px 6px !important;
+}
+
+#root .sidebar.compact {
+  padding: 8px 5px !important;
+}
+
+#root .sidebar nav {
+  gap: 0 !important;
+  padding: 4px 0 !important;
+}
+
+#root .sidebar nav a,
+#root .sidebar-group-button {
+  min-height: 32px !important;
+  padding: 6px 7px !important;
+}
+
+#root .sidebar-submenu {
+  margin-left: 12px !important;
+}
+
+#root .sidebar-submenu a {
+  min-height: 26px !important;
+  padding: 4px 7px !important;
+}
+
+#root .brand,
+#root .user-card,
+#root .sidebar-search,
+#root .collapse-row {
+  padding: 6px !important;
+}
+
+#root .content {
+  padding: 7px 8px 10px !important;
+}
+
+#root .panel,
+#root .asset-page > .panel,
+#root .category-page > .panel,
+#root .booking-page .panel,
+#root .dashboard-page .panel {
+  padding: 8px !important;
+}
+
+#root .asset-page,
+#root .category-page,
+#root .booking-page,
+#root .dashboard-page,
+#root .asset-list-layout,
+#root .asset-selection-body,
+#root .category-workspace,
+#root .booking-layout,
+#root .booking-calendar-shell {
+  gap: 5px !important;
+}
+
+#root .topbar,
+#root .mobile-topbar,
+#root .section-tabs,
+#root .section-tabs nav {
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+#root .login-shell {
+  background: #eef2f5 !important;
+}
+
+#root .login-blueprint {
+  background:
+    linear-gradient(90deg, rgba(21, 77, 124, 0.05) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(21, 77, 124, 0.05) 1px, transparent 1px),
+    #eef2f5 !important;
+  background-size: 28px 28px !important;
+}
+
+#root .login-radial,
+#root .login-shapes,
+#root .login-blueprint-grid,
+#root .scan-line {
+  opacity: 0.35 !important;
+}
+
+#root .login-card {
+  width: min(420px, calc(100vw - 32px)) !important;
+  padding: 28px !important;
+  background: #ffffff !important;
+  border: 1px solid #cfd6df !important;
+}
+
+#root .login-logo {
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+#root .login-subtitle,
+#root .login-note,
+#root .login-footer-line small {
+  color: #475467 !important;
+}
+
+#root .login-btn {
+  width: 100% !important;
+  background: #16324f !important;
+  border: 1px solid #16324f !important;
+  color: #ffffff !important;
+  min-height: 38px !important;
+  box-shadow: none !important;
+}
+
+#root .login-btn:hover {
+  background: #1f3d5a !important;
+  border-color: #1f3d5a !important;
+  transform: none !important;
+}
+
+#root .login-note {
+  border: 1px solid #d7dde5 !important;
+  background: #f6f8fa !important;
+}
+
+/* QLVT UX consolidation pass: compact, sharp, consistent page layouts. */
+#root {
+  color: #1f2937;
+}
+
+#root .app-shell {
+  grid-template-columns: 236px minmax(0, 1fr) !important;
+  background: #eef2f5;
+}
+
+#root .sidebar {
+  border-right: 1px solid #d7dde5 !important;
+  background: #ffffff !important;
+  box-shadow: none !important;
+}
+
+#root .brand {
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  justify-content: flex-start;
+}
+
+#root .brand:hover {
+  background: #f6f8fa !important;
+}
+
+#root .brand img {
+  max-width: 112px;
+  object-fit: contain;
+}
+
+#root .brand p {
+  color: #52677a;
+  font-weight: 600;
+}
+
+#root .sidebar-search,
+#root .asset-search,
+#root .category-search-field > span {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+#root .sidebar-search > svg,
+#root .asset-search > svg,
+#root .category-search-field > span > svg {
+  position: absolute;
+  left: 9px;
+  top: 50%;
+  z-index: 1;
+  width: 15px;
+  height: 15px;
+  color: #667085;
+  pointer-events: none;
+  transform: translateY(-50%);
+}
+
+#root .sidebar-search input,
+#root .asset-search input,
+#root .category-search-field input {
+  width: 100%;
+  min-width: 0;
+  padding-left: 32px !important;
+  padding-right: 30px !important;
+}
+
+#root .sidebar-search button,
+#root .category-search-clear {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  z-index: 2;
+  width: 24px;
+  min-width: 24px;
+  height: 24px;
+  min-height: 24px;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  color: #667085;
+  transform: translateY(-50%);
+}
+
+#root .sidebar-search button:hover,
+#root .category-search-clear:hover {
+  background: #eef2f5 !important;
+  color: #16324f;
+}
+
+#root .sidebar nav a,
+#root .sidebar-group-button {
+  border: 1px solid transparent !important;
+  color: #344054;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+#root .sidebar nav a:hover,
+#root .sidebar-group-button:hover {
+  background: #f6f8fa !important;
+  border-color: #e4e7ec !important;
+  color: #16324f;
+}
+
+#root .sidebar nav a.active,
+#root .sidebar-group-button.active,
+#root .sidebar-submenu a.active {
+  background: #eef4fa !important;
+  border-color: #ccd8e4 !important;
+  color: #16324f !important;
+  font-weight: 600;
+}
+
+#root .sidebar nav a.active::before,
+#root .sidebar-group-button.active::before,
+#root .sidebar-submenu a.active::before {
+  display: none !important;
+}
+
+#root .section-tabs {
+  margin-bottom: 5px;
+  border: 1px solid #d7dde5 !important;
+  background: #ffffff !important;
+}
+
+#root .section-tabs nav {
+  gap: 3px !important;
+}
+
+#root .section-tabs a {
+  min-height: 28px;
+  padding: 5px 9px !important;
+  border: 1px solid transparent !important;
+  color: #52677a;
+  font-size: 13px;
+}
+
+#root .section-tabs a:hover,
+#root .section-tabs a.active {
+  background: #eef4fa !important;
+  border-color: #ccd8e4 !important;
+  color: #16324f;
+}
+
+#root .page-grid,
+#root .asset-page,
+#root .category-page,
+#root .booking-page,
+#root .dashboard-page,
+#root .help-page {
+  gap: 6px !important;
+}
+
+#root .panel-title {
+  gap: 8px;
+  margin-bottom: 7px;
+}
+
+#root .panel-title h2,
+#root .panel-title h3 {
+  color: #1f2937;
+  font-size: 16px;
+  line-height: 1.25;
+}
+
+#root .panel-title p {
+  margin-top: 2px;
+  color: #667085;
+  font-size: 12px;
+}
+
+#root .panel-actions,
+#root .asset-actions,
+#root .booking-table-tools,
+#root .modal-actions {
+  gap: 5px !important;
+}
+
+#root .panel-actions button,
+#root .asset-actions button,
+#root .booking-table-tools button,
+#root .modal-actions button,
+#root .asset-toolbar button,
+#root .asset-toolbar select,
+#root .booking-filters select,
+#root .booking-filters input,
+#root .asset-filter-field select,
+#root .asset-filter-field input {
+  min-height: 29px !important;
+  font-size: 12px !important;
+}
+
+#root .asset-toolbar {
+  display: grid !important;
+  grid-template-columns: minmax(240px, 1fr) repeat(4, minmax(120px, 170px));
+  align-items: end;
+  gap: 5px !important;
+  margin-bottom: 6px;
+}
+
+#root .asset-search {
+  min-height: 30px;
+}
+
+#root .asset-filter-field {
+  min-width: 0;
+  gap: 3px;
+}
+
+#root .asset-filter-field > span,
+#root .category-filters label,
+#root .booking-filters label > span,
+#root .asset-bulk-action-select > span {
+  color: #52677a;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+#root .asset-list-layout {
+  align-items: stretch;
+  grid-template-columns: minmax(210px, 250px) minmax(0, 1fr);
+}
+
+#root .asset-category-sidebar {
+  width: auto;
+  min-width: 0;
+  padding: 7px !important;
+  border: 1px solid #d7dde5 !important;
+}
+
+#root .asset-category-sidebar-head {
+  gap: 6px !important;
+  padding-bottom: 6px !important;
+  border-bottom: 1px solid #e4e7ec;
+}
+
+#root .asset-category-filter-list {
+  gap: 1px !important;
+}
+
+#root .asset-category-filter-item {
+  min-height: 28px !important;
+  gap: 5px !important;
+  padding-top: 4px !important;
+  padding-right: 5px !important;
+  padding-bottom: 4px !important;
+  border: 1px solid transparent !important;
+}
+
+#root .asset-category-filter-item:hover {
+  background: #f6f8fa !important;
+  border-color: #e4e7ec !important;
+}
+
+#root .asset-category-filter-item[data-selected="true"] {
+  background: #eef4fa !important;
+  border-color: #ccd8e4 !important;
+}
+
+#root .asset-category-filter-copy {
+  min-width: 0;
+}
+
+#root .asset-category-filter-copy strong {
+  display: block;
+  overflow: hidden;
+  color: #25384f;
+  font-size: 12px;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#root .asset-category-filter-copy small {
+  display: block;
+  overflow: hidden;
+  color: #667085;
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#root .asset-category-filter-count {
+  min-width: 22px;
+  padding: 1px 4px !important;
+  border: 0 !important;
+  background: #eef2f5 !important;
+  color: #52677a !important;
+  font-size: 10px;
+  text-align: center;
+}
+
+#root .asset-results-column,
+#root .asset-selection-workspace {
+  min-width: 0;
+}
+
+#root .asset-list-panel {
+  border: 0 !important;
+  background: transparent !important;
+}
+
+#root .asset-list-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 34px;
+  padding: 5px 0 !important;
+}
+
+#root .asset-list-head > div {
+  min-width: 0;
+}
+
+#root .asset-list-head strong {
+  color: #1f2937;
+  font-size: 14px;
+}
+
+#root .asset-list-head span {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  max-width: 100%;
+  overflow: hidden;
+  color: #52677a;
+  font-size: 12px;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#root .asset-list-head span span {
+  display: inline-flex;
+  flex: 0 0 auto;
+}
+
+#root .table-wrap {
+  border: 1px solid #d7dde5 !important;
+  background: #ffffff;
+}
+
+#root table th {
+  color: #1f2937 !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0 !important;
+}
+
+#root table td {
+  color: #52677a;
+  font-size: 12px !important;
+}
+
+#root table td:first-child,
+#root .asset-name-cell strong,
+#root .booking-name-cell strong {
+  color: #25384f;
+}
+
+#root table input[type="checkbox"],
+#root .asset-selection-card input[type="checkbox"] {
+  width: 13px !important;
+  min-width: 13px !important;
+  height: 13px !important;
+  min-height: 13px !important;
+}
+
+#root .asset-selection-workspace {
+  gap: 5px !important;
+  padding: 7px !important;
+  border: 1px solid #d7dde5 !important;
+}
+
+#root .asset-selection-head {
+  min-height: 34px;
+  padding-bottom: 5px !important;
+}
+
+#root .asset-selection-card {
+  min-height: 42px;
+  padding: 5px 6px !important;
+  border: 1px solid #d7dde5 !important;
+}
+
+#root .asset-selection-card:hover {
+  border-color: #b8c4d0 !important;
+  background: #f8fafc !important;
+}
+
+#root .asset-selection-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 5px !important;
+}
+
+#root .asset-bulk-panel {
+  min-height: 0 !important;
+  padding: 7px !important;
+  border: 1px solid #d7dde5 !important;
+}
+
+#root .asset-bulk-form-row,
+#root .asset-bulk-form-row.three {
+  grid-template-columns: repeat(3, minmax(150px, 1fr));
+  gap: 5px !important;
+}
+
+#root .asset-bulk-panel-copy {
+  align-self: center;
+  min-width: 180px;
+}
+
+#root .asset-bulk-panel .primary-action {
+  align-self: end;
+  width: auto !important;
+  min-width: 96px;
+}
+
+#root .category-workspace {
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 360px);
+  gap: 6px !important;
+}
+
+#root .category-panel-controls,
+#root .category-filters {
+  gap: 5px !important;
+}
+
+#root .category-search-field {
+  max-width: 420px;
+}
+
+#root .category-org-viewport,
+#root .category-structure-detail,
+#root .category-structure-sidebar {
+  border: 1px solid #d7dde5 !important;
+}
+
+#root .category-org-card {
+  display: grid;
+  grid-template-columns: auto minmax(130px, 1fr) auto;
+  align-items: center;
+  gap: 6px !important;
+  min-width: 210px;
+  max-width: 280px;
+  padding: 6px 7px !important;
+  border: 1px solid #d7dde5 !important;
+  background: #ffffff !important;
+}
+
+#root .category-org-card:hover,
+#root .category-list-card:hover,
+#root .category-structure-row-head:hover {
+  background: #f6f8fa !important;
+  border-color: #ccd8e4 !important;
+}
+
+#root .category-org-card[data-selected="true"],
+#root .category-list-card.active,
+#root .category-structure-sidebar button.active {
+  background: #eef4fa !important;
+  border-color: #aebdca !important;
+  box-shadow: none !important;
+}
+
+#root .category-card-copy {
+  min-width: 0;
+}
+
+#root .category-card-copy strong,
+#root .category-list-card strong,
+#root .category-structure-title {
+  display: block;
+  color: #25384f;
+  font-size: 12px;
+  line-height: 1.25;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+#root .category-card-copy span {
+  display: block;
+  overflow: hidden;
+  color: #667085;
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#root .category-card-actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 3px;
+}
+
+#root .category-icon-action,
+#root .category-expand-button {
+  width: 24px !important;
+  min-width: 24px !important;
+  height: 24px !important;
+  min-height: 24px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  color: #52677a;
+}
+
+#root .category-icon-action:hover,
+#root .category-expand-button:hover {
+  background: #eef2f5 !important;
+  color: #16324f;
+}
+
+#root .category-icon-action.danger:hover {
+  color: #b42318;
+}
+
+#root .category-structure-row-head {
+  min-height: 30px;
+  padding: 5px 7px !important;
+  border: 1px solid transparent !important;
+}
+
+#root .category-structure-children {
+  gap: 2px !important;
+  padding-left: 12px !important;
+}
+
+#root .category-editor {
+  padding: 9px !important;
+  border: 1px solid #d7dde5 !important;
+}
+
+#root .category-editor-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 5px !important;
+}
+
+#root .booking-layout {
+  grid-template-columns: minmax(360px, 0.85fr) minmax(330px, 1.15fr);
+  align-items: stretch;
+}
+
+#root .booking-form-panel,
+#root .booking-flow-panel {
+  min-width: 0;
+}
+
+#root .booking-form-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 5px !important;
+}
+
+#root .booking-flow-list {
+  gap: 5px !important;
+}
+
+#root .booking-flow-list > div {
+  min-height: 34px;
+  padding: 6px 7px !important;
+  border: 1px solid #d7dde5 !important;
+  background: #f8fafc !important;
+}
+
+#root .booking-calendar-head {
+  align-items: flex-start;
+  gap: 8px !important;
+}
+
+#root .booking-calendar-controls {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  gap: 5px !important;
+  margin-left: auto;
+}
+
+#root .booking-calendar-view-select {
+  display: grid;
+  grid-template-columns: auto minmax(110px, 130px);
+  align-items: center;
+  gap: 5px;
+}
+
+#root .booking-calendar-view-select span {
+  color: #52677a;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+#root .booking-calendar-title {
+  margin: 4px 0 6px;
+  color: #25384f;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+#root .booking-calendar-shell {
+  grid-template-columns: 220px minmax(0, 1fr);
+  min-height: 520px;
+}
+
+#root .booking-calendar-sidebar,
+#root .booking-calendar-main,
+#root .booking-calendar-grid {
+  min-width: 0;
+}
+
+#root .booking-calendar-sidebar-filters {
+  gap: 5px !important;
+}
+
+#root .booking-time-grid-scroll {
+  max-height: 520px;
+  scroll-behavior: smooth;
+}
+
+#root .booking-time-event {
+  right: auto !important;
+  z-index: 2;
+  min-width: 0;
+  padding: 4px 5px !important;
+  overflow: hidden;
+  border: 1px solid #9bb8d8 !important;
+  background: #eaf3ff !important;
+  color: #16324f !important;
+}
+
+#root .booking-time-event:hover,
+#root .booking-calendar-event:hover {
+  border-color: #8eb0d4 !important;
+  background: #f2f7fd !important;
+  color: #16324f !important;
+}
+
+#root .booking-time-event strong,
+#root .booking-time-event span,
+#root .booking-time-event small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#root .booking-filters {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(150px, 210px));
+  justify-content: start;
+  gap: 5px !important;
+}
+
+#root .booking-table {
+  min-width: 0;
+}
+
+#root .dashboard-command-center {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 420px);
+  gap: 10px;
+  align-items: center;
+}
+
+#root .dashboard-command-center h1,
+#root .help-hero h1 {
+  margin: 0;
+  color: #172b43;
+  font-size: 24px;
+  line-height: 1.2;
+}
+
+#root .dashboard-command-center p,
+#root .help-hero p {
+  margin: 4px 0 0;
+  color: #52677a;
+  font-size: 13px;
+}
+
+#root .dashboard-system-summary,
+#root .dashboard-health-grid,
+#root .dashboard-shortcut-grid {
+  display: grid;
+  gap: 6px;
+}
+
+#root .dashboard-system-summary {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+#root .dashboard-system-summary > div,
+#root .dashboard-health-grid > div,
+#root .dashboard-shortcut,
+#root .dashboard-booking-item,
+#root .help-card,
+#root .help-note {
+  border: 1px solid #d7dde5 !important;
+  background: #ffffff !important;
+  box-shadow: none !important;
+}
+
+#root .dashboard-system-summary > div {
+  padding: 8px;
+}
+
+#root .dashboard-system-summary span,
+#root .dashboard-health-grid span,
+#root .dashboard-booking-item span,
+#root .dashboard-booking-item small,
+#root .dashboard-shortcut small,
+#root .help-card p,
+#root .help-card li,
+#root .help-note p {
+  color: #667085;
+  font-size: 12px;
+}
+
+#root .dashboard-system-summary strong {
+  display: block;
+  margin-top: 2px;
+  color: #172b43;
+  font-size: 18px;
+}
+
+#root .dashboard-main-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 360px);
+  gap: 6px;
+  align-items: start;
+}
+
+#root .dashboard-shortcut-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+#root .dashboard-shortcut {
+  display: flex;
+  gap: 8px;
+  min-height: 78px;
+  padding: 9px;
+  color: inherit;
+  text-decoration: none;
+}
+
+#root .dashboard-shortcut:hover,
+#root .dashboard-booking-item:hover,
+#root .help-links a:hover {
+  border-color: #aebdca !important;
+  background: #f6f8fa !important;
+}
+
+#root .dashboard-shortcut > span,
+#root .help-card-head > span {
+  display: grid;
+  flex: 0 0 30px;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border: 1px solid #ccd8e4;
+  background: #eef4fa;
+  color: #16324f;
+}
+
+#root .dashboard-shortcut strong,
+#root .dashboard-booking-item strong,
+#root .help-card h2 {
+  display: block;
+  color: #25384f;
+  font-size: 13px;
+}
+
+#root .dashboard-booking-list {
+  display: grid;
+  gap: 5px;
+}
+
+#root .dashboard-booking-item {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr) auto;
+  gap: 6px;
+  align-items: center;
+  padding: 7px;
+  color: inherit;
+  text-decoration: none;
+}
+
+#root .dashboard-booking-item div {
+  min-width: 0;
+}
+
+#root .dashboard-booking-item strong,
+#root .dashboard-booking-item span,
+#root .dashboard-booking-item small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#root .dashboard-health-grid {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+#root .dashboard-health-grid > div {
+  display: grid;
+  gap: 3px;
+  padding: 8px;
+}
+
+#root .dashboard-health-grid svg {
+  color: #52677a;
+}
+
+#root .dashboard-health-grid strong,
+#root .dashboard-health-grid a {
+  color: #172b43;
+  font-size: 15px;
+  text-decoration: none;
+}
+
+#root .help-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+#root .help-hero > svg {
+  width: 42px;
+  height: 42px;
+  color: #52677a;
+}
+
+#root .help-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+
+#root .help-card {
+  display: grid;
+  gap: 8px;
+}
+
+#root .help-card-head {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+#root .help-card ol {
+  margin: 0;
+  padding-left: 18px;
+}
+
+#root .help-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+#root .help-links a {
+  padding: 4px 7px;
+  border: 1px solid #d7dde5;
+  color: #16324f;
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+#root .help-note {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+@media (max-width: 1180px) {
+  #root .asset-toolbar,
+  #root .booking-filters {
+    grid-template-columns: repeat(2, minmax(180px, 1fr));
+  }
+
+  #root .booking-layout,
+  #root .dashboard-main-grid,
+  #root .dashboard-command-center {
+    grid-template-columns: 1fr;
+  }
+
+  #root .dashboard-shortcut-grid,
+  #root .dashboard-health-grid,
+  #root .dashboard-system-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  #root .asset-list-layout,
+  #root .category-workspace,
+  #root .booking-calendar-shell,
+  #root .help-grid {
+    grid-template-columns: 1fr;
+  }
+
+  #root .asset-toolbar,
+  #root .booking-filters,
+  #root .dashboard-shortcut-grid,
+  #root .dashboard-health-grid,
+  #root .dashboard-system-summary {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Dense professional pass: remove excess whitespace, stacked borders and double focus halos. */
+#root .app-shell {
+  grid-template-columns: 232px minmax(0, 1fr) !important;
+  gap: 0 !important;
+}
+
+#root .app-shell.sidebar-compact {
+  grid-template-columns: 64px minmax(0, 1fr) !important;
+}
+
+#root .content {
+  padding: 4px 6px 8px !important;
+}
+
+#root .sidebar {
+  padding: 6px 5px !important;
+}
+
+#root .sidebar.compact {
+  width: 64px !important;
+  padding: 6px 4px !important;
+}
+
+#root .brand {
+  min-height: 36px !important;
+  padding: 4px 5px !important;
+  border: 0 !important;
+}
+
+#root .sidebar nav {
+  padding: 3px 0 !important;
+}
+
+#root .sidebar nav a,
+#root .sidebar-group-button {
+  min-height: 30px !important;
+  padding: 5px 7px !important;
+}
+
+#root .sidebar-submenu {
+  margin-left: 10px !important;
+}
+
+#root .sidebar-submenu a {
+  min-height: 24px !important;
+  padding: 3px 7px !important;
+}
+
+#root .section-tabs {
+  margin-bottom: 4px !important;
+  padding: 4px !important;
+}
+
+#root .page-grid,
+#root .asset-page,
+#root .category-page,
+#root .booking-page,
+#root .dashboard-page,
+#root .help-page {
+  gap: 4px !important;
+}
+
+#root .panel,
+#root .asset-page > .panel,
+#root .category-page > .panel,
+#root .booking-page .panel,
+#root .dashboard-page .panel,
+#root .help-page .panel {
+  padding: 6px !important;
+}
+
+#root .panel-title {
+  margin-bottom: 5px !important;
+}
+
+#root input,
+#root select,
+#root textarea,
+#root button {
+  transition:
+    border-color 0.12s ease,
+    background-color 0.12s ease,
+    color 0.12s ease !important;
+}
+
+#root input:hover,
+#root select:hover,
+#root textarea:hover,
+#root input[type="date"]:hover,
+#root input[type="datetime-local"]:hover,
+#root .asset-filter-field:hover select,
+#root .asset-filter-field:hover input,
+#root .booking-filters label:hover select,
+#root .booking-filters label:hover input {
+  border-color: #aebdca !important;
+  background: #fbfcfd !important;
+}
+
+#root input:focus,
+#root select:focus,
+#root textarea:focus,
+#root input:focus-visible,
+#root select:focus-visible,
+#root textarea:focus-visible {
+  outline: none !important;
+  border-color: #2e82b6 !important;
+  box-shadow: none !important;
+}
+
+#root button:focus,
+#root button:focus-visible,
+#root a:focus,
+#root a:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+#root input[type="date"],
+#root input[type="datetime-local"],
+#root select,
+#root .asset-filter-field,
+#root .booking-filters label,
+#root .category-filters label {
+  cursor: pointer;
+}
+
+#root .sidebar-search input,
+#root .asset-search input,
+#root .category-search-field input {
+  padding-left: 34px !important;
+}
+
+#root .asset-toolbar {
+  grid-template-columns: minmax(260px, 1fr) repeat(4, minmax(110px, 150px)) !important;
+  gap: 4px !important;
+  margin-bottom: 4px !important;
+}
+
+#root .asset-list-layout {
+  grid-template-columns: minmax(235px, 260px) minmax(0, 1fr) !important;
+  gap: 4px !important;
+}
+
+#root .asset-list-layout.category-collapsed {
+  grid-template-columns: 36px minmax(0, 1fr) !important;
+}
+
+#root .asset-category-sidebar {
+  padding: 5px !important;
+}
+
+#root .asset-category-filter-copy strong {
+  white-space: normal !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+}
+
+#root .asset-category-filter-copy small {
+  max-width: 100%;
+}
+
+#root .asset-list-head {
+  padding: 3px 0 !important;
+}
+
+#root .asset-list-head span {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  min-width: 0;
+  white-space: nowrap !important;
+}
+
+#root .asset-list-head > div {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: 8px;
+  row-gap: 2px;
+}
+
+#root .asset-selection-workspace {
+  margin-top: 4px !important;
+  padding: 5px !important;
+}
+
+#root .asset-selection-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px;
+  min-height: 30px !important;
+  padding-bottom: 3px !important;
+}
+
+#root .asset-selection-body {
+  gap: 4px !important;
+}
+
+#root .asset-selection-stack {
+  max-height: 250px;
+}
+
+#root .asset-bulk-panel {
+  padding: 5px !important;
+}
+
+#root .asset-bulk-panel-copy {
+  min-width: 150px !important;
+}
+
+#root .asset-list-insights {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 4px;
+  margin-top: 4px;
+}
+
+#root .asset-insight-card {
+  min-width: 0;
+  padding: 6px;
+  border: 1px solid #d7dde5;
+  background: #ffffff;
+}
+
+#root .asset-insight-card > strong {
+  display: block;
+  margin-bottom: 4px;
+  color: #25384f;
+  font-size: 12px;
+}
+
+#root .asset-insight-card p {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px;
+  margin: 0;
+  padding: 2px 0;
+  color: #667085;
+  font-size: 11px;
+}
+
+#root .asset-insight-card span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#root .asset-insight-card b {
+  color: #25384f;
+  font-size: 11px;
+}
+
+#root .category-workspace {
+  grid-template-columns: minmax(0, 1fr) minmax(290px, 340px) !important;
+  gap: 4px !important;
+}
+
+#root .category-panel-controls {
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+#root .category-section-heading h3 {
+  margin: 0;
+  color: #25384f;
+  font-size: 14px;
+}
+
+#root .category-section-heading p {
+  margin: 1px 0 0;
+  color: #667085;
+  font-size: 11px;
+}
+
+#root .category-filters {
+  grid-template-columns: minmax(260px, 1fr) minmax(130px, 170px) minmax(120px, 150px);
+  align-items: end;
+  margin-bottom: 4px;
+}
+
+#root .category-org-viewport {
+  max-height: 380px;
+  padding: 8px !important;
+  overflow: auto;
+}
+
+#root .category-management-section {
+  display: grid;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+#root .category-org-card {
+  grid-template-columns: auto minmax(150px, 1fr) auto !important;
+  min-width: 230px !important;
+  max-width: 300px !important;
+  padding: 5px 6px !important;
+}
+
+#root .category-card-copy strong,
+#root .category-list-card strong,
+#root .category-structure-title {
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+#root .category-card-copy span {
+  white-space: nowrap !important;
+}
+
+#root .category-org-card:hover,
+#root .category-list-card:hover,
+#root .category-structure-row-head:hover,
+#root .asset-category-filter-item:hover {
+  background: #f8fafc !important;
+  border-color: #d7dde5 !important;
+}
+
+#root .category-org-card[data-selected="true"],
+#root .category-list-card.active,
+#root .category-structure-sidebar button.active,
+#root .asset-category-filter-item[data-selected="true"] {
+  background: #eef4fa !important;
+  border-color: #b8c7d6 !important;
+}
+
+#root .booking-layout {
+  grid-template-columns: minmax(0, 7fr) minmax(280px, 3fr) !important;
+  gap: 4px !important;
+}
+
+#root .booking-form-grid,
+#root .booking-filters {
+  gap: 4px !important;
+}
+
+#root .booking-filters {
+  grid-template-columns: repeat(4, minmax(140px, 190px)) !important;
+}
+
+#root .booking-calendar-controls {
+  margin-left: 0 !important;
+  margin-right: auto;
+}
+
+#root .booking-time-event:hover,
+#root .booking-calendar-event:hover {
+  background: #f2f7fd !important;
+  border-color: #9bb8d8 !important;
+}
+
+#root .dashboard-command-center {
+  position: relative;
+  min-height: 150px;
+  overflow: hidden;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 390px) !important;
+  background:
+    linear-gradient(90deg, rgba(22, 50, 79, 0.06) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(22, 50, 79, 0.06) 1px, transparent 1px),
+    #ffffff !important;
+  background-size: 28px 28px !important;
+}
+
+#root .dashboard-command-center::after {
+  position: absolute;
+  right: 24px;
+  bottom: -26px;
+  width: 210px;
+  height: 110px;
+  border: 1px solid rgba(82, 103, 122, 0.18);
+  content: "";
+}
+
+#root .dashboard-hero-copy {
+  position: relative;
+  z-index: 1;
+}
+
+#root .dashboard-hero-copy img {
+  display: block;
+  width: 132px;
+  height: auto;
+  margin-bottom: 10px;
+}
+
+#root .dashboard-hero-copy h1 {
+  margin: 0;
+  color: #172b43;
+  font-size: 26px;
+  line-height: 1.15;
+}
+
+#root .dashboard-hero-copy p,
+#root .dashboard-hero-copy span {
+  display: block;
+  margin-top: 4px;
+  color: #52677a;
+  font-size: 13px;
+}
+
+#root .dashboard-booking-item {
+  grid-template-columns: 18px minmax(0, 1fr);
+  align-items: start;
+}
+
+#root .dashboard-booking-item .badge {
+  justify-self: start;
+  margin-top: 3px;
+  grid-column: 2;
+  max-width: 100%;
+}
+
+#root .dashboard-main-grid,
+#root .dashboard-shortcut-grid,
+#root .dashboard-health-grid {
+  gap: 4px !important;
+}
+
+#root .help-layout {
+  display: grid;
+  grid-template-columns: minmax(230px, 280px) minmax(0, 1fr);
+  gap: 4px;
+}
+
+#root .help-nav,
+#root .help-detail {
+  min-width: 0;
+}
+
+#root .help-nav > strong {
+  display: block;
+  margin-bottom: 5px;
+  color: #25384f;
+  font-size: 13px;
+}
+
+#root .help-nav-tree,
+#root .help-nav-group,
+#root .help-nav-children {
+  display: grid;
+  gap: 1px;
+}
+
+#root .help-nav button {
+  justify-content: flex-start;
+  min-height: 28px;
+  padding: 4px 6px !important;
+  border: 1px solid transparent !important;
+  background: transparent !important;
+  color: #344054;
+  font-size: 12px;
+  text-align: left;
+}
+
+#root .help-nav button:hover,
+#root .help-nav button.active {
+  background: #eef4fa !important;
+  border-color: #d7dde5 !important;
+  color: #16324f;
+}
+
+#root .help-nav-children {
+  margin-left: 18px;
+}
+
+#root .help-detail {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+}
+
+#root .help-detail-head {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+#root .help-detail-head > svg {
+  flex: 0 0 28px;
+  width: 28px;
+  height: 28px;
+  padding: 5px;
+  border: 1px solid #ccd8e4;
+  background: #eef4fa;
+  color: #16324f;
+}
+
+#root .help-detail h2 {
+  margin: 0;
+  color: #25384f;
+  font-size: 18px;
+}
+
+#root .help-detail p,
+#root .help-detail li {
+  color: #52677a;
+  font-size: 13px;
+}
+
+@media (max-width: 1180px) {
+  #root .asset-list-insights,
+  #root .dashboard-shortcut-grid,
+  #root .dashboard-health-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  #root .help-layout,
+  #root .asset-list-insights {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* BIMLAB color accent pass for Asset List and Asset Categories. */
+:root {
+  --bimlab-blue: #15507f;
+  --bimlab-blue-strong: #0f3f67;
+  --bimlab-blue-soft: #eaf5fb;
+  --bimlab-blue-soft-2: #f3f9fd;
+  --bimlab-line: #c7d8e5;
+}
+
+#root .asset-page,
+#root .category-page > .panel {
+  background: #ffffff !important;
+}
+
+#root .asset-page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 42px;
+  margin: -6px -6px 6px;
+  padding: 8px 12px;
+  background: var(--bimlab-blue);
+  color: #ffffff;
+}
+
+#root .asset-page-header h2 {
+  margin: 0;
+  color: #ffffff;
+  font-size: 17px;
+  line-height: 1.2;
+}
+
+#root .asset-page-header span {
+  display: block;
+  margin-top: 2px;
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 12px;
+}
+
+#root .asset-page-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  align-items: center;
+  margin-bottom: 5px;
+  padding: 6px;
+  border: 1px solid var(--bimlab-line);
+  background: var(--bimlab-blue-soft-2);
+}
+
+#root .asset-page-actions button {
+  min-height: 29px !important;
+}
+
+#root .asset-page-actions .asset-import-button,
+#root .asset-page-actions .asset-template-button {
+  border-color: #9ec4de !important;
+  background: #ffffff !important;
+  color: var(--bimlab-blue) !important;
+}
+
+#root .asset-page-actions .asset-import-button:hover,
+#root .asset-page-actions .asset-template-button:hover,
+#root .asset-page-actions .secondary:hover {
+  border-color: var(--bimlab-blue) !important;
+  background: #edf7fc !important;
+}
+
+#root .asset-list-layout {
+  background: var(--bimlab-blue-soft-2);
+  border: 1px solid var(--bimlab-line);
+  padding: 4px;
+}
+
+#root .asset-category-sidebar {
+  background: #ffffff !important;
+}
+
+#root .asset-toolbar {
+  padding: 5px;
+  border: 1px solid var(--bimlab-line);
+  background: #ffffff;
+}
+
+#root .asset-list-head {
+  padding: 6px 8px !important;
+  border: 1px solid var(--bimlab-line);
+  border-bottom: 0;
+  background: var(--bimlab-blue-soft);
+}
+
+#root .asset-list-head strong {
+  color: var(--bimlab-blue-strong);
+}
+
+#root .asset-list-head span span,
+#root .asset-list-head span span span {
+  color: var(--bimlab-blue) !important;
+}
+
+#root .asset-list-insights {
+  padding: 5px;
+  border: 1px solid var(--bimlab-line);
+  background: var(--bimlab-blue-soft-2);
+}
+
+#root .asset-insight-card {
+  border-color: var(--bimlab-line) !important;
+  background: #ffffff !important;
+}
+
+#root .asset-insight-card > strong {
+  color: var(--bimlab-blue-strong);
+}
+
+#root .asset-insight-bars {
+  display: grid;
+  gap: 5px;
+}
+
+#root .asset-insight-bar-row {
+  display: grid;
+  gap: 3px;
+}
+
+#root .asset-insight-bar-row p {
+  padding: 0 !important;
+}
+
+#root .asset-insight-track {
+  height: 6px;
+  overflow: hidden;
+  background: #e5eef5;
+}
+
+#root .asset-insight-track span {
+  display: block;
+  height: 100%;
+  background: var(--bimlab-blue);
+}
+
+#root .asset-insight-track span[data-tone$="-1"] {
+  background: #2e82b6;
+}
+
+#root .asset-insight-track span[data-tone$="-2"] {
+  background: #5aa6cf;
+}
+
+#root .asset-insight-track span[data-tone$="-3"] {
+  background: #78b7d8;
+}
+
+#root .asset-insight-track span[data-tone$="-4"] {
+  background: #9bcbe2;
+}
+
+#root .category-page .panel-title,
+#root .category-panel-controls,
+#root .category-management-section > .category-section-heading {
+  border-left: 4px solid var(--bimlab-blue);
+  padding-left: 8px;
+}
+
+#root .category-tree-panel {
+  display: grid;
+  grid-template-rows: auto auto auto minmax(0, auto);
+  min-height: 0;
+  overflow: hidden;
+  border-color: var(--bimlab-line) !important;
+  background: var(--bimlab-blue-soft-2) !important;
+}
+
+#root .category-filters {
+  padding: 5px;
+  border: 1px solid var(--bimlab-line);
+  background: #ffffff;
+}
+
+#root .category-org-viewport {
+  height: 420px;
+  min-height: 420px;
+  max-height: 420px;
+  border-color: var(--bimlab-line) !important;
+  background:
+    linear-gradient(90deg, rgba(21, 80, 127, 0.035) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(21, 80, 127, 0.035) 1px, transparent 1px),
+    var(--bimlab-blue-soft) !important;
+  background-size: 28px 28px !important;
+  overflow: auto !important;
+}
+
+#root .category-org-forest {
+  width: max-content;
+  min-width: 100%;
+  padding: 8px;
+}
+
+#root .category-org-card {
+  grid-template-columns: auto minmax(220px, max-content) auto !important;
+  width: max-content !important;
+  min-width: 300px !important;
+  max-width: none !important;
+  border-color: #b9d4e7 !important;
+  background: #ffffff !important;
+}
+
+#root .category-org-card:hover {
+  background: #f8fcff !important;
+  border-color: #91bdd8 !important;
+}
+
+#root .category-org-card[data-selected="true"] {
+  border-color: var(--bimlab-blue) !important;
+  background: #eef8ff !important;
+}
+
+#root .category-card-copy {
+  width: max-content;
+  max-width: 390px;
+  min-width: 0;
+}
+
+#root .category-card-copy strong {
+  max-width: 390px;
+  overflow: hidden !important;
+  color: var(--bimlab-blue-strong);
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+#root .category-card-copy span {
+  max-width: 390px;
+  color: #5b7185;
+}
+
+#root .category-card-actions {
+  margin-left: 8px;
+}
+
+#root .category-icon-action,
+#root .category-expand-button {
+  color: var(--bimlab-blue) !important;
+}
+
+#root .category-icon-action:hover,
+#root .category-expand-button:hover {
+  background: var(--bimlab-blue-soft) !important;
+}
+
+#root .category-management-section {
+  min-height: 0;
+  max-height: 360px;
+  padding: 5px;
+  border: 1px solid var(--bimlab-line);
+  background: #ffffff;
+  overflow: hidden;
+}
+
+#root .category-management-section .category-structure-view {
+  min-height: 0;
+}
+
+#root .category-management-section .category-structure-grid {
+  min-height: 0;
+  max-height: 300px;
+}
+
+#root .category-management-section .category-structure-sidebar,
+#root .category-management-section .category-structure-detail {
+  max-height: 300px;
+  overflow: auto;
+}
+
+#root .category-structure-sidebar,
+#root .category-structure-detail,
+#root .category-editor {
+  border-color: var(--bimlab-line) !important;
+  background: #ffffff !important;
+}
+
+#root .category-structure-sidebar-head,
+#root .category-structure-detail-head,
+#root .category-parent-context {
+  background: var(--bimlab-blue-soft) !important;
+}
+
+#root .category-editor {
+  background: var(--bimlab-blue-soft-2) !important;
+}
+
+#root .category-editor input,
+#root .category-editor select,
+#root .category-editor textarea {
+  background: #ffffff !important;
+}
+
+@media (max-width: 1180px) {
+  #root .category-org-card {
+    min-width: 260px !important;
+  }
+
+  #root .category-card-copy,
+  #root .category-card-copy strong,
+  #root .category-card-copy span {
+    max-width: 320px;
+  }
+}
+
+/* Restore neutral colors after BIMLAB accent experiment while keeping the compact layout. */
+#root .asset-page-header {
+  background: #ffffff !important;
+  color: #1f2937 !important;
+  border-bottom: 1px solid #d7dde5;
+}
+
+#root .asset-page-header h2 {
+  color: #1f2937 !important;
+}
+
+#root .asset-page-header span {
+  color: #667085 !important;
+}
+
+#root .asset-page-actions,
+#root .asset-list-layout,
+#root .asset-toolbar,
+#root .asset-list-insights,
+#root .category-tree-panel,
+#root .category-org-viewport,
+#root .category-management-section,
+#root .category-editor {
+  background: #ffffff !important;
+}
+
+#root .asset-list-head,
+#root .category-structure-sidebar-head,
+#root .category-structure-detail-head,
+#root .category-parent-context {
+  background: #f6f8fa !important;
+}
+
+#root .category-page .panel-title,
+#root .category-panel-controls,
+#root .category-management-section > .category-section-heading {
+  border-left: 0 !important;
+  padding-left: 0 !important;
+}
+
+#root .category-org-viewport {
+  background: #f8fafc !important;
+}
+
+#root .category-org-card,
+#root .category-org-card:hover,
+#root .category-org-card[data-selected="true"] {
+  border-color: #d7dde5 !important;
+}
+
+#root .category-org-card[data-selected="true"] {
+  background: #f2f6fa !important;
+}
+
+#root .category-card-copy strong,
+#root .asset-list-head strong,
+#root .asset-insight-card > strong {
+  color: #25384f !important;
+}
+
+#root .asset-list-head span span,
+#root .asset-list-head span span span {
+  color: #154d7c !important;
+}
+
+#root .asset-page-actions .asset-template-button,
+#root .asset-template-button {
+  min-height: 34px !important;
+  padding: 7px 10px !important;
+  border: 1px solid #a7f3d0 !important;
+  background: #ecfdf5 !important;
+  color: #047857 !important;
+  font-size: 12px !important;
+}
+
+#root .asset-page-actions .asset-template-button:hover,
+#root .asset-template-button:hover {
+  border-color: #6ee7b7 !important;
+  background: #d1fae5 !important;
+  color: #065f46 !important;
+}
+
+#root .asset-page-actions .asset-import-button,
+#root .asset-import-button {
+  min-height: 34px !important;
+  padding: 7px 10px !important;
+  border: 1px solid #bfdbfe !important;
+  background: #eff6ff !important;
+  color: #154d7c !important;
+  font-size: 12px !important;
+}
+
+#root .asset-page-actions .asset-import-button:hover,
+#root .asset-import-button:hover {
+  border-color: #93c5fd !important;
+  background: #dbeafe !important;
+  color: #154d7c !important;
+}
+
+#root .asset-page-actions .asset-add-button {
+  min-height: 34px !important;
+  padding: 7px 10px !important;
+  border: 1px solid #b8c6d6 !important;
+  background: #16324f !important;
+  color: #ffffff !important;
+  font-size: 12px !important;
+}
+
+#root .asset-page-actions .asset-add-button:hover {
+  border-color: #16324f !important;
+  background: #1f3d5a !important;
+  color: #ffffff !important;
+}
+
+/* Internal-admin compact layout and BIMLAB LAB-blue sidebar. */
+:root {
+  --qlvt-lab-blue: #123f63;
+  --qlvt-lab-blue-hover: #1b5b88;
+  --qlvt-lab-blue-active: #236b9e;
+  --qlvt-lab-blue-soft: #eef7fc;
+}
+
+#root .app-shell {
+  grid-template-columns: 232px minmax(0, 1fr) !important;
+  gap: 0 !important;
+  background: #eef2f5 !important;
+}
+
+#root .app-shell.sidebar-compact {
+  grid-template-columns: 64px minmax(0, 1fr) !important;
+}
+
+#root .content {
+  min-width: 0;
+  padding: 4px 6px 8px !important;
+  overflow: auto;
+}
+
+#root .page-grid,
+#root .dashboard-page,
+#root .asset-page,
+#root .category-page,
+#root .booking-page,
+#root .help-page {
+  gap: 4px !important;
+}
+
+#root .panel,
+#root .asset-page.panel,
+#root .category-page > .panel,
+#root .dashboard-page .panel,
+#root .booking-page .panel,
+#root .help-page .panel {
+  padding: 6px !important;
+}
+
+#root .section-tabs {
+  margin-bottom: 3px !important;
+}
+
+#root .sidebar {
+  padding: 6px 5px !important;
+  border-right: 0 !important;
+  background: var(--qlvt-lab-blue) !important;
+  color: #eaf6ff !important;
+}
+
+#root .sidebar.compact {
+  width: 64px !important;
+  padding: 6px 4px !important;
+}
+
+#root .brand {
+  min-height: 38px !important;
+  padding: 4px 6px !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+
+#root .brand:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+
+#root .brand p {
+  color: #d8eefc !important;
+}
+
+#root .brand-compact-mark {
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+
+#root .sidebar-search {
+  border: 1px solid rgba(255, 255, 255, 0.18) !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+
+#root .sidebar-search > svg {
+  color: #bfe4f8 !important;
+}
+
+#root .sidebar-search input {
+  border-color: transparent !important;
+  background: transparent !important;
+  color: #ffffff !important;
+}
+
+#root .sidebar-search input::placeholder {
+  color: rgba(234, 246, 255, 0.72) !important;
+}
+
+#root .sidebar-search button {
+  color: #d8eefc !important;
+}
+
+#root .sidebar-search button:hover {
+  background: rgba(255, 255, 255, 0.12) !important;
+  color: #ffffff !important;
+}
+
+#root .sidebar nav {
+  gap: 1px !important;
+  padding: 4px 0 !important;
+}
+
+#root .sidebar nav a,
+#root .sidebar-group-button,
+#root .sidebar-submenu a {
+  border: 1px solid transparent !important;
+  background: transparent !important;
+  color: #eaf6ff !important;
+}
+
+#root .sidebar nav a svg,
+#root .sidebar-group-button svg {
+  color: #bfe4f8 !important;
+}
+
+#root .sidebar nav a:hover,
+#root .sidebar-group-button:hover,
+#root .sidebar-submenu a:hover {
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #ffffff !important;
+}
+
+#root .sidebar nav a.active,
+#root .sidebar-group-button.active,
+#root .sidebar-submenu a.active {
+  border-color: rgba(125, 211, 252, 0.38) !important;
+  background: var(--qlvt-lab-blue-active) !important;
+  color: #ffffff !important;
+}
+
+#root .sidebar-submenu {
+  margin-left: 10px !important;
+  border-left: 1px solid rgba(255, 255, 255, 0.16);
+}
+
+#root .sidebar-submenu a {
+  padding-left: 8px !important;
+}
+
+#root .collapse-row,
+#root .user-card {
+  border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+#root .collapse-row button,
+#root .logout-button {
+  border-color: rgba(255, 255, 255, 0.14) !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #ffffff !important;
+}
+
+#root .collapse-row button:hover,
+#root .logout-button:hover {
+  background: rgba(255, 255, 255, 0.14) !important;
+}
+
+#root .user-card strong {
+  color: #ffffff !important;
+}
+
+#root .user-card span {
+  color: #c6e5f7 !important;
+}
+
+#root .sidebar-empty {
+  color: #c6e5f7 !important;
+}
+
+#root .asset-toolbar,
+#root .category-filters,
+#root .booking-filters,
+#root .asset-list-insights,
+#root .help-nav,
+#root .booking-flow-list > div {
+  background: var(--qlvt-lab-blue-soft) !important;
+}
+
+#root .category-page > .panel {
+  overflow: visible !important;
+}
+
+#root .category-workspace {
+  align-items: start !important;
+  gap: 4px !important;
+}
+
+#root .category-tree-panel {
+  display: block !important;
+  overflow: visible !important;
+  background: #ffffff !important;
+}
+
+#root .category-org-viewport {
+  height: 300px !important;
+  min-height: 300px !important;
+  max-height: 300px !important;
+  background:
+    linear-gradient(90deg, rgba(18, 63, 99, 0.035) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(18, 63, 99, 0.035) 1px, transparent 1px),
+    #eef7fc !important;
+  background-size: 28px 28px !important;
+  overflow: auto !important;
+}
+
+#root .category-management-section {
+  max-height: none !important;
+  margin-top: 4px !important;
+  overflow: visible !important;
+  background: #ffffff !important;
+}
+
+#root .category-management-section .category-structure-view,
+#root .category-management-section .category-structure-grid,
+#root .category-management-section .category-structure-sidebar,
+#root .category-management-section .category-structure-detail {
+  max-height: none !important;
+  overflow: visible !important;
+}
+
+#root .category-structure-grid {
+  align-items: start;
+}
+
+#root .category-structure-sidebar,
+#root .category-structure-detail {
+  background: #ffffff !important;
+}
+
+#root .category-editor {
+  align-self: start;
+  background: #ffffff !important;
+}
+
+@media (max-width: 900px) {
+  #root .app-shell,
+  #root .app-shell.sidebar-compact {
+    grid-template-columns: 1fr !important;
+  }
+
+  #root .content {
+    padding: 4px !important;
+  }
+}
+
+/* Final requested pass: LAB-gray sidebar, blue top navigation, expandable category management, asset table text tools. */
+:root {
+  --qlvt-lab-gray: #56616d;
+  --qlvt-lab-gray-hover: #637080;
+  --qlvt-lab-gray-active: #6f7c8d;
+  --qlvt-nav-blue: #123f63;
+  --qlvt-nav-blue-hover: #1b5b88;
+  --qlvt-link-blue: #15507f;
+}
+
+#root .sidebar {
+  background: var(--qlvt-lab-gray) !important;
+  color: #f8fafc !important;
+}
+
+#root .brand,
+#root .brand:hover {
+  border: 0 !important;
+  background: transparent !important;
+}
+
+#root .brand p,
+#root .sidebar-empty {
+  color: rgba(248, 250, 252, 0.78) !important;
+}
+
+#root .brand-compact-mark {
+  background: rgba(255, 255, 255, 0.11) !important;
+  color: #ffffff !important;
+}
+
+#root .sidebar-search,
+#root .user-card {
+  border-color: rgba(255, 255, 255, 0.12) !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+
+#root .user-card {
+  display: grid !important;
+  grid-template-columns: 30px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 7px !important;
+  margin: 4px 0 0 !important;
+  padding: 7px !important;
+}
+
+#root .user-card > svg,
+#root .user-card [class*="avatar"] {
+  width: 28px !important;
+  height: 28px !important;
+  min-width: 28px !important;
+  color: #ffffff !important;
+}
+
+#root .user-card div {
+  min-width: 0;
+}
+
+#root .user-card strong {
+  display: block;
+  overflow: hidden;
+  color: #ffffff !important;
+  font-size: 12px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#root .user-card span {
+  display: block;
+  overflow: hidden;
+  color: rgba(248, 250, 252, 0.72) !important;
+  font-size: 10.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#root .sidebar-search > svg,
+#root .sidebar nav a svg,
+#root .sidebar-group-button svg {
+  color: rgba(248, 250, 252, 0.82) !important;
+}
+
+#root .sidebar-search input {
+  color: #ffffff !important;
+}
+
+#root .sidebar-search input::placeholder {
+  color: rgba(248, 250, 252, 0.68) !important;
+}
+
+#root .sidebar nav a,
+#root .sidebar-group-button,
+#root .sidebar-submenu a {
+  border-color: transparent !important;
+  background: transparent !important;
+  color: #f8fafc !important;
+}
+
+#root .sidebar nav a:hover,
+#root .sidebar-group-button:hover,
+#root .sidebar-submenu a:hover {
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  background: rgba(255, 255, 255, 0.09) !important;
+  color: #ffffff !important;
+}
+
+#root .sidebar nav a.active,
+#root .sidebar-group-button.active,
+#root .sidebar-submenu a.active,
+#root .sidebar-submenu a.active:hover {
+  border-color: rgba(255, 255, 255, 0.16) !important;
+  background: var(--qlvt-lab-gray-active) !important;
+  color: #ffffff !important;
+}
+
+#root .sidebar-submenu {
+  border-left-color: rgba(255, 255, 255, 0.14) !important;
+}
+
+#root .collapse-row button,
+#root .logout-button {
+  border-color: rgba(255, 255, 255, 0.12) !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #ffffff !important;
+}
+
+#root .collapse-row button:hover,
+#root .logout-button:hover {
+  background: rgba(255, 255, 255, 0.14) !important;
+}
+
+#root .section-tabs {
+  margin-bottom: 3px !important;
+  border: 0 !important;
+  background: var(--qlvt-nav-blue) !important;
+}
+
+#root .section-tabs nav {
+  background: transparent !important;
+}
+
+#root .section-tabs a {
+  border-color: transparent !important;
+  background: transparent !important;
+  color: rgba(255, 255, 255, 0.86) !important;
+}
+
+#root .section-tabs a:hover,
+#root .section-tabs a.active {
+  border-color: rgba(255, 255, 255, 0.14) !important;
+  background: var(--qlvt-nav-blue-hover) !important;
+  color: #ffffff !important;
+}
+
+#root .section-tabs .secondary {
+  border-color: rgba(255, 255, 255, 0.2) !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: #ffffff !important;
+}
+
+#root .category-page > .panel,
+#root .category-tree-panel,
+#root .category-management-section,
+#root .category-management-section .category-structure-view,
+#root .category-management-section .category-structure-grid,
+#root .category-management-section .category-structure-sidebar,
+#root .category-management-section .category-structure-sidebar nav,
+#root .category-management-section .category-structure-detail,
+#root .category-management-section .category-structure-rows {
+  max-height: none !important;
+  overflow: visible !important;
+}
+
+#root .category-management-section {
+  display: block !important;
+  min-height: 0 !important;
+  margin-top: 4px !important;
+  padding: 5px !important;
+}
+
+#root .category-management-section .category-structure-view {
+  display: block !important;
+}
+
+#root .category-management-section .category-structure-grid {
+  align-items: start !important;
+}
+
+#root .content {
+  overflow-y: auto !important;
+}
+
+#root .asset-list-head {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 8px !important;
+  padding: 5px 0 !important;
+}
+
+#root .asset-list-summary {
+  display: flex !important;
+  min-width: 0;
+  align-items: center !important;
+}
+
+#root .asset-total-value-line {
+  display: inline-flex !important;
+  min-width: 0;
+  align-items: baseline !important;
+  gap: 4px !important;
+  overflow: hidden;
+  color: #52677a !important;
+  font-size: 12px !important;
+  line-height: 1.25 !important;
+  text-overflow: ellipsis;
+  white-space: nowrap !important;
+}
+
+#root .asset-total-value {
+  display: inline-flex !important;
+  flex: 0 0 auto !important;
+  align-items: baseline !important;
+  gap: 4px !important;
+  color: var(--qlvt-link-blue) !important;
+  font-weight: 600 !important;
+  white-space: nowrap !important;
+}
+
+#root .asset-total-value span {
+  display: inline !important;
+  color: var(--qlvt-link-blue) !important;
+  font-weight: 600 !important;
+  white-space: nowrap !important;
+}
+
+#root .asset-table-text-actions {
+  display: flex !important;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 10px;
+}
+
+#root .asset-table-text-action {
+  min-width: 0 !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  color: var(--qlvt-link-blue) !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  line-height: 1.2 !important;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  box-shadow: none !important;
+  cursor: pointer;
+}
+
+#root .asset-table-text-action:hover,
+#root .asset-table-text-action[data-active="true"] {
+  background: transparent !important;
+  color: #0f3f67 !important;
+}
+
+#root .asset-page-actions .asset-add-button {
+  min-height: 34px !important;
+  padding: 7px 10px !important;
+}
