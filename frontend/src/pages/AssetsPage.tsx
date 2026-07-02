@@ -1,6 +1,6 @@
 import {
-  type CSSProperties,
   type ChangeEvent,
+  type CSSProperties,
   type MouseEvent,
   type ReactNode,
   useEffect,
@@ -23,6 +23,7 @@ import {
   FiUpload,
   FiX,
 } from "react-icons/fi";
+import { OverflowActions } from "../components/OverflowActions";
 import { StatusBadge } from "../components/StatusBadge";
 import { useActions } from "../contexts/ActionsContext";
 import { useAppData } from "../contexts/AppDataContext";
@@ -90,19 +91,13 @@ const ASSET_VALUE_FILTERS: Array<{
   { value: "FROM_50M_TO_200M", label: "50 - 200 triệu", min: 50_000_000, max: 200_000_000 },
   { value: "FROM_200M", label: "Trên 200 triệu", min: 200_000_000 },
 ];
-const ASSET_MUTABLE_STATUSES = [
-  "IN_STOCK",
-  "ASSIGNED",
-  "MAINTENANCE",
-  "DISPOSED",
-  "LOST",
-] as const;
+const ASSET_MUTABLE_STATUSES = ["IN_STOCK", "ASSIGNED", "MAINTENANCE", "DISPOSED", "LOST"] as const;
 const ASSET_TABLE_STORAGE_KEY = "qlvt.assetList.tableColumns.v1";
 const ASSET_TABLE_COLUMNS: AssetTableColumnConfig[] = [
   { id: "asset", label: "Tài sản", locked: true, defaultVisible: true },
   { id: "category", label: "Danh mục", locked: true, defaultVisible: true },
   { id: "serialNumber", label: "Serial/MAC", defaultVisible: false },
-  { id: "status", label: "Trạng thái", locked: true, defaultVisible: true },
+  { id: "status", label: "Trạng thái", defaultVisible: true },
   { id: "purchaseCost", label: "Giá trị mua", defaultVisible: true },
   { id: "originalCost", label: "Nguyên giá", defaultVisible: false },
   { id: "bookValue", label: "Giá trị còn lại", defaultVisible: false },
@@ -116,10 +111,10 @@ const ASSET_TABLE_COLUMNS: AssetTableColumnConfig[] = [
   { id: "warrantyUntil", label: "Bảo hành đến", defaultVisible: false },
 ];
 const ASSET_TABLE_COLUMN_WIDTHS: Record<AssetTableColumnId, number> = {
-  asset: 230,
-  category: 190,
+  asset: 190,
+  category: 150,
   serialNumber: 160,
-  status: 128,
+  status: 118,
   purchaseCost: 138,
   originalCost: 138,
   bookValue: 138,
@@ -133,7 +128,7 @@ const ASSET_TABLE_COLUMN_WIDTHS: Record<AssetTableColumnId, number> = {
   warrantyUntil: 138,
 };
 const ASSET_TABLE_SELECT_WIDTH = 42;
-const ASSET_TABLE_ACTIONS_WIDTH = 118;
+const ASSET_TABLE_ACTIONS_WIDTH = 86;
 const ASSET_TABLE_COLUMN_IDS = ASSET_TABLE_COLUMNS.map((column) => column.id);
 const DEFAULT_ASSET_TABLE_VISIBLE_COLUMNS = ASSET_TABLE_COLUMNS.filter(
   (column) => column.defaultVisible || column.locked,
@@ -144,21 +139,13 @@ type SheetRow = SheetCell[];
 function normalizeAssetColumnOrder(order: AssetTableColumnId[]) {
   const middleColumns = [
     ...order.filter(
-      (id) =>
-        ASSET_TABLE_COLUMN_IDS.includes(id) &&
-        id !== "asset" &&
-        id !== "category" &&
-        id !== "status",
+      (id) => ASSET_TABLE_COLUMN_IDS.includes(id) && id !== "asset" && id !== "category",
     ),
     ...ASSET_TABLE_COLUMN_IDS.filter(
-      (id) =>
-        !order.includes(id) &&
-        id !== "asset" &&
-        id !== "category" &&
-        id !== "status",
+      (id) => !order.includes(id) && id !== "asset" && id !== "category",
     ),
   ];
-  return ["asset", "category", "status", ...middleColumns] as AssetTableColumnId[];
+  return ["asset", "category", ...middleColumns] as AssetTableColumnId[];
 }
 
 function readAssetColumnPreferences() {
@@ -520,7 +507,11 @@ function AssetListPagination({
   return (
     <div className="table-pagination asset-list-pagination">
       <div className="table-pagination-summary">
-        Hiển thị <strong>{start}-{end}</strong> / <strong>{total}</strong> tài sản
+        Hiển thị{" "}
+        <strong>
+          {start}-{end}
+        </strong>{" "}
+        / <strong>{total}</strong> tài sản
       </div>
       <div className="table-pagination-controls">
         <select
@@ -1215,8 +1206,9 @@ export function AssetsPage() {
 
   const sourceOptions = useMemo(
     () =>
-      Array.from(new Set(assets.map((asset) => asset.source?.trim()).filter(Boolean) as string[]))
-        .sort((a, b) => a.localeCompare(b, "vi")),
+      Array.from(
+        new Set(assets.map((asset) => asset.source?.trim()).filter(Boolean) as string[]),
+      ).sort((a, b) => a.localeCompare(b, "vi")),
     [assets],
   );
 
@@ -1339,11 +1331,7 @@ export function AssetsPage() {
   const assetPageCount = Math.max(1, Math.ceil(filteredAssets.length / assetPageSize));
   const safeAssetPage = Math.min(assetPage, assetPageCount);
   const pagedAssets = useMemo(
-    () =>
-      filteredAssets.slice(
-        (safeAssetPage - 1) * assetPageSize,
-        safeAssetPage * assetPageSize,
-      ),
+    () => filteredAssets.slice((safeAssetPage - 1) * assetPageSize, safeAssetPage * assetPageSize),
     [assetPageSize, filteredAssets, safeAssetPage],
   );
   const selectedAssets = useMemo(
@@ -1395,27 +1383,33 @@ export function AssetsPage() {
   const assetListInsights = useMemo(() => {
     const countMap = (values: string[]) => {
       const map = new Map<string, number>();
-      values.forEach((value) => map.set(value, (map.get(value) || 0) + 1));
+      values.forEach((value) => {
+        map.set(value, (map.get(value) || 0) + 1);
+      });
       return Array.from(map.entries())
         .map(([label, value]) => ({ label, value }))
         .sort((a, b) => b.value - a.value || a.label.localeCompare(b.label, "vi"))
         .slice(0, 5);
     };
 
-    const valueBuckets = ASSET_VALUE_FILTERS.filter((item) => item.value !== "ALL").map((bucket) => ({
-      label: bucket.label,
-      value: filteredAssets.filter((asset) => {
-        const value = Number(asset.purchaseCost || 0);
-        if (bucket.min !== undefined && value < bucket.min) return false;
-        if (bucket.max !== undefined && value >= bucket.max) return false;
-        return true;
-      }).length,
-    })).filter((item) => item.value > 0);
+    const valueBuckets = ASSET_VALUE_FILTERS.filter((item) => item.value !== "ALL")
+      .map((bucket) => ({
+        label: bucket.label,
+        value: filteredAssets.filter((asset) => {
+          const value = Number(asset.purchaseCost || 0);
+          if (bucket.min !== undefined && value < bucket.min) return false;
+          if (bucket.max !== undefined && value >= bucket.max) return false;
+          return true;
+        }).length,
+      }))
+      .filter((item) => item.value > 0);
 
     return {
       statuses: countMap(filteredAssets.map((asset) => statusLabel(asset.status))),
       categories: countMap(
-        filteredAssets.map((asset) => asset.assetCategory?.name || asset.category || "Chưa phân loại"),
+        filteredAssets.map(
+          (asset) => asset.assetCategory?.name || asset.category || "Chưa phân loại",
+        ),
       ),
       values: valueBuckets,
       sites: countMap(
@@ -1519,9 +1513,13 @@ export function AssetsPage() {
     setSelectedAssetIds((current) => {
       const next = new Set(current);
       if (allPageSelected) {
-        pageSelectableIds.forEach((id) => next.delete(id));
+        pageSelectableIds.forEach((id) => {
+          next.delete(id);
+        });
       } else {
-        pageSelectableIds.forEach((id) => next.add(id));
+        pageSelectableIds.forEach((id) => {
+          next.add(id);
+        });
       }
       return next;
     });
@@ -1571,7 +1569,9 @@ export function AssetsPage() {
       await reloadAssetList();
       setSelectedAssetIds((current) => {
         const next = new Set(current);
-        selectedAssets.forEach((asset) => next.delete(asset.id));
+        selectedAssets.forEach((asset) => {
+          next.delete(asset.id);
+        });
         return next;
       });
     } catch {
@@ -1598,7 +1598,9 @@ export function AssetsPage() {
         ...buildAssetPayload(asset),
         siteId: bulkSiteId ? Number(bulkSiteId) : (asset.siteId ?? null),
         departmentId: bulkDepartmentId ? Number(bulkDepartmentId) : (asset.departmentId ?? null),
-        assignedEmployeeId: bulkEmployeeId ? Number(bulkEmployeeId) : (asset.assignedEmployeeId ?? null),
+        assignedEmployeeId: bulkEmployeeId
+          ? Number(bulkEmployeeId)
+          : (asset.assignedEmployeeId ?? null),
       }),
       `Đã chuyển vị trí ${selectedAssets.length} tài sản.`,
     );
@@ -1622,7 +1624,9 @@ export function AssetsPage() {
   };
 
   const handleBulkReturnAssets = async () => {
-    const confirmed = window.confirm(`Thu hồi ${selectedAssets.length} tài sản đã chọn về trạng thái trong kho?`);
+    const confirmed = window.confirm(
+      `Thu hồi ${selectedAssets.length} tài sản đã chọn về trạng thái trong kho?`,
+    );
     if (!confirmed) return;
     await updateSelectedAssets(
       (asset) => ({
@@ -1700,7 +1704,9 @@ export function AssetsPage() {
               query,
             )}
           </strong>
-          <span>{highlightSearchText(item.assetCategory?.code || "Chưa có mã danh mục", query)}</span>
+          <span>
+            {highlightSearchText(item.assetCategory?.code || "Chưa có mã danh mục", query)}
+          </span>
         </div>
       ),
     },
@@ -1786,8 +1792,12 @@ export function AssetsPage() {
     ASSET_TABLE_ACTIONS_WIDTH + (assetMultiSelectMode ? ASSET_TABLE_SELECT_WIDTH : 0),
   );
   const columnConfigOrder = [
-    ...assetColumnOrder.filter((id) => ASSET_TABLE_COLUMNS.some((column) => column.id === id && column.locked)),
-    ...assetColumnOrder.filter((id) => ASSET_TABLE_COLUMNS.some((column) => column.id === id && !column.locked)),
+    ...assetColumnOrder.filter((id) =>
+      ASSET_TABLE_COLUMNS.some((column) => column.id === id && column.locked),
+    ),
+    ...assetColumnOrder.filter((id) =>
+      ASSET_TABLE_COLUMNS.some((column) => column.id === id && !column.locked),
+    ),
   ];
 
   const closeImport = () => {
@@ -1950,36 +1960,38 @@ export function AssetsPage() {
             </button>
           </div>
 
-          {!assetCategoryCollapsed && <div className="asset-category-filter-list">
-            <button
-              type="button"
-              className="asset-category-filter-item all"
-              data-selected={!selectedCategoryNode ? "true" : undefined}
-              onClick={resetAssetFilters}
-            >
-              <span className="asset-category-filter-spacer" />
-              <span className="asset-category-filter-copy">
-                <strong>Tất cả danh mục</strong>
-                <small>Toàn bộ tài sản</small>
-              </span>
-              <span className="asset-category-filter-count">{assets.length}</span>
-            </button>
+          {!assetCategoryCollapsed && (
+            <div className="asset-category-filter-list">
+              <button
+                type="button"
+                className="asset-category-filter-item all"
+                data-selected={!selectedCategoryNode ? "true" : undefined}
+                onClick={resetAssetFilters}
+              >
+                <span className="asset-category-filter-spacer" />
+                <span className="asset-category-filter-copy">
+                  <strong>Tất cả danh mục</strong>
+                  <small>Toàn bộ tài sản</small>
+                </span>
+                <span className="asset-category-filter-count">{assets.length}</span>
+              </button>
 
-            {categoryTree.map((node) => (
-              <AssetCategoryFilterNode
-                key={node.id}
-                node={node}
-                selectedId={selectedCategoryNode?.id}
-                selectedPathIds={selectedCategoryPathIds}
-                expandedIds={expandedAssetCategoryIds}
-                assetCounts={categoryAssetCounts}
-                onSelect={(category) =>
-                  setCategoryPath(findCategoryIdPath(categoryTree, category.id))
-                }
-                onToggle={toggleAssetCategory}
-              />
-            ))}
-          </div>}
+              {categoryTree.map((node) => (
+                <AssetCategoryFilterNode
+                  key={node.id}
+                  node={node}
+                  selectedId={selectedCategoryNode?.id}
+                  selectedPathIds={selectedCategoryPathIds}
+                  expandedIds={expandedAssetCategoryIds}
+                  assetCounts={categoryAssetCounts}
+                  onSelect={(category) =>
+                    setCategoryPath(findCategoryIdPath(categoryTree, category.id))
+                  }
+                  onToggle={toggleAssetCategory}
+                />
+              ))}
+            </div>
+          )}
         </aside>
 
         <div className="asset-results-column">
@@ -2085,7 +2097,6 @@ export function AssetsPage() {
                   Cấu hình cột
                 </button>
               </div>
-
             </div>
             {columnConfigOpen && (
               <>
@@ -2104,9 +2115,7 @@ export function AssetsPage() {
                   <div className="asset-column-popover-head">
                     <div>
                       <strong id="asset-column-config-title">Cấu hình cột</strong>
-                      <span>
-                        Bật/tắt cột cần xem. Các cột cố định luôn hiển thị trong bảng.
-                      </span>
+                      <span>Bật/tắt cột cần xem. Các cột cố định luôn hiển thị trong bảng.</span>
                     </div>
                     <button
                       type="button"
@@ -2169,31 +2178,34 @@ export function AssetsPage() {
             ) : (
               <div
                 className="asset-table"
-                style={
-                  { "--qlvt-table-min-width": `${assetTableMinWidth}px` } as CSSProperties
-                }
+                style={{ "--qlvt-table-min-width": `${assetTableMinWidth}px` } as CSSProperties}
               >
                 <table className={assetMultiSelectMode ? "is-multi-select" : "is-single-select"}>
                   <thead>
                     <tr>
-                      {assetMultiSelectMode && <th className="asset-table-select-col asset-table-sticky-select">
-                        <label className="asset-table-checkbox" title="Chọn toàn bộ dòng trên trang">
-                          <input
-                            type="checkbox"
-                            checked={allPageSelected}
-                            ref={(input) => {
-                              if (input) input.indeterminate = somePageSelected;
-                            }}
-                            onChange={toggleCurrentPageSelected}
-                          />
-                          <span />
-                        </label>
-                      </th>}
+                      {assetMultiSelectMode && (
+                        <th className="asset-table-select-col asset-table-sticky-select">
+                          <label
+                            className="asset-table-checkbox"
+                            title="Chọn toàn bộ dòng trên trang"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={allPageSelected}
+                              ref={(input) => {
+                                if (input) input.indeterminate = somePageSelected;
+                              }}
+                              onChange={toggleCurrentPageSelected}
+                            />
+                            <span />
+                          </label>
+                        </th>
+                      )}
                       {configuredAssetColumns.map((column) => (
                         <th
                           key={column.id}
                           className={`asset-table-col-${column.id} ${
-                            ["asset", "category", "status"].includes(column.id)
+                            ["asset", "category"].includes(column.id)
                               ? `asset-table-sticky-left asset-table-sticky-${column.id}`
                               : ""
                           } ${column.align ? `align-${column.align}` : ""}`}
@@ -2201,9 +2213,7 @@ export function AssetsPage() {
                           {column.label}
                         </th>
                       ))}
-                      <th className="asset-table-actions-col asset-table-sticky-right">
-                        Thao tác
-                      </th>
+                      <th className="asset-table-actions-col asset-table-sticky-right">Thao tác</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -2212,24 +2222,26 @@ export function AssetsPage() {
                         key={item.id}
                         className={selectedAssetIds.has(item.id) ? "is-selected" : undefined}
                       >
-                        {assetMultiSelectMode && <td className="asset-table-select-col asset-table-sticky-select">
-                          <label
-                            className="asset-table-checkbox"
-                            title={`Chọn ${item.assetCode}`}
-                          >
-                            <input
-                              type="checkbox"
-                              checked={selectedAssetIds.has(item.id)}
-                              onChange={() => toggleAssetSelected(item.id)}
-                            />
-                            <span />
-                          </label>
-                        </td>}
+                        {assetMultiSelectMode && (
+                          <td className="asset-table-select-col asset-table-sticky-select">
+                            <label
+                              className="asset-table-checkbox"
+                              title={`Chọn ${item.assetCode}`}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={selectedAssetIds.has(item.id)}
+                                onChange={() => toggleAssetSelected(item.id)}
+                              />
+                              <span />
+                            </label>
+                          </td>
+                        )}
                         {configuredAssetColumns.map((column) => (
                           <td
                             key={column.id}
                             className={`asset-table-col-${column.id} ${
-                              ["asset", "category", "status"].includes(column.id)
+                              ["asset", "category"].includes(column.id)
                                 ? `asset-table-sticky-left asset-table-sticky-${column.id}`
                                 : ""
                             } ${column.align ? `align-${column.align}` : ""}`}
@@ -2238,34 +2250,30 @@ export function AssetsPage() {
                           </td>
                         ))}
                         <td className="asset-table-actions-col asset-table-sticky-right">
-                          <div className="asset-row-icon-actions">
-                            <button
-                              type="button"
-                              className="asset-row-text-action"
-                              title="Xem và chỉnh sửa tài sản"
-                              onClick={() => openAssetDetail(item)}
-                            >
-                              Xem
-                            </button>
-                            <button
-                              type="button"
-                              className="asset-row-text-action"
-                              title="Xem mã QR tài sản"
-                              onClick={() => setQrAsset(item)}
-                            >
-                              QR
-                            </button>
-                            {canManage && (
-                              <button
-                                type="button"
-                                className="asset-row-text-action danger"
-                                title="Xóa tài sản"
-                                onClick={() => void handleDeleteAsset(item)}
-                              >
-                                Xóa
-                              </button>
-                            )}
-                          </div>
+                          <OverflowActions
+                            label={`Mở thao tác cho ${item.assetCode}`}
+                            actions={[
+                              {
+                                label: "Xem chi tiết",
+                                onClick: () => openAssetDetail(item),
+                              },
+                              {
+                                label: "Xem QR",
+                                onClick: () => setQrAsset(item),
+                              },
+                              ...(canManage
+                                ? [
+                                    {
+                                      label: "Xóa",
+                                      danger: true,
+                                      onClick: () => {
+                                        void handleDeleteAsset(item);
+                                      },
+                                    },
+                                  ]
+                                : []),
+                            ]}
+                          />
                         </td>
                       </tr>
                     ))}
@@ -2355,7 +2363,11 @@ export function AssetsPage() {
 
               {selectedAssets.length > 0 && (
                 <div className="asset-selection-body">
-                  <div className="asset-selection-stack" aria-label="Danh sách tài sản đã chọn">
+                  <div
+                    className="asset-selection-stack"
+                    role="list"
+                    aria-label="Danh sách tài sản đã chọn"
+                  >
                     {selectedAssets.map((asset) => (
                       <div className="asset-selection-card" key={asset.id}>
                         <div>
@@ -2420,7 +2432,9 @@ export function AssetsPage() {
                         <>
                           <div className="asset-bulk-panel-copy">
                             <strong>Chuyển vị trí</strong>
-                            <span>Bỏ trống trường nào thì hệ thống giữ nguyên giá trị hiện tại.</span>
+                            <span>
+                              Bỏ trống trường nào thì hệ thống giữ nguyên giá trị hiện tại.
+                            </span>
                           </div>
                           <div className="asset-bulk-form-row three">
                             <label>
@@ -2567,28 +2581,66 @@ export function AssetsPage() {
           )}
 
           <section className="asset-list-insights" aria-label="Thống kê tài sản đang hiển thị">
+            <div className="asset-insights-title">
+              <div>
+                <strong>Phân tích nhanh tài sản</strong>
+                <span>Trực quan theo dữ liệu đang hiển thị trong danh sách.</span>
+              </div>
+              <small>{filteredAssets.length} tài sản</small>
+            </div>
             {[
               ["Theo trạng thái", assetListInsights.statuses],
               ["Theo danh mục", assetListInsights.categories],
               ["Theo giá trị", assetListInsights.values],
               ["Theo chi nhánh", assetListInsights.sites],
-            ].map(([title, items]) => (
-              <article className="asset-insight-card" key={title as string}>
-                <strong>{title as string}</strong>
-                {(items as Array<{ label: string; value: number }>).length === 0 ? (
-                  <span>Chưa có dữ liệu</span>
-                ) : (
-                  <div>
-                    {(items as Array<{ label: string; value: number }>).map((item) => (
-                      <p key={item.label}>
-                        <span>{item.label}</span>
-                        <b>{item.value}</b>
-                      </p>
-                    ))}
+            ].map(([title, items]) => {
+              const insightItems = items as Array<{ label: string; value: number }>;
+              const total = insightItems.reduce((sum, item) => sum + item.value, 0);
+              let accumulated = 0;
+              const palette = ["#15507f", "#2e82b6", "#65a9cf", "#94c8df", "#d0e7f3"];
+              const segments =
+                total > 0
+                  ? insightItems
+                      .map((item, index) => {
+                        const start = accumulated;
+                        accumulated += (item.value / total) * 100;
+                        return `${palette[index % palette.length]} ${start}% ${accumulated}%`;
+                      })
+                      .join(", ")
+                  : "#e5e7eb 0 100%";
+
+              return (
+                <article className="asset-insight-card" key={title as string}>
+                  <div className="asset-insight-head">
+                    <strong>{title as string}</strong>
+                    <span>{total} mục</span>
                   </div>
-                )}
-              </article>
-            ))}
+                  {insightItems.length === 0 ? (
+                    <span>Chưa có dữ liệu</span>
+                  ) : (
+                    <div className="asset-insight-visual">
+                      <div
+                        className="asset-insight-donut"
+                        style={{ "--asset-donut": segments } as CSSProperties}
+                        title={insightItems
+                          .map((item) => `${item.label}: ${item.value}`)
+                          .join("\n")}
+                        aria-hidden="true"
+                      />
+                      <div className="asset-insight-bars">
+                        {insightItems.map((item, index) => (
+                          <p key={item.label}>
+                            <i style={{ background: palette[index % palette.length] }} />
+                            <span>{item.label}</span>
+                            <b>{item.value}</b>
+                          </p>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </article>
+              );
+            })}
           </section>
         </div>
       </div>
@@ -2735,7 +2787,6 @@ export function AssetsPage() {
                 <section className="asset-detail-section">
                   <h3>Sử dụng, đơn vị và vị trí</h3>
                   <div className="asset-detail-fields">
-                    
                     <label>
                       <span>Site hiện tại</span>
                       <select

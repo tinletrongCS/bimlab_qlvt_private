@@ -346,9 +346,12 @@
 }
 
 /* Booking list and calendar now follow the same dense QLVT table language as Assets. */
-.booking-calendar-panel,
-.booking-column-popover {
+.booking-calendar-panel {
   position: relative;
+}
+
+.booking-column-popover {
+  position: fixed;
 }
 
 .booking-calendar-head,
@@ -1241,22 +1244,24 @@
 .booking-page .asset-column-backdrop:hover,
 .booking-page .asset-column-backdrop:focus,
 .booking-page .asset-column-backdrop:active {
-  display: none !important;
+  display: block !important;
+  background: rgba(0, 0, 0, 0.6) !important;
+  backdrop-filter: blur(8px) !important;
+  z-index: 100 !important;
 }
 
 .booking-page .asset-column-popover,
 .booking-page .booking-column-popover {
   border-radius: 4px;
   box-shadow: 0 18px 44px -26px rgba(15, 23, 42, 0.5);
-  left: auto;
-  max-height: min(520px, calc(100vh - 180px));
-  max-width: min(520px, calc(100vw - 40px));
-  position: absolute;
-  right: 17px;
-  top: 58px;
-  transform: none;
-  width: min(420px, calc(100vw - 40px));
-  z-index: 70;
+  left: 50%;
+  max-height: min(680px, calc(100vh - 48px));
+  max-width: calc(100vw - 32px);
+  position: fixed;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(560px, calc(100vw - 32px));
+  z-index: 101;
 }
 
 /* Booking table must scroll horizontally instead of squeezing configured columns. */
@@ -1285,57 +1290,57 @@
 }
 
 .booking-table .booking-table-col-booking {
-  min-width: 230px !important;
-  width: 230px !important;
+  min-width: 110px !important;
+  width: 110px !important;
 }
 
 .booking-table .booking-table-col-asset {
-  min-width: 190px !important;
-  width: 190px !important;
+  min-width: 110px !important;
+  width: 110px !important;
 }
 
 .booking-table .booking-table-col-status {
-  min-width: 126px !important;
-  width: 126px !important;
+  min-width: 70px !important;
+  width: 70px !important;
 }
 
 .booking-table .booking-table-col-time {
-  min-width: 205px !important;
-  width: 205px !important;
+  min-width: 130px !important;
+  width: 130px !important;
 }
 
 .booking-table .booking-table-col-owner,
 .booking-table .booking-table-col-createdBy {
-  min-width: 150px;
-  width: 150px;
+  min-width: 90px;
+  width: 90px;
 }
 
 .booking-table .booking-table-col-purpose {
-  min-width: 260px;
-  width: 260px;
+  min-width: 120px;
+  width: 120px;
 }
 
 .booking-table .booking-table-col-department,
 .booking-table .booking-table-col-site,
 .booking-table .booking-table-col-project {
-  min-width: 145px;
-  width: 145px;
+  min-width: 85px;
+  width: 85px;
 }
 
 .booking-table .booking-table-col-autoRelease {
-  min-width: 150px;
-  width: 150px;
+  min-width: 85px;
+  width: 85px;
 }
 
 .booking-table .booking-table-col-checked,
 .booking-table .booking-table-col-updatedAt {
-  min-width: 190px;
-  width: 190px;
+  min-width: 90px;
+  width: 90px;
 }
 
 .booking-table .booking-table-col-actions {
-  min-width: 176px !important;
-  width: 176px !important;
+  min-width: 100px !important;
+  width: 100px !important;
 }
 
 .booking-table .booking-table-sticky-booking {
@@ -1343,15 +1348,15 @@
 }
 
 .booking-table .booking-table-sticky-asset {
-  left: 230px !important;
+  left: 110px !important;
 }
 
 .booking-table .booking-table-sticky-status {
-  left: 420px !important;
+  left: 350px !important;
 }
 
 .booking-table .booking-table-sticky-time {
-  left: 546px !important;
+  left: 220px !important;
 }
 
 .booking-table th.booking-table-sticky-left,
@@ -2063,4 +2068,565 @@
   .booking-page .booking-layout {
     grid-template-columns: 1fr !important;
   }
+}
+.booking-table-tools {
+  position: relative;
+}
+
+.booking-column-dropdown {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+}
+
+.booking-page .booking-column-config-toggle {
+  min-width: 0 !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: #0f3f67 !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  text-decoration: underline !important;
+  text-underline-offset: 3px !important;
+}
+
+.booking-page .booking-column-config-toggle:hover,
+.booking-page .booking-column-config-toggle[aria-expanded="true"] {
+  background: transparent !important;
+  color: #092c47 !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+.booking-page .booking-column-popover {
+  position: absolute !important;
+  top: calc(100% + 8px) !important;
+  right: 0 !important;
+  left: auto !important;
+  transform: none !important;
+  width: min(420px, calc(100vw - 32px)) !important;
+  max-height: min(520px, calc(100vh - 160px)) !important;
+  overflow: hidden !important;
+  z-index: 80 !important;
+}
+
+.booking-page .booking-column-popover .asset-column-list {
+  max-height: 340px !important;
+  overflow: auto !important;
+}
+
+#root .booking-table .table-wrap {
+  overflow-x: auto !important;
+  overflow-y: visible !important;
+}
+
+#root .booking-table table {
+  table-layout: fixed !important;
+  width: max(100%, var(--qlvt-table-min-width, 1120px)) !important;
+  min-width: max(100%, var(--qlvt-table-min-width, 1120px)) !important;
+}
+
+#root .booking-table th,
+#root .booking-table td {
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+#root .booking-table-col-booking {
+  width: 220px !important;
+  min-width: 220px !important;
+}
+
+#root .booking-table-col-asset {
+  width: 220px !important;
+  min-width: 220px !important;
+}
+
+#root .booking-table-col-status {
+  width: 140px !important;
+  min-width: 140px !important;
+}
+
+#root .booking-table-actions-col {
+  width: 170px !important;
+  min-width: 170px !important;
+}
+
+#root .booking-table .booking-table-sticky-left,
+#root .booking-table .booking-table-sticky-right {
+  position: sticky !important;
+  background: #ffffff !important;
+}
+
+#root .booking-table th.booking-table-sticky-left,
+#root .booking-table th.booking-table-sticky-right {
+  background: #eef2f6 !important;
+}
+
+#root .booking-table .booking-table-sticky-booking {
+  left: 0 !important;
+  z-index: 7 !important;
+}
+
+#root .booking-table .booking-table-sticky-asset {
+  left: 220px !important;
+  z-index: 7 !important;
+}
+
+#root .booking-table .booking-table-sticky-status {
+  left: 440px !important;
+  z-index: 7 !important;
+  box-shadow: 8px 0 16px -16px rgba(15, 23, 42, 0.5) !important;
+}
+
+#root .booking-table .booking-table-sticky-time {
+  left: auto !important;
+  z-index: auto !important;
+  box-shadow: none !important;
+}
+
+#root .booking-table .booking-table-sticky-right {
+  right: 0 !important;
+  z-index: 8 !important;
+  box-shadow: -8px 0 16px -16px rgba(15, 23, 42, 0.5) !important;
+}
+
+#root .booking-table tbody tr:hover td.booking-table-sticky-left,
+#root .booking-table tbody tr:hover td.booking-table-sticky-right {
+  background: #f8fbff !important;
+}
+
+/* Ultimate booking table lock. Keep this at EOF: only booking, room, actions are fixed. */
+#root .booking-table {
+  isolation: isolate !important;
+  overflow: hidden !important;
+}
+
+#root .booking-table .table-wrap {
+  overflow-x: auto !important;
+  overflow-y: auto !important;
+  scrollbar-gutter: stable !important;
+}
+
+#root .booking-table table {
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+  table-layout: fixed !important;
+  width: max(100%, var(--qlvt-table-min-width, 1420px)) !important;
+  min-width: max(100%, var(--qlvt-table-min-width, 1420px)) !important;
+}
+
+#root .booking-table th,
+#root .booking-table td {
+  position: relative !important;
+  left: auto !important;
+  right: auto !important;
+  z-index: 1 !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+  background-clip: padding-box !important;
+}
+
+#root .booking-table th:nth-child(3),
+#root .booking-table td:nth-child(3),
+#root .booking-table th:nth-child(4),
+#root .booking-table td:nth-child(4),
+#root .booking-table .booking-table-sticky-status,
+#root .booking-table .booking-table-sticky-time {
+  position: relative !important;
+  left: auto !important;
+  right: auto !important;
+  z-index: 1 !important;
+  box-shadow: none !important;
+}
+
+#root .booking-table .booking-table-sticky-left,
+#root .booking-table .booking-table-sticky-right {
+  position: sticky !important;
+  background: #ffffff !important;
+  background-clip: border-box !important;
+}
+
+#root .booking-table th.booking-table-sticky-left,
+#root .booking-table th.booking-table-sticky-right {
+  background: #eef2f6 !important;
+  z-index: 120 !important;
+}
+
+#root .booking-table .booking-table-sticky-booking {
+  left: 0 !important;
+  z-index: 80 !important;
+  width: 230px !important;
+  min-width: 230px !important;
+  max-width: 230px !important;
+}
+
+#root .booking-table .booking-table-sticky-asset {
+  left: 230px !important;
+  z-index: 81 !important;
+  width: 230px !important;
+  min-width: 230px !important;
+  max-width: 230px !important;
+  border-right: 1px solid #cfd8e3 !important;
+  box-shadow: 10px 0 14px -16px rgba(15, 23, 42, 0.55) !important;
+}
+
+#root .booking-table .booking-table-sticky-right {
+  right: 0 !important;
+  z-index: 84 !important;
+  width: 86px !important;
+  min-width: 86px !important;
+  max-width: 86px !important;
+  border-left: 1px solid #d7dde5 !important;
+  box-shadow: -8px 0 14px -16px rgba(15, 23, 42, 0.55) !important;
+}
+
+#root .booking-table-col-booking {
+  width: 230px !important;
+  min-width: 230px !important;
+  max-width: 230px !important;
+}
+
+#root .booking-table-col-asset {
+  width: 230px !important;
+  min-width: 230px !important;
+  max-width: 230px !important;
+}
+
+#root .booking-table-col-status {
+  width: 140px !important;
+  min-width: 140px !important;
+  max-width: 140px !important;
+  border-left: 1px solid #e1e7ef !important;
+  border-right: 1px solid #d7dde5 !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+  box-shadow:
+    inset 1px 0 0 #e1e7ef,
+    inset -1px 0 0 #d7dde5,
+    inset 0 -1px 0 #e2e8f0 !important;
+}
+
+#root .booking-table tbody td.booking-table-col-status {
+  background: #ffffff !important;
+}
+
+#root .booking-table tbody tr:hover td.booking-table-col-status {
+  background: #f8fbff !important;
+}
+
+#root .booking-table-actions-col {
+  width: 86px !important;
+  min-width: 86px !important;
+  max-width: 86px !important;
+  text-align: center !important;
+}
+
+#root .booking-table tbody tr:hover td.booking-table-sticky-left,
+#root .booking-table tbody tr:hover td.booking-table-sticky-right {
+  background: #f8fbff !important;
+}
+
+/* Definitive booking table contract: only booking, room and actions are fixed. */
+#root .booking-table th,
+#root .booking-table td {
+  position: relative !important;
+  left: auto !important;
+  right: auto !important;
+  z-index: 1 !important;
+}
+
+#root .booking-table th:nth-child(3),
+#root .booking-table td:nth-child(3),
+#root .booking-table th:nth-child(4),
+#root .booking-table td:nth-child(4),
+#root .booking-table .booking-table-sticky-status,
+#root .booking-table .booking-table-sticky-time {
+  position: relative !important;
+  left: auto !important;
+  right: auto !important;
+  z-index: 1 !important;
+  box-shadow: none !important;
+}
+
+#root .booking-table .booking-table-sticky-left,
+#root .booking-table .booking-table-sticky-right {
+  position: sticky !important;
+  background: #ffffff !important;
+  background-clip: border-box !important;
+}
+
+#root .booking-table th.booking-table-sticky-left,
+#root .booking-table th.booking-table-sticky-right {
+  background: #eef2f6 !important;
+  z-index: 120 !important;
+}
+
+#root .booking-table .booking-table-sticky-booking {
+  left: 0 !important;
+  z-index: 80 !important;
+}
+
+#root .booking-table .booking-table-sticky-asset {
+  left: 230px !important;
+  z-index: 81 !important;
+  box-shadow: 10px 0 14px -16px rgba(15, 23, 42, 0.55) !important;
+}
+
+#root .booking-table .booking-table-sticky-right {
+  right: 0 !important;
+  z-index: 84 !important;
+  border-left: 1px solid #d7dde5 !important;
+  box-shadow: -8px 0 14px -16px rgba(15, 23, 42, 0.55) !important;
+}
+
+#root .booking-table-col-booking {
+  width: 230px !important;
+  min-width: 230px !important;
+  max-width: 230px !important;
+}
+
+#root .booking-table-col-asset {
+  width: 230px !important;
+  min-width: 230px !important;
+  max-width: 230px !important;
+}
+
+#root .booking-table-col-status {
+  width: 140px !important;
+  min-width: 140px !important;
+  max-width: 140px !important;
+  border-left: 1px solid #e1e7ef !important;
+  border-right: 1px solid #d7dde5 !important;
+  box-shadow:
+    inset 1px 0 0 #e1e7ef,
+    inset -1px 0 0 #d7dde5 !important;
+}
+
+#root .booking-table-actions-col {
+  width: 86px !important;
+  min-width: 86px !important;
+  max-width: 86px !important;
+}
+
+#root .booking-table tbody tr:hover td.booking-table-sticky-left,
+#root .booking-table tbody tr:hover td.booking-table-sticky-right {
+  background: #f8fbff !important;
+}
+
+/* Final booking sticky correction. This file is loaded after app.css. */
+#root .booking-table {
+  isolation: isolate !important;
+}
+
+#root .booking-table .table-wrap {
+  overflow-x: auto !important;
+  overflow-y: auto !important;
+}
+
+#root .booking-table table {
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+  table-layout: fixed !important;
+}
+
+#root .booking-table th,
+#root .booking-table td {
+  position: relative !important;
+}
+
+#root .booking-table th:not(.booking-table-sticky-left):not(.booking-table-sticky-right),
+#root .booking-table td:not(.booking-table-sticky-left):not(.booking-table-sticky-right) {
+  z-index: 1 !important;
+}
+
+#root .booking-table-col-booking {
+  width: 230px !important;
+  min-width: 230px !important;
+  max-width: 230px !important;
+}
+
+#root .booking-table-col-asset {
+  width: 230px !important;
+  min-width: 230px !important;
+  max-width: 230px !important;
+}
+
+#root .booking-table-col-status {
+  width: 140px !important;
+  min-width: 140px !important;
+  max-width: 140px !important;
+  border-left: 1px solid #e1e7ef !important;
+  border-right: 1px solid #cfd8e3 !important;
+  box-shadow:
+    inset 1px 0 0 #e1e7ef,
+    inset -1px 0 0 #cfd8e3 !important;
+}
+
+#root .booking-table-col-time {
+  width: 260px !important;
+  min-width: 260px !important;
+  max-width: 260px !important;
+}
+
+#root .booking-table-actions-col {
+  width: 86px !important;
+  min-width: 86px !important;
+  max-width: 86px !important;
+  border-left: 1px solid #d7dde5 !important;
+}
+
+#root .booking-table .booking-table-sticky-left,
+#root .booking-table .booking-table-sticky-right {
+  position: sticky !important;
+  background: #ffffff !important;
+  background-clip: border-box !important;
+}
+
+#root .booking-table .booking-table-sticky-booking {
+  left: 0 !important;
+  z-index: 80 !important;
+}
+
+#root .booking-table .booking-table-sticky-asset {
+  left: 230px !important;
+  z-index: 81 !important;
+}
+
+#root .booking-table .booking-table-sticky-status {
+  left: 460px !important;
+  z-index: 82 !important;
+  box-shadow:
+    inset 1px 0 0 #e1e7ef,
+    inset -1px 0 0 #cfd8e3 !important;
+}
+
+#root .booking-table .booking-table-sticky-time {
+  left: 600px !important;
+  z-index: 83 !important;
+  box-shadow: 10px 0 14px -16px rgba(15, 23, 42, 0.55) !important;
+}
+
+#root .booking-table .booking-table-sticky-right {
+  right: 0 !important;
+  z-index: 84 !important;
+}
+
+#root .booking-table th.booking-table-sticky-left,
+#root .booking-table th.booking-table-sticky-right {
+  z-index: 120 !important;
+  background: #eef2f6 !important;
+}
+
+#root .booking-table tbody tr:hover td.booking-table-sticky-left,
+#root .booking-table tbody tr:hover td.booking-table-sticky-right {
+  background: #f8fbff !important;
+}
+
+/* EOF booking table contract: do not add booking table overrides below this block. */
+#root .booking-table {
+  isolation: isolate !important;
+  overflow: hidden !important;
+}
+
+#root .booking-table .table-wrap {
+  overflow-x: auto !important;
+  overflow-y: auto !important;
+  scrollbar-gutter: stable !important;
+}
+
+#root .booking-table table {
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+  table-layout: fixed !important;
+  width: max(100%, var(--qlvt-table-min-width, 1420px)) !important;
+  min-width: max(100%, var(--qlvt-table-min-width, 1420px)) !important;
+}
+
+#root .booking-table th,
+#root .booking-table td {
+  position: relative !important;
+  left: auto !important;
+  right: auto !important;
+  z-index: 1 !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+  background-clip: padding-box !important;
+}
+
+#root .booking-table th:nth-child(3),
+#root .booking-table td:nth-child(3),
+#root .booking-table th:nth-child(4),
+#root .booking-table td:nth-child(4),
+#root .booking-table .booking-table-sticky-status,
+#root .booking-table .booking-table-sticky-time {
+  position: relative !important;
+  left: auto !important;
+  right: auto !important;
+  z-index: 1 !important;
+  box-shadow: none !important;
+}
+
+#root .booking-table .booking-table-sticky-left,
+#root .booking-table .booking-table-sticky-right {
+  position: sticky !important;
+  background: #ffffff !important;
+  background-clip: border-box !important;
+}
+
+#root .booking-table th.booking-table-sticky-left,
+#root .booking-table th.booking-table-sticky-right {
+  background: #eef2f6 !important;
+  z-index: 120 !important;
+}
+
+#root .booking-table .booking-table-sticky-booking {
+  left: 0 !important;
+  z-index: 80 !important;
+  width: 230px !important;
+  min-width: 230px !important;
+  max-width: 230px !important;
+}
+
+#root .booking-table .booking-table-sticky-asset {
+  left: 230px !important;
+  z-index: 81 !important;
+  width: 230px !important;
+  min-width: 230px !important;
+  max-width: 230px !important;
+  border-right: 1px solid #cfd8e3 !important;
+  box-shadow: 10px 0 14px -16px rgba(15, 23, 42, 0.55) !important;
+}
+
+#root .booking-table .booking-table-sticky-right {
+  right: 0 !important;
+  z-index: 84 !important;
+  width: 86px !important;
+  min-width: 86px !important;
+  max-width: 86px !important;
+  border-left: 1px solid #d7dde5 !important;
+  box-shadow: -8px 0 14px -16px rgba(15, 23, 42, 0.55) !important;
+}
+
+#root .booking-table-col-status {
+  width: 140px !important;
+  min-width: 140px !important;
+  max-width: 140px !important;
+  border-left: 1px solid #e1e7ef !important;
+  border-right: 1px solid #d7dde5 !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+  box-shadow:
+    inset 1px 0 0 #e1e7ef,
+    inset -1px 0 0 #d7dde5,
+    inset 0 -1px 0 #e2e8f0 !important;
+}
+
+#root .booking-table tbody td.booking-table-col-status {
+  background: #ffffff !important;
+}
+
+#root .booking-table tbody tr:hover td.booking-table-col-status {
+  background: #f8fbff !important;
 }

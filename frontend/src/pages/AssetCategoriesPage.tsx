@@ -457,8 +457,7 @@ export function AssetCategoriesPage() {
     [categories, assetClassFilter, activeFilter, categorySearch],
   );
   const filteredTree = useMemo(
-    () =>
-      filterTree(buildCategoryTree(categories), assetClassFilter, activeFilter, categorySearch),
+    () => filterTree(buildCategoryTree(categories), assetClassFilter, activeFilter, categorySearch),
     [categories, assetClassFilter, activeFilter, categorySearch],
   );
   const categoryFormChanged = useMemo(() => {
@@ -638,7 +637,9 @@ export function AssetCategoriesPage() {
                   Loại danh mục
                   <select
                     value={assetClassFilter}
-                    onChange={(event) => setAssetClassFilter(event.target.value as AssetClassFilter)}
+                    onChange={(event) =>
+                      setAssetClassFilter(event.target.value as AssetClassFilter)
+                    }
                   >
                     <option value="ALL">Tất cả</option>
                     <option value="FIXED_ASSET">Tài sản cố định</option>

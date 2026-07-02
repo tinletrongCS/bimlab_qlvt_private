@@ -15,7 +15,6 @@ import {
 import { NavLink } from "react-router-dom";
 import { StatusBadge } from "../components/StatusBadge";
 import { useAppData } from "../contexts/AppDataContext";
-import { useAuth } from "../contexts/AuthContext";
 import { money } from "../lib/format";
 import { loadAssetBookings } from "../services/api";
 import type { AssetBooking } from "../services/types";
@@ -119,7 +118,7 @@ export function DashboardPage() {
       <div className="panel dashboard-command-center">
         <div className="dashboard-hero-copy">
           <img src="https://bimlab.com.vn/assets/img/bimlab-logo.png" alt="BIMLab" />
-          <h1>Hệ thống quản lý tài sản</h1> 
+          <h1>Hệ thống quản lý tài sản</h1>
           <span>{todayLabel}</span>
         </div>
         <div className="dashboard-system-summary">
