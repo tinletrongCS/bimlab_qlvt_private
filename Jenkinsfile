@@ -258,6 +258,26 @@ BUILD_NUMBER=${env.BUILD_NUMBER ?: ''}
       }
     }
 
+    stage('Deploy production (local /opt/bimlab)') {
+      when { expression { env.BRANCH_NAME == 'production' } }
+      steps {
+        sh '''
+          set -eu
+          docker run --rm \
+            --volumes-from "$HOSTNAME" \
+            -v /opt/bimlab:/opt/bimlab \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            -w "$PWD" \
+            docker:27-cli sh -lc '
+              set -eu
+              apk add --no-cache rsync >/dev/null
+              docker compose version >/dev/null 2>&1 || { echo "compose plugin missing in helper"; exit 3; }
+              sh deploy/ci-deploy.sh /opt/bimlab/qlvt "$PWD"
+            '
+        '''
+      }
+    }
+
     stage('Production approval') {
       when {
         expression { return params.DEPLOY_TARGET == 'production' }
