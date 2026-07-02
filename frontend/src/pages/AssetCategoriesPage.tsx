@@ -596,73 +596,73 @@ export function AssetCategoriesPage() {
         <PanelHeader title="Danh mục tài sản" action={false} onAdd={startCreate} />
 
         <div className="category-workspace">
-          <div className="category-tree-panel">
-            <div className="category-panel-controls">
-              <div className="category-section-heading">
-                <h3>Sơ đồ phân cấp</h3>
+          <div className="category-main-column">
+            <div className="category-tree-panel">
+              <div className="category-panel-controls">
+                <div className="category-section-heading">
+                  <h3>Sơ đồ phân cấp</h3>
+                </div>
+                <button
+                  type="button"
+                  className="secondary"
+                  onClick={() => void refresh()}
+                  disabled={loading || submitting}
+                >
+                  <FiRefreshCw /> Làm mới
+                </button>
               </div>
-              <button
-                type="button"
-                className="secondary"
-                onClick={() => void refresh()}
-                disabled={loading || submitting}
-              >
-                <FiRefreshCw /> Làm mới
-              </button>
-            </div>
 
-            <div className="category-filters">
-              <label className="category-search-field">
-                Tìm danh mục
-                <span>
-                  <FiSearch />
-                  <input
-                    value={categorySearch}
-                    onChange={(event) => setCategorySearch(event.target.value)}
-                    placeholder="Tìm theo tên, mã, mô tả..."
-                  />
-                  {categorySearch && (
-                    <button
-                      type="button"
-                      className="category-search-clear"
-                      onClick={() => setCategorySearch("")}
-                      aria-label="Xóa nội dung tìm kiếm"
-                    >
-                      <FiX />
-                    </button>
-                  )}
-                </span>
-              </label>
-              <label>
-                Loại danh mục
-                <select
-                  value={assetClassFilter}
-                  onChange={(event) => setAssetClassFilter(event.target.value as AssetClassFilter)}
-                >
-                  <option value="ALL">Tất cả</option>
-                  <option value="FIXED_ASSET">Tài sản cố định</option>
-                  <option value="TOOL_EQUIPMENT">Công cụ dụng cụ</option>
-                </select>
-              </label>
-              <label>
-                Trạng thái
-                <select
-                  value={activeFilter}
-                  onChange={(event) => setActiveFilter(event.target.value as ActiveFilter)}
-                >
-                  <option value="ALL">Tất cả</option>
-                  <option value="ACTIVE">Đang sử dụng</option>
-                  <option value="INACTIVE">Ngưng sử dụng</option>
-                </select>
-              </label>
-            </div>
+              <div className="category-filters">
+                <label className="category-search-field">
+                  Tìm danh mục
+                  <span>
+                    <FiSearch />
+                    <input
+                      value={categorySearch}
+                      onChange={(event) => setCategorySearch(event.target.value)}
+                      placeholder="Tìm theo tên, mã, mô tả..."
+                    />
+                    {categorySearch && (
+                      <button
+                        type="button"
+                        className="category-search-clear"
+                        onClick={() => setCategorySearch("")}
+                        aria-label="Xóa nội dung tìm kiếm"
+                      >
+                        <FiX />
+                      </button>
+                    )}
+                  </span>
+                </label>
+                <label>
+                  Loại danh mục
+                  <select
+                    value={assetClassFilter}
+                    onChange={(event) => setAssetClassFilter(event.target.value as AssetClassFilter)}
+                  >
+                    <option value="ALL">Tất cả</option>
+                    <option value="FIXED_ASSET">Tài sản cố định</option>
+                    <option value="TOOL_EQUIPMENT">Công cụ dụng cụ</option>
+                  </select>
+                </label>
+                <label>
+                  Trạng thái
+                  <select
+                    value={activeFilter}
+                    onChange={(event) => setActiveFilter(event.target.value as ActiveFilter)}
+                  >
+                    <option value="ALL">Tất cả</option>
+                    <option value="ACTIVE">Đang sử dụng</option>
+                    <option value="INACTIVE">Ngưng sử dụng</option>
+                  </select>
+                </label>
+              </div>
 
-            {loading ? (
-              <div className="loading">Đang tải dữ liệu...</div>
-            ) : filteredCategories.length === 0 ? (
-              <div className="empty-state">Chưa có danh mục.</div>
-            ) : (
-              <>
+              {loading ? (
+                <div className="loading">Đang tải dữ liệu...</div>
+              ) : filteredCategories.length === 0 ? (
+                <div className="empty-state">Chưa có danh mục.</div>
+              ) : (
                 <div className="category-org-viewport">
                   <div className="category-org-forest">
                     {filteredTree.map((node) => (
@@ -680,20 +680,23 @@ export function AssetCategoriesPage() {
                     ))}
                   </div>
                 </div>
-                <div className="category-management-section">
-                  <div className="category-section-heading">
-                    <h3>Quản lý danh sách</h3>
-                  </div>
-                  <StructureView
-                    roots={filteredTree}
-                    selectedId={selectedCategoryId ?? undefined}
-                    onEdit={startEdit}
-                    expandedIds={expandedStructureIds}
-                    onToggle={toggleStructureNode}
-                    searchQuery={categorySearch}
-                  />
+              )}
+            </div>
+
+            {!loading && filteredCategories.length > 0 && (
+              <div className="category-management-section">
+                <div className="category-section-heading">
+                  <h3>Quản lý danh sách</h3>
                 </div>
-              </>
+                <StructureView
+                  roots={filteredTree}
+                  selectedId={selectedCategoryId ?? undefined}
+                  onEdit={startEdit}
+                  expandedIds={expandedStructureIds}
+                  onToggle={toggleStructureNode}
+                  searchQuery={categorySearch}
+                />
+              </div>
             )}
           </div>
 

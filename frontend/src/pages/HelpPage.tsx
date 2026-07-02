@@ -7,7 +7,9 @@ import {
   FiCalendar,
   FiGrid,
   FiRepeat,
+  FiSearch,
   FiTool,
+  FiX,
 } from "react-icons/fi";
 import { NavLink } from "react-router-dom";
 
@@ -17,6 +19,7 @@ interface GuideItem {
   icon?: ReactNode;
   description: string;
   steps: string[];
+  details?: string[];
   links?: Array<{ to: string; label: string }>;
   children?: GuideItem[];
 }
@@ -190,17 +193,55 @@ function flattenGuides(items: GuideItem[]): GuideItem[] {
   return items.flatMap((item) => [item, ...flattenGuides(item.children || [])]);
 }
 
+function normalizeGuideText(value: string) {
+  return value
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
+function guideMatches(item: GuideItem, query: string) {
+  if (!query) return true;
+  return [item.title, item.description, ...item.steps, ...(item.details || [])].some((value) =>
+    normalizeGuideText(value).includes(query),
+  );
+}
+
+function filterGuideTree(items: GuideItem[], query: string): GuideItem[] {
+  if (!query) return items;
+  return items.flatMap((item): GuideItem[] => {
+    const children = filterGuideTree(item.children || [], query);
+    if (guideMatches(item, query) || children.length > 0) {
+      return [{ ...item, children: children.length > 0 ? children : item.children }];
+    }
+    return [];
+  });
+}
+
 export function HelpPage() {
   const allGuides = useMemo(() => flattenGuides(GUIDE_TREE), []);
   const [activeId, setActiveId] = useState("overview");
+  const [guideSearch, setGuideSearch] = useState("");
+  const normalizedGuideSearch = normalizeGuideText(guideSearch.trim());
+  const visibleGuideTree = useMemo(
+    () => filterGuideTree(GUIDE_TREE, normalizedGuideSearch),
+    [normalizedGuideSearch],
+  );
+  const visibleGuideCount = useMemo(() => flattenGuides(visibleGuideTree).length, [visibleGuideTree]);
   const activeGuide = allGuides.find((item) => item.id === activeId) || allGuides[0];
+  const activeDetails =
+    activeGuide.details ||
+    [
+      "Đọc mô tả nghiệp vụ trước, sau đó thao tác theo thứ tự các bước bên dưới để tránh chọn sai màn hình hoặc sai dữ liệu.",
+      "Nếu một nút hoặc API phụ thuộc phân quyền, hãy kiểm tra lại vai trò đăng nhập và quyền tương ứng trước khi kết luận là lỗi hệ thống.",
+      "Sau khi cập nhật dữ liệu, ưu tiên làm mới đúng khu vực nghiệp vụ thay vì reload toàn trang để giữ lại bộ lọc và ngữ cảnh đang thao tác.",
+    ];
 
   return (
     <section className="help-page page-grid">
       <div className="panel help-hero">
         <div>
           <h1>Hướng dẫn sử dụng</h1>
-          <p>Chọn một mục ở cây bên trái để xem hướng dẫn thao tác các chức năng hiện có.</p>
         </div>
         <FiArchive />
       </div>
@@ -208,8 +249,25 @@ export function HelpPage() {
       <div className="help-layout">
         <aside className="panel help-nav">
           <strong>Danh mục hướng dẫn</strong>
+          <label className="help-search">
+            <FiSearch />
+            <input
+              value={guideSearch}
+              onChange={(event) => setGuideSearch(event.target.value)}
+              placeholder="Tìm hướng dẫn..."
+            />
+            {guideSearch && (
+              <button type="button" onClick={() => setGuideSearch("")} aria-label="Xóa tìm kiếm">
+                <FiX />
+              </button>
+            )}
+          </label>
+          {guideSearch && <span className="help-search-count">{visibleGuideCount} kết quả phù hợp</span>}
           <div className="help-nav-tree">
-            {GUIDE_TREE.map((item) => (
+            {visibleGuideTree.length === 0 && (
+              <div className="empty-state">Không tìm thấy hướng dẫn phù hợp.</div>
+            )}
+            {visibleGuideTree.map((item) => (
               <div className="help-nav-group" key={item.id}>
                 <button
                   type="button"
@@ -251,6 +309,26 @@ export function HelpPage() {
               <li key={step}>{step}</li>
             ))}
           </ol>
+          <section className="help-detail-section">
+            <h3>Chi tiết cần lưu ý</h3>
+            <ul>
+              {activeDetails.map((detail) => (
+                <li key={detail}>{detail}</li>
+              ))}
+            </ul>
+          </section>
+          {activeGuide.children && activeGuide.children.length > 0 && (
+            <section className="help-detail-section">
+              <h3>Các mục con liên quan</h3>
+              <div className="help-related-list">
+                {activeGuide.children.map((child) => (
+                  <button type="button" key={child.id} onClick={() => setActiveId(child.id)}>
+                    {child.title}
+                  </button>
+                ))}
+              </div>
+            </section>
+          )}
           {activeGuide.links && (
             <div className="help-links">
               {activeGuide.links.map((link) => (

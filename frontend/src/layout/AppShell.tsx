@@ -378,6 +378,7 @@ export function AppShell() {
         {subnavItems.length > 0 && (
           <div className="section-tabs">
             <nav aria-label="Điều hướng nhóm chức năng QLVT">
+              <span className="section-tabs-parent">{currentGroup?.label}:</span>
               {subnavItems.map((item) => (
                 <NavLink key={item.to} to={item.to}>
                   {item.label}

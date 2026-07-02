@@ -8770,6 +8770,89 @@ textarea,
   font-size: 18px;
 }
 
+#root .dashboard-hero-pattern {
+  position: absolute;
+  z-index: 0;
+  pointer-events: none;
+}
+
+#root .pattern-grid-main {
+  top: 26px;
+  left: 36%;
+  width: 360px;
+  height: 190px;
+  border: 1px solid rgba(21, 80, 127, 0.18);
+  background:
+    linear-gradient(90deg, rgba(21, 80, 127, 0.12) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(21, 80, 127, 0.12) 1px, transparent 1px),
+    radial-gradient(circle, rgba(21, 80, 127, 0.18) 0 2px, transparent 3px);
+  background-size: 18px 18px, 18px 18px, 24px 24px;
+  opacity: 0.8;
+  transform: rotate(-5deg);
+  animation: dashboardPatternDriftA 4.6s ease-in-out infinite alternate;
+}
+
+#root .pattern-dot-main {
+  top: 92px;
+  left: 51%;
+  width: 300px;
+  height: 150px;
+  background:
+    radial-gradient(circle, rgba(21, 80, 127, 0.2) 0 2px, transparent 3px),
+    radial-gradient(circle, rgba(21, 80, 127, 0.12) 0 1px, transparent 2px);
+  background-size: 20px 20px, 34px 34px;
+  opacity: 0.78;
+  animation: dashboardPatternDriftB 3.8s linear infinite alternate;
+}
+
+#root .pattern-stripe-main {
+  top: 154px;
+  left: 32%;
+  width: 360px;
+  height: 82px;
+  border-top: 1px solid rgba(21, 80, 127, 0.22);
+  border-bottom: 1px solid rgba(21, 80, 127, 0.14);
+  background:
+    linear-gradient(90deg, rgba(21, 80, 127, 0.16), transparent 72%),
+    repeating-linear-gradient(90deg, rgba(21, 80, 127, 0.14) 0 1px, transparent 1px 13px);
+  opacity: 0.72;
+  transform: skewX(-14deg);
+  animation: dashboardPatternDriftC 4.2s ease-in-out infinite alternate;
+}
+
+#root .pattern-ring-main {
+  top: -62px;
+  left: 58%;
+  width: 260px;
+  height: 260px;
+  border: 1px solid rgba(21, 80, 127, 0.16);
+  background:
+    radial-gradient(circle at center, transparent 0 42%, rgba(21, 80, 127, 0.12) 43% 44%, transparent 45%),
+    repeating-linear-gradient(45deg, rgba(21, 80, 127, 0.08) 0 1px, transparent 1px 10px);
+  opacity: 0.72;
+  animation: dashboardPatternDriftD 5.2s ease-in-out infinite alternate;
+}
+
+@keyframes dashboardPatternDriftA {
+  from { transform: translate3d(0, 0, 0) rotate(-5deg); }
+  to { transform: translate3d(30px, 18px, 0) rotate(4deg); }
+}
+
+@keyframes dashboardPatternDriftB {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(-28px, 20px, 0); }
+}
+
+@keyframes dashboardPatternDriftC {
+  from { transform: translate3d(0, 0, 0) skewX(-14deg); }
+  to { transform: translate3d(34px, -12px, 0) skewX(-8deg); }
+}
+
+@keyframes dashboardPatternDriftD {
+  from { transform: translate3d(0, 0, 0) rotate(0deg); }
+  to { transform: translate3d(-24px, 26px, 0) rotate(10deg); }
+}
+
 #root .dashboard-main-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(300px, 360px);
@@ -10147,574 +10230,13 @@ textarea,
   }
 }
 
-/* Final requested pass: BIMLAB blue sidebar, lighter blue top navigation, expandable category management, asset table text tools. */
+/* Consolidated QLVT UI overrides: keep the final layer small and predictable. */
 :root {
-  --qlvt-sidebar-blue: #123f63;
-  --qlvt-sidebar-blue-hover: #1b5b88;
-  --qlvt-sidebar-blue-active: #236b9e;
-  --qlvt-nav-blue: #dceefa;
-  --qlvt-nav-blue-hover: #c7e4f6;
-  --qlvt-nav-blue-active: #b5d8ee;
-  --qlvt-link-blue: #15507f;
+  --qlvt-control-radius: 2px;
+  --qlvt-border-soft: #d7dde5;
+  --qlvt-focus-blue: #2e82b6;
 }
 
-#root .sidebar {
-  background: var(--qlvt-sidebar-blue) !important;
-  color: #f8fafc !important;
-}
-
-#root .brand,
-#root .brand:hover {
-  border: 0 !important;
-  background: transparent !important;
-}
-
-#root .brand p,
-#root .sidebar-empty {
-  color: rgba(248, 250, 252, 0.78) !important;
-}
-
-#root .brand-compact-mark {
-  background: rgba(255, 255, 255, 0.11) !important;
-  color: #ffffff !important;
-}
-
-#root .sidebar-search,
-#root .user-card {
-  border-color: rgba(255, 255, 255, 0.12) !important;
-  background: rgba(255, 255, 255, 0.08) !important;
-}
-
-#root .user-card {
-  display: grid !important;
-  grid-template-columns: 30px minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 7px !important;
-  margin: 4px 0 0 !important;
-  padding: 7px !important;
-}
-
-#root .user-card > svg,
-#root .user-card [class*="avatar"] {
-  width: 28px !important;
-  height: 28px !important;
-  min-width: 28px !important;
-  color: #ffffff !important;
-}
-
-#root .user-card div {
-  min-width: 0;
-}
-
-#root .user-card strong {
-  display: block;
-  overflow: hidden;
-  color: #ffffff !important;
-  font-size: 12px;
-  font-weight: 600;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-#root .user-card span {
-  display: block;
-  overflow: hidden;
-  color: rgba(248, 250, 252, 0.72) !important;
-  font-size: 10.5px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-#root .sidebar-search > svg,
-#root .sidebar nav a svg,
-#root .sidebar-group-button svg {
-  color: rgba(248, 250, 252, 0.82) !important;
-}
-
-#root .sidebar-search input {
-  color: #ffffff !important;
-}
-
-#root .sidebar-search input::placeholder {
-  color: rgba(248, 250, 252, 0.68) !important;
-}
-
-#root .sidebar nav a,
-#root .sidebar-group-button,
-#root .sidebar-submenu a {
-  border-color: transparent !important;
-  background: transparent !important;
-  color: #f8fafc !important;
-}
-
-#root .sidebar nav a:hover,
-#root .sidebar-group-button:hover,
-#root .sidebar-submenu a:hover {
-  border-color: rgba(255, 255, 255, 0.08) !important;
-  background: rgba(255, 255, 255, 0.09) !important;
-  color: #ffffff !important;
-}
-
-#root .sidebar nav a.active,
-#root .sidebar-group-button.active,
-#root .sidebar-submenu a.active,
-#root .sidebar-submenu a.active:hover {
-  border-color: rgba(125, 211, 252, 0.38) !important;
-  background: var(--qlvt-sidebar-blue-active) !important;
-  color: #ffffff !important;
-}
-
-#root .sidebar-submenu {
-  border-left-color: rgba(255, 255, 255, 0.14) !important;
-}
-
-#root .collapse-row button,
-#root .logout-button {
-  border-color: rgba(255, 255, 255, 0.12) !important;
-  background: rgba(255, 255, 255, 0.08) !important;
-  color: #ffffff !important;
-}
-
-#root .collapse-row button:hover,
-#root .logout-button:hover {
-  background: rgba(255, 255, 255, 0.14) !important;
-}
-
-#root .section-tabs {
-  margin-bottom: 3px !important;
-  border: 1px solid #b5d8ee !important;
-  background: var(--qlvt-nav-blue) !important;
-}
-
-#root .section-tabs nav {
-  background: transparent !important;
-}
-
-#root .section-tabs a {
-  border-color: transparent !important;
-  background: transparent !important;
-  color: #123f63 !important;
-}
-
-#root .section-tabs a:hover,
-#root .section-tabs a.active {
-  border-color: #9ccae7 !important;
-  background: var(--qlvt-nav-blue-active) !important;
-  color: #0f3554 !important;
-}
-
-#root .section-tabs .secondary {
-  border-color: #9ccae7 !important;
-  background: #eef7fc !important;
-  color: #123f63 !important;
-}
-
-#root .category-page > .panel,
-#root .category-tree-panel,
-#root .category-management-section,
-#root .category-management-section .category-structure-view,
-#root .category-management-section .category-structure-grid,
-#root .category-management-section .category-structure-sidebar,
-#root .category-management-section .category-structure-sidebar nav,
-#root .category-management-section .category-structure-detail,
-#root .category-management-section .category-structure-rows {
-  max-height: none !important;
-  overflow: visible !important;
-}
-
-#root .category-management-section {
-  display: block !important;
-  min-height: 0 !important;
-  margin-top: 4px !important;
-  padding: 5px !important;
-}
-
-#root .category-management-section .category-structure-view {
-  display: block !important;
-}
-
-#root .category-management-section .category-structure-grid {
-  align-items: start !important;
-}
-
-#root .content {
-  overflow-y: auto !important;
-}
-
-#root .asset-list-head {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: space-between !important;
-  gap: 8px !important;
-  padding: 5px 0 !important;
-}
-
-#root .asset-list-summary {
-  display: flex !important;
-  min-width: 0;
-  align-items: center !important;
-}
-
-#root .asset-total-value-line {
-  display: inline-flex !important;
-  min-width: 0;
-  align-items: baseline !important;
-  gap: 4px !important;
-  overflow: hidden;
-  color: #52677a !important;
-  font-size: 12px !important;
-  line-height: 1.25 !important;
-  text-overflow: ellipsis;
-  white-space: nowrap !important;
-}
-
-#root .asset-total-value {
-  display: inline-flex !important;
-  flex: 0 0 auto !important;
-  align-items: baseline !important;
-  gap: 4px !important;
-  color: var(--qlvt-link-blue) !important;
-  font-weight: 600 !important;
-  white-space: nowrap !important;
-}
-
-#root .asset-total-value span {
-  display: inline !important;
-  color: var(--qlvt-link-blue) !important;
-  font-weight: 600 !important;
-  white-space: nowrap !important;
-}
-
-#root .asset-table-text-actions {
-  display: flex !important;
-  flex: 0 0 auto;
-  align-items: center;
-  gap: 10px;
-}
-
-#root .asset-table-text-action {
-  min-width: 0 !important;
-  min-height: 0 !important;
-  padding: 0 !important;
-  border: 0 !important;
-  background: transparent !important;
-  color: var(--qlvt-link-blue) !important;
-  font-size: 12px !important;
-  font-weight: 600 !important;
-  line-height: 1.2 !important;
-  text-decoration: underline;
-  text-underline-offset: 2px;
-  box-shadow: none !important;
-  cursor: pointer;
-}
-
-#root .asset-table-text-action:hover,
-#root .asset-table-text-action[data-active="true"] {
-  background: transparent !important;
-  color: #0f3f67 !important;
-}
-
-#root .asset-page-actions .asset-add-button {
-  min-height: 34px !important;
-  padding: 7px 10px !important;
-}
-
-/* Small-radius and nested-border cleanup pass. */
-#root button,
-#root .primary,
-#root .primary-action,
-#root .secondary,
-#root .ghost-button,
-#root .danger-action,
-#root .icon-button,
-#root .menu-button,
-#root .logout-button,
-#root .panel-actions > button,
-#root .modal-actions button,
-#root .table-pagination-controls button,
-#root .category-view-tabs button,
-#root .category-panel-controls .secondary,
-#root .asset-template-button,
-#root .asset-import-button,
-#root .asset-import-file-button,
-#root .asset-import-preview-toolbar button,
-#root .booking-form-actions button,
-#root .booking-table-head button,
-#root .asset-table-text-action,
-#root .dashboard-shortcut,
-#root .dashboard-booking-item,
-#root .dashboard-system-summary > div,
-#root .dashboard-health-grid > div {
-  border-radius: 2px !important;
-}
-
-#root .brand {
-  min-height: 44px !important;
-  align-items: flex-start !important;
-}
-
-#root .brand img {
-  max-width: 124px !important;
-  padding: 3px 6px;
-  background: #ffffff;
-  border-radius: 2px !important;
-  object-fit: contain;
-}
-
-#root .brand p {
-  margin-top: 3px;
-  color: #ffffff !important;
-  font-weight: 600;
-}
-
-#root .brand-compact-mark {
-  background: #ffffff !important;
-  border-radius: 2px !important;
-}
-
-#root .brand-compact-mark img {
-  padding: 0;
-  background: transparent;
-}
-
-#root .user-card {
-  border: 0 !important;
-  background: rgba(255, 255, 255, 0.08) !important;
-}
-
-#root .user-card strong,
-#root .user-card span {
-  color: #ffffff !important;
-}
-
-#root .user-card > svg,
-#root .user-card [class*="avatar"] {
-  border-color: rgba(255, 255, 255, 0.22) !important;
-  background: rgba(255, 255, 255, 0.12) !important;
-  color: #ffffff !important;
-}
-
-#root .asset-list-layout {
-  border: 0 !important;
-  background: transparent !important;
-  padding: 0 !important;
-}
-
-#root .asset-category-sidebar {
-  border: 1px solid #d7dde5 !important;
-  background: #ffffff !important;
-}
-
-#root .asset-category-filter-item {
-  border-color: transparent !important;
-}
-
-#root .asset-category-filter-item:hover,
-#root .asset-category-filter-item[data-selected="true"] {
-  border-color: transparent !important;
-}
-
-#root .asset-toolbar,
-#root .asset-list-head,
-#root .asset-list-insights,
-#root .asset-insight-card,
-#root .asset-selection-workspace,
-#root .asset-bulk-panel {
-  border: 0 !important;
-}
-
-#root .asset-toolbar {
-  background: #f6f8fa !important;
-  padding: 5px !important;
-}
-
-#root .asset-list-head {
-  background: transparent !important;
-  border-bottom: 1px solid #d7dde5 !important;
-}
-
-#root .asset-list-panel {
-  border: 0 !important;
-  background: transparent !important;
-}
-
-#root .asset-list-panel .table-wrap,
-#root .booking-table .table-wrap {
-  border: 1px solid #d7dde5 !important;
-}
-
-#root .asset-list-insights {
-  padding: 0 !important;
-  background: transparent !important;
-}
-
-#root .asset-insight-card {
-  background: #f8fafc !important;
-}
-
-#root .asset-selection-workspace,
-#root .asset-bulk-panel {
-  background: #f8fafc !important;
-}
-
-#root .asset-selection-card {
-  border: 0 !important;
-  border-left: 2px solid #d7dde5 !important;
-  background: #ffffff !important;
-}
-
-/* System-wide nested border hierarchy: keep borders on page frames, tables, modals and inputs only. */
-:root {
-  --qlvt-nested-surface: #f8fafc;
-  --qlvt-nested-surface-strong: #f3f6f9;
-  --qlvt-nested-hover: #eef4fa;
-  --qlvt-nested-selected: #e8f1f8;
-}
-
-#root .panel .panel,
-#root .panel .card,
-#root .panel .stat-card,
-#root .panel .operation-card,
-#root .panel .asset-metric,
-#root .panel .dashboard-shortcut,
-#root .panel .dashboard-booking-item,
-#root .panel .dashboard-system-summary > div,
-#root .panel .dashboard-health-grid > div,
-#root .panel .help-card,
-#root .panel .help-note,
-#root .panel .asset-detail-section,
-#root .panel .asset-detail-readonly-grid > div,
-#root .panel .asset-import-section,
-#root .panel .booking-flow-list > div,
-#root .panel .booking-hero-metrics > div,
-#root .panel .booking-calendar-event,
-#root .panel .booking-time-event,
-#root .panel .booking-agenda-event,
-#root .panel .category-list-card,
-#root .panel .category-org-card,
-#root .panel .category-summary-stat,
-#root .panel .category-parent-context,
-#root .panel .asset-selection-workspace,
-#root .panel .asset-selection-card,
-#root .panel .asset-insight-card,
-#root .panel .asset-bulk-panel,
-#root .panel .asset-import-confirm-card,
-#root .panel .asset-import-summary > div,
-#root .panel .asset-column-option,
-#root .panel .booking-column-option,
-#root .panel .asset-category-filter-item,
-#root .modal-body .asset-detail-section,
-#root .modal-body .asset-detail-readonly-grid > div,
-#root .crud-modal .asset-detail-section,
-#root .crud-modal .asset-detail-readonly-grid > div {
-  border: 0 !important;
-  box-shadow: none !important;
-}
-
-#root .panel .stat-card,
-#root .panel .operation-card,
-#root .panel .asset-metric,
-#root .panel .dashboard-shortcut,
-#root .panel .dashboard-booking-item,
-#root .panel .dashboard-system-summary > div,
-#root .panel .dashboard-health-grid > div,
-#root .panel .help-card,
-#root .panel .help-note,
-#root .panel .asset-detail-section,
-#root .panel .asset-detail-readonly-grid > div,
-#root .panel .asset-import-section,
-#root .panel .booking-flow-list > div,
-#root .panel .booking-hero-metrics > div,
-#root .panel .category-summary-stat,
-#root .panel .category-parent-context,
-#root .panel .asset-insight-card,
-#root .panel .asset-bulk-panel,
-#root .panel .asset-import-confirm-card,
-#root .panel .asset-import-summary > div,
-#root .modal-body .asset-detail-section,
-#root .modal-body .asset-detail-readonly-grid > div,
-#root .crud-modal .asset-detail-section,
-#root .crud-modal .asset-detail-readonly-grid > div {
-  background: var(--qlvt-nested-surface) !important;
-}
-
-#root .panel .category-list-card,
-#root .panel .category-org-card,
-#root .panel .asset-category-filter-item,
-#root .panel .asset-selection-card,
-#root .panel .asset-column-option,
-#root .panel .booking-column-option {
-  background: transparent !important;
-}
-
-#root .panel .dashboard-shortcut:hover,
-#root .panel .dashboard-booking-item:hover,
-#root .panel .help-card:hover,
-#root .panel .category-list-card:hover,
-#root .panel .category-org-card:hover,
-#root .panel .asset-category-filter-item:hover,
-#root .panel .asset-selection-card:hover,
-#root .panel .asset-column-option:hover,
-#root .panel .booking-column-option:hover {
-  border: 0 !important;
-  background: var(--qlvt-nested-hover) !important;
-}
-
-#root .panel .category-list-card.active,
-#root .panel .category-org-card[data-selected="true"],
-#root .panel .asset-category-filter-item[data-selected="true"],
-#root .panel .asset-selection-card[data-selected="true"],
-#root .panel .asset-column-option.is-locked {
-  border: 0 !important;
-  background: var(--qlvt-nested-selected) !important;
-  box-shadow: inset 2px 0 0 #15507f !important;
-}
-
-#root .category-structure-sidebar button,
-#root .category-structure-row-head,
-#root .booking-flow-list > div,
-#root .help-links a,
-#root .asset-import-preview-toolbar,
-#root .asset-import-preview-filter,
-#root .asset-import-file-row,
-#root .booking-filters,
-#root .category-filters,
-#root .asset-toolbar {
-  border: 0 !important;
-}
-
-#root .category-structure-sidebar button:hover,
-#root .category-structure-row-head:hover,
-#root .category-structure-sidebar button.active,
-#root .category-structure-row-head[data-selected="true"] {
-  border: 0 !important;
-  box-shadow: inset 2px 0 0 #15507f !important;
-}
-
-#root .asset-table,
-#root .asset-import-preview,
-#root .booking-table,
-#root .table-wrap,
-#root .asset-column-popover,
-#root .booking-column-popover,
-#root .crud-modal,
-#root .asset-detail-modal,
-#root .asset-import-modal,
-#root .asset-qr-modal,
-#root .booking-detail-modal,
-#root .booking-confirm-modal {
-  border-color: #d7dde5 !important;
-}
-
-#root .panel .table-wrap + .asset-list-insights,
-#root .panel .asset-selection-workspace + .asset-list-insights,
-#root .panel .asset-toolbar + .asset-list-panel,
-#root .panel .category-filters + .category-org-viewport,
-#root .panel .booking-filters + .table-wrap {
-  margin-top: 4px !important;
-}
-
-/* Sidebar proportions and category-node surface tuning. */
 #root .app-shell {
   grid-template-columns: 216px minmax(0, 1fr) !important;
 }
@@ -10723,26 +10245,133 @@ textarea,
   grid-template-columns: 60px minmax(0, 1fr) !important;
 }
 
+#root .content {
+  padding: 8px 10px 12px !important;
+}
+
+#root button,
+#root input,
+#root select,
+#root textarea,
+#root .panel,
+#root .table-wrap,
+#root .modal-content,
+#root .crud-modal,
+#root .asset-detail-modal,
+#root .asset-import-modal,
+#root .asset-column-popover,
+#root .booking-column-popover,
+#root .dashboard-shortcut,
+#root .dashboard-booking-item,
+#root .dashboard-system-summary > div,
+#root .dashboard-health-grid > div,
+#root .category-org-card,
+#root .category-list-card,
+#root .category-structure-row-head,
+#root .category-structure-sidebar button,
+#root .asset-category-filter-item,
+#root .asset-selection-card,
+#root .status-badge {
+  border-radius: var(--qlvt-control-radius) !important;
+}
+
+#root input:focus,
+#root select:focus,
+#root textarea:focus,
+#root button:focus-visible,
+#root .asset-column-config-toggle:focus-visible,
+#root .asset-table-text-action:focus-visible {
+  outline: none !important;
+  border-color: var(--qlvt-focus-blue) !important;
+  box-shadow: 0 0 0 2px rgba(46, 130, 182, 0.12) !important;
+}
+
+#root .panel .category-list-card,
+#root .panel .category-org-card,
+#root .panel .asset-category-filter-item,
+#root .panel .asset-selection-card,
+#root .panel .asset-column-option,
+#root .panel .booking-column-option,
+#root .panel .asset-metric,
+#root .panel .dashboard-shortcut,
+#root .panel .dashboard-booking-item,
+#root .panel .dashboard-system-summary > div,
+#root .panel .dashboard-health-grid > div,
+#root .panel .help-card,
+#root .panel .help-note {
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
 #root .sidebar {
+  width: 216px !important;
   padding-right: 4px !important;
   padding-left: 4px !important;
+  background: var(--qlvt-sidebar-blue) !important;
+}
+
+#root .sidebar.compact {
+  width: 60px !important;
 }
 
 #root .brand {
-  min-height: 56px !important;
-  padding: 6px 5px 8px !important;
+  min-height: 58px !important;
+  padding: 7px 5px 6px !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border: 0 !important;
+  background: transparent !important;
 }
 
 #root .brand img {
-  max-width: 146px !important;
-  width: 146px !important;
-  padding: 4px 7px;
+  width: auto !important;
+  max-width: 132px !important;
+  height: auto !important;
+  max-height: 32px !important;
+  padding: 4px 7px !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: #ffffff !important;
+  box-shadow: none !important;
 }
 
 #root .brand p {
   margin-top: 5px !important;
-  font-size: 12.5px !important;
-  line-height: 1.15;
+  color: #ffffff !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  line-height: 1.15 !important;
+}
+
+#root .sidebar.compact .brand {
+  min-height: 48px !important;
+  padding: 5px !important;
+}
+
+#root .sidebar.compact .brand-compact-mark {
+  display: grid !important;
+  width: 34px !important;
+  min-width: 34px !important;
+  height: 34px !important;
+  min-height: 34px !important;
+  place-items: center !important;
+  border: 1px solid rgba(255, 255, 255, 0.65) !important;
+  border-radius: 2px !important;
+  background: #ffffff !important;
+  box-shadow: none !important;
+  overflow: hidden !important;
+}
+
+#root .sidebar.compact .brand-compact-mark img {
+  display: block !important;
+  width: 28px !important;
+  max-width: 28px !important;
+  height: 28px !important;
+  max-height: 28px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  object-fit: contain !important;
 }
 
 #root .sidebar nav a,
@@ -10753,26 +10382,136 @@ textarea,
 }
 
 #root .sidebar-submenu {
-  margin-left: 8px !important;
+  margin-left: 14px !important;
 }
 
 #root .sidebar-submenu a {
+  padding-left: 12px !important;
   padding-right: 5px !important;
 }
 
-#root .sidebar.compact {
-  width: 60px !important;
+#root .sidebar-search {
+  min-height: 26px !important;
+  padding: 2px 3px !important;
 }
 
-#root .sidebar.compact .brand {
-  min-height: 48px !important;
-  align-items: center !important;
-  padding: 5px !important;
+#root .sidebar-search input {
+  min-height: 24px !important;
+  padding: 3px 23px 3px 27px !important;
+  font-size: 11px !important;
 }
 
-#root .sidebar.compact .brand-compact-mark {
-  width: 34px !important;
-  height: 34px !important;
+#root .sidebar-search > svg {
+  left: 7px !important;
+  width: 13px !important;
+  height: 13px !important;
+}
+
+#root .sidebar-search button {
+  right: 1px !important;
+  width: 20px !important;
+  min-width: 20px !important;
+  height: 20px !important;
+  min-height: 20px !important;
+}
+
+#root .user-card {
+  grid-template-columns: 32px minmax(0, 1fr) 28px !important;
+  gap: 7px !important;
+  margin-top: 4px !important;
+  padding: 7px 4px !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+
+#root .user-card strong,
+#root .user-card span {
+  color: #ffffff !important;
+  background: transparent !important;
+}
+
+#root .user-card span {
+  padding: 0 !important;
+  border: 0 !important;
+  opacity: 0.82;
+}
+
+#root .user-card .user-avatar,
+#root .user-card > svg,
+#root .user-card [class*="avatar"] {
+  width: 32px !important;
+  min-width: 32px !important;
+  height: 32px !important;
+  min-height: 32px !important;
+  border: 1px solid rgba(255, 255, 255, 0.54) !important;
+  border-radius: 50% !important;
+  background: #ffffff !important;
+  color: #123f63 !important;
+}
+
+#root .category-page,
+#root .category-page > .panel,
+#root .category-main-column,
+#root .category-tree-panel {
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  overflow: visible !important;
+}
+
+#root .category-org-viewport {
+  box-sizing: border-box !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  height: clamp(500px, 64vh, 720px) !important;
+  max-height: 720px !important;
+  min-height: 500px !important;
+  overflow: auto !important;
+  overscroll-behavior: contain !important;
+  scrollbar-gutter: stable both-edges !important;
+  background: #f8fafc !important;
+}
+
+#root .category-org-forest {
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: flex-start !important;
+  width: max-content !important;
+  min-width: max-content !important;
+  max-width: none !important;
+  min-height: max-content !important;
+}
+
+#root .category-org-card {
+  width: 220px !important;
+  min-width: 205px !important;
+  max-width: 220px !important;
+  background: #ffffff !important;
+}
+
+#root .category-org-card:hover,
+#root .category-structure-row-head:hover,
+#root .category-structure-sidebar button:hover {
+  background: #ecfdf5 !important;
+}
+
+#root .category-management-section,
+#root .category-management-section .category-structure-view,
+#root .category-management-section .category-structure-grid,
+#root .category-management-section .category-structure-sidebar,
+#root .category-management-section .category-structure-detail,
+#root .category-management-section .category-structure-sidebar nav,
+#root .category-management-section .category-structure-rows {
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  overflow: visible !important;
+}
+
+#root .category-management-section .category-structure-grid {
+  display: grid !important;
+  grid-template-columns: minmax(180px, 0.26fr) minmax(0, 1fr) !important;
+  align-items: start !important;
 }
 
 #root .panel .category-list-card,
@@ -10786,111 +10525,164 @@ textarea,
   background: #ffffff !important;
 }
 
-#root .panel .category-list-card:hover,
-#root .panel .category-org-card:hover,
-#root .panel .asset-category-filter-item:hover,
-#root .panel .asset-selection-card:hover,
-#root .panel .asset-column-option:hover,
-#root .panel .booking-column-option:hover,
-#root .category-structure-sidebar button:hover,
-#root .category-structure-row-head:hover {
-  background: #f7fafc !important;
+#root .panel .category-list-card.active,
+#root .panel .category-org-card[data-selected="true"],
+#root .category-structure-row-head[data-selected="true"],
+#root .category-structure-sidebar button.active,
+#root .asset-category-filter-item[data-selected="true"],
+#root .asset-selection-card[data-selected="true"] {
+  background: #eef7ff !important;
+  box-shadow: inset 2px 0 0 #15507f !important;
 }
 
-/* Final sidebar sizing and category management scroll fix. */
-#root .app-shell {
-  grid-template-columns: 238px minmax(0, 1fr) !important;
-}
-
-#root .app-shell.sidebar-compact {
-  grid-template-columns: 64px minmax(0, 1fr) !important;
-}
-
-#root .sidebar {
-  width: 238px !important;
-  padding-right: 6px !important;
-  padding-left: 6px !important;
-}
-
-#root .sidebar.compact {
-  width: 64px !important;
-}
-
-#root .brand {
-  min-height: 82px !important;
-  padding: 10px 8px 9px !important;
+#root .asset-list-head {
+  display: flex !important;
   align-items: center !important;
-  justify-content: center !important;
+  justify-content: space-between !important;
+  gap: 10px !important;
+  padding: 6px 0 !important;
+  border: 0 !important;
+  border-bottom: 1px solid #d7dde5 !important;
+  background: transparent !important;
 }
 
-#root .brand img {
-  width: 176px !important;
-  max-width: calc(100% - 12px) !important;
+#root .asset-list-summary {
+  display: flex !important;
+  align-items: center !important;
+  min-width: 0;
+  overflow: hidden;
+}
+
+#root .asset-total-value-line {
+  display: inline-flex !important;
+  align-items: baseline !important;
+  min-width: 0;
+  gap: 5px !important;
+  color: #52677a !important;
+  font-size: 12px !important;
+  line-height: 1.2 !important;
+  white-space: nowrap !important;
+}
+
+#root .asset-total-value {
+  display: inline-flex !important;
+  align-items: baseline !important;
+  flex: 0 0 auto;
+  gap: 4px !important;
+  color: var(--qlvt-link-blue) !important;
+  font-weight: 600 !important;
+  white-space: nowrap !important;
+}
+
+#root .asset-list-head-actions {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 12px;
+}
+
+#root .asset-list-head-actions .asset-table-text-action,
+#root .asset-list-head-actions .asset-multi-select-toggle,
+#root .asset-list-head-actions .asset-column-config-toggle {
+  min-width: 0 !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  color: var(--qlvt-link-blue) !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  line-height: 1.2 !important;
+  text-decoration: underline !important;
+  text-underline-offset: 2px !important;
+  box-shadow: none !important;
+}
+
+#root .asset-list-head-actions .asset-table-text-action:hover,
+#root .asset-list-head-actions .asset-table-text-action[data-active="true"],
+#root .asset-list-head-actions .asset-column-config-toggle[aria-expanded="true"] {
+  background: transparent !important;
+  color: #0f3f67 !important;
+  box-shadow: none !important;
+}
+
+#root .asset-page-actions .asset-add-button,
+#root .asset-page-actions .asset-template-button,
+#root .asset-page-actions .asset-import-button {
+  min-height: 34px !important;
+  padding: 7px 10px !important;
+  font-size: 12px !important;
+}
+
+#root .asset-table th,
+#root .asset-table td,
+#root .asset-table .status-badge {
+  border-color: #e4e7ec !important;
+}
+
+#root .asset-table .status-badge {
+  border-width: 0 !important;
+}
+
+#root .booking-calendar-shell {
+  align-items: start !important;
+}
+
+#root .booking-calendar-sidebar,
+#root .booking-calendar-main,
+#root .booking-calendar-grid,
+#root .booking-mini-calendar {
+  align-self: start !important;
+  margin-top: 0 !important;
+}
+
+#root .dashboard-command-center {
+  isolation: isolate !important;
+  min-height: 300px !important;
+  overflow: hidden !important;
+  background:
+    radial-gradient(circle at 12% 18%, rgba(21, 80, 127, 0.16) 0 2px, transparent 3px),
+    radial-gradient(circle at 38% 72%, rgba(21, 80, 127, 0.12) 0 2px, transparent 3px),
+    linear-gradient(115deg, rgba(199, 228, 246, 0.92), rgba(238, 247, 252, 0.96)),
+    #eaf5fb !important;
+}
+
+#root .dashboard-hero-pattern {
+  display: block !important;
+}
+
+#root .dashboard-system-summary {
+  grid-template-columns: 1fr !important;
+  min-width: 0;
+}
+
+#root .dashboard-system-summary > div {
+  min-width: 0;
+  overflow: hidden;
+  padding: 12px !important;
+}
+
+#root .dashboard-system-summary strong {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  font-size: clamp(16px, 2.1vw, 20px) !important;
+  line-height: 1.15 !important;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#root .help-page,
+#root .help-layout,
+#root .help-nav,
+#root .help-detail {
   height: auto !important;
   max-height: none !important;
-  padding: 5px 8px !important;
-}
-
-#root .brand p {
-  margin-top: 7px !important;
-  color: #ffffff !important;
-  font-size: 14px !important;
-  font-weight: 650 !important;
-  line-height: 1.15 !important;
-}
-
-#root .sidebar nav a,
-#root .sidebar-group-button {
-  gap: 8px !important;
-  padding-right: 7px !important;
-  padding-left: 8px !important;
-}
-
-#root .sidebar-submenu {
-  margin-left: 10px !important;
-}
-
-#root .sidebar.compact .brand {
-  min-height: 54px !important;
-  padding: 6px 5px !important;
-}
-
-#root .sidebar.compact .brand-compact-mark {
-  width: 38px !important;
-  height: 38px !important;
-}
-
-#root .category-management-section {
-  height: clamp(420px, 58vh, 680px) !important;
-  max-height: clamp(420px, 58vh, 680px) !important;
-  min-height: 420px !important;
-  overflow: hidden !important;
-}
-
-#root .category-management-section .category-structure-view {
-  height: calc(100% - 28px) !important;
-  min-height: 0 !important;
-  overflow: hidden !important;
-}
-
-#root .category-management-section .category-structure-grid {
-  height: 100% !important;
-  min-height: 0 !important;
-  overflow: hidden !important;
-}
-
-#root .category-management-section .category-structure-sidebar,
-#root .category-management-section .category-structure-detail {
-  height: 100% !important;
-  min-height: 0 !important;
-  max-height: none !important;
-  overflow-y: auto !important;
-  overflow-x: hidden !important;
-  scrollbar-gutter: stable !important;
-}
-
-#root .category-management-section .category-structure-sidebar nav,
-#root .category-management-section .category-structure-rows {
-  max-height: none !important;
   overflow: visible !important;
+}
+
+@media (max-width: 1080px) {
+  #root .category-management-section .category-structure-grid {
+    grid-template-columns: 1fr !important;
+  }
 }
