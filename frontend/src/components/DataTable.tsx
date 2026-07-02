@@ -5,6 +5,7 @@ interface Column<T> {
   key: string;
   title: string;
   render: (item: T) => ReactNode;
+  className?: string;
 }
 
 interface DataTableProps<T> {
@@ -48,7 +49,9 @@ export function DataTable<T>({
           <thead>
             <tr>
               {columns.map((column) => (
-                <th key={column.key}>{column.title}</th>
+                <th key={column.key} className={column.className}>
+                  {column.title}
+                </th>
               ))}
             </tr>
           </thead>
@@ -63,7 +66,9 @@ export function DataTable<T>({
               visibleData.map((item, index) => (
                 <tr key={getRowKey ? getRowKey(item, (safePage - 1) * pageSize + index) : index}>
                   {columns.map((column) => (
-                    <td key={column.key}>{column.render(item)}</td>
+                    <td key={column.key} className={column.className}>
+                      {column.render(item)}
+                    </td>
                   ))}
                 </tr>
               ))

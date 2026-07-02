@@ -1,14 +1,18 @@
-import { useEffect, useMemo, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import {
   FiCalendar,
   FiCheckCircle,
+  FiChevronLeft,
+  FiChevronRight,
   FiClock,
-  FiEye,
   FiLogIn,
   FiLogOut,
   FiRefreshCw,
+  FiRotateCcw,
   FiSearch,
+  FiSettings,
+  FiX,
   FiXCircle,
 } from "react-icons/fi";
 import { DataTable } from "../components/DataTable";
@@ -30,6 +34,33 @@ import type {
 } from "../services/types";
 
 type BookingAction = "check-in" | "check-out" | "cancel";
+type BookingCalendarView = "day" | "week" | "month";
+type BookingTableColumnId =
+  | "booking"
+  | "asset"
+  | "time"
+  | "status"
+  | "owner"
+  | "purpose"
+  | "department"
+  | "site"
+  | "project"
+  | "autoRelease"
+  | "checked"
+  | "createdBy"
+  | "updatedAt"
+  | "actions";
+
+interface BookingTableColumnConfig {
+  id: BookingTableColumnId;
+  label: string;
+  locked?: boolean;
+  defaultVisible?: boolean;
+}
+
+interface BookingTableColumnDefinition extends BookingTableColumnConfig {
+  render: (item: AssetBooking) => ReactNode;
+}
 
 const BOOKING_STATUS_OPTIONS = [
   { value: "", label: "Tất cả trạng thái" },
@@ -65,6 +96,96 @@ const EMPTY_FORM = {
   notes: "",
 };
 
+const BOOKING_TABLE_STORAGE_KEY = "qlvt.bookingList.tableColumns.v1";
+const BOOKING_TABLE_COLUMNS: BookingTableColumnConfig[] = [
+  { id: "booking", label: "Phiên booking", locked: true, defaultVisible: true },
+  { id: "asset", label: "Phòng họp", locked: true, defaultVisible: true },
+  { id: "time", label: "Khung giờ", locked: true, defaultVisible: true },
+  { id: "status", label: "Trạng thái", locked: true, defaultVisible: true },
+  { id: "owner", label: "Phụ trách", defaultVisible: true },
+  { id: "purpose", label: "Mục đích", defaultVisible: false },
+  { id: "department", label: "Phòng ban", defaultVisible: false },
+  { id: "site", label: "Chi nhánh", defaultVisible: false },
+  { id: "project", label: "Dự án", defaultVisible: false },
+  { id: "autoRelease", label: "Tự động trả phòng", defaultVisible: false },
+  { id: "checked", label: "Nhận / trả phòng", defaultVisible: false },
+  { id: "createdBy", label: "Người tạo", defaultVisible: false },
+  { id: "updatedAt", label: "Cập nhật", defaultVisible: false },
+  { id: "actions", label: "Thao tác", locked: true, defaultVisible: true },
+];
+const BOOKING_TABLE_COLUMN_IDS = BOOKING_TABLE_COLUMNS.map((column) => column.id);
+const DEFAULT_BOOKING_TABLE_VISIBLE_COLUMNS = BOOKING_TABLE_COLUMNS.filter(
+  (column) => column.defaultVisible || column.locked,
+).map((column) => column.id);
+const BOOKING_LOCKED_COLUMN_ORDER: BookingTableColumnId[] = [
+  "booking",
+  "asset",
+  "status",
+  "time",
+  "actions",
+];
+
+function normalizeBookingColumnOrder(order: BookingTableColumnId[]) {
+  const middleColumns = [
+    ...order.filter(
+      (id) =>
+        BOOKING_TABLE_COLUMN_IDS.includes(id) &&
+        !BOOKING_LOCKED_COLUMN_ORDER.includes(id),
+    ),
+    ...BOOKING_TABLE_COLUMN_IDS.filter(
+      (id) => !order.includes(id) && !BOOKING_LOCKED_COLUMN_ORDER.includes(id),
+    ),
+  ];
+  return [
+    "booking",
+    "asset",
+    "status",
+    "time",
+    ...middleColumns,
+    "actions",
+  ] as BookingTableColumnId[];
+}
+
+function readBookingColumnPreferences() {
+  if (typeof window === "undefined") {
+    return {
+      order: normalizeBookingColumnOrder(BOOKING_TABLE_COLUMN_IDS),
+      visible: DEFAULT_BOOKING_TABLE_VISIBLE_COLUMNS,
+    };
+  }
+
+  try {
+    const raw = window.localStorage.getItem(BOOKING_TABLE_STORAGE_KEY);
+    if (!raw) {
+      return {
+        order: normalizeBookingColumnOrder(BOOKING_TABLE_COLUMN_IDS),
+        visible: DEFAULT_BOOKING_TABLE_VISIBLE_COLUMNS,
+      };
+    }
+    const parsed = JSON.parse(raw) as Partial<{
+      order: BookingTableColumnId[];
+      visible: BookingTableColumnId[];
+    }>;
+    const knownIds = new Set(BOOKING_TABLE_COLUMN_IDS);
+    const order = [
+      ...(parsed.order || []).filter((id): id is BookingTableColumnId => knownIds.has(id)),
+      ...BOOKING_TABLE_COLUMN_IDS.filter((id) => !(parsed.order || []).includes(id)),
+    ];
+    const visible = Array.from(
+      new Set([
+        ...(parsed.visible || []).filter((id): id is BookingTableColumnId => knownIds.has(id)),
+        ...BOOKING_TABLE_COLUMNS.filter((column) => column.locked).map((column) => column.id),
+      ]),
+    );
+    return { order: normalizeBookingColumnOrder(order), visible };
+  } catch {
+    return {
+      order: normalizeBookingColumnOrder(BOOKING_TABLE_COLUMN_IDS),
+      visible: DEFAULT_BOOKING_TABLE_VISIBLE_COLUMNS,
+    };
+  }
+}
+
 function toNullableNumber(value: string) {
   const trimmed = value.trim();
   return trimmed ? Number(trimmed) : null;
@@ -79,6 +200,101 @@ function formatDateTime(value?: string) {
     hour: "2-digit",
     minute: "2-digit",
   });
+}
+
+function formatShortDate(value: Date) {
+  return value.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit" });
+}
+
+function formatDateInput(value: Date) {
+  const year = value.getFullYear();
+  const month = String(value.getMonth() + 1).padStart(2, "0");
+  const day = String(value.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function parseDateInput(value: string) {
+  if (!value) return null;
+  const [year, month, day] = value.split("-").map(Number);
+  if (!year || !month || !day) return null;
+  return new Date(year, month - 1, day);
+}
+
+function formatCalendarDayHeader(value: Date) {
+  return value.toLocaleDateString("vi-VN", {
+    weekday: "short",
+    day: "2-digit",
+    month: "2-digit",
+  });
+}
+
+function formatCalendarTitle(value: Date, view: BookingCalendarView) {
+  if (view === "day") {
+    return value.toLocaleDateString("vi-VN", {
+      weekday: "long",
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
+  }
+  if (view === "week") {
+    const start = startOfWeek(value);
+    const end = addDays(start, 6);
+    return `${formatShortDate(start)} - ${formatShortDate(end)}`;
+  }
+  return value.toLocaleDateString("vi-VN", { month: "long", year: "numeric" });
+}
+
+function startOfDay(value: Date) {
+  const next = new Date(value);
+  next.setHours(0, 0, 0, 0);
+  return next;
+}
+
+function addDays(value: Date, amount: number) {
+  const next = new Date(value);
+  next.setDate(next.getDate() + amount);
+  return next;
+}
+
+function addMonths(value: Date, amount: number) {
+  const next = new Date(value);
+  next.setMonth(next.getMonth() + amount);
+  return next;
+}
+
+function startOfWeek(value: Date) {
+  const dayOffset = (value.getDay() + 6) % 7;
+  return addDays(startOfDay(value), -dayOffset);
+}
+
+function startOfMonth(value: Date) {
+  return new Date(value.getFullYear(), value.getMonth(), 1);
+}
+
+function isSameDay(a: Date, b: Date) {
+  return (
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
+  );
+}
+
+function bookingDate(value: AssetBooking) {
+  const date = new Date(value.startTime);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function bookingTimeRange(value: AssetBooking) {
+  const start = new Date(value.startTime);
+  const end = new Date(value.endTime);
+  const startLabel = Number.isNaN(start.getTime())
+    ? "—"
+    : start.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
+  const endLabel = Number.isNaN(end.getTime())
+    ? "—"
+    : end.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
+  return `${startLabel} - ${endLabel}`;
 }
 
 function errorMessage(error: unknown, fallback: string) {
@@ -136,6 +352,16 @@ export function BookingPage() {
     booking: AssetBooking;
   } | null>(null);
   const [cancelReason, setCancelReason] = useState("");
+  const [bookingColumnOrder, setBookingColumnOrder] = useState<BookingTableColumnId[]>(
+    () => readBookingColumnPreferences().order,
+  );
+  const [visibleBookingColumns, setVisibleBookingColumns] = useState<BookingTableColumnId[]>(
+    () => readBookingColumnPreferences().visible,
+  );
+  const [bookingColumnConfigOpen, setBookingColumnConfigOpen] = useState(false);
+  const [draggedBookingColumn, setDraggedBookingColumn] = useState<BookingTableColumnId | null>(null);
+  const [calendarView, setCalendarView] = useState<BookingCalendarView>("week");
+  const [calendarDate, setCalendarDate] = useState(() => new Date());
 
   const assetOptions = useMemo(
     () =>
@@ -210,6 +436,17 @@ export function BookingPage() {
       cancelled = true;
     };
   }, [filters.fromTime, filters.status, filters.toTime, loading, selectedFilterAsset?.id]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem(
+      BOOKING_TABLE_STORAGE_KEY,
+      JSON.stringify({
+        order: bookingColumnOrder,
+        visible: visibleBookingColumns,
+      }),
+    );
+  }, [bookingColumnOrder, visibleBookingColumns]);
 
   const resetForm = () => {
     setForm(EMPTY_FORM);
@@ -321,6 +558,207 @@ export function BookingPage() {
       setSubmitting(false);
     }
   };
+
+  const toggleBookingColumn = (id: BookingTableColumnId) => {
+    const column = BOOKING_TABLE_COLUMNS.find((item) => item.id === id);
+    if (column?.locked) return;
+    setVisibleBookingColumns((current) =>
+      current.includes(id) ? current.filter((item) => item !== id) : [...current, id],
+    );
+  };
+
+  const resetBookingColumns = () => {
+    setBookingColumnOrder(normalizeBookingColumnOrder(BOOKING_TABLE_COLUMN_IDS));
+    setVisibleBookingColumns(DEFAULT_BOOKING_TABLE_VISIBLE_COLUMNS);
+  };
+
+  const dropBookingColumn = (targetId: BookingTableColumnId) => {
+    if (!draggedBookingColumn || draggedBookingColumn === targetId) return;
+    const draggedColumn = BOOKING_TABLE_COLUMNS.find((item) => item.id === draggedBookingColumn);
+    const targetColumn = BOOKING_TABLE_COLUMNS.find((item) => item.id === targetId);
+    if (draggedColumn?.locked || targetColumn?.locked) {
+      setDraggedBookingColumn(null);
+      return;
+    }
+    setBookingColumnOrder((current) => {
+      const withoutDragged = current.filter((id) => id !== draggedBookingColumn);
+      const targetIndex = withoutDragged.indexOf(targetId);
+      if (targetIndex < 0) return current;
+      return normalizeBookingColumnOrder([
+        ...withoutDragged.slice(0, targetIndex),
+        draggedBookingColumn,
+        ...withoutDragged.slice(targetIndex),
+      ]);
+    });
+    setDraggedBookingColumn(null);
+  };
+
+  const bookingTableColumns: BookingTableColumnDefinition[] = [
+    {
+      id: "booking",
+      label: "Phiên booking",
+      locked: true,
+      render: (item) => (
+        <div className="asset-name-cell">
+          <strong>{item.title}</strong>
+          <span>{item.bookingCode}</span>
+        </div>
+      ),
+    },
+    {
+      id: "asset",
+      label: "Phòng họp",
+      locked: true,
+      render: (item) => (
+        <div className="asset-muted-stack">
+          <strong>{item.assetName || "—"}</strong>
+          <span>{item.assetCode || `#${item.assetId}`}</span>
+        </div>
+      ),
+    },
+    {
+      id: "time",
+      label: "Khung giờ",
+      locked: true,
+      render: (item) => (
+        <div className="asset-muted-stack">
+          <strong>{formatDateTime(item.startTime)}</strong>
+          <span>{formatDateTime(item.endTime)}</span>
+        </div>
+      ),
+    },
+    {
+      id: "status",
+      label: "Trạng thái",
+      locked: true,
+      render: (item) => <BookingStatusBadge status={item.status} />,
+    },
+    {
+      id: "owner",
+      label: "Phụ trách",
+      render: (item) => item.requestedByEmployeeId || item.createdBy || "—",
+    },
+    {
+      id: "purpose",
+      label: "Mục đích",
+      render: (item) => item.purpose || "—",
+    },
+    {
+      id: "department",
+      label: "Phòng ban",
+      render: (item) => item.departmentId || "—",
+    },
+    {
+      id: "site",
+      label: "Chi nhánh",
+      render: (item) => item.siteId || "—",
+    },
+    {
+      id: "project",
+      label: "Dự án",
+      render: (item) => item.projectId || "—",
+    },
+    {
+      id: "autoRelease",
+      label: "Tự động trả phòng",
+      render: (item) => (item.autoRelease ? "Có" : "Không"),
+    },
+    {
+      id: "checked",
+      label: "Nhận / trả phòng",
+      render: (item) => (
+        <div className="asset-muted-stack">
+          <span>{formatDateTime(item.checkedInAt)}</span>
+          <span>{formatDateTime(item.checkedOutAt)}</span>
+        </div>
+      ),
+    },
+    {
+      id: "createdBy",
+      label: "Người tạo",
+      render: (item) => item.createdBy || "—",
+    },
+    {
+      id: "updatedAt",
+      label: "Cập nhật",
+      render: (item) => formatDateTime(item.updatedAt),
+    },
+    {
+      id: "actions",
+      label: "Thao tác",
+      locked: true,
+      render: (item) => (
+        <div className="asset-row-text-actions">
+          <button type="button" className="asset-row-text-action" onClick={() => setSelectedBooking(item)}>
+            Xem
+          </button>
+          <button
+            type="button"
+            className="asset-row-text-action"
+            disabled={!canCheckIn(item)}
+            onClick={() => setConfirmAction({ type: "check-in", booking: item })}
+          >
+            Nhận
+          </button>
+          <button
+            type="button"
+            className="asset-row-text-action"
+            disabled={!canCheckOut(item)}
+            onClick={() => setConfirmAction({ type: "check-out", booking: item })}
+          >
+            Trả
+          </button>
+          <button
+            type="button"
+            className="asset-row-text-action danger"
+            disabled={!canCancel(item)}
+            onClick={() => setConfirmAction({ type: "cancel", booking: item })}
+          >
+            Hủy
+          </button>
+        </div>
+      ),
+    },
+  ];
+  const bookingColumnById = new Map(bookingTableColumns.map((column) => [column.id, column]));
+  const visibleBookingColumnSet = new Set(visibleBookingColumns);
+  const configuredBookingColumns = bookingColumnOrder
+    .map((id) => bookingColumnById.get(id))
+    .filter((column): column is BookingTableColumnDefinition => {
+      if (!column) return false;
+      return visibleBookingColumnSet.has(column.id) || Boolean(column.locked);
+    });
+  const bookingColumnConfigOrder = [
+    ...bookingColumnOrder.filter((id) => BOOKING_TABLE_COLUMNS.some((column) => column.id === id && column.locked)),
+    ...bookingColumnOrder.filter((id) => BOOKING_TABLE_COLUMNS.some((column) => column.id === id && !column.locked)),
+  ];
+
+  const calendarStep = calendarView === "month" ? "month" : "day";
+  const moveCalendar = (direction: -1 | 1) => {
+    setCalendarDate((current) =>
+      calendarStep === "month"
+        ? addMonths(current, direction)
+        : addDays(current, direction * (calendarView === "week" ? 7 : 1)),
+    );
+  };
+  const monthStart = startOfMonth(calendarDate);
+  const monthGridStart = startOfWeek(monthStart);
+  const monthDays = Array.from({ length: 42 }, (_, index) => addDays(monthGridStart, index));
+  const calendarDateValue = formatDateInput(calendarDate);
+  const calendarDays =
+    calendarView === "month"
+      ? monthDays
+      : Array.from(
+          { length: calendarView === "week" ? 7 : 1 },
+          (_, index) => addDays(calendarView === "week" ? startOfWeek(calendarDate) : startOfDay(calendarDate), index),
+        );
+  const bookingsForDay = (day: Date) =>
+    bookings
+      .filter((booking) => {
+        const date = bookingDate(booking);
+        return date ? isSameDay(date, day) : false;
+      })
+      .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
 
   return (
     <section className="booking-page page-grid">
@@ -519,20 +957,212 @@ export function BookingPage() {
         </section>
       </div>
 
+      <section className="panel booking-calendar-panel">
+        <div className="booking-calendar-head">
+          <div>
+            <h2>Lịch phòng họp</h2>
+            <p>Xem nhanh các phiên đặt phòng theo ngày, tuần hoặc tháng.</p>
+          </div>
+          <div className="booking-calendar-controls">
+            <button type="button" className="secondary" onClick={() => moveCalendar(-1)}>
+              <FiChevronLeft /> Trước
+            </button>
+            <button type="button" className="secondary" onClick={() => setCalendarDate(new Date())}>
+              Hôm nay
+            </button>
+            <button type="button" className="secondary" onClick={() => moveCalendar(1)}>
+              Sau <FiChevronRight />
+            </button>
+            <div className="booking-calendar-switch" role="tablist" aria-label="Chế độ xem lịch">
+              {[
+                ["day", "Ngày"],
+                ["week", "Tuần"],
+                ["month", "Tháng"],
+              ].map(([value, label]) => (
+                <button
+                  key={value}
+                  type="button"
+                  className={calendarView === value ? "active" : ""}
+                  onClick={() => setCalendarView(value as BookingCalendarView)}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+        <div className="booking-calendar-title">{formatCalendarTitle(calendarDate, calendarView)}</div>
+        <div className="booking-calendar-filter-row">
+          <label className="asset-date-filter">
+            <span>Ngày lịch</span>
+            <input
+              type="date"
+              value={calendarDateValue}
+              onChange={(event) => {
+                const next = parseDateInput(event.target.value);
+                if (next) setCalendarDate(next);
+              }}
+            />
+          </label>
+          <label className="asset-filter-field">
+            <span>Phòng họp</span>
+            <select
+              value={filters.assetCode}
+              onChange={(event) => setFilters((prev) => ({ ...prev, assetCode: event.target.value }))}
+            >
+              <option value="">Tất cả phòng</option>
+              {assetOptions.map((asset) => (
+                <option key={asset.id} value={asset.assetCode}>
+                  {asset.assetCode} · {asset.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="asset-filter-field">
+            <span>Trạng thái</span>
+            <select
+              value={filters.status}
+              onChange={(event) => setFilters((prev) => ({ ...prev, status: event.target.value }))}
+            >
+              {BOOKING_STATUS_OPTIONS.map((option) => (
+                <option key={option.value || "all"} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+        <div className={`booking-calendar-grid booking-calendar-view-${calendarView}`}>
+          <div className="booking-calendar-weekdays">
+            {["T2", "T3", "T4", "T5", "T6", "T7", "CN"].map((label) => (
+              <span key={label}>{label}</span>
+            ))}
+          </div>
+
+          {calendarView === "month" ? (
+            <div className="booking-calendar-days">
+              {calendarDays.map((day) => {
+                const dayBookings = bookingsForDay(day);
+                return (
+                  <div
+                    key={day.toISOString()}
+                    className="booking-calendar-day"
+                    data-muted={day.getMonth() !== calendarDate.getMonth()}
+                    data-selected={isSameDay(day, calendarDate) || undefined}
+                    data-today={isSameDay(day, new Date()) || undefined}
+                  >
+                    <button
+                      type="button"
+                      className="booking-calendar-day-number"
+                      onClick={() => {
+                        setCalendarDate(day);
+                        setCalendarView("day");
+                      }}
+                    >
+                      {day.getDate()}
+                    </button>
+                    <div className="booking-calendar-events">
+                      {dayBookings.slice(0, 2).map((booking) => (
+                        <button
+                          key={booking.id}
+                          type="button"
+                          className="booking-calendar-event"
+                          data-status={booking.status}
+                          onClick={() => setSelectedBooking(booking)}
+                          title={`${bookingTimeRange(booking)} · ${booking.title}`}
+                        >
+                          <span>{bookingTimeRange(booking)}</span>
+                          <strong>{booking.title}</strong>
+                        </button>
+                      ))}
+                      {dayBookings.length > 2 && (
+                        <button
+                          type="button"
+                          className="booking-calendar-more"
+                          onClick={() => {
+                            setCalendarDate(day);
+                            setCalendarView("day");
+                          }}
+                        >
+                          +{dayBookings.length - 2} lịch khác
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="booking-agenda-grid">
+              {calendarDays.map((day) => {
+                const dayBookings = bookingsForDay(day);
+                return (
+                  <section
+                    key={day.toISOString()}
+                    className="booking-agenda-day"
+                    data-selected={isSameDay(day, calendarDate) || undefined}
+                    data-today={isSameDay(day, new Date()) || undefined}
+                    onClick={() => setCalendarDate(day)}
+                  >
+                    <div className="booking-agenda-day-head">
+                      <strong>{formatCalendarDayHeader(day)}</strong>
+                      <span>{dayBookings.length} cuộc họp</span>
+                    </div>
+                    <div className="booking-agenda-events">
+                      {dayBookings.length === 0 ? (
+                        <div className="booking-agenda-empty">Chưa có lịch đặt phòng.</div>
+                      ) : (
+                        dayBookings.map((booking) => (
+                          <button
+                            key={booking.id}
+                            type="button"
+                            className="booking-agenda-event"
+                            data-status={booking.status}
+                            onClick={() => setSelectedBooking(booking)}
+                          >
+                            <span className="booking-agenda-time">{bookingTimeRange(booking)}</span>
+                            <span className="booking-agenda-copy">
+                              <strong>{booking.title}</strong>
+                              <small>{booking.assetName || booking.assetCode || "Phòng họp"}</small>
+                            </span>
+                            <BookingStatusBadge status={booking.status} />
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  </section>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </section>
+
       <section className="panel">
         <div className="panel-title booking-table-head">
           <div>
             <h2>Danh sách lịch đặt</h2>
             <p>Theo dõi phiên booking và thao tác nhận/trả/hủy phòng.</p>
           </div>
-          <button
-            type="button"
-            className="secondary"
-            onClick={() => void loadBookings()}
-            disabled={loading || submitting}
-          >
-            <FiRefreshCw /> Làm mới
-          </button>
+          <div className="booking-table-tools">
+            <button
+              type="button"
+              className="secondary asset-column-config-toggle booking-column-config-toggle"
+              aria-expanded={bookingColumnConfigOpen}
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={() => setBookingColumnConfigOpen((open) => !open)}
+            >
+              <FiSettings /> Cấu hình cột
+            </button>
+            <button
+              type="button"
+              className="secondary"
+              onClick={() => void loadBookings()}
+              disabled={loading || submitting}
+            >
+              <FiRefreshCw /> Làm mới
+            </button>
+          </div>
         </div>
 
         <div className="booking-filters">
@@ -585,96 +1215,99 @@ export function BookingPage() {
           </label>
         </div>
 
+        {bookingColumnConfigOpen && (
+          <>
+            <button
+              type="button"
+              className="asset-column-backdrop"
+              aria-label="Đóng cấu hình cột"
+              onClick={() => setBookingColumnConfigOpen(false)}
+            />
+            <div
+              className="asset-column-popover booking-column-popover"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="booking-column-config-title"
+            >
+              <div className="asset-column-popover-head">
+                <div>
+                  <strong id="booking-column-config-title">Cấu hình cột</strong>
+                  <span>Bật/tắt cột cần xem. Các cột bắt buộc được cố định trong bảng.</span>
+                </div>
+                <button
+                  type="button"
+                  className="icon-button"
+                  onClick={() => setBookingColumnConfigOpen(false)}
+                >
+                  <FiX />
+                </button>
+              </div>
+              <div className="asset-column-list">
+                {bookingColumnConfigOrder.map((id) => {
+                  const column = BOOKING_TABLE_COLUMNS.find((item) => item.id === id);
+                  if (!column) return null;
+                  const locked = Boolean(column.locked);
+                  const checked = visibleBookingColumnSet.has(id) || locked;
+                  return (
+                    <label
+                      key={id}
+                      className={`asset-column-option ${
+                        draggedBookingColumn === id ? "is-dragging" : ""
+                      } ${locked ? "is-locked" : ""}`}
+                      draggable={!locked}
+                      onDragStart={() => {
+                        if (!locked) setDraggedBookingColumn(id);
+                      }}
+                      onDragOver={(event) => event.preventDefault()}
+                      onDrop={() => dropBookingColumn(id)}
+                      onDragEnd={() => setDraggedBookingColumn(null)}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        disabled={locked}
+                        onChange={() => toggleBookingColumn(id)}
+                      />
+                      <span>{column.label}</span>
+                      {locked && <em>Bắt buộc</em>}
+                    </label>
+                  );
+                })}
+              </div>
+              <div className="asset-column-popover-actions">
+                <button type="button" className="secondary" onClick={resetBookingColumns}>
+                  <FiRotateCcw /> Mặc định
+                </button>
+                <button
+                  type="button"
+                  className="primary"
+                  onClick={() => setBookingColumnConfigOpen(false)}
+                >
+                  Áp dụng
+                </button>
+              </div>
+            </div>
+          </>
+        )}
+
         <div className="booking-table">
           <DataTable
             data={bookings}
             getRowKey={(item) => item.id}
             emptyText={loading ? "Đang tải lịch đặt phòng..." : "Chưa có lịch đặt phòng"}
-            columns={[
-              {
-                key: "booking",
-                title: "Phiên booking",
-                render: (item) => (
-                  <div className="asset-name-cell">
-                    <strong>{item.title}</strong>
-                    <span>{item.bookingCode}</span>
-                  </div>
-                ),
-              },
-              {
-                key: "asset",
-                title: "Phòng họp",
-                render: (item) => (
-                  <div className="asset-muted-stack">
-                    <strong>{item.assetName || "—"}</strong>
-                    <span>{item.assetCode || `#${item.assetId}`}</span>
-                  </div>
-                ),
-              },
-              {
-                key: "time",
-                title: "Khung giờ",
-                render: (item) => (
-                  <div className="asset-muted-stack">
-                    <strong>{formatDateTime(item.startTime)}</strong>
-                    <span>{formatDateTime(item.endTime)}</span>
-                  </div>
-                ),
-              },
-              {
-                key: "owner",
-                title: "Phụ trách",
-                render: (item) => item.requestedByEmployeeId || item.createdBy || "—",
-              },
-              {
-                key: "status",
-                title: "Trạng thái",
-                render: (item) => <BookingStatusBadge status={item.status} />,
-              },
-              {
-                key: "actions",
-                title: "",
-                render: (item) => (
-                  <div className="asset-row-icon-actions">
-                    <button
-                      type="button"
-                      className="asset-icon-action"
-                      title="Xem chi tiết"
-                      onClick={() => setSelectedBooking(item)}
-                    >
-                      <FiEye />
-                    </button>
-                    <button
-                      type="button"
-                      className="asset-icon-action"
-                      title="Check-in"
-                      disabled={!canCheckIn(item)}
-                      onClick={() => setConfirmAction({ type: "check-in", booking: item })}
-                    >
-                      <FiLogIn />
-                    </button>
-                    <button
-                      type="button"
-                      className="asset-icon-action"
-                      title="Check-out"
-                      disabled={!canCheckOut(item)}
-                      onClick={() => setConfirmAction({ type: "check-out", booking: item })}
-                    >
-                      <FiLogOut />
-                    </button>
-                    <button
-                      type="button"
-                      className="asset-icon-action danger"
-                      title="Hủy lịch"
-                      disabled={!canCancel(item)}
-                      onClick={() => setConfirmAction({ type: "cancel", booking: item })}
-                    >
-                      <FiXCircle />
-                    </button>
-                  </div>
-                ),
-              },
-            ]}
+            itemLabel="lịch đặt"
+            columns={configuredBookingColumns.map((column) => ({
+              key: column.id,
+              title: column.label,
+              render: column.render,
+              className: `booking-table-col-${column.id} ${
+                ["booking", "asset", "status", "time"].includes(column.id)
+                  ? `booking-table-sticky-left booking-table-sticky-${column.id}`
+                  : column.id === "actions"
+                    ? "booking-table-sticky-right booking-table-actions-col"
+                    : ""
+              }`,
+            }))}
           />
         </div>
       </section>

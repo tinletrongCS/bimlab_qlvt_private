@@ -182,7 +182,17 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   );
 
   const ensureDashboard = useCallback(
-    () => loadKeys(["summary", "assets", "subscriptions", "vendors", "requests", "utilization"]),
+    () =>
+      loadKeys([
+        "summary",
+        "assets",
+        "subscriptions",
+        "vendors",
+        "requests",
+        "utilization",
+        "departments",
+        "workSites",
+      ]),
     [loadKeys],
   );
 
