@@ -10142,18 +10142,19 @@ textarea,
   }
 }
 
-/* Final requested pass: LAB-gray sidebar, blue top navigation, expandable category management, asset table text tools. */
+/* Final requested pass: BIMLAB blue sidebar, lighter blue top navigation, expandable category management, asset table text tools. */
 :root {
-  --qlvt-lab-gray: #56616d;
-  --qlvt-lab-gray-hover: #637080;
-  --qlvt-lab-gray-active: #6f7c8d;
-  --qlvt-nav-blue: #123f63;
-  --qlvt-nav-blue-hover: #1b5b88;
+  --qlvt-sidebar-blue: #123f63;
+  --qlvt-sidebar-blue-hover: #1b5b88;
+  --qlvt-sidebar-blue-active: #236b9e;
+  --qlvt-nav-blue: #dceefa;
+  --qlvt-nav-blue-hover: #c7e4f6;
+  --qlvt-nav-blue-active: #b5d8ee;
   --qlvt-link-blue: #15507f;
 }
 
 #root .sidebar {
-  background: var(--qlvt-lab-gray) !important;
+  background: var(--qlvt-sidebar-blue) !important;
   color: #f8fafc !important;
 }
 
@@ -10253,8 +10254,8 @@ textarea,
 #root .sidebar-group-button.active,
 #root .sidebar-submenu a.active,
 #root .sidebar-submenu a.active:hover {
-  border-color: rgba(255, 255, 255, 0.16) !important;
-  background: var(--qlvt-lab-gray-active) !important;
+  border-color: rgba(125, 211, 252, 0.38) !important;
+  background: var(--qlvt-sidebar-blue-active) !important;
   color: #ffffff !important;
 }
 
@@ -10276,7 +10277,7 @@ textarea,
 
 #root .section-tabs {
   margin-bottom: 3px !important;
-  border: 0 !important;
+  border: 1px solid #b5d8ee !important;
   background: var(--qlvt-nav-blue) !important;
 }
 
@@ -10287,20 +10288,20 @@ textarea,
 #root .section-tabs a {
   border-color: transparent !important;
   background: transparent !important;
-  color: rgba(255, 255, 255, 0.86) !important;
+  color: #123f63 !important;
 }
 
 #root .section-tabs a:hover,
 #root .section-tabs a.active {
-  border-color: rgba(255, 255, 255, 0.14) !important;
-  background: var(--qlvt-nav-blue-hover) !important;
-  color: #ffffff !important;
+  border-color: #9ccae7 !important;
+  background: var(--qlvt-nav-blue-active) !important;
+  color: #0f3554 !important;
 }
 
 #root .section-tabs .secondary {
-  border-color: rgba(255, 255, 255, 0.2) !important;
-  background: rgba(255, 255, 255, 0.1) !important;
-  color: #ffffff !important;
+  border-color: #9ccae7 !important;
+  background: #eef7fc !important;
+  color: #123f63 !important;
 }
 
 #root .category-page > .panel,
@@ -10411,4 +10412,480 @@ textarea,
 #root .asset-page-actions .asset-add-button {
   min-height: 34px !important;
   padding: 7px 10px !important;
+}
+
+/* Small-radius and nested-border cleanup pass. */
+#root button,
+#root .primary,
+#root .primary-action,
+#root .secondary,
+#root .ghost-button,
+#root .danger-action,
+#root .icon-button,
+#root .menu-button,
+#root .logout-button,
+#root .panel-actions > button,
+#root .modal-actions button,
+#root .table-pagination-controls button,
+#root .category-view-tabs button,
+#root .category-panel-controls .secondary,
+#root .asset-template-button,
+#root .asset-import-button,
+#root .asset-import-file-button,
+#root .asset-import-preview-toolbar button,
+#root .booking-form-actions button,
+#root .booking-table-head button,
+#root .asset-table-text-action,
+#root .dashboard-shortcut,
+#root .dashboard-booking-item,
+#root .dashboard-system-summary > div,
+#root .dashboard-health-grid > div {
+  border-radius: 2px !important;
+}
+
+#root .brand {
+  min-height: 44px !important;
+  align-items: flex-start !important;
+}
+
+#root .brand img {
+  max-width: 124px !important;
+  padding: 3px 6px;
+  background: #ffffff;
+  border-radius: 2px !important;
+  object-fit: contain;
+}
+
+#root .brand p {
+  margin-top: 3px;
+  color: #ffffff !important;
+  font-weight: 600;
+}
+
+#root .brand-compact-mark {
+  background: #ffffff !important;
+  border-radius: 2px !important;
+}
+
+#root .brand-compact-mark img {
+  padding: 0;
+  background: transparent;
+}
+
+#root .user-card {
+  border: 0 !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+
+#root .user-card strong,
+#root .user-card span {
+  color: #ffffff !important;
+}
+
+#root .user-card > svg,
+#root .user-card [class*="avatar"] {
+  border-color: rgba(255, 255, 255, 0.22) !important;
+  background: rgba(255, 255, 255, 0.12) !important;
+  color: #ffffff !important;
+}
+
+#root .asset-list-layout {
+  border: 0 !important;
+  background: transparent !important;
+  padding: 0 !important;
+}
+
+#root .asset-category-sidebar {
+  border: 1px solid #d7dde5 !important;
+  background: #ffffff !important;
+}
+
+#root .asset-category-filter-item {
+  border-color: transparent !important;
+}
+
+#root .asset-category-filter-item:hover,
+#root .asset-category-filter-item[data-selected="true"] {
+  border-color: transparent !important;
+}
+
+#root .asset-toolbar,
+#root .asset-list-head,
+#root .asset-list-insights,
+#root .asset-insight-card,
+#root .asset-selection-workspace,
+#root .asset-bulk-panel {
+  border: 0 !important;
+}
+
+#root .asset-toolbar {
+  background: #f6f8fa !important;
+  padding: 5px !important;
+}
+
+#root .asset-list-head {
+  background: transparent !important;
+  border-bottom: 1px solid #d7dde5 !important;
+}
+
+#root .asset-list-panel {
+  border: 0 !important;
+  background: transparent !important;
+}
+
+#root .asset-list-panel .table-wrap,
+#root .booking-table .table-wrap {
+  border: 1px solid #d7dde5 !important;
+}
+
+#root .asset-list-insights {
+  padding: 0 !important;
+  background: transparent !important;
+}
+
+#root .asset-insight-card {
+  background: #f8fafc !important;
+}
+
+#root .asset-selection-workspace,
+#root .asset-bulk-panel {
+  background: #f8fafc !important;
+}
+
+#root .asset-selection-card {
+  border: 0 !important;
+  border-left: 2px solid #d7dde5 !important;
+  background: #ffffff !important;
+}
+
+/* System-wide nested border hierarchy: keep borders on page frames, tables, modals and inputs only. */
+:root {
+  --qlvt-nested-surface: #f8fafc;
+  --qlvt-nested-surface-strong: #f3f6f9;
+  --qlvt-nested-hover: #eef4fa;
+  --qlvt-nested-selected: #e8f1f8;
+}
+
+#root .panel .panel,
+#root .panel .card,
+#root .panel .stat-card,
+#root .panel .operation-card,
+#root .panel .asset-metric,
+#root .panel .dashboard-shortcut,
+#root .panel .dashboard-booking-item,
+#root .panel .dashboard-system-summary > div,
+#root .panel .dashboard-health-grid > div,
+#root .panel .help-card,
+#root .panel .help-note,
+#root .panel .asset-detail-section,
+#root .panel .asset-detail-readonly-grid > div,
+#root .panel .asset-import-section,
+#root .panel .booking-flow-list > div,
+#root .panel .booking-hero-metrics > div,
+#root .panel .booking-calendar-event,
+#root .panel .booking-time-event,
+#root .panel .booking-agenda-event,
+#root .panel .category-list-card,
+#root .panel .category-org-card,
+#root .panel .category-summary-stat,
+#root .panel .category-parent-context,
+#root .panel .asset-selection-workspace,
+#root .panel .asset-selection-card,
+#root .panel .asset-insight-card,
+#root .panel .asset-bulk-panel,
+#root .panel .asset-import-confirm-card,
+#root .panel .asset-import-summary > div,
+#root .panel .asset-column-option,
+#root .panel .booking-column-option,
+#root .panel .asset-category-filter-item,
+#root .modal-body .asset-detail-section,
+#root .modal-body .asset-detail-readonly-grid > div,
+#root .crud-modal .asset-detail-section,
+#root .crud-modal .asset-detail-readonly-grid > div {
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+#root .panel .stat-card,
+#root .panel .operation-card,
+#root .panel .asset-metric,
+#root .panel .dashboard-shortcut,
+#root .panel .dashboard-booking-item,
+#root .panel .dashboard-system-summary > div,
+#root .panel .dashboard-health-grid > div,
+#root .panel .help-card,
+#root .panel .help-note,
+#root .panel .asset-detail-section,
+#root .panel .asset-detail-readonly-grid > div,
+#root .panel .asset-import-section,
+#root .panel .booking-flow-list > div,
+#root .panel .booking-hero-metrics > div,
+#root .panel .category-summary-stat,
+#root .panel .category-parent-context,
+#root .panel .asset-insight-card,
+#root .panel .asset-bulk-panel,
+#root .panel .asset-import-confirm-card,
+#root .panel .asset-import-summary > div,
+#root .modal-body .asset-detail-section,
+#root .modal-body .asset-detail-readonly-grid > div,
+#root .crud-modal .asset-detail-section,
+#root .crud-modal .asset-detail-readonly-grid > div {
+  background: var(--qlvt-nested-surface) !important;
+}
+
+#root .panel .category-list-card,
+#root .panel .category-org-card,
+#root .panel .asset-category-filter-item,
+#root .panel .asset-selection-card,
+#root .panel .asset-column-option,
+#root .panel .booking-column-option {
+  background: transparent !important;
+}
+
+#root .panel .dashboard-shortcut:hover,
+#root .panel .dashboard-booking-item:hover,
+#root .panel .help-card:hover,
+#root .panel .category-list-card:hover,
+#root .panel .category-org-card:hover,
+#root .panel .asset-category-filter-item:hover,
+#root .panel .asset-selection-card:hover,
+#root .panel .asset-column-option:hover,
+#root .panel .booking-column-option:hover {
+  border: 0 !important;
+  background: var(--qlvt-nested-hover) !important;
+}
+
+#root .panel .category-list-card.active,
+#root .panel .category-org-card[data-selected="true"],
+#root .panel .asset-category-filter-item[data-selected="true"],
+#root .panel .asset-selection-card[data-selected="true"],
+#root .panel .asset-column-option.is-locked {
+  border: 0 !important;
+  background: var(--qlvt-nested-selected) !important;
+  box-shadow: inset 2px 0 0 #15507f !important;
+}
+
+#root .category-structure-sidebar button,
+#root .category-structure-row-head,
+#root .booking-flow-list > div,
+#root .help-links a,
+#root .asset-import-preview-toolbar,
+#root .asset-import-preview-filter,
+#root .asset-import-file-row,
+#root .booking-filters,
+#root .category-filters,
+#root .asset-toolbar {
+  border: 0 !important;
+}
+
+#root .category-structure-sidebar button:hover,
+#root .category-structure-row-head:hover,
+#root .category-structure-sidebar button.active,
+#root .category-structure-row-head[data-selected="true"] {
+  border: 0 !important;
+  box-shadow: inset 2px 0 0 #15507f !important;
+}
+
+#root .asset-table,
+#root .asset-import-preview,
+#root .booking-table,
+#root .table-wrap,
+#root .asset-column-popover,
+#root .booking-column-popover,
+#root .crud-modal,
+#root .asset-detail-modal,
+#root .asset-import-modal,
+#root .asset-qr-modal,
+#root .booking-detail-modal,
+#root .booking-confirm-modal {
+  border-color: #d7dde5 !important;
+}
+
+#root .panel .table-wrap + .asset-list-insights,
+#root .panel .asset-selection-workspace + .asset-list-insights,
+#root .panel .asset-toolbar + .asset-list-panel,
+#root .panel .category-filters + .category-org-viewport,
+#root .panel .booking-filters + .table-wrap {
+  margin-top: 4px !important;
+}
+
+/* Sidebar proportions and category-node surface tuning. */
+#root .app-shell {
+  grid-template-columns: 216px minmax(0, 1fr) !important;
+}
+
+#root .app-shell.sidebar-compact {
+  grid-template-columns: 60px minmax(0, 1fr) !important;
+}
+
+#root .sidebar {
+  padding-right: 4px !important;
+  padding-left: 4px !important;
+}
+
+#root .brand {
+  min-height: 56px !important;
+  padding: 6px 5px 8px !important;
+}
+
+#root .brand img {
+  max-width: 146px !important;
+  width: 146px !important;
+  padding: 4px 7px;
+}
+
+#root .brand p {
+  margin-top: 5px !important;
+  font-size: 12.5px !important;
+  line-height: 1.15;
+}
+
+#root .sidebar nav a,
+#root .sidebar-group-button {
+  gap: 7px !important;
+  padding-right: 5px !important;
+  padding-left: 6px !important;
+}
+
+#root .sidebar-submenu {
+  margin-left: 8px !important;
+}
+
+#root .sidebar-submenu a {
+  padding-right: 5px !important;
+}
+
+#root .sidebar.compact {
+  width: 60px !important;
+}
+
+#root .sidebar.compact .brand {
+  min-height: 48px !important;
+  align-items: center !important;
+  padding: 5px !important;
+}
+
+#root .sidebar.compact .brand-compact-mark {
+  width: 34px !important;
+  height: 34px !important;
+}
+
+#root .panel .category-list-card,
+#root .panel .category-org-card,
+#root .panel .asset-category-filter-item,
+#root .panel .asset-selection-card,
+#root .panel .asset-column-option,
+#root .panel .booking-column-option,
+#root .category-structure-sidebar button,
+#root .category-structure-row-head {
+  background: #ffffff !important;
+}
+
+#root .panel .category-list-card:hover,
+#root .panel .category-org-card:hover,
+#root .panel .asset-category-filter-item:hover,
+#root .panel .asset-selection-card:hover,
+#root .panel .asset-column-option:hover,
+#root .panel .booking-column-option:hover,
+#root .category-structure-sidebar button:hover,
+#root .category-structure-row-head:hover {
+  background: #f7fafc !important;
+}
+
+/* Final sidebar sizing and category management scroll fix. */
+#root .app-shell {
+  grid-template-columns: 238px minmax(0, 1fr) !important;
+}
+
+#root .app-shell.sidebar-compact {
+  grid-template-columns: 64px minmax(0, 1fr) !important;
+}
+
+#root .sidebar {
+  width: 238px !important;
+  padding-right: 6px !important;
+  padding-left: 6px !important;
+}
+
+#root .sidebar.compact {
+  width: 64px !important;
+}
+
+#root .brand {
+  min-height: 82px !important;
+  padding: 10px 8px 9px !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+#root .brand img {
+  width: 176px !important;
+  max-width: calc(100% - 12px) !important;
+  height: auto !important;
+  max-height: none !important;
+  padding: 5px 8px !important;
+}
+
+#root .brand p {
+  margin-top: 7px !important;
+  color: #ffffff !important;
+  font-size: 14px !important;
+  font-weight: 650 !important;
+  line-height: 1.15 !important;
+}
+
+#root .sidebar nav a,
+#root .sidebar-group-button {
+  gap: 8px !important;
+  padding-right: 7px !important;
+  padding-left: 8px !important;
+}
+
+#root .sidebar-submenu {
+  margin-left: 10px !important;
+}
+
+#root .sidebar.compact .brand {
+  min-height: 54px !important;
+  padding: 6px 5px !important;
+}
+
+#root .sidebar.compact .brand-compact-mark {
+  width: 38px !important;
+  height: 38px !important;
+}
+
+#root .category-management-section {
+  height: clamp(420px, 58vh, 680px) !important;
+  max-height: clamp(420px, 58vh, 680px) !important;
+  min-height: 420px !important;
+  overflow: hidden !important;
+}
+
+#root .category-management-section .category-structure-view {
+  height: calc(100% - 28px) !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+}
+
+#root .category-management-section .category-structure-grid {
+  height: 100% !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+}
+
+#root .category-management-section .category-structure-sidebar,
+#root .category-management-section .category-structure-detail {
+  height: 100% !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  scrollbar-gutter: stable !important;
+}
+
+#root .category-management-section .category-structure-sidebar nav,
+#root .category-management-section .category-structure-rows {
+  max-height: none !important;
+  overflow: visible !important;
 }

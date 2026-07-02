@@ -1035,7 +1035,6 @@ export function BookingPage() {
         <div className="booking-calendar-head">
           <div>
             <h2>Lịch phòng họp</h2>
-            <p>Xem nhanh các phiên đặt phòng theo ngày, tuần hoặc tháng.</p>
           </div>
           <div className="booking-calendar-controls">
             <button type="button" className="secondary" onClick={() => moveCalendar(-1)}>
@@ -1274,7 +1273,6 @@ export function BookingPage() {
         <div className="panel-title booking-table-head">
           <div>
             <h2>Danh sách lịch đặt</h2>
-            <p>Theo dõi phiên booking và thao tác nhận/trả/hủy phòng.</p>
           </div>
           <div className="booking-table-tools">
             <button
