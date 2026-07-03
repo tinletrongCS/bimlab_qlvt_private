@@ -1,12 +1,12 @@
 // Phase 2 PR#5/#6 — Keycloak OIDC (Authorization Code + PKCE) cho QLVT FE.
 //
 // Pin bảo mật:
-//  - Access token + refresh token chỉ giữ IN-MEMORY (userStore = InMemoryWebStorage) → KHÔNG localStorage.
+//  - Access token + refresh token lưu trong sessionStorage của phiên trình duyệt → reload không mất phiên,
+//    vẫn không dùng localStorage dài hạn.
 //  - State handshake PKCE (code_verifier + state) sống qua redirect → sessionStorage (mặc định, ngắn hạn).
 //  - PR#6: refresh token rotation qua automaticSilentRenew (oidc-client-ts dùng refresh_token, KHÔNG iframe
 //    → tránh chặn third-party-cookie). Logout = signoutRedirect (end-session SLO của Keycloak).
 import {
-  InMemoryWebStorage,
   type User,
   UserManager,
   type UserManagerSettings,
@@ -36,8 +36,8 @@ function buildSettings(): UserManagerSettings {
     response_type: "code",
     // Chỉ cần "openid" — user info + permissions lấy từ /api/asset/me (KHÔNG dùng OIDC profile/userinfo).
     scope: "openid",
-    // Access/refresh token in-memory; state (PKCE) mặc định sessionStorage.
-    userStore: new WebStorageStateStore({ store: new InMemoryWebStorage() }),
+    // Access/refresh token theo phiên trình duyệt; state (PKCE) cũng dùng sessionStorage.
+    userStore: new WebStorageStateStore({ store: window.sessionStorage }),
     // PR#6: tự gia hạn access token (5') bằng refresh token TRƯỚC khi hết hạn 60s.
     automaticSilentRenew: true,
     accessTokenExpiringNotificationTimeInSeconds: 60,
@@ -100,6 +100,10 @@ export async function completeSilentRenewCallback(): Promise<void> {
 /** Khôi phục phiên khi reload, dựa session SSO Keycloak (prompt=none). Thất bại = chưa đăng nhập. */
 export async function trySilentLogin(): Promise<boolean> {
   try {
+    const existingUser = await userManager().getUser();
+    if (existingUser && !existingUser.expired) {
+      return adopt(existingUser);
+    }
     const user = await userManager().signinSilent();
     return adopt(user);
   } catch {
