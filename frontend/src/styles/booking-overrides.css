@@ -2630,3 +2630,155 @@
 #root .booking-table tbody tr:hover td.booking-table-col-status {
   background: #f8fbff !important;
 }
+
+/* EOF booking calendar/list sync. Calendar uses the same visual surface as booking list. */
+#root .booking-calendar-panel {
+  border-color: #d7dde5 !important;
+  background: #ffffff !important;
+}
+
+#root .booking-calendar-head {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  align-items: stretch !important;
+  gap: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-bottom: 1px solid #e1e7ef !important;
+  background: #ffffff !important;
+}
+
+#root .booking-calendar-head > div:first-child {
+  padding: 8px 10px !important;
+}
+
+#root .booking-calendar-controls,
+#root .booking-table-tools {
+  background: #f6f8fa !important;
+}
+
+#root .booking-calendar-controls {
+  display: flex !important;
+  width: 100% !important;
+  justify-content: flex-start !important;
+  margin: 0 !important;
+  padding: 8px 10px !important;
+  border-top: 1px solid #e1e7ef !important;
+}
+
+#root .booking-calendar-controls button,
+#root .booking-calendar-view-select select {
+  border: 1px solid #d7dde5 !important;
+  background: #ffffff !important;
+  color: #25384f !important;
+  box-shadow: none !important;
+}
+
+#root .booking-calendar-controls button:hover,
+#root .booking-calendar-view-select select:hover {
+  border-color: #b8c6d6 !important;
+  background: #f6f8fa !important;
+  color: #15507f !important;
+}
+
+#root .booking-calendar-view-select span {
+  color: #64748b !important;
+}
+
+#root .booking-calendar-title {
+  margin: 0 !important;
+  padding: 7px 10px !important;
+  border-top: 0 !important;
+  border-bottom: 1px solid #e1e7ef !important;
+  background: #f6f8fa !important;
+  color: #25384f !important;
+}
+
+#root .booking-calendar-shell,
+#root .booking-calendar-sidebar,
+#root .booking-calendar-main,
+#root .booking-calendar-grid,
+#root .booking-mini-calendar {
+  border-color: #d7dde5 !important;
+  background: #ffffff !important;
+}
+
+#root .booking-calendar-sidebar-filters {
+  border-color: #d7dde5 !important;
+  background: #f6f8fa !important;
+}
+
+#root .booking-calendar-sidebar-filters select {
+  border-color: #d7dde5 !important;
+  background: #ffffff !important;
+  color: #25384f !important;
+}
+
+#root .booking-calendar-weekdays,
+#root .booking-time-grid-head {
+  border-color: #e1e7ef !important;
+  background: #f5f7fa !important;
+}
+
+#root .booking-calendar-weekdays span,
+#root .booking-time-corner,
+#root .booking-time-day-label {
+  border-color: #e1e7ef !important;
+  background: #f5f7fa !important;
+  color: #334155 !important;
+}
+
+#root .booking-time-grid {
+  grid-template-rows: 38px minmax(0, 1fr) !important;
+  border-color: #d7dde5 !important;
+  background: #ffffff !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+}
+
+#root .booking-time-grid-head {
+  min-height: 38px !important;
+  height: 38px !important;
+}
+
+#root .booking-time-grid-week .booking-time-grid-head,
+#root .booking-time-grid-week .booking-time-grid-scroll {
+  width: 1246px !important;
+  min-width: 1246px !important;
+}
+
+#root .booking-time-grid-day .booking-time-grid-head,
+#root .booking-time-grid-day .booking-time-grid-scroll {
+  width: 226px !important;
+  min-width: 226px !important;
+}
+
+#root .booking-time-grid-scroll {
+  padding-top: 4px !important;
+  scroll-padding-top: 12px !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+}
+
+#root .booking-time-columns {
+  width: 1190px !important;
+  min-width: 1190px !important;
+}
+
+#root .booking-time-grid-day .booking-time-columns {
+  width: 170px !important;
+  min-width: 170px !important;
+}
+
+#root .booking-time-column {
+  min-width: 170px !important;
+}
+
+#root .booking-time-axis > div:first-child span {
+  top: 4px !important;
+}
+
+#root .booking-time-axis span {
+  background: #ffffff !important;
+  color: #64748b !important;
+}
