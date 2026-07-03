@@ -12602,56 +12602,122 @@ body,
 
 /* --- KEYFRAMES CHO CHUYỂN ĐỘNG NHANH & LIÊN TỤC --- */
 @keyframes pan-grid {
-  0% { background-position: 0 0, 0 0, 0 0, 0 0; }
-  100% { background-position: 40px 40px, -40px 40px, 40px 40px, 40px 40px; }
+  0% {
+    background-position:
+      0 0,
+      0 0,
+      0 0,
+      0 0;
+  }
+  100% {
+    background-position:
+      40px 40px,
+      -40px 40px,
+      40px 40px,
+      40px 40px;
+  }
 }
 
 @keyframes pan-stripes {
-  0% { background-position: 0 0; }
-  100% { background-position: -100px 0; }
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: -100px 0;
+  }
 }
 
 @keyframes float-pattern {
-  0% { transform: translateY(0px) rotate(0deg); }
-  50% { transform: translateY(-12px) rotate(2deg); }
-  100% { transform: translateY(0px) rotate(0deg); }
+  0% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-12px) rotate(2deg);
+  }
+  100% {
+    transform: translateY(0px) rotate(0deg);
+  }
 }
 
 @keyframes pulse-wave {
-  0% { transform: scale(1); opacity: 0.2; }
-  50% { transform: scale(1.15); opacity: 0.5; }
-  100% { transform: scale(1); opacity: 0.2; }
+  0% {
+    transform: scale(1);
+    opacity: 0.2;
+  }
+  50% {
+    transform: scale(1.15);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0.2;
+  }
 }
 
 /* --- DASHBOARD HERO CHÍNH --- */
 /* --- KEYFRAMES MƯỢT MÀ, KHÔNG GIẬT LẮC --- */
 /* Di chuyển background phải là bội số của background-size (100px và 20px) để loop hoàn hảo */
 @keyframes blueprint-scroll {
-  0% { background-position: 0px 0px, 0px 0px, 0px 0px, 0px 0px; }
-  100% { background-position: 100px 100px, 100px 100px, 100px 100px, 100px 100px; }
+  0% {
+    background-position:
+      0px 0px,
+      0px 0px,
+      0px 0px,
+      0px 0px;
+  }
+  100% {
+    background-position:
+      100px 100px,
+      100px 100px,
+      100px 100px,
+      100px 100px;
+  }
 }
 
 /* Cuộn ngang mượt mà cho các vạch sọc góc 45 độ (cạnh huyền của 100 là ~141.42) */
 @keyframes stripe-scroll {
-  0% { background-position: 0px 0px; }
-  100% { background-position: 141.42px 0px; } 
+  0% {
+    background-position: 0px 0px;
+  }
+  100% {
+    background-position: 141.42px 0px;
+  }
 }
 
 @keyframes float-smooth {
-  0% { transform: translateY(0px) rotate(0deg); }
-  50% { transform: translateY(-12px) rotate(1.5deg); }
-  100% { transform: translateY(0px) rotate(0deg); }
+  0% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-12px) rotate(1.5deg);
+  }
+  100% {
+    transform: translateY(0px) rotate(0deg);
+  }
 }
 
 @keyframes radar-spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 @keyframes pulse-ring-smooth {
-  0% { transform: scale(0.9); opacity: 0.3; }
-  50% { transform: scale(1.1); opacity: 0.6; }
-  100% { transform: scale(0.9); opacity: 0.3; }
+  0% {
+    transform: scale(0.9);
+    opacity: 0.3;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(0.9);
+    opacity: 0.3;
+  }
 }
 
 /* --- DASHBOARD HERO CHÍNH --- */
@@ -12662,7 +12728,12 @@ body,
   position: relative;
   overflow: hidden;
   /* Nền gradient xanh dương đậm chất bản vẽ kỹ thuật */
-  background: linear-gradient(125deg, rgba(162, 214, 240, 0.96), rgba(210, 238, 250, 0.98) 58%, #c9e6f7) !important;
+  background: linear-gradient(
+    125deg,
+    rgba(162, 214, 240, 0.96),
+    rgba(210, 238, 250, 0.98) 58%,
+    #c9e6f7
+  ) !important;
 }
 
 /* Layer 1: Lưới bản vẽ kỹ thuật (Blueprint Grid) */
@@ -12678,11 +12749,25 @@ body,
     linear-gradient(90deg, rgba(11, 63, 99, 0.15) 1px, transparent 1px),
     linear-gradient(rgba(21, 95, 138, 0.25) 2px, transparent 2px),
     linear-gradient(90deg, rgba(21, 95, 138, 0.25) 2px, transparent 2px);
-  background-size: 20px 20px, 20px 20px, 100px 100px, 100px 100px;
+  background-size:
+    20px 20px,
+    20px 20px,
+    100px 100px,
+    100px 100px;
   /* Tăng thời gian lên 8s để chuyển động đầm, mượt, không gây chóng mặt */
   animation: blueprint-scroll 8s linear infinite;
-  mask-image: radial-gradient(ellipse at center, rgba(0,0,0,1) 10%, rgba(0,0,0,0.3) 70%, transparent 100%);
-  -webkit-mask-image: radial-gradient(ellipse at center, rgba(0,0,0,1) 10%, rgba(0,0,0,0.3) 70%, transparent 100%);
+  mask-image: radial-gradient(
+    ellipse at center,
+    rgba(0, 0, 0, 1) 10%,
+    rgba(0, 0, 0, 0.3) 70%,
+    transparent 100%
+  );
+  -webkit-mask-image: radial-gradient(
+    ellipse at center,
+    rgba(0, 0, 0, 1) 10%,
+    rgba(0, 0, 0, 0.3) 70%,
+    transparent 100%
+  );
 }
 
 /* Layer 2: Các sọc chéo ký hiệu mặt cắt (Hatching) */
@@ -12692,11 +12777,27 @@ body,
   inset: -20%;
   z-index: 0;
   pointer-events: none;
-  background: repeating-linear-gradient(45deg, rgba(11, 63, 99, 0.08) 0px, rgba(11, 63, 99, 0.08) 4px, transparent 4px, transparent 20px);
+  background: repeating-linear-gradient(
+    45deg,
+    rgba(11, 63, 99, 0.08) 0px,
+    rgba(11, 63, 99, 0.08) 4px,
+    transparent 4px,
+    transparent 20px
+  );
   background-size: 141.42px 141.42px; /* Chuẩn toán học để loop góc 45 độ */
   animation: stripe-scroll 6s linear infinite;
-  mask-image: linear-gradient(to top left, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.1) 50%, transparent 80%);
-  -webkit-mask-image: linear-gradient(to top left, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.1) 50%, transparent 80%);
+  mask-image: linear-gradient(
+    to top left,
+    rgba(0, 0, 0, 0.8) 0%,
+    rgba(0, 0, 0, 0.1) 50%,
+    transparent 80%
+  );
+  -webkit-mask-image: linear-gradient(
+    to top left,
+    rgba(0, 0, 0, 0.8) 0%,
+    rgba(0, 0, 0, 0.1) 50%,
+    transparent 80%
+  );
 }
 
 /* --- BẢO VỆ NỘI DUNG CHỮ --- */
@@ -12710,7 +12811,7 @@ body,
 #root .dashboard-hero-copy img {
   width: 170px !important;
   margin-bottom: 8px !important;
-  filter: drop-shadow(0px 4px 6px rgba(255,255,255,0.7));
+  filter: drop-shadow(0px 4px 6px rgba(255, 255, 255, 0.7));
 }
 
 #root .dashboard-hero-copy h1 {
@@ -12718,7 +12819,9 @@ body,
   font-size: 34px !important;
   font-weight: 800 !important;
   line-height: 1.08 !important;
-  text-shadow: 0 0 12px rgba(255, 255, 255, 0.95), 0 0 24px rgba(255, 255, 255, 0.8) !important;
+  text-shadow:
+    0 0 12px rgba(255, 255, 255, 0.95),
+    0 0 24px rgba(255, 255, 255, 0.8) !important;
 }
 
 #root .dashboard-hero-copy span {
@@ -12759,9 +12862,21 @@ body,
   height: 320px !important;
   border-radius: 50%;
   background-image:
-    /* Trục chữ thập */
-    linear-gradient(to right, transparent 49.5%, rgba(11, 63, 99, 0.5) 49.5%, rgba(11, 63, 99, 0.5) 50.5%, transparent 50.5%),
-    linear-gradient(to bottom, transparent 49.5%, rgba(11, 63, 99, 0.5) 49.5%, rgba(11, 63, 99, 0.5) 50.5%, transparent 50.5%),
+/* Trục chữ thập */
+    linear-gradient(
+      to right,
+      transparent 49.5%,
+      rgba(11, 63, 99, 0.5) 49.5%,
+      rgba(11, 63, 99, 0.5) 50.5%,
+      transparent 50.5%
+    ),
+    linear-gradient(
+      to bottom,
+      transparent 49.5%,
+      rgba(11, 63, 99, 0.5) 49.5%,
+      rgba(11, 63, 99, 0.5) 50.5%,
+      transparent 50.5%
+    ),
     /* Vòng tròn địa hình */
     radial-gradient(circle, transparent 20%, rgba(11, 63, 99, 0.4) 21%, transparent 22%),
     radial-gradient(circle, transparent 40%, rgba(11, 63, 99, 0.3) 41%, transparent 42%),
@@ -12776,7 +12891,13 @@ body,
   inset: auto auto 20px 40px !important;
   width: 320px !important;
   height: 80px !important;
-  background: repeating-linear-gradient(90deg, rgba(21, 95, 138, 0.3) 0, rgba(21, 95, 138, 0.3) 10px, transparent 10px, transparent 30px);
+  background: repeating-linear-gradient(
+    90deg,
+    rgba(21, 95, 138, 0.3) 0,
+    rgba(21, 95, 138, 0.3) 10px,
+    transparent 10px,
+    transparent 30px
+  );
   border-top: 4px solid rgba(11, 63, 99, 0.5);
   border-bottom: 4px solid rgba(11, 63, 99, 0.5);
   opacity: 0.45 !important;

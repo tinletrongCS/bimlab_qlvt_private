@@ -1,182 +1,237 @@
-09:51:18  + set -eu
-09:51:18  + mkdir -p reports
-09:51:18  + id -u
-09:51:18  + id -g
-09:51:18  + docker run --rm --user 0:0 --volumes-from 74b5695ab0fa -w /var/jenkins_home/workspace/bimlab_qlvt_test/frontend -e CI=true -e WORKSPACE=/var/jenkins_home/workspace/bimlab_qlvt_test -e RUN_SECURITY_AUDIT=false -e HOME=/tmp -e NPM_CONFIG_CACHE=/tmp/npm -e PNPM_HOME=/tmp/pnpm -e PNPM_STORE_DIR=/tmp/pnpm-store node:22-alpine sh -lc 
-09:51:18                  set -eu
-09:51:18                  export PATH="$PNPM_HOME/bin:$PATH"
-09:51:18                  if grep -Eq "lockfileVersion: .*6\.0" pnpm-lock.yaml; then PNPM_VERSION=8.15.9; else PNPM_VERSION=10.33.2; fi
-09:51:18                  mkdir -p "$PNPM_STORE_DIR"
-09:51:18                  npm install -g "pnpm@$PNPM_VERSION" --prefix "$PNPM_HOME"
-09:51:18                  pnpm config set store-dir "$PNPM_STORE_DIR"
-09:51:18                  rm -rf node_modules
-09:51:18                  pnpm install --frozen-lockfile
-09:51:18                  rm -rf .pnpm-store
-09:51:18                  pnpm lint
-09:51:18                  pnpm test -- --reporter=default --reporter=junit --outputFile=reports/vitest-junit.xml
-09:51:18                  pnpm build
-09:51:18                  if [ "${RUN_SECURITY_AUDIT:-false}" = "true" ]; then pnpm audit --audit-level high; fi
-09:51:18                
-09:51:19  
-09:51:19  added 1 package in 1s
-09:51:19  
-09:51:19  1 package is looking for funding
-09:51:19    run `npm fund` for details
-09:51:20  Lockfile is up to date, resolution step is skipped
-09:51:20  Progress: resolved 1, reused 0, downloaded 0, added 0
-09:51:20  Packages: +284
-09:51:20  ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-09:51:21  Progress: resolved 284, reused 0, downloaded 89, added 89
-09:51:22  Progress: resolved 284, reused 0, downloaded 169, added 169
-09:51:23  Progress: resolved 284, reused 0, downloaded 213, added 213
-09:51:24  Progress: resolved 284, reused 0, downloaded 250, added 250
-09:51:25  Progress: resolved 284, reused 0, downloaded 281, added 281
-09:51:26  Progress: resolved 284, reused 0, downloaded 282, added 282
-09:51:29  Progress: resolved 284, reused 0, downloaded 283, added 282
-09:51:29  Progress: resolved 284, reused 0, downloaded 284, added 284, done
-09:51:29  
-09:51:29  dependencies:
-09:51:29  + @vitejs/plugin-react 6.0.2
-09:51:29  + animejs 4.4.1
-09:51:29  + axios 1.16.1
-09:51:29  + exceljs 4.4.0
-09:51:29  + oidc-client-ts 3.5.0
-09:51:29  + react 19.2.6
-09:51:29  + react-dom 19.2.6
-09:51:29  + react-hot-toast 2.6.0
-09:51:29  + react-icons 5.6.0
-09:51:29  + react-router-dom 7.15.1
-09:51:29  + recharts 2.15.4
-09:51:29  + vite 8.0.13
-09:51:29  + xlsx 0.18.5
-09:51:29  
-09:51:29  devDependencies:
-09:51:29  + @biomejs/biome 2.4.16
-09:51:29  + @testing-library/jest-dom 6.9.1
-09:51:29  + @testing-library/react 16.3.2
-09:51:29  + @testing-library/user-event 14.6.1
-09:51:29  + @types/react 19.2.14
-09:51:29  + @types/react-dom 19.2.3
-09:51:29  + jsdom 29.1.1
-09:51:29  + typescript 6.0.3
-09:51:29  + vitest 4.1.7
-09:51:29  
-09:51:29  Done in 9.5s using pnpm v10.33.2
-09:51:30  
-09:51:30  > bimlab-asset-frontend@1.0.0 lint /var/jenkins_home/workspace/bimlab_qlvt_test/frontend
-09:51:30  > biome check .
-09:51:30  
-09:51:31  src/pages/AssetsPage.tsx format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-09:51:31  
-09:51:31    × Formatter would have printed the following content:
-09:51:31    
-09:51:31  Checked 50 files in 910ms. No fixes applied.
-09:51:31  Found 1 error.
-09:51:31      2218 2218 │                       <tr className="asset-table-empty-row">
-09:51:31      2219 2219 │                         <td
-09:51:31      2220      │ - ························colSpan={
-09:51:31      2221      │ - ··························configuredAssetColumns.length·+·1·+·(assetMultiSelectMode·?·1·:·0)
-09:51:31      2222      │ - ························}
-09:51:31           2220 │ + ························colSpan={configuredAssetColumns.length·+·1·+·(assetMultiSelectMode·?·1·:·0)}
-09:51:31      2223 2221 │                         >
-09:51:31      2224 2222 │                           <div className="asset-table-empty-state">
-09:51:31    
-09:51:31  
-09:51:31  check ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-09:51:31  
-09:51:31    × Some errors were emitted while running checks.
-09:51:31    
-09:51:31  
-09:51:31   ELIFECYCLE  Command failed with exit code 1.
-
-
-10:57:18  + set -eu
-10:57:18  + mkdir -p reports
-10:57:18  + id -u
-10:57:18  + id -g
-10:57:18  + docker run --rm --user 0:0 --volumes-from 74b5695ab0fa -w /var/jenkins_home/workspace/bimlab_qlvt_test/frontend -e CI=true -e WORKSPACE=/var/jenkins_home/workspace/bimlab_qlvt_test -e RUN_SECURITY_AUDIT=false -e HOME=/tmp -e NPM_CONFIG_CACHE=/tmp/npm -e PNPM_HOME=/tmp/pnpm -e PNPM_STORE_DIR=/tmp/pnpm-store node:22-alpine sh -lc 
-10:57:18                  set -eu
-10:57:18                  export PATH="$PNPM_HOME/bin:$PATH"
-10:57:18                  if grep -Eq "lockfileVersion: .*6\.0" pnpm-lock.yaml; then PNPM_VERSION=8.15.9; else PNPM_VERSION=10.33.2; fi
-10:57:18                  mkdir -p "$PNPM_STORE_DIR"
-10:57:18                  npm install -g "pnpm@$PNPM_VERSION" --prefix "$PNPM_HOME"
-10:57:18                  pnpm config set store-dir "$PNPM_STORE_DIR"
-10:57:18                  rm -rf node_modules
-10:57:18                  pnpm install --frozen-lockfile
-10:57:18                  rm -rf .pnpm-store
-10:57:18                  pnpm lint
-10:57:18                  pnpm test -- --reporter=default --reporter=junit --outputFile=reports/vitest-junit.xml
-10:57:18                  pnpm build
-10:57:18                  if [ "${RUN_SECURITY_AUDIT:-false}" = "true" ]; then pnpm audit --audit-level high; fi
-10:57:18                
-10:57:19  
-10:57:19  added 1 package in 1s
-10:57:19  
-10:57:19  1 package is looking for funding
-10:57:19    run `npm fund` for details
-10:57:20  Lockfile is up to date, resolution step is skipped
-10:57:20  Progress: resolved 1, reused 0, downloaded 0, added 0
-10:57:20  Packages: +284
-10:57:20  ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-10:57:21  Progress: resolved 284, reused 0, downloaded 87, added 87
-10:57:22  Progress: resolved 284, reused 0, downloaded 146, added 146
-10:57:23  Progress: resolved 284, reused 0, downloaded 210, added 210
-10:57:24  Progress: resolved 284, reused 0, downloaded 278, added 278
-10:57:25  Progress: resolved 284, reused 0, downloaded 280, added 280
-10:57:26  Progress: resolved 284, reused 0, downloaded 282, added 282
-10:57:28  Progress: resolved 284, reused 0, downloaded 283, added 282
-10:57:29  Progress: resolved 284, reused 0, downloaded 284, added 284, done
-10:57:29  
-10:57:29  dependencies:
-10:57:29  + @vitejs/plugin-react 6.0.2
-10:57:29  + animejs 4.4.1
-10:57:29  + axios 1.16.1
-10:57:29  + exceljs 4.4.0
-10:57:29  + oidc-client-ts 3.5.0
-10:57:29  + react 19.2.6
-10:57:29  + react-dom 19.2.6
-10:57:29  + react-hot-toast 2.6.0
-10:57:29  + react-icons 5.6.0
-10:57:29  + react-router-dom 7.15.1
-10:57:29  + recharts 2.15.4
-10:57:29  + vite 8.0.13
-10:57:29  + xlsx 0.18.5
-10:57:29  
-10:57:29  devDependencies:
-10:57:29  + @biomejs/biome 2.4.16
-10:57:29  + @testing-library/jest-dom 6.9.1
-10:57:29  + @testing-library/react 16.3.2
-10:57:29  + @testing-library/user-event 14.6.1
-10:57:29  + @types/react 19.2.14
-10:57:29  + @types/react-dom 19.2.3
-10:57:29  + jsdom 29.1.1
-10:57:29  + typescript 6.0.3
-10:57:29  + vitest 4.1.7
-10:57:29  
-10:57:29  Done in 8.9s using pnpm v10.33.2
-10:57:29  
-10:57:29  > bimlab-asset-frontend@1.0.0 lint /var/jenkins_home/workspace/bimlab_qlvt_test/frontend
-10:57:29  > biome check .
-10:57:29  
-10:57:30  src/pages/AssetsPage.tsx format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-10:57:30  
-10:57:30    × Formatter would have printed the following content:
-10:57:30    
-10:57:30      2218 2218 │                       <tr className="asset-table-empty-row">
-10:57:30      2219 2219 │                         <td
-10:57:30      2220      │ - ························colSpan={
-10:57:30      2221      │ - ··························configuredAssetColumns.length·+·1·+·(assetMultiSelectMode·?·1·:·0)
-10:57:30      2222      │ - ························}
-10:57:30           2220 │ + ························colSpan={configuredAssetColumns.length·+·1·+·(assetMultiSelectMode·?·1·:·0)}
-10:57:30      2223 2221 │                         >
-10:57:30      2224 2222 │                           <div className="asset-table-empty-state">
-10:57:30    
-10:57:30  
-10:57:30  Checked 50 files in 981ms. No fixes applied.
-10:57:30  Found 1 error.
-10:57:30  check ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-10:57:30  
-10:57:30    × Some errors were emitted while running checks.
-10:57:30    
-10:57:30  
-10:57:30   ELIFECYCLE  Command failed with exit code 1.
+12:53:18  + set -eu
+12:53:18  + mkdir -p reports
+12:53:18  + id -u
+12:53:18  + id -g
+12:53:18  + docker run --rm --user 0:0 --volumes-from 74b5695ab0fa -w /var/jenkins_home/workspace/bimlab_qlvt_test/frontend -e CI=true -e WORKSPACE=/var/jenkins_home/workspace/bimlab_qlvt_test -e RUN_SECURITY_AUDIT=false -e HOME=/tmp -e NPM_CONFIG_CACHE=/tmp/npm -e PNPM_HOME=/tmp/pnpm -e PNPM_STORE_DIR=/tmp/pnpm-store node:22-alpine sh -lc 
+12:53:18                  set -eu
+12:53:18                  export PATH="$PNPM_HOME/bin:$PATH"
+12:53:18                  if grep -Eq "lockfileVersion: .*6\.0" pnpm-lock.yaml; then PNPM_VERSION=8.15.9; else PNPM_VERSION=10.33.2; fi
+12:53:18                  mkdir -p "$PNPM_STORE_DIR"
+12:53:18                  npm install -g "pnpm@$PNPM_VERSION" --prefix "$PNPM_HOME"
+12:53:18                  pnpm config set store-dir "$PNPM_STORE_DIR"
+12:53:18                  rm -rf node_modules
+12:53:18                  pnpm install --frozen-lockfile
+12:53:18                  rm -rf .pnpm-store
+12:53:18                  pnpm lint
+12:53:18                  pnpm test -- --reporter=default --reporter=junit --outputFile=reports/vitest-junit.xml
+12:53:18                  pnpm build
+12:53:18                  if [ "${RUN_SECURITY_AUDIT:-false}" = "true" ]; then pnpm audit --audit-level high; fi
+12:53:18                
+12:53:19  
+12:53:19  added 1 package in 1s
+12:53:19  
+12:53:19  1 package is looking for funding
+12:53:19    run `npm fund` for details
+12:53:20  Lockfile is up to date, resolution step is skipped
+12:53:20  Progress: resolved 1, reused 0, downloaded 0, added 0
+12:53:20  Packages: +284
+12:53:20  ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+12:53:21  Progress: resolved 284, reused 0, downloaded 88, added 88
+12:53:22  Progress: resolved 284, reused 0, downloaded 163, added 162
+12:53:23  Progress: resolved 284, reused 0, downloaded 222, added 222
+12:53:24  Progress: resolved 284, reused 0, downloaded 266, added 266
+12:53:25  Progress: resolved 284, reused 0, downloaded 280, added 280
+12:53:26  Progress: resolved 284, reused 0, downloaded 282, added 282
+12:53:28  Progress: resolved 284, reused 0, downloaded 283, added 282
+12:53:29  Progress: resolved 284, reused 0, downloaded 283, added 283
+12:53:30  Progress: resolved 284, reused 0, downloaded 284, added 283
+12:53:30  Progress: resolved 284, reused 0, downloaded 284, added 284, done
+12:53:30  
+12:53:30  dependencies:
+12:53:30  + @vitejs/plugin-react 6.0.2
+12:53:30  + animejs 4.4.1
+12:53:30  + axios 1.16.1
+12:53:30  + exceljs 4.4.0
+12:53:30  + oidc-client-ts 3.5.0
+12:53:30  + react 19.2.6
+12:53:30  + react-dom 19.2.6
+12:53:30  + react-hot-toast 2.6.0
+12:53:30  + react-icons 5.6.0
+12:53:30  + react-router-dom 7.15.1
+12:53:30  + recharts 2.15.4
+12:53:30  + vite 8.0.13
+12:53:30  + xlsx 0.18.5
+12:53:30  
+12:53:30  devDependencies:
+12:53:30  + @biomejs/biome 2.4.16
+12:53:30  + @testing-library/jest-dom 6.9.1
+12:53:30  + @testing-library/react 16.3.2
+12:53:30  + @testing-library/user-event 14.6.1
+12:53:30  + @types/react 19.2.14
+12:53:30  + @types/react-dom 19.2.3
+12:53:30  + jsdom 29.1.1
+12:53:30  + typescript 6.0.3
+12:53:30  + vitest 4.1.7
+12:53:30  
+12:53:30  Done in 10.4s using pnpm v10.33.2
+12:53:31  
+12:53:31  > bimlab-asset-frontend@1.0.0 lint /var/jenkins_home/workspace/bimlab_qlvt_test/frontend
+12:53:31  > biome check .
+12:53:31  
+12:53:31  src/styles/app.css format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+12:53:31  
+12:53:31    × Formatter would have printed the following content:
+12:53:31    
+12:53:31      12603 12603 │   /* --- KEYFRAMES CHO CHUYỂN ĐỘNG NHANH & LIÊN TỤC --- */
+12:53:31      12604 12604 │   @keyframes pan-grid {
+12:53:31      12605       │ - ··0%·{·background-position:·0·0,·0·0,·0·0,·0·0;·}
+12:53:31      12606       │ - ··100%·{·background-position:·40px·40px,·-40px·40px,·40px·40px,·40px·40px;·}
+12:53:31            12605 │ + ··0%·{
+12:53:31            12606 │ + ····background-position:
+12:53:31            12607 │ + ······0·0,
+12:53:31            12608 │ + ······0·0,
+12:53:31            12609 │ + ······0·0,
+12:53:31            12610 │ + ······0·0;
+12:53:31            12611 │ + ··}
+12:53:31            12612 │ + ··100%·{
+12:53:31            12613 │ + ····background-position:
+12:53:31            12614 │ + ······40px·40px,
+12:53:31            12615 │ + ······-40px·40px,
+12:53:31            12616 │ + ······40px·40px,
+12:53:31            12617 │ + ······40px·40px;
+12:53:31            12618 │ + ··}
+12:53:31      12607 12619 │   }
+12:53:31      12608 12620 │   
+12:53:31      12609 12621 │   @keyframes pan-stripes {
+12:53:31      12610       │ - ··0%·{·background-position:·0·0;·}
+12:53:31      12611       │ - ··100%·{·background-position:·-100px·0;·}
+12:53:31            12622 │ + ··0%·{
+12:53:31            12623 │ + ····background-position:·0·0;
+12:53:31            12624 │ + ··}
+12:53:31            12625 │ + ··100%·{
+12:53:31            12626 │ + ····background-position:·-100px·0;
+12:53:31            12627 │ + ··}
+12:53:31      12612 12628 │   }
+12:53:31      12613 12629 │   
+12:53:31      12614 12630 │   @keyframes float-pattern {
+12:53:31      12615       │ - ··0%·{·transform:·translateY(0px)·rotate(0deg);·}
+12:53:31      12616       │ - ··50%·{·transform:·translateY(-12px)·rotate(2deg);·}
+12:53:31      12617       │ - ··100%·{·transform:·translateY(0px)·rotate(0deg);·}
+12:53:31            12631 │ + ··0%·{
+12:53:31            12632 │ + ····transform:·translateY(0px)·rotate(0deg);
+12:53:31            12633 │ + ··}
+12:53:31            12634 │ + ··50%·{
+12:53:31            12635 │ + ····transform:·translateY(-12px)·rotate(2deg);
+12:53:31            12636 │ + ··}
+12:53:31            12637 │ + ··100%·{
+12:53:31            12638 │ + ····transform:·translateY(0px)·rotate(0deg);
+12:53:31            12639 │ + ··}
+12:53:31      12618 12640 │   }
+12:53:31      12619 12641 │   
+12:53:31      12620 12642 │   @keyframes pulse-wave {
+12:53:31      12621       │ - ··0%·{·transform:·scale(1);·opacity:·0.2;·}
+12:53:31      12622       │ - ··50%·{·transform:·scale(1.15);·opacity:·0.5;·}
+12:53:31      12623       │ - ··100%·{·transform:·scale(1);·opacity:·0.2;·}
+12:53:31            12643 │ + ··0%·{
+12:53:31            12644 │ + ····transform:·scale(1);
+12:53:31            12645 │ + ····opacity:·0.2;
+12:53:31            12646 │ + ··}
+12:53:31            12647 │ + ··50%·{
+12:53:31            12648 │ + ····transform:·scale(1.15);
+12:53:31            12649 │ + ····opacity:·0.5;
+12:53:31            12650 │ + ··}
+12:53:31            12651 │ + ··100%·{
+12:53:31            12652 │ + ····transform:·scale(1);
+12:53:31            12653 │ + ····opacity:·0.2;
+12:53:31            12654 │ + ··}
+12:53:31      12624 12655 │   }
+12:53:31      12625 12656 │   
+12:53:31      ··········· │ 
+12:53:31      12628 12659 │   /* Di chuyển background phải là bội số của background-size (100px và 20px) để loop hoàn hảo */
+12:53:31      12629 12660 │   @keyframes blueprint-scroll {
+12:53:31      12630       │ - ··0%·{·background-position:·0px·0px,·0px·0px,·0px·0px,·0px·0px;·}
+12:53:31      12631       │ - ··100%·{·background-position:·100px·100px,·100px·100px,·100px·100px,·100px·100px;·}
+12:53:31            12661 │ + ··0%·{
+12:53:31            12662 │ + ····background-position:
+12:53:31            12663 │ + ······0px·0px,
+12:53:31            12664 │ + ······0px·0px,
+12:53:31            12665 │ + ······0px·0px,
+12:53:31            12666 │ + ······0px·0px;
+12:53:31            12667 │ + ··}
+12:53:31            12668 │ + ··100%·{
+12:53:31            12669 │ + ····background-position:
+12:53:31            12670 │ + ······100px·100px,
+12:53:31            12671 │ + ······100px·100px,
+12:53:31            12672 │ + ······100px·100px,
+12:53:31            12673 │ + ······100px·100px;
+12:53:31            12674 │ + ··}
+12:53:31      12632 12675 │   }
+12:53:31      12633 12676 │   
+12:53:31      12634 12677 │   /* Cuộn ngang mượt mà cho các vạch sọc góc 45 độ (cạnh huyền của 100 là ~141.42) */
+12:53:31      12635 12678 │   @keyframes stripe-scroll {
+12:53:31      12636       │ - ··0%·{·background-position:·0px·0px;·}
+12:53:31      12637       │ - ··100%·{·background-position:·141.42px·0px;·}·
+12:53:31            12679 │ + ··0%·{
+12:53:31            12680 │ + ····background-position:·0px·0px;
+12:53:31            12681 │ + ··}
+12:53:31            12682 │ + ··100%·{
+12:53:31            12683 │ + ····background-position:·141.42px·0px;
+12:53:31            12684 │ + ··}
+12:53:31      12638 12685 │   }
+12:53:31      12639 12686 │   
+12:53:31      12640 12687 │   @keyframes float-smooth {
+12:53:31      12641       │ - ··0%·{·transform:·translateY(0px)·rotate(0deg);·}
+12:53:31      12642       │ - ··50%·{·transform:·translateY(-12px)·rotate(1.5deg);·}
+12:53:31      12643       │ - ··100%·{·transform:·translateY(0px)·rotate(0deg);·}
+12:53:31            12688 │ + ··0%·{
+12:53:31            12689 │ + ····transform:·translateY(0px)·rotate(0deg);
+12:53:31            12690 │ + ··}
+12:53:31            12691 │ + ··50%·{
+12:53:31            12692 │ + ····transform:·translateY(-12px)·rotate(1.5deg);
+12:53:31            12693 │ + ··}
+12:53:31            12694 │ + ··100%·{
+12:53:31            12695 │ + ····transform:·translateY(0px)·rotate(0deg);
+12:53:31            12696 │ + ··}
+12:53:31      12644 12697 │   }
+12:53:31      12645 12698 │   
+12:53:31      12646 12699 │   @keyframes radar-spin {
+12:53:31      12647       │ - ··0%·{·transform:·rotate(0deg);·}
+12:53:31      12648       │ - ··100%·{·transform:·rotate(360deg);·}
+12:53:31            12700 │ + ··0%·{
+12:53:31            12701 │ + ····transform:·rotate(0deg);
+12:53:31            12702 │ + ··}
+12:53:31            12703 │ + ··100%·{
+12:53:31            12704 │ + ····transform:·rotate(360deg);
+12:53:31            12705 │ + ··}
+12:53:31      12649 12706 │   }
+12:53:31      12650 12707 │   
+12:53:31      12651 12708 │   @keyframes pulse-ring-smooth {
+12:53:31      12652       │ - ··0%·{·transform:·scale(0.9);·opacity:·0.3;·}
+12:53:31      12653       │ - ··50%·{·transform:·scale(1.1);·opacity:·0.6;·}
+12:53:31      12654       │ - ··100%·{·transform:·scale(0.9);·opacity:·0.3;·}
+12:53:31            12709 │ + ··0%·{
+12:53:31            12710 │ + ····transform:·scale(0.9);
+12:53:31            12711 │ + ····opacity:·0.3;
+12:53:31            12712 │ + ··}
+12:53:31            12713 │ + ··50%·{
+12:53:31            12714 │ + ····transform:·scale(1.1);
+12:53:31            12715 │ + ····opacity:·0.6;
+12:53:31            12716 │ + ··}
+12:53:31            12717 │ + ··100%·{
+12:53:31            12718 │ + ····transform:·scale(0.9);
+12:53:31            12719 │ + ····opacity:·0.3;
+12:53:31            12720 │ + ··}
+12:53:31      12655 12721 │   }
+12:53:31      12656 12722 │   
+12:53:31      ··········· │ 
+12:53:31      12663 12729 │     overflow: hidden;
+12:53:31      12664 12730 │     /* Nền gradient xanh dương đậm chất bản vẽ kỹ thuật */
+12:53:31      12665       │ - ··background:·linear-gradient(125deg,·rgba(162,·214,·240,·0.96),·rgba(210,·238,·250,·0.98)·58%,·#c9e6f7)·!important;
+12:53:31            12731 │ + ··background:·linear-gradient(
+12:53:31            12732 │ + ····125deg,
+12:53:31            12733 │ + ····rgba(162,·214,·240,·0.96),
+12:53:31            12734 │ + ····rgba(210,·238,·250,·0.98)·58%,
+12:53:31            12735 │ + ····#c9e6f7
+12:53:31            12736 │ + ··)·!important;
+12:53:31      12666 12737 │   }
+12:53:31    103 more lines truncated
+12:53:31    
+12:53:31  
+12:53:31  Checked 50 files in 956ms. No fixes applied.
+12:53:31  Found 1 error.
+12:53:32  check ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+12:53:32  
+12:53:32    × Some errors were emitted while running checks.
+12:53:32    
+12:53:32  
+12:53:32   ELIFECYCLE  Command failed with exit code 1.
