@@ -12,8 +12,14 @@ const labelMap: Record<string, string> = {
   LIQUIDATED: "Đã thanh lý",
   DRAFT: "Bản nháp",
   PENDING: "Chờ duyệt",
+  PENDING_APPROVAL: "Chờ duyệt",
   APPROVED: "Đã duyệt",
+  CONFIRMED: "Đã xác nhận",
+  IN_USE: "Đang sử dụng",
+  COMPLETED: "Hoàn tất",
+  CANCELLED: "Đã hủy",
   REJECTED: "Từ chối",
+  EXPIRED: "Quá hạn",
 };
 
 export function StatusBadge({ value }: StatusBadgeProps) {
