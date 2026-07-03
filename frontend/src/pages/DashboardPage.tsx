@@ -123,7 +123,7 @@ export function DashboardPage() {
         </div>
         <div className="dashboard-system-summary">
           <div>
-            <span>Giá trị đang hiển thị</span>
+            <span>Giá trị tài sản</span>
             <strong>{money.format(assetValue)}</strong>
           </div>
         </div>

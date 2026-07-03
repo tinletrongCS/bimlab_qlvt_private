@@ -12433,3 +12433,574 @@ body,
     position: static !important;
   }
 }
+
+/* Dashboard and navigation depth pass. */
+#root .dashboard-command-center {
+  align-items: start !important;
+  min-height: 320px !important;
+  padding-top: 18px !important;
+  background:
+    linear-gradient(90deg, rgba(11, 63, 99, 0.12) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(11, 63, 99, 0.1) 1px, transparent 1px),
+    radial-gradient(circle at 8% 16%, rgba(11, 63, 99, 0.2) 0 2px, transparent 3px),
+    radial-gradient(circle at 18% 72%, rgba(21, 95, 138, 0.18) 0 2px, transparent 3px),
+    radial-gradient(circle at 82% 18%, rgba(11, 63, 99, 0.22) 0 2px, transparent 3px),
+    radial-gradient(circle at 94% 66%, rgba(21, 95, 138, 0.16) 0 2px, transparent 3px),
+    linear-gradient(125deg, rgba(176, 220, 242, 0.96), rgba(224, 243, 251, 0.98) 58%, #d8eef9),
+    #d8eef9 !important;
+  background-size:
+    24px 24px,
+    24px 24px,
+    34px 34px,
+    42px 42px,
+    30px 30px,
+    46px 46px,
+    auto,
+    auto !important;
+}
+
+#root .dashboard-command-center::before {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(135deg, rgba(11, 63, 99, 0.13) 0 1px, transparent 1px 14px),
+    linear-gradient(
+      90deg,
+      rgba(11, 63, 99, 0.12),
+      transparent 28%,
+      transparent 72%,
+      rgba(11, 63, 99, 0.1)
+    );
+  content: "";
+  mask-image: linear-gradient(
+    90deg,
+    #000 0%,
+    rgba(0, 0, 0, 0.78) 24%,
+    rgba(0, 0, 0, 0.42) 50%,
+    rgba(0, 0, 0, 0.78) 76%,
+    #000 100%
+  );
+  -webkit-mask-image: linear-gradient(
+    90deg,
+    #000 0%,
+    rgba(0, 0, 0, 0.78) 24%,
+    rgba(0, 0, 0, 0.42) 50%,
+    rgba(0, 0, 0, 0.78) 76%,
+    #000 100%
+  );
+}
+
+#root .dashboard-command-center::after {
+  right: -42px !important;
+  bottom: -32px !important;
+  width: 330px !important;
+  height: 178px !important;
+  border-color: rgba(11, 63, 99, 0.26) !important;
+  background:
+    linear-gradient(90deg, rgba(11, 63, 99, 0.12) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(11, 63, 99, 0.1) 1px, transparent 1px) !important;
+  background-size: 18px 18px !important;
+}
+
+#root .dashboard-hero-copy {
+  align-self: start !important;
+  padding-top: 0 !important;
+}
+
+#root .dashboard-system-summary {
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+#root .dashboard-hero-copy img {
+  width: 170px !important;
+  margin-bottom: 8px !important;
+}
+
+#root .dashboard-hero-copy h1 {
+  color: #0a3150 !important;
+  font-size: 34px !important;
+  font-weight: 800 !important;
+  line-height: 1.08 !important;
+}
+
+#root .dashboard-hero-copy span {
+  color: #315f7f !important;
+  font-size: 14px !important;
+  font-weight: 650 !important;
+}
+
+#root .pattern-grid-main {
+  inset: 16px auto auto 18px !important;
+  width: 230px !important;
+  height: 145px !important;
+  opacity: 0.42 !important;
+}
+
+#root .pattern-dot-main {
+  inset: 18px 22px auto auto !important;
+  width: 260px !important;
+  height: 130px !important;
+  opacity: 0.46 !important;
+}
+
+#root .pattern-stripe-main {
+  inset: auto auto 18px 22px !important;
+  width: 280px !important;
+  height: 110px !important;
+  opacity: 0.34 !important;
+}
+
+#root .pattern-ring-main {
+  inset: auto 46px 24px auto !important;
+  width: 210px !important;
+  height: 210px !important;
+  opacity: 0.34 !important;
+}
+
+:root {
+  --qlvt-sidebar-blue: #082f4d;
+  --qlvt-sidebar-blue-hover: #0f4f79;
+}
+
+#root .sidebar {
+  background: #082f4d !important;
+}
+
+#root .sidebar nav a:hover,
+#root .sidebar-group-button:hover,
+#root .sidebar-submenu a:hover {
+  background: #0e4a72 !important;
+}
+
+#root .sidebar nav a.active,
+#root .sidebar-group-button.active,
+#root .sidebar-submenu a.active {
+  background: #0f5e8f !important;
+}
+
+@media (max-width: 760px) {
+  #root .dashboard-hero-copy h1 {
+    font-size: 26px !important;
+    white-space: normal !important;
+  }
+
+  #root .dashboard-hero-copy img {
+    width: 140px !important;
+  }
+}
+
+/* ==========================================================================
+   QLVT HERO SECTION
+   Gom toàn bộ override chính của các hero tại đây để dễ chỉnh giao diện.
+   - Dashboard: .dashboard-command-center, .dashboard-hero-copy, pattern-*
+   - Help: .help-hero
+   - Booking: .booking-hero, .booking-hero-metrics
+   ========================================================================== */
+
+/* --- KEYFRAMES CHO CHUYỂN ĐỘNG NHANH & LIÊN TỤC --- */
+@keyframes pan-grid {
+  0% {
+    background-position:
+      0 0,
+      0 0,
+      0 0,
+      0 0;
+  }
+  100% {
+    background-position:
+      40px 40px,
+      -40px 40px,
+      40px 40px,
+      40px 40px;
+  }
+}
+
+@keyframes pan-stripes {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: -100px 0;
+  }
+}
+
+@keyframes float-pattern {
+  0% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-12px) rotate(2deg);
+  }
+  100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+}
+
+@keyframes pulse-wave {
+  0% {
+    transform: scale(1);
+    opacity: 0.2;
+  }
+  50% {
+    transform: scale(1.15);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0.2;
+  }
+}
+
+/* --- DASHBOARD HERO CHÍNH --- */
+/* --- KEYFRAMES MƯỢT MÀ, KHÔNG GIẬT LẮC --- */
+/* Di chuyển background phải là bội số của background-size (100px và 20px) để loop hoàn hảo */
+@keyframes blueprint-scroll {
+  0% {
+    background-position:
+      0px 0px,
+      0px 0px,
+      0px 0px,
+      0px 0px;
+  }
+  100% {
+    background-position:
+      100px 100px,
+      100px 100px,
+      100px 100px,
+      100px 100px;
+  }
+}
+
+/* Cuộn ngang mượt mà cho các vạch sọc góc 45 độ (cạnh huyền của 100 là ~141.42) */
+@keyframes stripe-scroll {
+  0% {
+    background-position: 0px 0px;
+  }
+  100% {
+    background-position: 141.42px 0px;
+  }
+}
+
+@keyframes float-smooth {
+  0% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-12px) rotate(1.5deg);
+  }
+  100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+}
+
+@keyframes radar-spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pulse-ring-smooth {
+  0% {
+    transform: scale(0.9);
+    opacity: 0.3;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(0.9);
+    opacity: 0.3;
+  }
+}
+
+/* --- DASHBOARD HERO CHÍNH --- */
+#root .dashboard-command-center {
+  align-items: start !important;
+  min-height: 320px !important;
+  padding-top: 18px !important;
+  position: relative;
+  overflow: hidden;
+  /* Nền gradient xanh dương đậm chất bản vẽ kỹ thuật */
+  background: linear-gradient(
+    125deg,
+    rgba(162, 214, 240, 0.96),
+    rgba(210, 238, 250, 0.98) 58%,
+    #c9e6f7
+  ) !important;
+}
+
+/* Layer 1: Lưới bản vẽ kỹ thuật (Blueprint Grid) */
+#root .dashboard-command-center::before {
+  content: "";
+  position: absolute;
+  inset: -50%;
+  z-index: 0;
+  pointer-events: none;
+  /* Kết hợp lưới mỏng (20px) và lưới dày (100px) đặc trưng của bản vẽ */
+  background:
+    linear-gradient(rgba(11, 63, 99, 0.15) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(11, 63, 99, 0.15) 1px, transparent 1px),
+    linear-gradient(rgba(21, 95, 138, 0.25) 2px, transparent 2px),
+    linear-gradient(90deg, rgba(21, 95, 138, 0.25) 2px, transparent 2px);
+  background-size:
+    20px 20px,
+    20px 20px,
+    100px 100px,
+    100px 100px;
+  /* Tăng thời gian lên 8s để chuyển động đầm, mượt, không gây chóng mặt */
+  animation: blueprint-scroll 8s linear infinite;
+  mask-image: radial-gradient(
+    ellipse at center,
+    rgba(0, 0, 0, 1) 10%,
+    rgba(0, 0, 0, 0.3) 70%,
+    transparent 100%
+  );
+  -webkit-mask-image: radial-gradient(
+    ellipse at center,
+    rgba(0, 0, 0, 1) 10%,
+    rgba(0, 0, 0, 0.3) 70%,
+    transparent 100%
+  );
+}
+
+/* Layer 2: Các sọc chéo ký hiệu mặt cắt (Hatching) */
+#root .dashboard-command-center::after {
+  content: "";
+  position: absolute;
+  inset: -20%;
+  z-index: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    45deg,
+    rgba(11, 63, 99, 0.08) 0px,
+    rgba(11, 63, 99, 0.08) 4px,
+    transparent 4px,
+    transparent 20px
+  );
+  background-size: 141.42px 141.42px; /* Chuẩn toán học để loop góc 45 độ */
+  animation: stripe-scroll 6s linear infinite;
+  mask-image: linear-gradient(
+    to top left,
+    rgba(0, 0, 0, 0.8) 0%,
+    rgba(0, 0, 0, 0.1) 50%,
+    transparent 80%
+  );
+  -webkit-mask-image: linear-gradient(
+    to top left,
+    rgba(0, 0, 0, 0.8) 0%,
+    rgba(0, 0, 0, 0.1) 50%,
+    transparent 80%
+  );
+}
+
+/* --- BẢO VỆ NỘI DUNG CHỮ --- */
+#root .dashboard-hero-copy {
+  position: relative;
+  z-index: 2;
+  align-self: start !important;
+  padding-top: 0 !important;
+}
+
+#root .dashboard-hero-copy img {
+  width: 170px !important;
+  margin-bottom: 8px !important;
+  filter: drop-shadow(0px 4px 6px rgba(255, 255, 255, 0.7));
+}
+
+#root .dashboard-hero-copy h1 {
+  color: #05223a !important;
+  font-size: 34px !important;
+  font-weight: 800 !important;
+  line-height: 1.08 !important;
+  text-shadow:
+    0 0 12px rgba(255, 255, 255, 0.95),
+    0 0 24px rgba(255, 255, 255, 0.8) !important;
+}
+
+#root .dashboard-hero-copy span {
+  color: #1c4a6a !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.9) !important;
+}
+
+/* --- HỌA TIẾT ABSTRACT (XÂY DỰNG/ĐO ĐẠC) --- */
+#root .dashboard-hero-pattern {
+  display: block !important;
+  position: absolute;
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* Khối hình học vuông vức (Block xây dựng) */
+#root .pattern-grid-main {
+  inset: 16px auto auto -10px !important;
+  width: 220px !important;
+  height: 220px !important;
+  /* Tạo khung outline của một công trình */
+  background:
+    linear-gradient(rgba(11, 63, 99, 0.3) 4px, transparent 4px) 0 0 / 100% 40px,
+    linear-gradient(90deg, rgba(11, 63, 99, 0.3) 4px, transparent 4px) 0 0 / 40px 100%;
+  opacity: 0.5 !important;
+  border: 4px solid rgba(21, 95, 138, 0.4);
+  border-radius: 8px;
+  animation: float-smooth 6s ease-in-out infinite;
+}
+
+/* Biến tấu Dấu chấm thành: Vòng tròn đồng tâm kết hợp Trục tọa độ (Radar/Topography) */
+#root .pattern-dot-main {
+  display: block !important;
+  inset: -40px 20px auto auto !important;
+  width: 320px !important;
+  height: 320px !important;
+  border-radius: 50%;
+  background-image:
+/* Trục chữ thập */
+    linear-gradient(
+      to right,
+      transparent 49.5%,
+      rgba(11, 63, 99, 0.5) 49.5%,
+      rgba(11, 63, 99, 0.5) 50.5%,
+      transparent 50.5%
+    ),
+    linear-gradient(
+      to bottom,
+      transparent 49.5%,
+      rgba(11, 63, 99, 0.5) 49.5%,
+      rgba(11, 63, 99, 0.5) 50.5%,
+      transparent 50.5%
+    ),
+    /* Vòng tròn địa hình */
+    radial-gradient(circle, transparent 20%, rgba(11, 63, 99, 0.4) 21%, transparent 22%),
+    radial-gradient(circle, transparent 40%, rgba(11, 63, 99, 0.3) 41%, transparent 42%),
+    radial-gradient(circle, transparent 60%, rgba(11, 63, 99, 0.2) 61%, transparent 62%),
+    radial-gradient(circle, transparent 80%, rgba(11, 63, 99, 0.1) 81%, transparent 82%);
+  opacity: 0.55 !important;
+  animation: radar-spin 40s linear infinite; /* Xoay rất chậm rãi như radar */
+}
+
+/* Các thanh dầm chịu lực (Structural beams) */
+#root .pattern-stripe-main {
+  inset: auto auto 20px 40px !important;
+  width: 320px !important;
+  height: 80px !important;
+  background: repeating-linear-gradient(
+    90deg,
+    rgba(21, 95, 138, 0.3) 0,
+    rgba(21, 95, 138, 0.3) 10px,
+    transparent 10px,
+    transparent 30px
+  );
+  border-top: 4px solid rgba(11, 63, 99, 0.5);
+  border-bottom: 4px solid rgba(11, 63, 99, 0.5);
+  opacity: 0.45 !important;
+  animation: float-smooth 5s ease-in-out infinite reverse;
+}
+
+/* Điểm mốc đo đạc (Surveying target point) */
+#root .pattern-ring-main {
+  inset: auto 60px 40px auto !important;
+  width: 180px !important;
+  height: 180px !important;
+  border: 6px dashed rgba(11, 63, 99, 0.35);
+  border-radius: 50%;
+  animation: pulse-ring-smooth 4s infinite alternate ease-in-out;
+}
+/*
+  DASHBOARD END
+*/
+#root .help-hero {
+  min-height: 82px !important;
+  border: 1px solid #d7dde5 !important;
+  background: #ffffff !important;
+}
+
+#root .help-hero h1 {
+  color: #172b43 !important;
+  font-size: 22px !important;
+  font-weight: 750 !important;
+}
+
+#root .help-hero p {
+  color: #52677a !important;
+  font-size: 13px !important;
+}
+
+#root .booking-hero {
+  align-items: center;
+  display: grid;
+  gap: 18px;
+  grid-template-columns: minmax(0, 1fr) minmax(360px, 0.48fr);
+}
+
+#root .booking-hero h2 {
+  margin: 0;
+  color: #111827;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+#root .booking-hero p:not(.eyebrow) {
+  margin: 8px 0 0;
+  color: #64748b;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+#root .booking-hero-metrics {
+  display: grid;
+  gap: 6px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+#root .booking-hero-metrics > div {
+  border: 1px solid var(--qlvt-border);
+  border-radius: 3px;
+  background: #ffffff;
+  box-shadow: none;
+  padding: 10px;
+}
+
+#root .booking-hero-metrics span {
+  display: block;
+  color: var(--qlvt-muted);
+  font-size: 10.5px;
+  font-weight: 500;
+}
+
+#root .booking-hero-metrics strong {
+  display: block;
+  margin-top: 4px;
+  color: var(--qlvt-text);
+  font-size: 20px;
+  font-weight: 700;
+}
+
+@media (max-width: 1120px) {
+  #root .booking-hero {
+    grid-template-columns: 1fr;
+  }
+
+  #root .booking-hero-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  #root .dashboard-hero-copy h1 {
+    font-size: 26px !important;
+    white-space: normal !important;
+  }
+
+  #root .dashboard-hero-copy img {
+    width: 140px !important;
+  }
+}
