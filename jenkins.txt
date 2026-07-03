@@ -1,711 +1,182 @@
-23:31:20  + set -eu
-23:31:20  + mkdir -p reports
-23:31:20  + id -u
-23:31:20  + id -g
-23:31:20  + docker run --rm --user 0:0 --volumes-from 74b5695ab0fa -w /var/jenkins_home/workspace/bimlab_qlvt_test/frontend -e CI=true -e WORKSPACE=/var/jenkins_home/workspace/bimlab_qlvt_test -e RUN_SECURITY_AUDIT=false -e HOME=/tmp -e NPM_CONFIG_CACHE=/tmp/npm -e PNPM_HOME=/tmp/pnpm -e PNPM_STORE_DIR=/tmp/pnpm-store node:22-alpine sh -lc 
-23:31:20                  set -eu
-23:31:20                  export PATH="$PNPM_HOME/bin:$PATH"
-23:31:20                  if grep -Eq "lockfileVersion: .*6\.0" pnpm-lock.yaml; then PNPM_VERSION=8.15.9; else PNPM_VERSION=10.33.2; fi
-23:31:20                  mkdir -p "$PNPM_STORE_DIR"
-23:31:20                  npm install -g "pnpm@$PNPM_VERSION" --prefix "$PNPM_HOME"
-23:31:20                  pnpm config set store-dir "$PNPM_STORE_DIR"
-23:31:20                  rm -rf node_modules
-23:31:20                  pnpm install --frozen-lockfile
-23:31:20                  rm -rf .pnpm-store
-23:31:20                  pnpm lint
-23:31:20                  pnpm test -- --reporter=default --reporter=junit --outputFile=reports/vitest-junit.xml
-23:31:20                  pnpm build
-23:31:20                  if [ "${RUN_SECURITY_AUDIT:-false}" = "true" ]; then pnpm audit --audit-level high; fi
-23:31:20                
-23:31:21  
-23:31:21  added 1 package in 1s
-23:31:21  
-23:31:21  1 package is looking for funding
-23:31:21    run `npm fund` for details
-23:31:22  Lockfile is up to date, resolution step is skipped
-23:31:22  Progress: resolved 1, reused 0, downloaded 0, added 0
-23:31:22  Packages: +284
-23:31:22  ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-23:31:22  Progress: resolved 284, reused 0, downloaded 83, added 83
-23:31:24  Progress: resolved 284, reused 0, downloaded 145, added 145
-23:31:25  Progress: resolved 284, reused 0, downloaded 210, added 210
-23:31:26  Progress: resolved 284, reused 0, downloaded 277, added 277
-23:31:26   WARN  Tarball download average speed 26 KiB/s (size 47 KiB) is below 50 KiB/s: https://registry.npmjs.org/react-transition-group/-/react-transition-group-4.4.5.tgz (GET)
-23:31:27  Progress: resolved 284, reused 0, downloaded 282, added 282
-23:31:28  Progress: resolved 284, reused 0, downloaded 283, added 282
-23:31:29  Progress: resolved 284, reused 0, downloaded 283, added 283
-23:31:30  Progress: resolved 284, reused 0, downloaded 284, added 283
-23:31:30  Progress: resolved 284, reused 0, downloaded 284, added 284, done
-23:31:30  
-23:31:30  dependencies:
-23:31:30  + @vitejs/plugin-react 6.0.2
-23:31:30  + animejs 4.4.1
-23:31:30  + axios 1.16.1
-23:31:30  + exceljs 4.4.0
-23:31:30  + oidc-client-ts 3.5.0
-23:31:30  + react 19.2.6
-23:31:30  + react-dom 19.2.6
-23:31:30  + react-hot-toast 2.6.0
-23:31:30  + react-icons 5.6.0
-23:31:30  + react-router-dom 7.15.1
-23:31:30  + recharts 2.15.4
-23:31:30  + vite 8.0.13
-23:31:30  + xlsx 0.18.5
-23:31:30  
-23:31:30  devDependencies:
-23:31:30  + @biomejs/biome 2.4.16
-23:31:30  + @testing-library/jest-dom 6.9.1
-23:31:30  + @testing-library/react 16.3.2
-23:31:30  + @testing-library/user-event 14.6.1
-23:31:30  + @types/react 19.2.14
-23:31:30  + @types/react-dom 19.2.3
-23:31:30  + jsdom 29.1.1
-23:31:30  + typescript 6.0.3
-23:31:30  + vitest 4.1.7
-23:31:30  
-23:31:30  Done in 9.2s using pnpm v10.33.2
-23:31:31  
-23:31:31  > bimlab-asset-frontend@1.0.0 lint /var/jenkins_home/workspace/bimlab_qlvt_test/frontend
-23:31:31  > biome check .
-23:31:31  
-23:31:32  src/pages/DashboardPage.tsx:18:8 lint/correctness/noUnusedImports  FIXABLE  ━━━━━━━━━━━━━━━━━━━━━━━━
-23:31:32  
-23:31:32    ! This import is unused.
-23:31:32    
-23:31:32      16 │ import { StatusBadge } from "../components/StatusBadge";
-23:31:32      17 │ import { useAppData } from "../contexts/AppDataContext";
-23:31:32    > 18 │ import { useAuth } from "../contexts/AuthContext";
-23:31:32         │        ^^^^^^^^^^^
-23:31:32      19 │ import { money } from "../lib/format";
-23:31:32      20 │ import { loadAssetBookings } from "../services/api";
-23:31:32    
-23:31:32    i Unused imports might be the result of an incomplete refactoring.
-23:31:32    
-23:31:32    i Unsafe fix: Remove the unused imports.
-23:31:32    
-23:31:32       16  16 │   import { StatusBadge } from "../components/StatusBadge";
-23:31:32       17  17 │   import { useAppData } from "../contexts/AppDataContext";
-23:31:32       18     │ - import·{·useAuth·}·from·"../contexts/AuthContext";
-23:31:32       19  18 │   import { money } from "../lib/format";
-23:31:32       20  19 │   import { loadAssetBookings } from "../services/api";
-23:31:32    
-23:31:32  
-23:31:32  src/pages/AssetCategoriesPage.tsx format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-23:31:32  
-23:31:32    × Formatter would have printed the following content:
-23:31:32    
-23:31:32      458 458 │     );
-23:31:32      459 459 │     const filteredTree = useMemo(
-23:31:32      460     │ - ····()·=>
-23:31:32      461     │ - ······filterTree(buildCategoryTree(categories),·assetClassFilter,·activeFilter,·categorySearch),
-23:31:32          460 │ + ····()·=>·filterTree(buildCategoryTree(categories),·assetClassFilter,·activeFilter,·categorySearch),
-23:31:32      462 461 │       [categories, assetClassFilter, activeFilter, categorySearch],
-23:31:32      463 462 │     );
-23:31:32      ······· │ 
-23:31:32      639 638 │                     <select
-23:31:32      640 639 │                       value={assetClassFilter}
-23:31:32      641     │ - ····················onChange={(event)·=>·setAssetClassFilter(event.target.value·as·AssetClassFilter)}
-23:31:32          640 │ + ····················onChange={(event)·=>
-23:31:32          641 │ + ······················setAssetClassFilter(event.target.value·as·AssetClassFilter)
-23:31:32          642 │ + ····················}
-23:31:32      642 643 │                     >
-23:31:32      643 644 │                       <option value="ALL">Tất cả</option>
-23:31:32    
-23:31:32  
-23:31:32  src/pages/AssetsPage.tsx:1:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-23:31:32  
-23:31:32    × Sort the imported names.
-23:31:32    
-23:31:32     > 1 │ import {
-23:31:32         │ ^^^^^^^^
-23:31:32     > 2 │   type CSSProperties,
-23:31:32     > 3 │   type ChangeEvent,
-23:31:32     > 4 │   type MouseEvent,
-23:31:32          ...
-23:31:32     > 8 │   useState,
-23:31:32     > 9 │ } from "react";
-23:31:32         │ ^^^^^^^^^^^^^^^
-23:31:32      10 │ import toast from "react-hot-toast";
-23:31:32      11 │ import {
-23:31:32    
-23:31:32    i Safe fix: Organize imports and exports (Biome)
-23:31:32    
-23:31:32         1    1 │   import {
-23:31:32         2      │ - ··type·CSSProperties,
-23:31:32         3      │ - ··type·ChangeEvent,
-23:31:32              2 │ + ··type·ChangeEvent,
-23:31:32              3 │ + ··type·CSSProperties,
-23:31:32         4    4 │     type MouseEvent,
-23:31:32         5    5 │     type ReactNode,
-23:31:32    
-23:31:32  
-23:31:32  src/pages/AssetsPage.tsx:1397:14 lint/suspicious/useIterableCallbackReturn ━━━━━━━━━━━━━━━━━━━━━━━━━
-23:31:32  
-23:31:32    × This callback passed to forEach() iterable method should not return a value.
-23:31:32    
-23:31:32      1395 │     const countMap = (values: string[]) => {
-23:31:32      1396 │       const map = new Map<string, number>();
-23:31:32    > 1397 │       values.forEach((value) => map.set(value, (map.get(value) || 0) + 1));
-23:31:32           │              ^^^^^^^
-23:31:32      1398 │       return Array.from(map.entries())
-23:31:32      1399 │         .map(([label, value]) => ({ label, value }))
-23:31:32    
-23:31:32    i Either remove this return or remove the returned value.
-23:31:32    
-23:31:32      1395 │     const countMap = (values: string[]) => {
-23:31:32      1396 │       const map = new Map<string, number>();
-23:31:32    > 1397 │       values.forEach((value) => map.set(value, (map.get(value) || 0) + 1));
-23:31:32           │                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-23:31:32      1398 │       return Array.from(map.entries())
-23:31:32      1399 │         .map(([label, value]) => ({ label, value }))
-23:31:32    
-23:31:32  
-23:31:32  src/pages/AssetsPage.tsx:1521:27 lint/suspicious/useIterableCallbackReturn ━━━━━━━━━━━━━━━━━━━━━━━━━
-23:31:32  
-23:31:32    × This callback passed to forEach() iterable method should not return a value.
-23:31:32    
-23:31:32      1519 │       const next = new Set(current);
-23:31:32      1520 │       if (allPageSelected) {
-23:31:32    > 1521 │         pageSelectableIds.forEach((id) => next.delete(id));
-23:31:32           │                           ^^^^^^^
-23:31:32      1522 │       } else {
-23:31:32      1523 │         pageSelectableIds.forEach((id) => next.add(id));
-23:31:32    
-23:31:32    i Either remove this return or remove the returned value.
-23:31:32    
-23:31:32      1519 │       const next = new Set(current);
-23:31:32      1520 │       if (allPageSelected) {
-23:31:32    > 1521 │         pageSelectableIds.forEach((id) => next.delete(id));
-23:31:32           │                                           ^^^^^^^^^^^^^^^
-23:31:32      1522 │       } else {
-23:31:32      1523 │         pageSelectableIds.forEach((id) => next.add(id));
-23:31:32    
-23:31:32  
-23:31:32  src/pages/AssetsPage.tsx:1523:27 lint/suspicious/useIterableCallbackReturn ━━━━━━━━━━━━━━━━━━━━━━━━━
-23:31:32  
-23:31:32    × This callback passed to forEach() iterable method should not return a value.
-23:31:32    
-23:31:32      1521 │         pageSelectableIds.forEach((id) => next.delete(id));
-23:31:32      1522 │       } else {
-23:31:32    > 1523 │         pageSelectableIds.forEach((id) => next.add(id));
-23:31:32           │                           ^^^^^^^
-23:31:32      1524 │       }
-23:31:32      1525 │       return next;
-23:31:32    
-23:31:32    i Either remove this return or remove the returned value.
-23:31:32    
-23:31:32      1521 │         pageSelectableIds.forEach((id) => next.delete(id));
-23:31:32      1522 │       } else {
-23:31:32    > 1523 │         pageSelectableIds.forEach((id) => next.add(id));
-23:31:32           │                                           ^^^^^^^^^^^^
-23:31:32      1524 │       }
-23:31:32      1525 │       return next;
-23:31:32    
-23:31:32  
-23:31:32  src/pages/AssetsPage.tsx:1573:24 lint/suspicious/useIterableCallbackReturn ━━━━━━━━━━━━━━━━━━━━━━━━━
-23:31:32  
-23:31:32    × This callback passed to forEach() iterable method should not return a value.
-23:31:32    
-23:31:32      1571 │       setSelectedAssetIds((current) => {
-23:31:32      1572 │         const next = new Set(current);
-23:31:32    > 1573 │         selectedAssets.forEach((asset) => next.delete(asset.id));
-23:31:32           │                        ^^^^^^^
-23:31:32      1574 │         return next;
-23:31:32      1575 │       });
-23:31:32    
-23:31:32    i Either remove this return or remove the returned value.
-23:31:32    
-23:31:32      1571 │       setSelectedAssetIds((current) => {
-23:31:32      1572 │         const next = new Set(current);
-23:31:32    > 1573 │         selectedAssets.forEach((asset) => next.delete(asset.id));
-23:31:32           │                                           ^^^^^^^^^^^^^^^^^^^^^
-23:31:32      1574 │         return next;
-23:31:32      1575 │       });
-23:31:32    
-23:31:32  
-23:31:32  src/pages/AssetsPage.tsx:2353:19 lint/a11y/useAriaPropsSupportedByRole ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-23:31:32  
-23:31:32    × The ARIA attribute 'aria-label' is not supported by this element.
-23:31:32    
-23:31:32      2351 │               {selectedAssets.length > 0 && (
-23:31:32      2352 │                 <div className="asset-selection-body">
-23:31:32    > 2353 │                   <div className="asset-selection-stack" aria-label="Danh sách tài sản đã chọn">
-23:31:32           │                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-23:31:32      2354 │                     {selectedAssets.map((asset) => (
-23:31:32      2355 │                       <div className="asset-selection-card" key={asset.id}>
-23:31:32    
-23:31:32    i Ensure that ARIA attributes are valid for the role of the element.
-23:31:32    
-23:31:32  
-23:31:32  src/pages/AssetsPage.tsx format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-23:31:32  
-23:31:32    × Formatter would have printed the following content:
-23:31:32    
-23:31:32        92   92 │     { value: "FROM_200M", label: "Trên 200 triệu", min: 200_000_000 },
-23:31:32        93   93 │   ];
-23:31:32        94      │ - const·ASSET_MUTABLE_STATUSES·=·[
-23:31:32        95      │ - ··"IN_STOCK",
-23:31:32        96      │ - ··"ASSIGNED",
-23:31:32        97      │ - ··"MAINTENANCE",
-23:31:32        98      │ - ··"DISPOSED",
-23:31:32        99      │ - ··"LOST",
-23:31:32       100      │ - ]·as·const;
-23:31:32             94 │ + const·ASSET_MUTABLE_STATUSES·=·["IN_STOCK",·"ASSIGNED",·"MAINTENANCE",·"DISPOSED",·"LOST"]·as·const;
-23:31:32       101   95 │   const ASSET_TABLE_STORAGE_KEY = "qlvt.assetList.tableColumns.v1";
-23:31:32       102   96 │   const ASSET_TABLE_COLUMNS: AssetTableColumnConfig[] = [
-23:31:32      ········· │ 
-23:31:32       146  140 │     const middleColumns = [
-23:31:32       147  141 │       ...order.filter(
-23:31:32       148      │ - ······(id)·=>
-23:31:32       149      │ - ········ASSET_TABLE_COLUMN_IDS.includes(id)·&&
-23:31:32       150      │ - ········id·!==·"asset"·&&
-23:31:32       151      │ - ········id·!==·"category",
-23:31:32            142 │ + ······(id)·=>·ASSET_TABLE_COLUMN_IDS.includes(id)·&&·id·!==·"asset"·&&·id·!==·"category",
-23:31:32       152  143 │       ),
-23:31:32       153  144 │       ...ASSET_TABLE_COLUMN_IDS.filter(
-23:31:32       154      │ - ······(id)·=>
-23:31:32       155      │ - ········!order.includes(id)·&&
-23:31:32       156      │ - ········id·!==·"asset"·&&
-23:31:32       157      │ - ········id·!==·"category",
-23:31:32            145 │ + ······(id)·=>·!order.includes(id)·&&·id·!==·"asset"·&&·id·!==·"category",
-23:31:32       158  146 │       ),
-23:31:32       159  147 │     ];
-23:31:32      ········· │ 
-23:31:32       520  508 │       <div className="table-pagination asset-list-pagination">
-23:31:32       521  509 │         <div className="table-pagination-summary">
-23:31:32       522      │ - ········Hiển·thị·<strong>{start}-{end}</strong>·/·<strong>{total}</strong>·tài·sản
-23:31:32            510 │ + ········Hiển·thị{"·"}
-23:31:32            511 │ + ········<strong>
-23:31:32            512 │ + ··········{start}-{end}
-23:31:32            513 │ + ········</strong>{"·"}
-23:31:32            514 │ + ········/·<strong>{total}</strong>·tài·sản
-23:31:32       523  515 │         </div>
-23:31:32       524  516 │         <div className="table-pagination-controls">
-23:31:32      ········· │ 
-23:31:32      1215 1207 │     const sourceOptions = useMemo(
-23:31:32      1216 1208 │       () =>
-23:31:32      1217      │ - ······Array.from(new·Set(assets.map((asset)·=>·asset.source?.trim()).filter(Boolean)·as·string[]))
-23:31:32      1218      │ - ········.sort((a,·b)·=>·a.localeCompare(b,·"vi")),
-23:31:32           1209 │ + ······Array.from(
-23:31:32           1210 │ + ········new·Set(assets.map((asset)·=>·asset.source?.trim()).filter(Boolean)·as·string[]),
-23:31:32           1211 │ + ······).sort((a,·b)·=>·a.localeCompare(b,·"vi")),
-23:31:32      1219 1212 │       [assets],
-23:31:32      1220 1213 │     );
-23:31:32      ········· │ 
-23:31:32      1339 1332 │     const safeAssetPage = Math.min(assetPage, assetPageCount);
-23:31:32      1340 1333 │     const pagedAssets = useMemo(
-23:31:32      1341      │ - ····()·=>
-23:31:32      1342      │ - ······filteredAssets.slice(
-23:31:32      1343      │ - ········(safeAssetPage·-·1)·*·assetPageSize,
-23:31:32      1344      │ - ········safeAssetPage·*·assetPageSize,
-23:31:32      1345      │ - ······),
-23:31:32           1334 │ + ····()·=>·filteredAssets.slice((safeAssetPage·-·1)·*·assetPageSize,·safeAssetPage·*·assetPageSize),
-23:31:32      1346 1335 │       [assetPageSize, filteredAssets, safeAssetPage],
-23:31:32      1347 1336 │     );
-23:31:32      ········· │ 
-23:31:32      1402 1391 │       };
-23:31:32      1403 1392 │   
-23:31:32      1404      │ - ····const·valueBuckets·=·ASSET_VALUE_FILTERS.filter((item)·=>·item.value·!==·"ALL").map((bucket)·=>·({
-23:31:32      1405      │ - ······label:·bucket.label,
-23:31:32      1406      │ - ······value:·filteredAssets.filter((asset)·=>·{
-23:31:32      1407      │ - ········const·value·=·Number(asset.purchaseCost·||·0);
-23:31:32      1408      │ - ········if·(bucket.min·!==·undefined·&&·value·<·bucket.min)·return·false;
-23:31:32      1409      │ - ········if·(bucket.max·!==·undefined·&&·value·>=·bucket.max)·return·false;
-23:31:32      1410      │ - ········return·true;
-23:31:32      1411      │ - ······}).length,
-23:31:32      1412      │ - ····})).filter((item)·=>·item.value·>·0);
-23:31:32           1393 │ + ····const·valueBuckets·=·ASSET_VALUE_FILTERS.filter((item)·=>·item.value·!==·"ALL")
-23:31:32           1394 │ + ······.map((bucket)·=>·({
-23:31:32           1395 │ + ········label:·bucket.label,
-23:31:32           1396 │ + ········value:·filteredAssets.filter((asset)·=>·{
-23:31:32           1397 │ + ··········const·value·=·Number(asset.purchaseCost·||·0);
-23:31:32           1398 │ + ··········if·(bucket.min·!==·undefined·&&·value·<·bucket.min)·return·false;
-23:31:32           1399 │ + ··········if·(bucket.max·!==·undefined·&&·value·>=·bucket.max)·return·false;
-23:31:32           1400 │ + ··········return·true;
-23:31:32           1401 │ + ········}).length,
-23:31:32           1402 │ + ······}))
-23:31:32           1403 │ + ······.filter((item)·=>·item.value·>·0);
-23:31:32      1413 1404 │   
-23:31:32      1414 1405 │       return {
-23:31:32      1415 1406 │         statuses: countMap(filteredAssets.map((asset) => statusLabel(asset.status))),
-23:31:32      1416 1407 │         categories: countMap(
-23:31:32      1417      │ - ········filteredAssets.map((asset)·=>·asset.assetCategory?.name·||·asset.category·||·"Chưa·phân·loại"),
-23:31:32           1408 │ + ········filteredAssets.map(
-23:31:32           1409 │ + ··········(asset)·=>·asset.assetCategory?.name·||·asset.category·||·"Chưa·phân·loại",
-23:31:32           1410 │ + ········),
-23:31:32      1418 1411 │         ),
-23:31:32      1419 1412 │         values: valueBuckets,
-23:31:32      ········· │ 
-23:31:32      1598 1591 │           siteId: bulkSiteId ? Number(bulkSiteId) : (asset.siteId ?? null),
-23:31:32      1599 1592 │           departmentId: bulkDepartmentId ? Number(bulkDepartmentId) : (asset.departmentId ?? null),
-23:31:32      1600      │ - ········assignedEmployeeId:·bulkEmployeeId·?·Number(bulkEmployeeId)·:·(asset.assignedEmployeeId·??·null),
-23:31:32           1593 │ + ········assignedEmployeeId:·bulkEmployeeId
-23:31:32           1594 │ + ··········?·Number(bulkEmployeeId)
-23:31:32           1595 │ + ··········:·(asset.assignedEmployeeId·??·null),
-23:31:32      1601 1596 │         }),
-23:31:32      1602 1597 │         `Đã chuyển vị trí ${selectedAssets.length} tài sản.`,
-23:31:32      ········· │ 
-23:31:32      1622 1617 │   
-23:31:32      1623 1618 │     const handleBulkReturnAssets = async () => {
-23:31:32      1624      │ - ····const·confirmed·=·window.confirm(`Thu·hồi·${selectedAssets.length}·tài·sản·đã·chọn·về·trạng·thái·trong·kho?`);
-23:31:32           1619 │ + ····const·confirmed·=·window.confirm(
-23:31:32           1620 │ + ······`Thu·hồi·${selectedAssets.length}·tài·sản·đã·chọn·về·trạng·thái·trong·kho?`,
-23:31:32           1621 │ + ····);
-23:31:32      1625 1622 │       if (!confirmed) return;
-23:31:32      1626 1623 │       await updateSelectedAssets(
-23:31:32      ········· │ 
-23:31:32      1700 1697 │               )}
-23:31:32      1701 1698 │             </strong>
-23:31:32      1702      │ - ··········<span>{highlightSearchText(item.assetCategory?.code·||·"Chưa·có·mã·danh·mục",·query)}</span>
-23:31:32           1699 │ + ··········<span>
-23:31:32           1700 │ + ············{highlightSearchText(item.assetCategory?.code·||·"Chưa·có·mã·danh·mục",·query)}
-23:31:32           1701 │ + ··········</span>
-23:31:32      1703 1702 │           </div>
-23:31:32      1704 1703 │         ),
-23:31:32      ········· │ 
-23:31:32      1786 1785 │     );
-23:31:32      1787 1786 │     const columnConfigOrder = [
-23:31:32      1788      │ - ····...assetColumnOrder.filter((id)·=>·ASSET_TABLE_COLUMNS.some((column)·=>·column.id·===·id·&&·column.locked)),
-23:31:32      1789      │ - ····...assetColumnOrder.filter((id)·=>·ASSET_TABLE_COLUMNS.some((column)·=>·column.id·===·id·&&·!column.locked)),
-23:31:32           1787 │ + ····...assetColumnOrder.filter((id)·=>
-23:31:32           1788 │ + ······ASSET_TABLE_COLUMNS.some((column)·=>·column.id·===·id·&&·column.locked),
-23:31:32           1789 │ + ····),
-23:31:32           1790 │ + ····...assetColumnOrder.filter((id)·=>
-23:31:32           1791 │ + ······ASSET_TABLE_COLUMNS.some((column)·=>·column.id·===·id·&&·!column.locked),
-23:31:32           1792 │ + ····),
-23:31:32      1790 1793 │     ];
-23:31:32      1791 1794 │   
-23:31:32      ········· │ 
-23:31:32      1950 1953 │             </div>
-23:31:32      1951 1954 │   
-23:31:32      1952      │ - ··········{!assetCategoryCollapsed·&&·<div·className="asset-category-filter-list">
-23:31:32      1953      │ - ············<button
-23:31:32      1954      │ - ··············type="button"
-23:31:32      1955      │ - ··············className="asset-category-filter-item·all"
-23:31:32      1956      │ - ··············data-selected={!selectedCategoryNode·?·"true"·:·undefined}
-23:31:32      1957      │ - ··············onClick={resetAssetFilters}
-23:31:32      1958      │ - ············>
-23:31:32      1959      │ - ··············<span·className="asset-category-filter-spacer"·/>
-23:31:32      1960      │ - ··············<span·className="asset-category-filter-copy">
-23:31:32      1961      │ - ················<strong>Tất·cả·danh·mục</strong>
-23:31:32      1962      │ - ················<small>Toàn·bộ·tài·sản</small>
-23:31:32      1963      │ - ··············</span>
-23:31:32      1964      │ - ··············<span·className="asset-category-filter-count">{assets.length}</span>
-23:31:32      1965      │ - ············</button>
-23:31:32           1955 │ + ··········{!assetCategoryCollapsed·&&·(
-23:31:32           1956 │ + ············<div·className="asset-category-filter-list">
-23:31:32           1957 │ + ··············<button
-23:31:32           1958 │ + ················type="button"
-23:31:32           1959 │ + ················className="asset-category-filter-item·all"
-23:31:32           1960 │ + ················data-selected={!selectedCategoryNode·?·"true"·:·undefined}
-23:31:32           1961 │ + ················onClick={resetAssetFilters}
-23:31:32           1962 │ + ··············>
-23:31:32           1963 │ + ················<span·className="asset-category-filter-spacer"·/>
-23:31:32    149 more lines truncated
-23:31:32    
-23:31:32  
-23:31:32  src/pages/BookingPage.tsx format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-23:31:32  
-23:31:32    × Formatter would have printed the following content:
-23:31:32    
-23:31:32       145  145 │   const BOOKING_HOUR_HEIGHT = 52;
-23:31:32       146  146 │   const BOOKING_HOURS = Array.from({ length: 24 }, (_, hour) => hour);
-23:31:32       147      │ - const·BOOKING_LOCKED_COLUMN_ORDER:·BookingTableColumnId[]·=·[
-23:31:32       148      │ - ··"booking",
-23:31:32       149      │ - ··"asset",
-23:31:32       150      │ - ··"actions",
-23:31:32       151      │ - ];
-23:31:32            147 │ + const·BOOKING_LOCKED_COLUMN_ORDER:·BookingTableColumnId[]·=·["booking",·"asset",·"actions"];
-23:31:32       152  148 │   
-23:31:32       153  149 │   function normalizeBookingColumnOrder(order: BookingTableColumnId[]) {
-23:31:32      ········· │ 
-23:31:32       160  156 │       ),
-23:31:32       161  157 │     ];
-23:31:32       162      │ - ··return·[
-23:31:32       163      │ - ····"booking",
-23:31:32       164      │ - ····"asset",
-23:31:32       165      │ - ····...middleColumns,
-23:31:32       166      │ - ····"actions",
-23:31:32       167      │ - ··]·as·BookingTableColumnId[];
-23:31:32            158 │ + ··return·["booking",·"asset",·...middleColumns,·"actions"]·as·BookingTableColumnId[];
-23:31:32       168  159 │   }
-23:31:32       169  160 │   
-23:31:32      ········· │ 
-23:31:32      1088 1079 │             </div>
-23:31:32      1089 1080 │           </div>
-23:31:32      1090      │ - ········<div·className="booking-calendar-title">{formatCalendarTitle(calendarDate,·calendarView)}</div>
-23:31:32           1081 │ + ········<div·className="booking-calendar-title">
-23:31:32           1082 │ + ··········{formatCalendarTitle(calendarDate,·calendarView)}
-23:31:32           1083 │ + ········</div>
-23:31:32      1091 1084 │           <div className="booking-calendar-shell">
-23:31:32      1092 1085 │             <aside className="booking-calendar-sidebar">
-23:31:32      ········· │ 
-23:31:32      1122 1115 │                   <select
-23:31:32      1123 1116 │                     value={filters.assetCode}
-23:31:32      1124      │ - ··················onChange={(event)·=>·setFilters((prev)·=>·({·...prev,·assetCode:·event.target.value·}))}
-23:31:32           1117 │ + ··················onChange={(event)·=>
-23:31:32           1118 │ + ····················setFilters((prev)·=>·({·...prev,·assetCode:·event.target.value·}))
-23:31:32           1119 │ + ··················}
-23:31:32      1125 1120 │                   >
-23:31:32      1126 1121 │                     <option value="">Tất cả phòng</option>
-23:31:32      ········· │ 
-23:31:32      1136 1131 │                   <select
-23:31:32      1137 1132 │                     value={filters.status}
-23:31:32      1138      │ - ··················onChange={(event)·=>·setFilters((prev)·=>·({·...prev,·status:·event.target.value·}))}
-23:31:32           1133 │ + ··················onChange={(event)·=>
-23:31:32           1134 │ + ····················setFilters((prev)·=>·({·...prev,·status:·event.target.value·}))
-23:31:32           1135 │ + ··················}
-23:31:32      1139 1136 │                   >
-23:31:32      1140 1137 │                     {BOOKING_STATUS_OPTIONS.map((option) => (
-23:31:32      ········· │ 
-23:31:32      1236 1233 │                     <div
-23:31:32      1237 1234 │                       className="booking-time-columns"
-23:31:32      1238      │ - ····················style={{·gridTemplateColumns:·`repeat(${calendarDays.length},·minmax(150px,·1fr))`·}}
-23:31:32           1235 │ + ····················style={{
-23:31:32           1236 │ + ······················gridTemplateColumns:·`repeat(${calendarDays.length},·minmax(150px,·1fr))`,
-23:31:32           1237 │ + ····················}}
-23:31:32      1239 1238 │                     >
-23:31:32      1240 1239 │                       {calendarDays.map((day) => {
-23:31:32      ········· │ 
-23:31:32      1253 1252 │                           >
-23:31:32      1254 1253 │                             {BOOKING_HOURS.map((hour) => (
-23:31:32      1255      │ - ····························<div·key={hour}·className="booking-time-slot"·style={{·height:·BOOKING_HOUR_HEIGHT·}}·/>
-23:31:32           1254 │ + ····························<div
-23:31:32           1255 │ + ······························key={hour}
-23:31:32           1256 │ + ······························className="booking-time-slot"
-23:31:32           1257 │ + ······························style={{·height:·BOOKING_HOUR_HEIGHT·}}
-23:31:32           1258 │ + ····························/>
-23:31:32      1256 1259 │                             ))}
-23:31:32      1257 1260 │                             {isToday && (
-23:31:32      ········· │ 
-23:31:32      1282 1285 │                                   <span>{bookingTimeRange(layout.booking)}</span>
-23:31:32      1283 1286 │                                   <small>
-23:31:32      1284      │ - ··································{layout.booking.assetName·||·layout.booking.assetCode·||·"Phòng·họp"}
-23:31:32           1287 │ + ··································{layout.booking.assetName·||
-23:31:32           1288 │ + ····································layout.booking.assetCode·||
-23:31:32           1289 │ + ····································"Phòng·họp"}
-23:31:32      1285 1290 │                                   </small>
-23:31:32      1286 1291 │                                 </button>
-23:31:32    
-23:31:32  
-23:31:32  src/pages/DashboardPage.tsx format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-23:31:32  
-23:31:32    × Formatter would have printed the following content:
-23:31:32    
-23:31:32      122 │ ··········<h1>Hệ·thống·quản·lý·tài·sản</h1>·
-23:31:32          │                                            -
-23:31:32  
-23:31:32  src/pages/HelpPage.tsx format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-23:31:32  
-23:31:32    × Formatter would have printed the following content:
-23:31:32    
-23:31:32      228 228 │       [normalizedGuideSearch],
-23:31:32      229 229 │     );
-23:31:32      230     │ - ··const·visibleGuideCount·=·useMemo(()·=>·flattenGuides(visibleGuideTree).length,·[visibleGuideTree]);
-23:31:32          230 │ + ··const·visibleGuideCount·=·useMemo(
-23:31:32          231 │ + ····()·=>·flattenGuides(visibleGuideTree).length,
-23:31:32          232 │ + ····[visibleGuideTree],
-23:31:32          233 │ + ··);
-23:31:32      231 234 │     const activeGuide = allGuides.find((item) => item.id === activeId) || allGuides[0];
-23:31:32      232     │ - ··const·activeDetails·=
-23:31:32      233     │ - ····activeGuide.details·||
-23:31:32      234     │ - ····[
-23:31:32      235     │ - ······"Đọc·mô·tả·nghiệp·vụ·trước,·sau·đó·thao·tác·theo·thứ·tự·các·bước·bên·dưới·để·tránh·chọn·sai·màn·hình·hoặc·sai·dữ·liệu.",
-23:31:32      236     │ - ······"Nếu·một·nút·hoặc·API·phụ·thuộc·phân·quyền,·hãy·kiểm·tra·lại·vai·trò·đăng·nhập·và·quyền·tương·ứng·trước·khi·kết·luận·là·lỗi·hệ·thống.",
-23:31:32      237     │ - ······"Sau·khi·cập·nhật·dữ·liệu,·ưu·tiên·làm·mới·đúng·khu·vực·nghiệp·vụ·thay·vì·reload·toàn·trang·để·giữ·lại·bộ·lọc·và·ngữ·cảnh·đang·thao·tác.",
-23:31:32      238     │ - ····];
-23:31:32          235 │ + ··const·activeDetails·=·activeGuide.details·||·[
-23:31:32          236 │ + ····"Đọc·mô·tả·nghiệp·vụ·trước,·sau·đó·thao·tác·theo·thứ·tự·các·bước·bên·dưới·để·tránh·chọn·sai·màn·hình·hoặc·sai·dữ·liệu.",
-23:31:32          237 │ + ····"Nếu·một·nút·hoặc·API·phụ·thuộc·phân·quyền,·hãy·kiểm·tra·lại·vai·trò·đăng·nhập·và·quyền·tương·ứng·trước·khi·kết·luận·là·lỗi·hệ·thống.",
-23:31:32          238 │ + ····"Sau·khi·cập·nhật·dữ·liệu,·ưu·tiên·làm·mới·đúng·khu·vực·nghiệp·vụ·thay·vì·reload·toàn·trang·để·giữ·lại·bộ·lọc·và·ngữ·cảnh·đang·thao·tác.",
-23:31:32          239 │ + ··];
-23:31:32      239 240 │   
-23:31:32      240 241 │     return (
-23:31:32      ······· │ 
-23:31:32      263 264 │               )}
-23:31:32      264 265 │             </label>
-23:31:32      265     │ - ··········{guideSearch·&&·<span·className="help-search-count">{visibleGuideCount}·kết·quả·phù·hợp</span>}
-23:31:32          266 │ + ··········{guideSearch·&&·(
-23:31:32          267 │ + ············<span·className="help-search-count">{visibleGuideCount}·kết·quả·phù·hợp</span>
-23:31:32          268 │ + ··········)}
-23:31:32      266 269 │             <div className="help-nav-tree">
-23:31:32      267 270 │               {visibleGuideTree.length === 0 && (
-23:31:32    
-23:31:32  
-23:31:32  src/styles/app.css format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-23:31:32  
-23:31:32    × Formatter would have printed the following content:
-23:31:32    
-23:31:32       8017  8017 │     background:
-23:31:32       8018  8018 │       linear-gradient(90deg, rgba(21, 77, 124, 0.05) 1px, transparent 1px),
-23:31:32       8019       │ - ····linear-gradient(180deg,·rgba(21,·77,·124,·0.05)·1px,·transparent·1px),
-23:31:32       8020       │ - ····#eef2f5·!important;
-23:31:32             8019 │ + ····linear-gradient(180deg,·rgba(21,·77,·124,·0.05)·1px,·transparent·1px),·#eef2f5·!important;
-23:31:32       8021  8020 │     background-size: 28px 28px !important;
-23:31:32       8022  8021 │   }
-23:31:32      ··········· │ 
-23:31:32       8814  8813 │       linear-gradient(180deg, rgba(21, 80, 127, 0.12) 1px, transparent 1px),
-23:31:32       8815  8814 │       radial-gradient(circle, rgba(21, 80, 127, 0.18) 0 2px, transparent 3px);
-23:31:32       8816       │ - ··background-size:·18px·18px,·18px·18px,·24px·24px;
-23:31:32             8815 │ + ··background-size:
-23:31:32             8816 │ + ····18px·18px,
-23:31:32             8817 │ + ····18px·18px,
-23:31:32             8818 │ + ····24px·24px;
-23:31:32       8817  8819 │     opacity: 0.8;
-23:31:32       8818  8820 │     transform: rotate(-5deg);
-23:31:32      ··········· │ 
-23:31:32       8828  8830 │       radial-gradient(circle, rgba(21, 80, 127, 0.2) 0 2px, transparent 3px),
-23:31:32       8829  8831 │       radial-gradient(circle, rgba(21, 80, 127, 0.12) 0 1px, transparent 2px);
-23:31:32       8830       │ - ··background-size:·20px·20px,·34px·34px;
-23:31:32             8832 │ + ··background-size:
-23:31:32             8833 │ + ····20px·20px,
-23:31:32             8834 │ + ····34px·34px;
-23:31:32       8831  8835 │     opacity: 0.78;
-23:31:32       8832  8836 │     animation: dashboardPatternDriftB 3.8s linear infinite alternate;
-23:31:32      ··········· │ 
-23:31:32       8855  8859 │     border: 1px solid rgba(21, 80, 127, 0.16);
-23:31:32       8856  8860 │     background:
-23:31:32       8857       │ - ····radial-gradient(circle·at·center,·transparent·0·42%,·rgba(21,·80,·127,·0.12)·43%·44%,·transparent·45%),
-23:31:32             8861 │ + ····radial-gradient(
-23:31:32             8862 │ + ······circle·at·center,
-23:31:32             8863 │ + ······transparent·0·42%,
-23:31:32             8864 │ + ······rgba(21,·80,·127,·0.12)·43%·44%,
-23:31:32             8865 │ + ······transparent·45%
-23:31:32             8866 │ + ····),
-23:31:32       8858  8867 │       repeating-linear-gradient(45deg, rgba(21, 80, 127, 0.08) 0 1px, transparent 1px 10px);
-23:31:32       8859  8868 │     opacity: 0.72;
-23:31:32      ··········· │ 
-23:31:32       8862  8871 │   
-23:31:32       8863  8872 │   @keyframes dashboardPatternDriftA {
-23:31:32       8864       │ - ··from·{·transform:·translate3d(0,·0,·0)·rotate(-5deg);·}
-23:31:32       8865       │ - ··to·{·transform:·translate3d(30px,·18px,·0)·rotate(4deg);·}
-23:31:32             8873 │ + ··from·{
-23:31:32             8874 │ + ····transform:·translate3d(0,·0,·0)·rotate(-5deg);
-23:31:32             8875 │ + ··}
-23:31:32             8876 │ + ··to·{
-23:31:32             8877 │ + ····transform:·translate3d(30px,·18px,·0)·rotate(4deg);
-23:31:32             8878 │ + ··}
-23:31:32       8866  8879 │   }
-23:31:32       8867  8880 │   
-23:31:32       8868  8881 │   @keyframes dashboardPatternDriftB {
-23:31:32       8869       │ - ··from·{·transform:·translate3d(0,·0,·0);·}
-23:31:32       8870       │ - ··to·{·transform:·translate3d(-28px,·20px,·0);·}
-23:31:32             8882 │ + ··from·{
-23:31:32             8883 │ + ····transform:·translate3d(0,·0,·0);
-23:31:32             8884 │ + ··}
-23:31:32             8885 │ + ··to·{
-23:31:32             8886 │ + ····transform:·translate3d(-28px,·20px,·0);
-23:31:32             8887 │ + ··}
-23:31:32       8871  8888 │   }
-23:31:32       8872  8889 │   
-23:31:32       8873  8890 │   @keyframes dashboardPatternDriftC {
-23:31:32       8874       │ - ··from·{·transform:·translate3d(0,·0,·0)·skewX(-14deg);·}
-23:31:32       8875       │ - ··to·{·transform:·translate3d(34px,·-12px,·0)·skewX(-8deg);·}
-23:31:32             8891 │ + ··from·{
-23:31:32             8892 │ + ····transform:·translate3d(0,·0,·0)·skewX(-14deg);
-23:31:32             8893 │ + ··}
-23:31:32             8894 │ + ··to·{
-23:31:32             8895 │ + ····transform:·translate3d(34px,·-12px,·0)·skewX(-8deg);
-23:31:32             8896 │ + ··}
-23:31:32       8876  8897 │   }
-23:31:32       8877  8898 │   
-23:31:32       8878  8899 │   @keyframes dashboardPatternDriftD {
-23:31:32       8879       │ - ··from·{·transform:·translate3d(0,·0,·0)·rotate(0deg);·}
-23:31:32       8880       │ - ··to·{·transform:·translate3d(-24px,·26px,·0)·rotate(10deg);·}
-23:31:32             8900 │ + ··from·{
-23:31:32             8901 │ + ····transform:·translate3d(0,·0,·0)·rotate(0deg);
-23:31:32             8902 │ + ··}
-23:31:32             8903 │ + ··to·{
-23:31:32             8904 │ + ····transform:·translate3d(-24px,·26px,·0)·rotate(10deg);
-23:31:32             8905 │ + ··}
-23:31:32       8881  8906 │   }
-23:31:32       8882  8907 │   
-23:31:32      ··········· │ 
-23:31:32       9426  9451 │     background:
-23:31:32       9427  9452 │       linear-gradient(90deg, rgba(22, 50, 79, 0.06) 1px, transparent 1px),
-23:31:32       9428       │ - ····linear-gradient(180deg,·rgba(22,·50,·79,·0.06)·1px,·transparent·1px),
-23:31:32       9429       │ - ····#ffffff·!important;
-23:31:32             9453 │ + ····linear-gradient(180deg,·rgba(22,·50,·79,·0.06)·1px,·transparent·1px),·#ffffff·!important;
-23:31:32       9430  9454 │     background-size: 28px 28px !important;
-23:31:32       9431  9455 │   }
-23:31:32      ··········· │ 
-23:31:32       9768  9792 │     background:
-23:31:32       9769  9793 │       linear-gradient(90deg, rgba(21, 80, 127, 0.035) 1px, transparent 1px),
-23:31:32       9770       │ - ····linear-gradient(180deg,·rgba(21,·80,·127,·0.035)·1px,·transparent·1px),
-23:31:32       9771       │ - ····var(--bimlab-blue-soft)·!important;
-23:31:32             9794 │ + ····linear-gradient(180deg,·rgba(21,·80,·127,·0.035)·1px,·transparent·1px),·var(--bimlab-blue-soft)·!important;
-23:31:32       9772  9795 │     background-size: 28px 28px !important;
-23:31:32       9773  9796 │     overflow: auto !important;
-23:31:32      ··········· │ 
-23:31:32      10212 10235 │     background:
-23:31:32      10213 10236 │       linear-gradient(90deg, rgba(18, 63, 99, 0.035) 1px, transparent 1px),
-23:31:32      10214       │ - ····linear-gradient(180deg,·rgba(18,·63,·99,·0.035)·1px,·transparent·1px),
-23:31:32      10215       │ - ····#eef7fc·!important;
-23:31:32            10237 │ + ····linear-gradient(180deg,·rgba(18,·63,·99,·0.035)·1px,·transparent·1px),·#eef7fc·!important;
-23:31:32      10216 10238 │     background-size: 28px 28px !important;
-23:31:32      10217 10239 │     overflow: auto !important;
-23:31:32      ··········· │ 
-23:31:32      11089 11111 │       radial-gradient(circle at 12% 18%, rgba(21, 80, 127, 0.16) 0 2px, transparent 3px),
-23:31:32      11090 11112 │       radial-gradient(circle at 38% 72%, rgba(21, 80, 127, 0.12) 0 2px, transparent 3px),
-23:31:32      11091       │ - ····linear-gradient(115deg,·rgba(199,·228,·246,·0.92),·rgba(238,·247,·252,·0.96)),
-23:31:32      11092       │ - ····#eaf5fb·!important;
-23:31:32            11113 │ + ····linear-gradient(115deg,·rgba(199,·228,·246,·0.92),·rgba(238,·247,·252,·0.96)),·#eaf5fb·!important;
-23:31:32      11093 11114 │   }
-23:31:32      11094 11115 │   
-23:31:32      ··········· │ 
-23:31:32      11977 11998 │   }
-23:31:32      11978 11999 │   
-23:31:32      11979       │ - #root·.asset-table·td:not(.asset-table-sticky-left):not(.asset-table-sticky-select):not(.asset-table-sticky-right),
-23:31:32            12000 │ + #root
-23:31:32            12001 │ + ··.asset-table
-23:31:32            12002 │ + ··td:not(.asset-table-sticky-left):not(.asset-table-sticky-select):not(.asset-table-sticky-right),
-23:31:32      11980 12003 │   #root .booking-table td:not(.booking-table-sticky-left):not(.booking-table-sticky-right),
-23:31:32      11981       │ - #root·.asset-table·th:not(.asset-table-sticky-left):not(.asset-table-sticky-select):not(.asset-table-sticky-right),
-23:31:32            12004 │ + #root
-23:31:32            12005 │ + ··.asset-table
-23:31:32            12006 │ + ··th:not(.asset-table-sticky-left):not(.asset-table-sticky-select):not(.asset-table-sticky-right),
-23:31:32      11982 12007 │   #root .booking-table th:not(.booking-table-sticky-left):not(.booking-table-sticky-right) {
-23:31:32      11983 12008 │     z-index: 1 !important;
-23:31:32    
-23:31:32  
-23:31:32  src/styles/booking-overrides.css format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-23:31:32  
-23:31:32    × Formatter would have printed the following content:
-23:31:32    
-23:31:32      2402 2402 │     border-left: 1px solid #e1e7ef !important;
-23:31:32      2403 2403 │     border-right: 1px solid #d7dde5 !important;
-23:31:32      2404      │ - ··box-shadow:·inset·1px·0·0·#e1e7ef,·inset·-1px·0·0·#d7dde5·!important;
-23:31:32           2404 │ + ··box-shadow:
-23:31:32           2405 │ + ····inset·1px·0·0·#e1e7ef,
-23:31:32           2406 │ + ····inset·-1px·0·0·#d7dde5·!important;
-23:31:32      2405 2407 │   }
-23:31:32      2406 2408 │   
-23:31:32      ········· │ 
-23:31:32      2460 2462 │     border-left: 1px solid #e1e7ef !important;
-23:31:32      2461 2463 │     border-right: 1px solid #cfd8e3 !important;
-23:31:32      2462      │ - ··box-shadow:·inset·1px·0·0·#e1e7ef,·inset·-1px·0·0·#cfd8e3·!important;
-23:31:32           2464 │ + ··box-shadow:
-23:31:32           2465 │ + ····inset·1px·0·0·#e1e7ef,
-23:31:32           2466 │ + ····inset·-1px·0·0·#cfd8e3·!important;
-23:31:32      2463 2467 │   }
-23:31:32      2464 2468 │   
-23:31:32      ········· │ 
-23:31:32      2496 2500 │     left: 460px !important;
-23:31:32      2497 2501 │     z-index: 82 !important;
-23:31:32      2498      │ - ··box-shadow:·inset·1px·0·0·#e1e7ef,·inset·-1px·0·0·#cfd8e3·!important;
-23:31:32           2502 │ + ··box-shadow:
-23:31:32           2503 │ + ····inset·1px·0·0·#e1e7ef,
-23:31:32           2504 │ + ····inset·-1px·0·0·#cfd8e3·!important;
-23:31:32      2499 2505 │   }
-23:31:32      2500 2506 │   
-23:31:32    
-23:31:32  
-23:31:32  Checked 50 files in 982ms. No fixes applied.
-23:31:32  Found 13 errors.
-23:31:32  Found 1 warning.
-23:31:32  check ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-23:31:32  
-23:31:32    × Some errors were emitted while running checks.
-23:31:32    
-23:31:32  
-23:31:32   ELIFECYCLE  Command failed with exit code 1.
+09:51:18  + set -eu
+09:51:18  + mkdir -p reports
+09:51:18  + id -u
+09:51:18  + id -g
+09:51:18  + docker run --rm --user 0:0 --volumes-from 74b5695ab0fa -w /var/jenkins_home/workspace/bimlab_qlvt_test/frontend -e CI=true -e WORKSPACE=/var/jenkins_home/workspace/bimlab_qlvt_test -e RUN_SECURITY_AUDIT=false -e HOME=/tmp -e NPM_CONFIG_CACHE=/tmp/npm -e PNPM_HOME=/tmp/pnpm -e PNPM_STORE_DIR=/tmp/pnpm-store node:22-alpine sh -lc 
+09:51:18                  set -eu
+09:51:18                  export PATH="$PNPM_HOME/bin:$PATH"
+09:51:18                  if grep -Eq "lockfileVersion: .*6\.0" pnpm-lock.yaml; then PNPM_VERSION=8.15.9; else PNPM_VERSION=10.33.2; fi
+09:51:18                  mkdir -p "$PNPM_STORE_DIR"
+09:51:18                  npm install -g "pnpm@$PNPM_VERSION" --prefix "$PNPM_HOME"
+09:51:18                  pnpm config set store-dir "$PNPM_STORE_DIR"
+09:51:18                  rm -rf node_modules
+09:51:18                  pnpm install --frozen-lockfile
+09:51:18                  rm -rf .pnpm-store
+09:51:18                  pnpm lint
+09:51:18                  pnpm test -- --reporter=default --reporter=junit --outputFile=reports/vitest-junit.xml
+09:51:18                  pnpm build
+09:51:18                  if [ "${RUN_SECURITY_AUDIT:-false}" = "true" ]; then pnpm audit --audit-level high; fi
+09:51:18                
+09:51:19  
+09:51:19  added 1 package in 1s
+09:51:19  
+09:51:19  1 package is looking for funding
+09:51:19    run `npm fund` for details
+09:51:20  Lockfile is up to date, resolution step is skipped
+09:51:20  Progress: resolved 1, reused 0, downloaded 0, added 0
+09:51:20  Packages: +284
+09:51:20  ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+09:51:21  Progress: resolved 284, reused 0, downloaded 89, added 89
+09:51:22  Progress: resolved 284, reused 0, downloaded 169, added 169
+09:51:23  Progress: resolved 284, reused 0, downloaded 213, added 213
+09:51:24  Progress: resolved 284, reused 0, downloaded 250, added 250
+09:51:25  Progress: resolved 284, reused 0, downloaded 281, added 281
+09:51:26  Progress: resolved 284, reused 0, downloaded 282, added 282
+09:51:29  Progress: resolved 284, reused 0, downloaded 283, added 282
+09:51:29  Progress: resolved 284, reused 0, downloaded 284, added 284, done
+09:51:29  
+09:51:29  dependencies:
+09:51:29  + @vitejs/plugin-react 6.0.2
+09:51:29  + animejs 4.4.1
+09:51:29  + axios 1.16.1
+09:51:29  + exceljs 4.4.0
+09:51:29  + oidc-client-ts 3.5.0
+09:51:29  + react 19.2.6
+09:51:29  + react-dom 19.2.6
+09:51:29  + react-hot-toast 2.6.0
+09:51:29  + react-icons 5.6.0
+09:51:29  + react-router-dom 7.15.1
+09:51:29  + recharts 2.15.4
+09:51:29  + vite 8.0.13
+09:51:29  + xlsx 0.18.5
+09:51:29  
+09:51:29  devDependencies:
+09:51:29  + @biomejs/biome 2.4.16
+09:51:29  + @testing-library/jest-dom 6.9.1
+09:51:29  + @testing-library/react 16.3.2
+09:51:29  + @testing-library/user-event 14.6.1
+09:51:29  + @types/react 19.2.14
+09:51:29  + @types/react-dom 19.2.3
+09:51:29  + jsdom 29.1.1
+09:51:29  + typescript 6.0.3
+09:51:29  + vitest 4.1.7
+09:51:29  
+09:51:29  Done in 9.5s using pnpm v10.33.2
+09:51:30  
+09:51:30  > bimlab-asset-frontend@1.0.0 lint /var/jenkins_home/workspace/bimlab_qlvt_test/frontend
+09:51:30  > biome check .
+09:51:30  
+09:51:31  src/pages/AssetsPage.tsx format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+09:51:31  
+09:51:31    × Formatter would have printed the following content:
+09:51:31    
+09:51:31  Checked 50 files in 910ms. No fixes applied.
+09:51:31  Found 1 error.
+09:51:31      2218 2218 │                       <tr className="asset-table-empty-row">
+09:51:31      2219 2219 │                         <td
+09:51:31      2220      │ - ························colSpan={
+09:51:31      2221      │ - ··························configuredAssetColumns.length·+·1·+·(assetMultiSelectMode·?·1·:·0)
+09:51:31      2222      │ - ························}
+09:51:31           2220 │ + ························colSpan={configuredAssetColumns.length·+·1·+·(assetMultiSelectMode·?·1·:·0)}
+09:51:31      2223 2221 │                         >
+09:51:31      2224 2222 │                           <div className="asset-table-empty-state">
+09:51:31    
+09:51:31  
+09:51:31  check ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+09:51:31  
+09:51:31    × Some errors were emitted while running checks.
+09:51:31    
+09:51:31  
+09:51:31   ELIFECYCLE  Command failed with exit code 1.
+
+
+10:57:18  + set -eu
+10:57:18  + mkdir -p reports
+10:57:18  + id -u
+10:57:18  + id -g
+10:57:18  + docker run --rm --user 0:0 --volumes-from 74b5695ab0fa -w /var/jenkins_home/workspace/bimlab_qlvt_test/frontend -e CI=true -e WORKSPACE=/var/jenkins_home/workspace/bimlab_qlvt_test -e RUN_SECURITY_AUDIT=false -e HOME=/tmp -e NPM_CONFIG_CACHE=/tmp/npm -e PNPM_HOME=/tmp/pnpm -e PNPM_STORE_DIR=/tmp/pnpm-store node:22-alpine sh -lc 
+10:57:18                  set -eu
+10:57:18                  export PATH="$PNPM_HOME/bin:$PATH"
+10:57:18                  if grep -Eq "lockfileVersion: .*6\.0" pnpm-lock.yaml; then PNPM_VERSION=8.15.9; else PNPM_VERSION=10.33.2; fi
+10:57:18                  mkdir -p "$PNPM_STORE_DIR"
+10:57:18                  npm install -g "pnpm@$PNPM_VERSION" --prefix "$PNPM_HOME"
+10:57:18                  pnpm config set store-dir "$PNPM_STORE_DIR"
+10:57:18                  rm -rf node_modules
+10:57:18                  pnpm install --frozen-lockfile
+10:57:18                  rm -rf .pnpm-store
+10:57:18                  pnpm lint
+10:57:18                  pnpm test -- --reporter=default --reporter=junit --outputFile=reports/vitest-junit.xml
+10:57:18                  pnpm build
+10:57:18                  if [ "${RUN_SECURITY_AUDIT:-false}" = "true" ]; then pnpm audit --audit-level high; fi
+10:57:18                
+10:57:19  
+10:57:19  added 1 package in 1s
+10:57:19  
+10:57:19  1 package is looking for funding
+10:57:19    run `npm fund` for details
+10:57:20  Lockfile is up to date, resolution step is skipped
+10:57:20  Progress: resolved 1, reused 0, downloaded 0, added 0
+10:57:20  Packages: +284
+10:57:20  ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+10:57:21  Progress: resolved 284, reused 0, downloaded 87, added 87
+10:57:22  Progress: resolved 284, reused 0, downloaded 146, added 146
+10:57:23  Progress: resolved 284, reused 0, downloaded 210, added 210
+10:57:24  Progress: resolved 284, reused 0, downloaded 278, added 278
+10:57:25  Progress: resolved 284, reused 0, downloaded 280, added 280
+10:57:26  Progress: resolved 284, reused 0, downloaded 282, added 282
+10:57:28  Progress: resolved 284, reused 0, downloaded 283, added 282
+10:57:29  Progress: resolved 284, reused 0, downloaded 284, added 284, done
+10:57:29  
+10:57:29  dependencies:
+10:57:29  + @vitejs/plugin-react 6.0.2
+10:57:29  + animejs 4.4.1
+10:57:29  + axios 1.16.1
+10:57:29  + exceljs 4.4.0
+10:57:29  + oidc-client-ts 3.5.0
+10:57:29  + react 19.2.6
+10:57:29  + react-dom 19.2.6
+10:57:29  + react-hot-toast 2.6.0
+10:57:29  + react-icons 5.6.0
+10:57:29  + react-router-dom 7.15.1
+10:57:29  + recharts 2.15.4
+10:57:29  + vite 8.0.13
+10:57:29  + xlsx 0.18.5
+10:57:29  
+10:57:29  devDependencies:
+10:57:29  + @biomejs/biome 2.4.16
+10:57:29  + @testing-library/jest-dom 6.9.1
+10:57:29  + @testing-library/react 16.3.2
+10:57:29  + @testing-library/user-event 14.6.1
+10:57:29  + @types/react 19.2.14
+10:57:29  + @types/react-dom 19.2.3
+10:57:29  + jsdom 29.1.1
+10:57:29  + typescript 6.0.3
+10:57:29  + vitest 4.1.7
+10:57:29  
+10:57:29  Done in 8.9s using pnpm v10.33.2
+10:57:29  
+10:57:29  > bimlab-asset-frontend@1.0.0 lint /var/jenkins_home/workspace/bimlab_qlvt_test/frontend
+10:57:29  > biome check .
+10:57:29  
+10:57:30  src/pages/AssetsPage.tsx format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+10:57:30  
+10:57:30    × Formatter would have printed the following content:
+10:57:30    
+10:57:30      2218 2218 │                       <tr className="asset-table-empty-row">
+10:57:30      2219 2219 │                         <td
+10:57:30      2220      │ - ························colSpan={
+10:57:30      2221      │ - ··························configuredAssetColumns.length·+·1·+·(assetMultiSelectMode·?·1·:·0)
+10:57:30      2222      │ - ························}
+10:57:30           2220 │ + ························colSpan={configuredAssetColumns.length·+·1·+·(assetMultiSelectMode·?·1·:·0)}
+10:57:30      2223 2221 │                         >
+10:57:30      2224 2222 │                           <div className="asset-table-empty-state">
+10:57:30    
+10:57:30  
+10:57:30  Checked 50 files in 981ms. No fixes applied.
+10:57:30  Found 1 error.
+10:57:30  check ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+10:57:30  
+10:57:30    × Some errors were emitted while running checks.
+10:57:30    
+10:57:30  
+10:57:30   ELIFECYCLE  Command failed with exit code 1.
