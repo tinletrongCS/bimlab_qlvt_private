@@ -88,12 +88,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(async () => {
     setSubmitting(true);
+    setUser(null);
     try {
       await keycloakLogout();
     } catch {
       // Token may already be expired; local logout still valid.
     } finally {
-      setUser(null);
       setSubmitting(false);
     }
   }, []);
