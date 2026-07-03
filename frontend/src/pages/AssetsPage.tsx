@@ -3291,33 +3291,37 @@ export function AssetsPage() {
               </div>
 
               <div className="asset-import-preview">
-                {importRows.length === 0 ? (
-                  <div className="empty-state">
-                    Chọn file Excel để xem dữ liệu trước khi import.
-                  </div>
-                ) : importPreviewRows.length === 0 ? (
-                  <div className="empty-state">Không có dòng phù hợp bộ lọc.</div>
-                ) : (
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>Dòng</th>
-                        <th>Tài sản</th>
-                        <th>Danh mục</th>
-                        <th>Phân loại</th>
-                        <th>Loại con</th>
-                        <th>Phòng ban</th>
-                        <th>Chi nhánh</th>
-                        <th>Serial/MAC</th>
-                        <th>Ngày dùng</th>
-                        <th>Nguyên giá</th>
-                        <th>Giá trị CL</th>
-                        <th>Trạng thái</th>
-                        <th>Ghi chú kiểm tra</th>
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Dòng</th>
+                      <th>Tài sản</th>
+                      <th>Danh mục</th>
+                      <th>Phân loại</th>
+                      <th>Loại con</th>
+                      <th>Phòng ban</th>
+                      <th>Chi nhánh</th>
+                      <th>Serial/MAC</th>
+                      <th>Ngày dùng</th>
+                      <th>Nguyên giá</th>
+                      <th>Giá trị CL</th>
+                      <th>Trạng thái</th>
+                      <th>Ghi chú kiểm tra</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {importRows.length === 0 || importPreviewRows.length === 0 ? (
+                      <tr className="asset-table-empty-row">
+                        <td colSpan={13}>
+                          <div className="asset-table-empty-state">
+                            {importRows.length === 0
+                              ? "Chọn file Excel để xem dữ liệu trước khi import."
+                              : "Không có dòng phù hợp bộ lọc."}
+                          </div>
+                        </td>
                       </tr>
-                    </thead>
-                    <tbody>
-                      {importPreviewRows.map((row) => {
+                    ) : (
+                      importPreviewRows.map((row) => {
                         const isResultRow = "errors" in row;
                         const source: AssetImportRowPayload | undefined = isResultRow
                           ? importRows.find((item) => item.rowNumber === row.rowNumber)
@@ -3371,10 +3375,10 @@ export function AssetsPage() {
                             </td>
                           </tr>
                         );
-                      })}
-                    </tbody>
-                  </table>
-                )}
+                      })
+                    )}
+                  </tbody>
+                </table>
               </div>
             </div>
 
