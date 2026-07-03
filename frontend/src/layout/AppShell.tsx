@@ -20,7 +20,7 @@ import {
   FiTool,
   FiX,
 } from "react-icons/fi";
-import { NavLink, Outlet, useLocation } from "react-router-dom";
+import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { CrudForm } from "../components/forms/CrudForm";
 import { LoadingSkeleton } from "../components/LoadingSkeleton";
 import { UserAvatar } from "../components/UserAvatar";
@@ -126,6 +126,7 @@ export function AppShell() {
   const { loading, error, refresh } = useAppData();
   const { submitting: actionSubmitting } = useActions();
   const location = useLocation();
+  const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [sidebarSearch, setSidebarSearch] = useState("");
@@ -202,6 +203,12 @@ export function AppShell() {
   }, [location.pathname]);
 
   const toggleGroup = (key: string) => setOpenGroups((prev) => ({ ...prev, [key]: !prev[key] }));
+
+  const handleLogout = async () => {
+    // Theo HRM: đợi SSO logout xử lý; nếu Keycloak không redirect thì fallback về /login.
+    await logout();
+    navigate("/login");
+  };
 
   return (
     <main className={`app-shell ${sidebarCompact ? "sidebar-compact" : ""}`}>
@@ -341,7 +348,7 @@ export function AppShell() {
           <button
             type="button"
             className="logout-button"
-            onClick={() => void logout()}
+            onClick={handleLogout}
             disabled={authSubmitting}
             title="Đăng xuất"
           >
