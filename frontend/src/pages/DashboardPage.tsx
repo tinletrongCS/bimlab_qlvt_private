@@ -137,8 +137,7 @@ export function DashboardPage() {
         <section className="panel dashboard-shortcuts">
           <div className="panel-title">
             <div>
-              <h2>Truy cập nhanh</h2>
-              <p>Các nghiệp vụ thường dùng trong quản lý tài sản.</p>
+              <h2>Lối tắt truy cập nhanh</h2>
             </div>
           </div>
           <div className="dashboard-shortcut-grid">

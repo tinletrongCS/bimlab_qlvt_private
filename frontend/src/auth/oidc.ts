@@ -73,15 +73,33 @@ function loseSession(): void {
 /** URL hiện tại có phải callback từ Keycloak (?code=&state=) không. */
 export function isOidcCallback(): boolean {
   const params = new URLSearchParams(window.location.search);
-  return params.has("code") && params.has("state");
+  return params.has("state") && (params.has("code") || params.has("error"));
 }
 
 /** Xử lý callback: đổi code→token (PKCE), giữ token in-memory, dọn ?code&state khỏi URL. */
 export async function handleOidcCallback(): Promise<boolean> {
-  const user = await userManager().signinRedirectCallback();
-  const ok = adopt(user);
-  window.history.replaceState({}, document.title, window.location.pathname);
-  return ok;
+  try {
+    const user = await userManager().signinRedirectCallback();
+    return adopt(user);
+  } finally {
+    const clean = new URL(window.location.href);
+    for (const key of [
+      "code",
+      "state",
+      "session_state",
+      "iss",
+      "error",
+      "error_description",
+      "error_uri",
+    ]) {
+      clean.searchParams.delete(key);
+    }
+    window.history.replaceState(
+      {},
+      document.title,
+      `${clean.pathname}${clean.search}${clean.hash}`,
+    );
+  }
 }
 
 /**
@@ -97,10 +115,13 @@ export async function completeSilentRenewCallback(): Promise<void> {
   }
 }
 
-/** Khôi phục phiên khi reload, dựa session SSO Keycloak (prompt=none). Thất bại = chưa đăng nhập. */
+/** Khôi phục phiên khi reload từ sessionStorage; chỉ refresh silent khi đã có user cũ. */
 export async function trySilentLogin(): Promise<boolean> {
   try {
     const existingUser = await userManager().getUser();
+    if (!existingUser) {
+      return false;
+    }
     if (existingUser && !existingUser.expired) {
       return adopt(existingUser);
     }
