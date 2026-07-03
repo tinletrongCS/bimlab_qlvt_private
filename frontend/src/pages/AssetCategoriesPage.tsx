@@ -423,7 +423,7 @@ function StructureRow({
               ))}
             </div>
           ) : (
-            <p>Chưa có danh mục con</p>
+            <p className="category-structure-empty">Chưa có danh mục con</p>
           )}
         </div>
       )}

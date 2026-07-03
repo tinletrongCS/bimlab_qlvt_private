@@ -45,11 +45,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (!cancelled) setUser(null);
         });
         // Keycloak: nếu là callback → đổi code→token; nếu không → thử khôi phục phiên (prompt=none).
+        let hasSession = false;
         if (isOidcCallback()) {
-          await handleOidcCallback();
+          hasSession = await handleOidcCallback();
         } else {
-          await trySilentLogin();
+          hasSession = await trySilentLogin();
         }
+
+        if (!hasSession) {
+          await keycloakLogin();
+          return;
+        }
+
         // loadCurrentUser → /asset/me (Bearer in-memory).
         const current = await loadCurrentUser();
         if (!cancelled) setUser(current);
