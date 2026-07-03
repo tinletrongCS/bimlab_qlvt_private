@@ -12436,9 +12436,10 @@ body,
 
 /* Dashboard and navigation depth pass. */
 #root .dashboard-command-center {
-  align-items: start !important;
-  min-height: 320px !important;
-  padding-top: 18px !important;
+  align-items: center !important;
+  min-height: 230px !important;
+  padding-top: 12px !important;
+  padding-bottom: 12px !important;
   background:
     linear-gradient(90deg, rgba(11, 63, 99, 0.12) 1px, transparent 1px),
     linear-gradient(180deg, rgba(11, 63, 99, 0.1) 1px, transparent 1px),
@@ -12804,7 +12805,7 @@ body,
 #root .dashboard-hero-copy {
   position: relative;
   z-index: 2;
-  align-self: start !important;
+  align-self: center !important;
   padding-top: 0 !important;
 }
 
