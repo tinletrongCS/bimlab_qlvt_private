@@ -2217,9 +2217,7 @@ export function AssetsPage() {
                   {pagedAssets.length === 0 ? (
                     <tr className="asset-table-empty-row">
                       <td
-                        colSpan={
-                          configuredAssetColumns.length + 1 + (assetMultiSelectMode ? 1 : 0)
-                        }
+                        colSpan={configuredAssetColumns.length + 1 + (assetMultiSelectMode ? 1 : 0)}
                       >
                         <div className="asset-table-empty-state">
                           Không có tài sản phù hợp bộ lọc.
