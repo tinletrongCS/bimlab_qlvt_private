@@ -2173,51 +2173,61 @@ export function AssetsPage() {
               </>
             )}
 
-            {filteredAssets.length === 0 ? (
-              <div className="empty-state">Không có tài sản phù hợp bộ lọc.</div>
-            ) : (
-              <div
-                className="asset-table"
-                style={{ "--qlvt-table-min-width": `${assetTableMinWidth}px` } as CSSProperties}
-              >
-                <table className={assetMultiSelectMode ? "is-multi-select" : "is-single-select"}>
-                  <thead>
-                    <tr>
-                      {assetMultiSelectMode && (
-                        <th className="asset-table-select-col asset-table-sticky-select">
-                          <label
-                            className="asset-table-checkbox"
-                            title="Chọn toàn bộ dòng trên trang"
-                          >
-                            <input
-                              type="checkbox"
-                              checked={allPageSelected}
-                              ref={(input) => {
-                                if (input) input.indeterminate = somePageSelected;
-                              }}
-                              onChange={toggleCurrentPageSelected}
-                            />
-                            <span />
-                          </label>
-                        </th>
-                      )}
-                      {configuredAssetColumns.map((column) => (
-                        <th
-                          key={column.id}
-                          className={`asset-table-col-${column.id} ${
-                            ["asset", "category"].includes(column.id)
-                              ? `asset-table-sticky-left asset-table-sticky-${column.id}`
-                              : ""
-                          } ${column.align ? `align-${column.align}` : ""}`}
+            <div
+              className="asset-table"
+              style={{ "--qlvt-table-min-width": `${assetTableMinWidth}px` } as CSSProperties}
+            >
+              <table className={assetMultiSelectMode ? "is-multi-select" : "is-single-select"}>
+                <thead>
+                  <tr>
+                    {assetMultiSelectMode && (
+                      <th className="asset-table-select-col asset-table-sticky-select">
+                        <label
+                          className="asset-table-checkbox"
+                          title="Chọn toàn bộ dòng trên trang"
                         >
-                          {column.label}
-                        </th>
-                      ))}
-                      <th className="asset-table-actions-col asset-table-sticky-right">Thao tác</th>
+                          <input
+                            type="checkbox"
+                            checked={allPageSelected}
+                            ref={(input) => {
+                              if (input) input.indeterminate = somePageSelected;
+                            }}
+                            onChange={toggleCurrentPageSelected}
+                          />
+                          <span />
+                        </label>
+                      </th>
+                    )}
+                    {configuredAssetColumns.map((column) => (
+                      <th
+                        key={column.id}
+                        className={`asset-table-col-${column.id} ${
+                          ["asset", "category"].includes(column.id)
+                            ? `asset-table-sticky-left asset-table-sticky-${column.id}`
+                            : ""
+                        } ${column.align ? `align-${column.align}` : ""}`}
+                      >
+                        {column.label}
+                      </th>
+                    ))}
+                    <th className="asset-table-actions-col asset-table-sticky-right">Thao tác</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pagedAssets.length === 0 ? (
+                    <tr className="asset-table-empty-row">
+                      <td
+                        colSpan={
+                          configuredAssetColumns.length + 1 + (assetMultiSelectMode ? 1 : 0)
+                        }
+                      >
+                        <div className="asset-table-empty-state">
+                          Không có tài sản phù hợp bộ lọc.
+                        </div>
+                      </td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {pagedAssets.map((item) => (
+                  ) : (
+                    pagedAssets.map((item) => (
                       <tr
                         key={item.id}
                         className={selectedAssetIds.has(item.id) ? "is-selected" : undefined}
@@ -2276,11 +2286,11 @@ export function AssetsPage() {
                           />
                         </td>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
             <AssetListPagination
               page={safeAssetPage}
               pageSize={assetPageSize}
@@ -2616,7 +2626,7 @@ export function AssetsPage() {
                     <span>{total} mục</span>
                   </div>
                   {insightItems.length === 0 ? (
-                    <span>Chưa có dữ liệu</span>
+                    <span className="asset-insight-empty">Chưa có dữ liệu</span>
                   ) : (
                     <div className="asset-insight-visual">
                       <div

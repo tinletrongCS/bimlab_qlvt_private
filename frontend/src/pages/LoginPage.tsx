@@ -118,8 +118,15 @@ export function LoginPage() {
   const location = useLocation();
   const loginSceneRef = useRef<HTMLDivElement>(null);
   const hasAnimated = useRef(false);
+  const hasStartedLogin = useRef(false);
 
   const redirectTo = (location.state as LocationState | null)?.from?.pathname || "/dashboard";
+
+  useEffect(() => {
+    if (user || bootstrapping || submitting || hasStartedLogin.current) return;
+    hasStartedLogin.current = true;
+    void login();
+  }, [user, bootstrapping, submitting, login]);
 
   useEffect(() => {
     if (user || bootstrapping || hasAnimated.current || !loginSceneRef.current) return;
