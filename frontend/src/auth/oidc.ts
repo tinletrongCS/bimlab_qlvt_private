@@ -14,15 +14,18 @@ import {
 } from "oidc-client-ts";
 
 let accessToken: string | null = null;
-let sessionLostHandler: (() => void) | null = null;
+
+/** Lý do mất phiên: "signed-out" = SLO từ app khác (check-session iframe); "expired" = hết hạn/renew fail. */
+export type SessionLostReason = "expired" | "signed-out";
+let sessionLostHandler: ((reason: SessionLostReason) => void) | null = null;
 
 /** Token hiện tại để axios gắn Authorization: Bearer. null nếu chưa/không còn đăng nhập. */
 export function getAccessToken(): string | null {
   return accessToken;
 }
 
-/** Đăng ký callback khi mất phiên (refresh thất bại / token hết hạn không gia hạn được). */
-export function onSessionLost(handler: () => void): void {
+/** Đăng ký callback khi mất phiên (refresh thất bại / token hết hạn / đăng xuất từ app khác). */
+export function onSessionLost(handler: (reason: SessionLostReason) => void): void {
   sessionLostHandler = handler;
 }
 
@@ -41,7 +44,11 @@ function buildSettings(): UserManagerSettings {
     // PR#6: tự gia hạn access token (5') bằng refresh token TRƯỚC khi hết hạn 60s.
     automaticSilentRenew: true,
     accessTokenExpiringNotificationTimeInSeconds: 60,
-    monitorSession: false,
+    // OIDC Session Management: nhúng check-session iframe của Keycloak, phát hiện
+    // session SSO đổi (logout SLO từ app khác: HRM/CDS/…) trong ~2s → userSignedOut
+    // → báo UI ngay thay vì đợi token hết hạn user mới biết. sso.bimlab.com.vn cùng
+    // site (bimlab.com.vn) với app nên cookie trong iframe không bị chặn third-party.
+    monitorSession: true,
   };
 }
 
@@ -54,8 +61,16 @@ function userManager(): UserManager {
       adopt(user);
     });
     // Refresh thất bại / hết hạn không gia hạn được → mất phiên → báo AuthContext logout cục bộ.
-    manager.events.addSilentRenewError(() => loseSession());
-    manager.events.addAccessTokenExpired(() => loseSession());
+    manager.events.addSilentRenewError(() => loseSession("expired"));
+    manager.events.addAccessTokenExpired(() => loseSession("expired"));
+    // SLO từ app khác trong hệ SSO (monitorSession phát hiện session Keycloak đổi):
+    // dọn user khỏi oidc-client (dừng silent renew) rồi báo UI với lý do "signed-out".
+    manager.events.addUserSignedOut(() => {
+      void userManager()
+        .removeUser()
+        .catch(() => {});
+      loseSession("signed-out");
+    });
   }
   return manager;
 }
@@ -65,9 +80,9 @@ function adopt(user: User | null): boolean {
   return Boolean(accessToken);
 }
 
-function loseSession(): void {
+function loseSession(reason: SessionLostReason): void {
   accessToken = null;
-  sessionLostHandler?.();
+  sessionLostHandler?.(reason);
 }
 
 /** URL hiện tại có phải callback từ Keycloak (?code=&state=) không. */
