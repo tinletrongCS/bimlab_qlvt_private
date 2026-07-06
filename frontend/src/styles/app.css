@@ -11992,11 +11992,7 @@ body,
   box-shadow: 10px 0 14px -16px rgba(15, 23, 42, 0.55) !important;
 }
 
-#root .asset-table-col-status,
-#root .booking-table-col-status {
-  border-left: 1px solid #e1e7ef !important;
-  border-right: 1px solid #d7dde5 !important;
-}
+
 
 #root .asset-table-actions-col,
 #root .booking-table-actions-col {
@@ -12089,105 +12085,6 @@ body,
 
 #root .asset-insight-bars i {
   border-radius: 9999px !important;
-}
-
-/* EOF asset status column fix: keep row separators visible inside the sticky status column. */
-#root .asset-table .asset-table-col-status {
-  width: 118px !important;
-  min-width: 118px !important;
-  max-width: 118px !important;
-  border-left: 1px solid #e1e7ef !important;
-  border-right: 1px solid #d7dde5 !important;
-  border-bottom: 1px solid #e2e8f0 !important;
-  box-shadow:
-    inset 1px 0 0 #e1e7ef,
-    inset -1px 0 0 #d7dde5,
-    inset 0 -1px 0 #e2e8f0 !important;
-}
-
-#root .asset-table tbody td.asset-table-col-status {
-  background: #ffffff !important;
-}
-
-#root .asset-table tbody td.asset-table-col-status::after {
-  background: #e2e8f0;
-  bottom: 0;
-  content: "";
-  height: 1px;
-  left: 0;
-  pointer-events: none;
-  position: absolute;
-  right: 0;
-  z-index: 2;
-}
-
-#root .asset-table tbody tr:hover td.asset-table-col-status {
-  background: #f8fbff !important;
-}
-
-#root .asset-table tbody tr.is-selected td.asset-table-col-status,
-#root .asset-table tbody tr.is-selected:hover td.asset-table-col-status {
-  background: #e9f0f7 !important;
-}
-
-#root .asset-table .asset-table-sticky-status {
-  border-right: 1px solid #cfd8e3 !important;
-  box-shadow:
-    inset 1px 0 0 #e1e7ef,
-    inset -1px 0 0 #cfd8e3,
-    inset 0 -1px 0 #e2e8f0,
-    10px 0 14px -16px rgba(15, 23, 42, 0.55) !important;
-}
-
-#root .asset-table th.asset-table-col-status {
-  background: #eef2f6 !important;
-}
-
-/* EOF asset status normal column: status is visible by default but no longer locked/sticky. */
-#root .asset-table .asset-table-sticky-status,
-#root .asset-table table.is-single-select .asset-table-sticky-status {
-  left: auto !important;
-  position: relative !important;
-  z-index: 1 !important;
-  box-shadow: none !important;
-}
-
-#root .asset-table .asset-table-col-status {
-  background: inherit !important;
-  border-left: 1px solid #e5e9ef !important;
-  border-right: 1px solid #e5e9ef !important;
-  border-bottom: 1px solid #e5e9ef !important;
-  box-shadow: none !important;
-}
-
-#root .asset-table th.asset-table-col-status {
-  background: #f5f7fa !important;
-  color: #334155 !important;
-}
-
-#root .asset-table tbody td.asset-table-col-status {
-  background: #ffffff !important;
-}
-
-#root .asset-table tbody td.asset-table-col-status::after {
-  background: #e5e9ef !important;
-  bottom: 0;
-  content: "";
-  height: 1px;
-  left: 0;
-  pointer-events: none;
-  position: absolute;
-  right: 0;
-  z-index: 2;
-}
-
-#root .asset-table tbody tr:hover td.asset-table-col-status {
-  background: #f8fbff !important;
-}
-
-#root .asset-table tbody tr.is-selected td.asset-table-col-status,
-#root .asset-table tbody tr.is-selected:hover td.asset-table-col-status {
-  background: #e9f0f7 !important;
 }
 
 /* Final production polish: consistent empty states, quieter reload skeleton, and help page tone. */
@@ -13063,3 +12960,37 @@ body,
 .import-status.pending {
   color: var(--text-muted);
 }
+
+/* Added cell borders as requested */
+#root .asset-table th,
+#root .asset-table td {
+  border: 1px solid #e4e7ec !important;
+}
+
+
+#root .asset-table th,
+#root .asset-table td {
+  vertical-align: middle !important;
+}
+
+
+/* Booking table borders + Sticky column border fixes */
+#root .booking-table th,
+#root .booking-table td {
+  border: 1px solid #e4e7ec !important;
+  vertical-align: middle !important;
+}
+
+#root .asset-table .asset-table-sticky-asset,
+#root .asset-table .asset-table-sticky-category,
+#root .booking-table .booking-table-sticky-booking,
+#root .booking-table .booking-table-sticky-asset {
+  box-shadow: inset -1px 0 0 #e4e7ec, 8px 0 16px -16px rgba(15, 23, 42, 0.5) !important;
+}
+
+
+#root .booking-table .booking-table-sticky-status,
+#root .booking-table .booking-table-sticky-time {
+  box-shadow: inset -1px 0 0 #e4e7ec, 10px 0 14px -16px rgba(15, 23, 42, 0.55) !important;
+}
+
