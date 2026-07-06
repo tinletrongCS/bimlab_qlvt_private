@@ -7,6 +7,10 @@ import type {
   AssetBookingCheckoutPayload,
   AssetBookingPayload,
   AssetCategory,
+  AssetCategoryImportCommitPayload,
+  AssetCategoryImportCommitResponse,
+  AssetCategoryImportRowPayload,
+  AssetCategoryImportValidationResponse,
   AssetCategoryPayload,
   AssetCategoryTree,
   AssetImportCommitPayload,
@@ -183,6 +187,26 @@ export async function updateAssetCategory(
 
 export async function deleteAssetCategory(id: number): Promise<void> {
   await api.delete(`/asset/categories/${id}`);
+}
+
+export async function validateAssetCategoryImport(
+  rows: AssetCategoryImportRowPayload[],
+): Promise<AssetCategoryImportValidationResponse> {
+  const response = await api.post<AssetCategoryImportValidationResponse>(
+    "/asset/categories/import/validate",
+    { rows },
+  );
+  return response.data;
+}
+
+export async function commitAssetCategoryImport(
+  payload: AssetCategoryImportCommitPayload,
+): Promise<AssetCategoryImportCommitResponse> {
+  const response = await api.post<AssetCategoryImportCommitResponse>(
+    "/asset/categories/import",
+    payload,
+  );
+  return response.data;
 }
 
 export async function loadDepreciation(id: number): Promise<DepreciationSnapshot> {

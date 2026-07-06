@@ -1,6 +1,10 @@
 package com.bimlab.asset.service;
 
+import com.bimlab.asset.dto.request.AssetCategoryImportCommitRequest;
+import com.bimlab.asset.dto.request.AssetCategoryImportValidateRequest;
 import com.bimlab.asset.dto.request.AssetCategoryRequest;
+import com.bimlab.asset.dto.response.AssetCategoryImportCommitResponse;
+import com.bimlab.asset.dto.response.AssetCategoryImportValidationResponse;
 import com.bimlab.asset.dto.response.AssetCategoryResponse;
 import com.bimlab.asset.dto.response.AssetCategoryTreeResponse;
 import com.bimlab.asset.model.AssetCategory;
@@ -83,11 +87,54 @@ public class AssetCategoryService {
         return modelToDto(saved);
     }
 
+    @Transactional(readOnly = true)
+    public AssetCategoryImportValidationResponse validateCategoryImport(
+            AssetCategoryImportValidateRequest req) {
+        // TODO PRACTICE CATEGORY IMPORT 1:
+        // Validate các dòng từ sheet DanhMuc_ThamChieu.
+        //
+        // Contract frontend gửi lên:
+        // - group: cột "Nhóm" trong Excel.
+        // - code: cột "Mã/Giá trị nhập", dùng làm khóa upsert.
+        // - name: cột "Diễn giải", là tên danh mục hoặc tên giá trị tham chiếu.
+        // - parentCode: cột "Danh mục cha", trỏ tới code của dòng cha nếu có.
+        //
+        // Yêu cầu gợi ý:
+        // - Chỉ xử lý các dòng group = "Danh mục"; các nhóm "Phân loại",
+        //   "Loại tài sản cố định", "Loại công cụ dụng cụ", "Trạng thái" có thể SKIP.
+        // - code và name không được rỗng.
+        // - code không được trùng lặp trong chính file upload.
+        // - Nếu parentCode có giá trị thì phải tồn tại trong DB hoặc nằm trong file upload.
+        // - Suy ra assetClass từ cha gần nhất:
+        //   FIXED_ASSET/TANGIBLE/INTANGIBLE => FIXED_ASSET,
+        //   TOOL_EQUIPMENT/SINGLE_USE/MULTI_USE => TOOL_EQUIPMENT.
+        // - Trả từng dòng status VALID/INVALID/WARNING và action CREATE/UPDATE/SKIP.
+        throw new UnsupportedOperationException("TODO: validate asset category import");
+    }
+
+    @Transactional
+    public AssetCategoryImportCommitResponse importCategories(
+            AssetCategoryImportCommitRequest req) {
+        // TODO PRACTICE CATEGORY IMPORT 2:
+        // Upsert danh mục sau khi người dùng bấm "Xác nhận nhập".
+        //
+        // Flow nên làm:
+        // 1. Gọi lại validateCategoryImport(...) hoặc tách helper validate dùng chung.
+        // 2. Nếu còn dòng INVALID thì không ghi DB, trả response FAILED/HAS_ERROR.
+        // 3. Với mỗi dòng action CREATE/UPDATE:
+        //    - Tìm AssetCategory theo code.
+        //    - Tìm parent theo parentCode nếu có.
+        //    - Set code, name, parent, assetClass, description, active=true.
+        //    - Save bằng categories.save(...).
+        // 4. Upsert theo thứ tự cha trước con để tránh parent chưa tồn tại.
+        // 5. Trả importedRows, updatedRows, skippedRows, errorRows và rows preview cuối.
+        throw new UnsupportedOperationException("TODO: import asset categories");
+    }
+
     @Transactional
     public AssetCategoryResponse updateCategory(Long id, AssetCategoryRequest req) {
         AssetCategory category = categories.findById(id)
-                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy danh mục với id: " + id));
-
+                    .orElseThrow(() -> new NoSuchElementException("Không tim thầy danh mục với id" + id));
         AssetCategory parent = null;
         if (req.parentId() != null) {
             parent = categories.findById(req.parentId())

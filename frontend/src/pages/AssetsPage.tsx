@@ -28,6 +28,7 @@ import { StatusBadge } from "../components/StatusBadge";
 import { useActions } from "../contexts/ActionsContext";
 import { useAppData } from "../contexts/AppDataContext";
 import { useAuth } from "../contexts/AuthContext";
+import { addCategoryReferenceSheet } from "../lib/categoryExcel";
 import { employeeLabel, money, projectLabel } from "../lib/format";
 import {
   commitAssetImport,
@@ -789,7 +790,7 @@ function downloadImportCsv(result: AssetImportValidationResponse) {
   URL.revokeObjectURL(url);
 }
 
-async function downloadAssetImportTemplate() {
+async function downloadAssetImportTemplate(categories: AssetCategoryTree[]) {
   const ExcelJS = await import("exceljs");
   const workbook = new ExcelJS.Workbook();
   workbook.creator = "BIMLab QLVT";
@@ -798,7 +799,6 @@ async function downloadAssetImportTemplate() {
   const sheet = workbook.addWorksheet("HoSoTaiSan_import", {
     views: [{ state: "frozen", ySplit: 4 }],
   });
-  const lookup = workbook.addWorksheet("DanhMuc_ThamChieu");
 
   const fieldKeys = [
     "assets.asset_code",
@@ -960,55 +960,7 @@ async function downloadAssetImportTemplate() {
     });
   });
 
-  lookup.columns = [
-    { header: "Nhóm", key: "group", width: 24 },
-    { header: "Mã/Giá trị nhập", key: "code", width: 28 },
-    { header: "Diễn giải", key: "label", width: 46 },
-    { header: "Danh mục cha", key: "parentCode", width: 28 },
-  ];
-  [
-    ["Phân loại", "FIXED_ASSET", "Tài sản cố định", ""],
-    ["Phân loại", "TOOL_EQUIPMENT", "Công cụ dụng cụ", ""],
-    ["Phân loại lớp con", "TANGIBLE", "Tài sản cố định hữu hình", "FIXED_ASSET"],
-    ["Phân loại lớp con", "INTANGIBLE", "Tài sản cố định vô hình", "FIXED_ASSET"],
-    ["Phân loại lớp con", "SINGLE_USE", "Công cụ dụng cụ sử dụng một lần", "TOOL_EQUIPMENT"],
-    ["Phân loại lớp con", "MULTI_USE", "Công cụ dụng cụ sử dụng nhiều lần", "TOOL_EQUIPMENT"],
-    ["Danh mục ví dụ", "IT_EQUIPMENT", "Thiết bị CNTT", "TANGIBLE"],
-    ["Danh mục ví dụ", "MONITOR", "Màn hình", "IT_EQUIPMENT"],
-    ["Danh mục ví dụ", "LAPTOP", "Laptop", "IT_EQUIPMENT"],
-    ["Danh mục ví dụ", "PRINTER", "Máy in", "IT_EQUIPMENT"],
-    ["Danh mục ví dụ", "OFFICE_EQUIPMENT", "Thiết bị văn phòng", "TANGIBLE"],
-    ["Danh mục ví dụ", "CHAIR", "Ghế", "OFFICE_EQUIPMENT"],
-    ["Danh mục ví dụ", "TABLE", "Bàn", "OFFICE_EQUIPMENT"],
-    ["Danh mục ví dụ", "SOFTWARE", "Phần mềm", "INTANGIBLE"],
-    ["Danh mục ví dụ", "LICENSE", "Bản quyền/phần mềm", "SOFTWARE"],
-    ["Trạng thái", "IN_STOCK", "Trong kho", ""],
-    ["Trạng thái", "ASSIGNED", "Đã cấp phát", ""],
-    ["Trạng thái", "MAINTENANCE", "Bảo trì", ""],
-    ["Trạng thái", "DISPOSED", "Đã thanh lý", ""],
-    ["Trạng thái", "LOST", "Mất", ""],
-    ["Trạng thái", "PENDING", "Chờ xử lý", ""],
-  ].forEach(([group, code, label, parentCode]) => {
-    lookup.addRow({ group, code, label, parentCode });
-  });
-
-  lookup.getRow(1).eachCell((cell) => {
-    cell.font = { name: "Be Vietnam Pro", size: 12, bold: true, color: { argb: "FFFFFFFF" } };
-    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF154D7C" } };
-    cell.alignment = { vertical: "middle", horizontal: "center" };
-  });
-  lookup.eachRow((row, rowNumber) => {
-    row.height = rowNumber === 1 ? 28 : 22;
-    row.eachCell((cell) => {
-      cell.font = {
-        name: "Be Vietnam Pro",
-        size: rowNumber === 1 ? 12 : 11,
-        bold: rowNumber === 1,
-        color: { argb: rowNumber === 1 ? "FFFFFFFF" : "FF111827" },
-      };
-      cell.border = { bottom: { style: "thin", color: { argb: "FFE5E7EB" } } };
-    });
-  });
+  addCategoryReferenceSheet(workbook, { categories });
 
   const buffer = await workbook.xlsx.writeBuffer();
   const blob = new Blob([buffer], {
@@ -1893,7 +1845,7 @@ export function AssetsPage() {
   const handleDownloadTemplate = async () => {
     const loadingToast = toast.loading("Đang tạo file mẫu Excel...");
     try {
-      await downloadAssetImportTemplate();
+      await downloadAssetImportTemplate(categoryTree);
       toast.success("Đã tải file mẫu Excel.", { id: loadingToast });
     } catch {
       toast.error("Không tạo được file mẫu Excel.", { id: loadingToast });
@@ -1914,7 +1866,6 @@ export function AssetsPage() {
       <header className="asset-page-header">
         <div>
           <h2>Danh sách tài sản</h2>
-          <span>Quản lý, lọc và cập nhật thông tin tài sản</span>
         </div>
       </header>
 

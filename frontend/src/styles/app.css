@@ -6341,6 +6341,8 @@ textarea,
 .asset-bulk-panel select,
 .asset-toolbar input,
 .asset-toolbar select,
+.category-filters input,
+.category-filters select,
 .category-editor input,
 .category-editor select,
 .category-editor textarea {
@@ -6793,6 +6795,8 @@ textarea,
 .asset-bulk-panel select,
 .asset-toolbar input,
 .asset-toolbar select,
+.category-filters input,
+.category-filters select,
 .asset-import-file-button,
 .asset-import-summary > div,
 .asset-import-row-status,
@@ -8253,6 +8257,8 @@ textarea,
 #root .modal-actions button,
 #root .asset-toolbar button,
 #root .asset-toolbar select,
+.category-filters input,
+.category-filters select,
 #root .booking-filters select,
 #root .booking-filters input,
 #root .asset-filter-field select,
@@ -9774,21 +9780,21 @@ textarea,
   grid-template-rows: auto auto auto minmax(0, auto);
   min-height: 0;
   overflow: hidden;
-  border-color: var(--bimlab-line) !important;
+  border: 0 !important;
   background: var(--bimlab-blue-soft-2) !important;
 }
 
 #root .category-filters {
   padding: 5px;
-  border: 1px solid var(--bimlab-line);
-  background: #ffffff;
+  border: 0 !important;
+  background: transparent !important;
 }
 
 #root .category-org-viewport {
   height: 420px;
   min-height: 420px;
   max-height: 420px;
-  border-color: var(--bimlab-line) !important;
+  border: 0 !important;
   background:
     linear-gradient(90deg, rgba(21, 80, 127, 0.035) 1px, transparent 1px),
     linear-gradient(180deg, rgba(21, 80, 127, 0.035) 1px, transparent 1px), var(--bimlab-blue-soft) !important;
@@ -13009,4 +13015,51 @@ body,
   #root .dashboard-hero-copy img {
     width: 140px !important;
   }
+}
+/* Category Excel import uses the same reference sheet as the asset import template. */
+.category-page-actions {
+  margin-bottom: 8px;
+}
+
+.asset-import-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0 6px;
+}
+
+.asset-import-file-note {
+  margin: 0 0 8px;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.asset-import-note {
+  display: block;
+  max-width: 360px;
+  overflow: hidden;
+  color: var(--text-muted);
+  text-overflow: ellipsis;
+  white-space: pre-line;
+}
+
+.import-status {
+  font-weight: 650;
+}
+
+.import-status.valid {
+  color: #166534;
+}
+
+.import-status.invalid {
+  color: #991b1b;
+}
+
+.import-status.warning {
+  color: #92400e;
+}
+
+.import-status.pending {
+  color: var(--text-muted);
 }
