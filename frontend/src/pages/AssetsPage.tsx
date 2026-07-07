@@ -3189,22 +3189,24 @@ export function AssetsPage() {
               </div>
 
               <div className="asset-import-controls">
-                <div className="asset-import-options">
-                  <label>
-                    <span>Chế độ nhập dữ liệu</span>
-                    <select
-                      value={importMode}
-                      onChange={(event) => setImportMode(event.target.value as ImportMode)}
-                    >
-                      <option value="VALID_ROWS_ONLY">Chỉ nhập những dòng hợp lệ</option>
-                      <option value="ALL_OR_NOTHING">Tất cả hoặc không nhập</option>
-                    </select>
-                  </label>
-                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%", gap: "12px", flexWrap: "wrap" }}>
+                  <div className="asset-import-options">
+                    <label style={{ display: "flex", alignItems: "center", gap: "8px", margin: 0 }}>
+                      <span style={{ color: "#64748b", fontSize: "11px", fontWeight: 600 }}>Chế độ nhập dữ liệu:</span>
+                      <select
+                        value={importMode}
+                        onChange={(event) => setImportMode(event.target.value as ImportMode)}
+                        style={{ padding: "4px 8px", borderRadius: "4px", border: "1px solid #dbe3ef", fontSize: "11px", color: "#334155" }}
+                      >
+                        <option value="VALID_ROWS_ONLY">Chỉ nhập những dòng hợp lệ</option>
+                        <option value="ALL_OR_NOTHING">Tất cả hoặc không nhập</option>
+                      </select>
+                    </label>
+                  </div>
 
-                <div className="asset-import-preview-toolbar">
-                  <span>Trạng thái dòng</span>
-                  <div>
+                  <div className="asset-import-preview-toolbar" style={{ display: "flex", alignItems: "center", gap: "8px", margin: 0, padding: 0 }}>
+                    <span style={{ color: "#64748b", fontSize: "11px", fontWeight: 600 }}>Trạng thái dòng:</span>
+                    <div style={{ display: "flex", gap: "6px" }}>
                     <button
                       type="button"
                       data-active={importPreviewFilter === "ALL" ? "true" : undefined}
@@ -3238,6 +3240,8 @@ export function AssetsPage() {
                     </button>
                   </div>
                 </div>
+              </div>
+
               </div>
 
               <div className="asset-import-preview">
