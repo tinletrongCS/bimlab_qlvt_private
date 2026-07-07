@@ -51,7 +51,7 @@ public class AssetCategoryController {
     public AssetCategoryResponse create(@Valid @RequestBody AssetCategoryRequest req) {
         return service.createCategory(req);
     }
-
+    // Lúc nhấn nút kiểm tra dữ liệu
     @PostMapping("/import/validate")
     @PreAuthorize("hasAuthority('asset_manage')")
     public AssetCategoryImportValidationResponse validateImport(

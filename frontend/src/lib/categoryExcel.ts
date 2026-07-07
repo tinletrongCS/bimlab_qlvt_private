@@ -28,7 +28,7 @@ const statusReferenceRows = [
 function flattenCategoryRows(categories: AssetCategoryTree[]) {
   const rows: string[][] = [];
   const visit = (node: AssetCategoryTree, fallbackParentCode = "") => {
-    rows.push(["Danh mục", node.code, node.name, node.parentId ? fallbackParentCode : ""]);
+    rows.push(["Danh mục", node.code, node.name, node.parentId ? fallbackParentCode : node.assetClass]);
     node.children.forEach((child) => visit(child, node.code));
   };
   categories.forEach((root) => visit(root));

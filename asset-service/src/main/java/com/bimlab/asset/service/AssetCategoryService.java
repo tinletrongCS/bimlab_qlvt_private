@@ -1,9 +1,12 @@
 package com.bimlab.asset.service;
 
 import com.bimlab.asset.dto.request.AssetCategoryImportCommitRequest;
+import com.bimlab.asset.dto.request.AssetCategoryImportRowRequest;
 import com.bimlab.asset.dto.request.AssetCategoryImportValidateRequest;
 import com.bimlab.asset.dto.request.AssetCategoryRequest;
 import com.bimlab.asset.dto.response.AssetCategoryImportCommitResponse;
+import com.bimlab.asset.dto.response.AssetCategoryImportMessageResponse;
+import com.bimlab.asset.dto.response.AssetCategoryImportRowResult;
 import com.bimlab.asset.dto.response.AssetCategoryImportValidationResponse;
 import com.bimlab.asset.dto.response.AssetCategoryResponse;
 import com.bimlab.asset.dto.response.AssetCategoryTreeResponse;
@@ -90,45 +93,134 @@ public class AssetCategoryService {
     @Transactional(readOnly = true)
     public AssetCategoryImportValidationResponse validateCategoryImport(
             AssetCategoryImportValidateRequest req) {
-        // TODO PRACTICE CATEGORY IMPORT 1:
-        // Validate các dòng từ sheet DanhMuc_ThamChieu.
-        //
-        // Contract frontend gửi lên:
-        // - group: cột "Nhóm" trong Excel.
-        // - code: cột "Mã/Giá trị nhập", dùng làm khóa upsert.
-        // - name: cột "Diễn giải", là tên danh mục hoặc tên giá trị tham chiếu.
-        // - parentCode: cột "Danh mục cha", trỏ tới code của dòng cha nếu có.
-        //
-        // Yêu cầu gợi ý:
-        // - Chỉ xử lý các dòng group = "Danh mục"; các nhóm "Phân loại",
-        //   "Loại tài sản cố định", "Loại công cụ dụng cụ", "Trạng thái" có thể SKIP.
-        // - code và name không được rỗng.
-        // - code không được trùng lặp trong chính file upload.
-        // - Nếu parentCode có giá trị thì phải tồn tại trong DB hoặc nằm trong file upload.
-        // - Suy ra assetClass từ cha gần nhất:
-        //   FIXED_ASSET/TANGIBLE/INTANGIBLE => FIXED_ASSET,
-        //   TOOL_EQUIPMENT/SINGLE_USE/MULTI_USE => TOOL_EQUIPMENT.
-        // - Trả từng dòng status VALID/INVALID/WARNING và action CREATE/UPDATE/SKIP.
-        throw new UnsupportedOperationException("TODO: validate asset category import");
+        List<AssetCategoryImportRowRequest> rows = req.rows() == null ? List.of() : req.rows();
+        Map<String, AssetCategory> dbByCode = categories.findAllByOrderByNameAsc()
+                .stream()
+                .collect(java.util.stream.Collectors.toMap(
+                        category -> normalizeCode(category.getCode()),
+                        category -> category,
+                        (first, second) -> first
+                ));
+        Map<String, AssetCategoryImportRowRequest> fileCategoryByCode = rows.stream()
+                .filter(this::isCategoryImportRow)
+                .filter(row -> !normalizeCode(row.code()).isBlank())
+                .collect(java.util.stream.Collectors.toMap(
+                        row -> normalizeCode(row.code()),
+                        row -> row,
+                        (first, second) -> first
+                ));
+        Set<String> seenCodes = new HashSet<>();
+
+        List<AssetCategoryImportRowResult> results = rows.stream()
+                .map(row -> validateCategoryImportRow(row, dbByCode, fileCategoryByCode, seenCodes))
+                .toList();
+
+        int errorRows = (int) results.stream().filter(row -> !row.errors().isEmpty()).count();
+        int warningRows = (int) results.stream().filter(row -> row.errors().isEmpty() && !row.warnings().isEmpty()).count();
+        int validRows = (int) results.stream().filter(row -> row.errors().isEmpty() && !"SKIP".equals(row.action())).count();
+        String uploadStatus = errorRows > 0 ? "HAS_ERROR" : "VALID";
+
+        return new AssetCategoryImportValidationResponse(
+                uploadStatus,
+                results.size(),
+                validRows,
+                errorRows,
+                warningRows,
+                results
+        );
     }
 
     @Transactional
     public AssetCategoryImportCommitResponse importCategories(
             AssetCategoryImportCommitRequest req) {
-        // TODO PRACTICE CATEGORY IMPORT 2:
-        // Upsert danh mục sau khi người dùng bấm "Xác nhận nhập".
-        //
-        // Flow nên làm:
-        // 1. Gọi lại validateCategoryImport(...) hoặc tách helper validate dùng chung.
-        // 2. Nếu còn dòng INVALID thì không ghi DB, trả response FAILED/HAS_ERROR.
-        // 3. Với mỗi dòng action CREATE/UPDATE:
-        //    - Tìm AssetCategory theo code.
-        //    - Tìm parent theo parentCode nếu có.
-        //    - Set code, name, parent, assetClass, description, active=true.
-        //    - Save bằng categories.save(...).
-        // 4. Upsert theo thứ tự cha trước con để tránh parent chưa tồn tại.
-        // 5. Trả importedRows, updatedRows, skippedRows, errorRows và rows preview cuối.
-        throw new UnsupportedOperationException("TODO: import asset categories");
+        AssetCategoryImportValidateRequest validateReq = new AssetCategoryImportValidateRequest(req.rows());
+        AssetCategoryImportValidationResponse validation = validateCategoryImport(validateReq);
+
+        if ("HAS_ERROR".equals(validation.uploadStatus())) {
+            return new AssetCategoryImportCommitResponse(
+                    "FAILED",
+                    0,
+                    0,
+                    (int) validation.rows().stream().filter(r -> "SKIP".equals(r.action())).count(),
+                    validation.errorRows(),
+                    validation.rows()
+            );
+        }
+
+        Map<String, AssetCategory> dbByCode = categories.findAllByOrderByNameAsc()
+                .stream()
+                .collect(java.util.stream.Collectors.toMap(
+                        category -> normalizeCode(category.getCode()),
+                        category -> category,
+                        (first, second) -> first
+                ));
+
+        Map<String, AssetCategoryImportRowRequest> fileCategoryByCode = req.rows().stream()
+                .filter(this::isCategoryImportRow)
+                .filter(row -> !normalizeCode(row.code()).isBlank())
+                .collect(java.util.stream.Collectors.toMap(
+                        row -> normalizeCode(row.code()),
+                        row -> row,
+                        (first, second) -> first
+                ));
+
+        List<AssetCategoryImportRowRequest> sortedRows = new ArrayList<>();
+        Set<String> visited = new HashSet<>();
+        Set<String> visiting = new HashSet<>();
+        
+        for (AssetCategoryImportRowRequest row : fileCategoryByCode.values()) {
+            dfsSort(row, fileCategoryByCode, visited, visiting, sortedRows);
+        }
+
+        int importedRows = 0;
+        int updatedRows = 0;
+
+        for (AssetCategoryImportRowRequest row : sortedRows) {
+            String code = normalizeCode(row.code());
+            String parentCode = normalizeCode(row.parentCode());
+
+            AssetCategory category = dbByCode.get(code);
+            boolean isUpdate = category != null;
+            if (!isUpdate) {
+                category = new AssetCategory();
+                category.setCode(trim(row.code())); 
+                category.setDescription("");
+            }
+
+            category.setName(trim(row.name()));
+            
+            AssetCategory parent = null;
+            if (!parentCode.isBlank()) {
+                parent = dbByCode.get(parentCode);
+            }
+            category.setParent(parent);
+
+            AssetClass assetClass = resolveImportAssetClass(code, dbByCode, fileCategoryByCode, new HashSet<>());
+            category.setAssetClass(assetClass);
+            category.setActive(true);
+
+            category = categories.save(category);
+            dbByCode.put(code, category);
+
+            if (isUpdate) {
+                updatedRows++;
+            } else {
+                importedRows++;
+            }
+        }
+        
+        int skippedRows = (int) validation.rows().stream()
+                .filter(r -> "SKIP".equals(r.action()))
+                .count();
+
+        return new AssetCategoryImportCommitResponse(
+                "SUCCESS",
+                importedRows,
+                updatedRows,
+                skippedRows,
+                0,
+                validation.rows()
+        );
     }
 
     @Transactional
@@ -218,5 +310,136 @@ public class AssetCategoryService {
                 category.getActive(),
                 children
         );
+    }
+
+    private AssetCategoryImportRowResult validateCategoryImportRow(
+            AssetCategoryImportRowRequest row,
+            Map<String, AssetCategory> dbByCode,
+            Map<String, AssetCategoryImportRowRequest> fileCategoryByCode,
+            Set<String> seenCodes) {
+        List<AssetCategoryImportMessageResponse> errors = new ArrayList<>();
+        List<AssetCategoryImportMessageResponse> warnings = new ArrayList<>();
+        String code = normalizeCode(row.code());
+        String name = trim(row.name());
+        String parentCode = normalizeCode(row.parentCode());
+
+        if (!isCategoryImportRow(row)) {
+            return new AssetCategoryImportRowResult(
+                    rowNumber(row),
+                    "VALID",
+                    code,
+                    name,
+                    parentCode,
+                    "SKIP",
+                    List.of(),
+                    List.of(message("group", "SKIPPED_REFERENCE_ROW", "Dòng tham chiếu không phải danh mục, backend sẽ bỏ qua."))
+            );
+        }
+
+        if (code.isBlank()) {
+            errors.add(message("code", "REQUIRED", "Mã danh mục không được rỗng."));
+        } else if (!seenCodes.add(code)) {
+            errors.add(message("code", "DUPLICATED_IN_FILE", "Mã danh mục bị trùng trong file upload."));
+        }
+
+        if (name.isBlank()) {
+            errors.add(message("name", "REQUIRED", "Tên danh mục không được rỗng."));
+        }
+
+        if (!parentCode.isBlank()
+                && resolveImportAssetClass(parentCode, dbByCode, fileCategoryByCode, new HashSet<>()) == null) {
+            errors.add(message("parentCode", "NOT_FOUND", "Danh mục cha không tồn tại trong DB hoặc trong file upload."));
+        }
+
+        if (!parentCode.isBlank() && parentCode.equals(code)) {
+            errors.add(message("parentCode", "SELF_PARENT", "Danh mục cha không được trỏ về chính mã danh mục."));
+        }
+
+        AssetClass assetClass = resolveImportAssetClass(
+                parentCode.isBlank() ? code : parentCode,
+                dbByCode,
+                fileCategoryByCode,
+                new HashSet<>()
+        );
+        if (assetClass == null && !dbByCode.containsKey(code)) {
+            errors.add(message("assetClass", "UNRESOLVED", "Không suy ra được loại tài sản từ Danh mục cha."));
+        }
+
+        String action = dbByCode.containsKey(code) ? "UPDATE" : "CREATE";
+        String status = errors.isEmpty() ? (warnings.isEmpty() ? "VALID" : "WARNING") : "INVALID";
+        return new AssetCategoryImportRowResult(
+                rowNumber(row),
+                status,
+                code,
+                name,
+                parentCode,
+                action,
+                errors,
+                warnings
+        );
+    }
+
+    private AssetClass resolveImportAssetClass(
+            String code,
+            Map<String, AssetCategory> dbByCode,
+            Map<String, AssetCategoryImportRowRequest> fileCategoryByCode,
+            Set<String> visiting) {
+        String normalized = normalizeCode(code);
+        if (normalized.isBlank()) return null;
+        if (Set.of("FIXED_ASSET", "TANGIBLE", "INTANGIBLE").contains(normalized)) return AssetClass.FIXED_ASSET;
+        if (Set.of("TOOL_EQUIPMENT", "SINGLE_USE", "MULTI_USE").contains(normalized)) return AssetClass.TOOL_EQUIPMENT;
+        AssetCategory dbCategory = dbByCode.get(normalized);
+        if (dbCategory != null) return dbCategory.getAssetClass();
+        AssetCategoryImportRowRequest fileRow = fileCategoryByCode.get(normalized);
+        if (fileRow == null || !visiting.add(normalized)) return null;
+        return resolveImportAssetClass(fileRow.parentCode(), dbByCode, fileCategoryByCode, visiting);
+    }
+
+    private boolean isCategoryImportRow(AssetCategoryImportRowRequest row) {
+        return "danh muc".equals(normalizeText(row.group()));
+    }
+
+    private AssetCategoryImportMessageResponse message(String field, String code, String message) {
+        return new AssetCategoryImportMessageResponse(field, code, message);
+    }
+
+    private String normalizeCode(String raw) {
+        return trim(raw).toUpperCase(Locale.ROOT);
+    }
+
+    private String normalizeText(String raw) {
+        return java.text.Normalizer.normalize(trim(raw), java.text.Normalizer.Form.NFD)
+                .replaceAll("\\p{M}", "")
+                .replace('đ', 'd')
+                .replace('Đ', 'D')
+                .toLowerCase(Locale.ROOT)
+                .trim();
+    }
+
+    private String trim(String raw) {
+        return raw == null ? "" : raw.trim();
+    }
+
+    private int rowNumber(AssetCategoryImportRowRequest row) {
+        return row.rowNumber() == null ? 0 : row.rowNumber();
+    }
+
+    private void dfsSort(AssetCategoryImportRowRequest row, 
+                         Map<String, AssetCategoryImportRowRequest> fileCategoryByCode, 
+                         Set<String> visited, Set<String> visiting, 
+                         List<AssetCategoryImportRowRequest> sortedRows) {
+        String code = normalizeCode(row.code());
+        if (visited.contains(code)) return;
+        if (!visiting.add(code)) return; 
+        
+        String parentCode = normalizeCode(row.parentCode());
+        if (!parentCode.isBlank()) {
+            AssetCategoryImportRowRequest parentRow = fileCategoryByCode.get(parentCode);
+            if (parentRow != null) {
+                dfsSort(parentRow, fileCategoryByCode, visited, visiting, sortedRows);
+            }
+        }
+        visited.add(code);
+        sortedRows.add(row);
     }
 }
