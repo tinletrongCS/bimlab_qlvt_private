@@ -701,8 +701,8 @@ export function AssetCategoriesPage() {
       setForm(emptyForm);
       setParentFieldsLocked(false);
       await refresh();
-    closeImport();
-      } catch {
+      closeImport();
+    } catch {
       toast.error("Không lưu được danh mục.");
     } finally {
       setSubmitting(false);
@@ -817,8 +817,8 @@ export function AssetCategoriesPage() {
         rows: result.rows,
       });
       await refresh();
-    closeImport();
-      } catch {
+      closeImport();
+    } catch {
       toast.error("Backend lưu danh mục đang chờ bạn implement phần TODO.");
     } finally {
       setImportBusy(false);
@@ -1155,7 +1155,16 @@ export function AssetCategoriesPage() {
                 </div>
 
                 <div className="asset-import-controls">
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%", gap: "12px", flexWrap: "wrap" }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      width: "100%",
+                      gap: "12px",
+                      flexWrap: "wrap",
+                    }}
+                  >
                     <div className="asset-import-options">
                       {importPreview?.uploadStatus === "VALID" && (
                         <div className="asset-import-tabs" style={{ display: "flex", gap: "8px" }}>
@@ -1200,44 +1209,51 @@ export function AssetCategoriesPage() {
                     <div
                       className="asset-import-preview-toolbar"
                       data-hidden={importPreviewTab === "TABLE" ? undefined : "true"}
-                      style={{ display: "flex", alignItems: "center", gap: "8px", margin: 0, padding: 0 }}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
+                        margin: 0,
+                        padding: 0,
+                      }}
                     >
-                      <span style={{ color: "#64748b", fontSize: "11px", fontWeight: 600 }}>Trạng thái dòng:</span>
+                      <span style={{ color: "#64748b", fontSize: "11px", fontWeight: 600 }}>
+                        Trạng thái dòng:
+                      </span>
                       <div style={{ display: "flex", gap: "6px" }}>
-                      <button
-                        type="button"
-                        data-active={importPreviewFilter === "ALL" ? "true" : undefined}
-                        onClick={() => setImportPreviewFilter("ALL")}
-                      >
-                        Tất cả <strong>{importPreview?.totalRows ?? importRows.length}</strong>
-                      </button>
-                      <button
-                        type="button"
-                        data-active={importPreviewFilter === "VALID" ? "true" : undefined}
-                        disabled={!importPreview}
-                        onClick={() => setImportPreviewFilter("VALID")}
-                      >
-                        Hợp lệ <strong>{importPreview?.validRows ?? 0}</strong>
-                      </button>
-                      <button
-                        type="button"
-                        data-active={importPreviewFilter === "INVALID" ? "true" : undefined}
-                        disabled={!importPreview}
-                        onClick={() => setImportPreviewFilter("INVALID")}
-                      >
-                        Lỗi <strong>{importPreview?.errorRows ?? 0}</strong>
-                      </button>
-                      <button
-                        type="button"
-                        data-active={importPreviewFilter === "WARNING" ? "true" : undefined}
-                        disabled={!importPreview}
-                        onClick={() => setImportPreviewFilter("WARNING")}
-                      >
-                        Cảnh báo <strong>{importPreview?.warningRows ?? 0}</strong>
-                      </button>
+                        <button
+                          type="button"
+                          data-active={importPreviewFilter === "ALL" ? "true" : undefined}
+                          onClick={() => setImportPreviewFilter("ALL")}
+                        >
+                          Tất cả <strong>{importPreview?.totalRows ?? importRows.length}</strong>
+                        </button>
+                        <button
+                          type="button"
+                          data-active={importPreviewFilter === "VALID" ? "true" : undefined}
+                          disabled={!importPreview}
+                          onClick={() => setImportPreviewFilter("VALID")}
+                        >
+                          Hợp lệ <strong>{importPreview?.validRows ?? 0}</strong>
+                        </button>
+                        <button
+                          type="button"
+                          data-active={importPreviewFilter === "INVALID" ? "true" : undefined}
+                          disabled={!importPreview}
+                          onClick={() => setImportPreviewFilter("INVALID")}
+                        >
+                          Lỗi <strong>{importPreview?.errorRows ?? 0}</strong>
+                        </button>
+                        <button
+                          type="button"
+                          data-active={importPreviewFilter === "WARNING" ? "true" : undefined}
+                          disabled={!importPreview}
+                          onClick={() => setImportPreviewFilter("WARNING")}
+                        >
+                          Cảnh báo <strong>{importPreview?.warningRows ?? 0}</strong>
+                        </button>
+                      </div>
                     </div>
-                  </div>
-
                   </div>
 
                   <div className="asset-import-preview">
