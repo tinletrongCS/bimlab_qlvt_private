@@ -13059,3 +13059,70 @@ body,
 #root .status-badge[class*="status-"] {
   background: transparent !important;
 }
+
+/* Fix Import Preview Scrolling */
+#root .asset-import-preview {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  max-height: 480px !important;
+  overflow: auto !important;
+}
+
+/* Fix Note Truncation */
+#root .asset-import-message-cell {
+  max-width: 250px !important;
+}
+
+#root .asset-import-note {
+  display: block;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Fix overlap between file row and summary */
+#root .asset-import-body {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 16px !important;
+  overflow-y: auto !important;
+}
+
+#root .asset-import-file-row {
+  flex-shrink: 0 !important;
+  min-height: fit-content !important;
+}
+
+#root .asset-import-summary {
+  flex-shrink: 0 !important;
+}
+
+#root .asset-import-controls {
+  flex: 1 1 auto !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+#root .asset-import-preview-toolbar {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  width: 100% !important;
+}
+
+#root .asset-import-preview {
+  flex: 1 1 auto !important;
+}
+
+/* Colorize the summary statistics */
+#root .asset-import-summary > div:nth-child(2) strong {
+  color: #166534 !important; /* Valid: Green */
+}
+#root .asset-import-summary > div:nth-child(3) strong {
+  color: #991b1b !important; /* Error: Red */
+}
+#root .asset-import-summary > div:nth-child(4) strong {
+  color: #a16207 !important; /* Warning: Yellow */
+}
