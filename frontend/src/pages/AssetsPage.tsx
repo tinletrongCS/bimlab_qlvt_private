@@ -211,6 +211,17 @@ function collectCategoryIds(node: AssetCategoryTree): Set<number> {
   return ids;
 }
 
+function collectCategoryCodes(node: AssetCategoryTree): Set<string> {
+  const codes = new Set<string>();
+  if (node.code) codes.add(node.code);
+  node.children.forEach((child) => {
+    collectCategoryCodes(child).forEach((code) => {
+      codes.add(code);
+    });
+  });
+  return codes;
+}
+
 function findCategoryPath(nodes: AssetCategoryTree[], path: string[]): AssetCategoryTree[] {
   const result: AssetCategoryTree[] = [];
   let current = nodes;
@@ -342,79 +353,19 @@ function dateKey(value?: string) {
   return normalized.length >= 10 ? normalized.slice(0, 10) : normalized;
 }
 
-function assetCategoryTokens(asset: AssetItem): Set<string> {
-  return new Set(
-    [
-      asset.category,
-      asset.assetCategory?.name,
-      asset.assetCategory?.code,
-      asset.assetClass,
-      asset.fixedAssetType,
-      asset.toolUsageType,
-      classLabel(asset.assetClass),
-      classLabel(asset.fixedAssetType),
-      classLabel(asset.toolUsageType),
-    ]
-      .filter(Boolean)
-      .map((value) => normalize(String(value))),
-  );
-}
-
-function categoryNodeTerms(node: AssetCategoryTree): Set<string> {
-  const name = normalize(node.name);
-  const code = normalize(node.code);
-  const source = `${name} ${code}`;
-  const terms = new Set([name, code].filter(Boolean));
-
-  if (
-    source.includes("fixed_asset") ||
-    source.includes("tscd") ||
-    source.includes("tai san co dinh")
-  ) {
-    terms.add("fixed_asset");
-    terms.add("tai san co dinh");
-  }
-  if (
-    source.includes("tool_equipment") ||
-    source.includes("ccdc") ||
-    source.includes("cong cu dung cu")
-  ) {
-    terms.add("tool_equipment");
-    terms.add("cong cu dung cu");
-  }
-  if (source.includes("intangible") || source.includes("vo hinh")) {
-    terms.add("intangible");
-    terms.add("vo hinh");
-  } else if (source.includes("tangible") || source.includes("huu hinh")) {
-    terms.add("tangible");
-    terms.add("huu hinh");
-  }
-  if (
-    source.includes("single_use") ||
-    source.includes("dung mot lan") ||
-    source.includes("dung 1 lan")
-  ) {
-    terms.add("single_use");
-    terms.add("dung mot lan");
-  }
-  if (source.includes("multi_use") || source.includes("dung nhieu lan")) {
-    terms.add("multi_use");
-    terms.add("dung nhieu lan");
-  }
-
-  return terms;
-}
-
 function assetMatchesCategoryNode(
   asset: AssetItem,
   node: AssetCategoryTree,
   descendantIds?: Set<number> | null,
+  descendantCodes?: Set<string> | null,
 ) {
   const assetCategoryId = asset.assetCategory?.id;
   if (assetCategoryId && descendantIds?.has(assetCategoryId)) return true;
-  const tokens = assetCategoryTokens(asset);
-  const nodeTerms = categoryNodeTerms(node);
-  return Array.from(nodeTerms).some((term) => tokens.has(term));
+
+  const assetCategoryCode = asset.category || asset.assetCategory?.code;
+  if (assetCategoryCode && descendantCodes?.has(assetCategoryCode)) return true;
+
+  return false;
 }
 
 function AssetCategoryFilterNode({
@@ -502,8 +453,6 @@ function AssetListPagination({
   const safePage = Math.min(page, pageCount);
   const start = total === 0 ? 0 : (safePage - 1) * pageSize + 1;
   const end = Math.min(safePage * pageSize, total);
-
-  if (total === 0) return null;
 
   return (
     <div className="table-pagination asset-list-pagination">
@@ -969,7 +918,7 @@ async function downloadAssetImportTemplate(categories: AssetCategoryTree[]) {
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
-  link.download = "mau_import_danh_sach_tai_san_bimlab.xlsx";
+  link.download = "mau_import_danh_sach_danh_muc_tai_san_bimlab.xlsx";
   link.click();
   URL.revokeObjectURL(url);
 }
@@ -1084,19 +1033,37 @@ export function AssetsPage() {
     return idsByCategory;
   }, [categoryTree]);
 
+  const categoryDescendantCodes = useMemo(() => {
+    const codesByCategory = new Map<number, Set<string>>();
+    const visit = (node: AssetCategoryTree): Set<string> => {
+      const codes = new Set<string>();
+      if (node.code) codes.add(node.code);
+      node.children.forEach((child) => {
+        visit(child).forEach((code) => {
+          codes.add(code);
+        });
+      });
+      codesByCategory.set(node.id, codes);
+      return codes;
+    };
+    categoryTree.forEach(visit);
+    return codesByCategory;
+  }, [categoryTree]);
+
   const categoryAssetCounts = useMemo(() => {
     const counts = new Map<number, number>();
     const visit = (node: AssetCategoryTree) => {
       const descendantIds = categoryDescendantIds.get(node.id) ?? collectCategoryIds(node);
+      const descendantCodes = categoryDescendantCodes.get(node.id) ?? collectCategoryCodes(node);
       const count = assets.filter((asset) =>
-        assetMatchesCategoryNode(asset, node, descendantIds),
+        assetMatchesCategoryNode(asset, node, descendantIds, descendantCodes),
       ).length;
       counts.set(node.id, count);
       node.children.forEach(visit);
     };
     categoryTree.forEach(visit);
     return counts;
-  }, [assets, categoryDescendantIds, categoryTree]);
+  }, [assets, categoryDescendantIds, categoryDescendantCodes, categoryTree]);
 
   const resetAssetFilters = () => {
     setCategoryPath([]);
@@ -1192,13 +1159,24 @@ export function AssetsPage() {
       ? (categoryDescendantIds.get(selectedCategoryNode.id) ??
         collectCategoryIds(selectedCategoryNode))
       : null;
+    const selectedCategoryCodes = selectedCategoryNode
+      ? (categoryDescendantCodes.get(selectedCategoryNode.id) ??
+        collectCategoryCodes(selectedCategoryNode))
+      : null;
     return assets.filter((asset) => {
       const matchesStatus = statusFilter === "ALL" || asset.status === statusFilter;
       const assetCategoryId = asset.assetCategory?.id;
+      const assetCategoryCode = asset.category || asset.assetCategory?.code;
       const matchesCategory =
         !selectedCategoryNode ||
         (assetCategoryId && selectedCategoryIds?.has(assetCategoryId)) ||
-        assetMatchesCategoryNode(asset, selectedCategoryNode, selectedCategoryIds);
+        (assetCategoryCode && selectedCategoryCodes?.has(assetCategoryCode)) ||
+        assetMatchesCategoryNode(
+          asset,
+          selectedCategoryNode,
+          selectedCategoryIds,
+          selectedCategoryCodes,
+        );
       const matchesSite = siteFilter === "ALL" || asset.siteId === Number(siteFilter);
       const matchesDepartment =
         departmentFilter === "ALL" || asset.departmentId === Number(departmentFilter);
@@ -1249,6 +1227,7 @@ export function AssetsPage() {
   }, [
     assets,
     categoryDescendantIds,
+    categoryDescendantCodes,
     departments,
     employees,
     projects,
@@ -1639,9 +1618,17 @@ export function AssetsPage() {
       label: "Tài sản",
       locked: true,
       render: (item) => (
-        <div className="asset-name-cell">
-          <strong>{highlightSearchText(item.name, query)}</strong>
-          <span>{highlightSearchText(item.assetCode, query)}</span>
+        <div
+          className="asset-name-cell"
+          title={`${item.name} - ${item.assetCode}`}
+          style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+        >
+          <strong style={{ overflow: "hidden", textOverflow: "ellipsis", display: "block" }}>
+            {highlightSearchText(item.name, query)}
+          </strong>
+          <span style={{ overflow: "hidden", textOverflow: "ellipsis", display: "block" }}>
+            {highlightSearchText(item.assetCode, query)}
+          </span>
         </div>
       ),
     },
@@ -1649,14 +1636,18 @@ export function AssetsPage() {
       id: "category",
       label: "Danh mục",
       render: (item) => (
-        <div className="asset-muted-stack">
-          <strong>
+        <div
+          className="asset-muted-stack"
+          title={`${item.assetCategory?.name || item.category || "Chưa phân loại"} - ${item.assetCategory?.code || "Chưa có mã danh mục"}`}
+          style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+        >
+          <strong style={{ overflow: "hidden", textOverflow: "ellipsis", display: "block" }}>
             {highlightSearchText(
               item.assetCategory?.name || item.category || "Chưa phân loại",
               query,
             )}
           </strong>
-          <span>
+          <span style={{ overflow: "hidden", textOverflow: "ellipsis", display: "block" }}>
             {highlightSearchText(item.assetCategory?.code || "Chưa có mã danh mục", query)}
           </span>
         </div>
@@ -2196,18 +2187,28 @@ export function AssetsPage() {
                             </label>
                           </td>
                         )}
-                        {configuredAssetColumns.map((column) => (
-                          <td
-                            key={column.id}
-                            className={`asset-table-col-${column.id} ${
-                              ["asset", "category"].includes(column.id)
-                                ? `asset-table-sticky-left asset-table-sticky-${column.id}`
-                                : ""
-                            } ${column.align ? `align-${column.align}` : ""}`}
-                          >
-                            {column.render(item)}
-                          </td>
-                        ))}
+                        {configuredAssetColumns.map((column) => {
+                          const content = column.render(item);
+                          const titleText =
+                            typeof content === "string"
+                              ? content
+                              : typeof content === "number"
+                                ? String(content)
+                                : undefined;
+                          return (
+                            <td
+                              key={column.id}
+                              title={titleText}
+                              className={`asset-table-col-${column.id} ${
+                                ["asset", "category"].includes(column.id)
+                                  ? `asset-table-sticky-left asset-table-sticky-${column.id}`
+                                  : ""
+                              } ${column.align ? `align-${column.align}` : ""}`}
+                            >
+                              {content}
+                            </td>
+                          );
+                        })}
                         <td className="asset-table-actions-col asset-table-sticky-right">
                           <OverflowActions
                             label={`Mở thao tác cho ${item.assetCode}`}
@@ -3128,7 +3129,7 @@ export function AssetsPage() {
             <div className="asset-qr-placeholder">
               <FiGrid />
               <strong>{qrAsset.name}</strong>
-              <span>Tính năng sinh và in QR sẽ được hiện thực ở bước sau.</span>
+              <span>Updated soon.</span>
             </div>
             <div className="modal-actions">
               <button type="button" className="secondary" onClick={() => setQrAsset(null)}>
@@ -3301,11 +3302,11 @@ export function AssetsPage() {
                             <td>{source?.bookValue ? money.format(source.bookValue) : "—"}</td>
                             <td>
                               {status ? (
-                                <span className="asset-import-row-status">
-                                  {importStatusLabel(status)}
-                                </span>
+                                <StatusBadge value={status} label={importStatusLabel(status)} />
+                              ) : source?.status ? (
+                                <StatusBadge value={source.status} />
                               ) : (
-                                source?.status || "—"
+                                "—"
                               )}
                             </td>
                             <td className="asset-import-message-cell">

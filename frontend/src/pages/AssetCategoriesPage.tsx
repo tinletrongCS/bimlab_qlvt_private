@@ -1,7 +1,6 @@
 import { type FormEvent, type ReactNode, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import {
-  FiCheckCircle,
   FiDownload,
   FiFileText,
   FiPlus,
@@ -12,7 +11,7 @@ import {
   FiUpload,
   FiX,
 } from "react-icons/fi";
-import { PanelHeader } from "../components/PanelHeader";
+import { StatusBadge } from "../components/StatusBadge";
 import {
   downloadCategoryImportTemplate,
   emptyCategoryImportResult,
@@ -473,6 +472,75 @@ function StructureRow({
   );
 }
 
+type ImportPreviewTreeNode = AssetCategoryImportRowPayload & {
+  children: ImportPreviewTreeNode[];
+};
+
+function renderImportPreviewTree(
+  rows: AssetCategoryImportRowPayload[],
+  expandedCodes: Set<string>,
+  onToggle: (code: string) => void,
+) {
+  const byCode = new Map<string, ImportPreviewTreeNode>();
+  const roots: ImportPreviewTreeNode[] = [];
+
+  rows.forEach((row) => {
+    if (row.code) {
+      byCode.set(row.code.trim().toUpperCase(), { ...row, children: [] });
+    }
+  });
+
+  rows.forEach((row) => {
+    if (!row.code) return;
+    const node = byCode.get(row.code.trim().toUpperCase());
+    if (!node) return;
+    if (row.parentCode) {
+      const pCode = row.parentCode.trim().toUpperCase();
+      const parent = byCode.get(pCode);
+      if (parent) {
+        parent.children.push(node);
+        return;
+      }
+    }
+    roots.push(node);
+  });
+
+  const renderNode = (node: ImportPreviewTreeNode, depth = 0) => {
+    const code = (node.code ?? "").trim().toUpperCase();
+    const hasChildren = node.children.length > 0;
+    const open = expandedCodes.has(code);
+    return (
+      <div key={code} className="category-structure-row">
+        <button
+          type="button"
+          className="category-structure-row-head"
+          style={{ paddingLeft: `${depth * 16 + 10}px` }}
+          onClick={() => {
+            if (hasChildren) onToggle(code);
+          }}
+        >
+          {hasChildren ? (
+            <span className={`category-arrow ${open ? "open" : ""}`}>▶</span>
+          ) : (
+            <span className="category-arrow-spacer" />
+          )}
+          <span className="category-structure-title" style={{ flex: 1, fontFamily: "inherit" }}>
+            {node.name}
+          </span>
+          <span className="category-structure-count">{node.code}</span>
+        </button>
+        {hasChildren && open && (
+          <div className="category-structure-row-body" style={{ display: "block" }}>
+            {node.children.map((child) => renderNode(child, depth + 1))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  return <>{roots.map((root) => renderNode(root))}</>;
+}
+
 export function AssetCategoriesPage() {
   const [categories, setCategories] = useState<AssetCategory[]>([]);
   const [form, setForm] = useState<AssetCategoryPayload>(emptyForm);
@@ -490,9 +558,12 @@ export function AssetCategoriesPage() {
   const [importBusy, setImportBusy] = useState(false);
   const [importFileName, setImportFileName] = useState("");
   const [importRows, setImportRows] = useState<AssetCategoryImportRowPayload[]>([]);
-  const [importPreview, setImportPreview] =
-    useState<AssetCategoryImportValidationResponse | null>(null);
+  const [importPreview, setImportPreview] = useState<AssetCategoryImportValidationResponse | null>(
+    null,
+  );
   const [importCancelConfirm, setImportCancelConfirm] = useState(false);
+  const [importPreviewTab, setImportPreviewTab] = useState<"TABLE" | "TREE">("TABLE");
+  const [expandedImportTreeCodes, setExpandedImportTreeCodes] = useState<Set<string>>(new Set());
   const [importPreviewFilter, setImportPreviewFilter] = useState<
     "ALL" | "VALID" | "INVALID" | "WARNING"
   >("ALL");
@@ -666,7 +737,9 @@ export function AssetCategoriesPage() {
     setImportRows([]);
     setImportPreview(null);
     setImportCancelConfirm(false);
+    setImportPreviewTab("TABLE");
     setImportPreviewFilter("ALL");
+    setExpandedImportTreeCodes(new Set());
   };
 
   const closeImport = () => {
@@ -683,11 +756,14 @@ export function AssetCategoriesPage() {
       setImportFileName(file.name);
       setImportRows(rows);
       setImportPreview(emptyCategoryImportResult(rows));
+      setImportPreviewTab("TABLE");
+      setExpandedImportTreeCodes(new Set());
       toast.success(`Đã đọc ${rows.length} dòng từ sheet danh mục.`);
     } catch (error) {
       setImportFileName("");
       setImportRows([]);
       setImportPreview(null);
+      setExpandedImportTreeCodes(new Set());
       toast.error(error instanceof Error ? error.message : "Không đọc được file Excel.");
     } finally {
       setImportBusy(false);
@@ -745,6 +821,15 @@ export function AssetCategoriesPage() {
     }
   };
 
+  const toggleImportTreeNode = (code: string) => {
+    setExpandedImportTreeCodes((prev) => {
+      const next = new Set(prev);
+      if (next.has(code)) next.delete(code);
+      else next.add(code);
+      return next;
+    });
+  };
+
   const renderImportNotes = (row: AssetCategoryImportRowResult) => {
     const notes = [...row.errors, ...row.warnings].map((item) => item.message);
     if (notes.length === 0) return "—";
@@ -775,7 +860,7 @@ export function AssetCategoriesPage() {
               setImportOpen(true);
             }}
           >
-            <FiUpload /> Tải lên Excel
+            <FiUpload /> Import danh mục
           </button>
         </div>
 
@@ -1067,9 +1152,50 @@ export function AssetCategoriesPage() {
 
                 <div className="asset-import-controls">
                   <div className="asset-import-options">
+                    {importPreview?.uploadStatus === "VALID" && (
+                      <div className="asset-import-tabs" style={{ display: "flex", gap: "8px" }}>
+                        <button
+                          type="button"
+                          style={{
+                            padding: "4px 12px",
+                            fontSize: "11px",
+                            fontFamily: "inherit",
+                            background: importPreviewTab === "TABLE" ? "#e0f2fe" : "transparent",
+                            border: "none",
+                            color: importPreviewTab === "TABLE" ? "#0369a1" : "#6b7280",
+                            borderRadius: "4px",
+                            fontWeight: importPreviewTab === "TABLE" ? 500 : 400,
+                            cursor: "pointer",
+                          }}
+                          onClick={() => setImportPreviewTab("TABLE")}
+                        >
+                          Danh sách dòng
+                        </button>
+                        <button
+                          type="button"
+                          style={{
+                            padding: "4px 12px",
+                            fontSize: "11px",
+                            fontFamily: "inherit",
+                            background: importPreviewTab === "TREE" ? "#e0f2fe" : "transparent",
+                            border: "none",
+                            color: importPreviewTab === "TREE" ? "#0369a1" : "#6b7280",
+                            borderRadius: "4px",
+                            fontWeight: importPreviewTab === "TREE" ? 500 : 400,
+                            cursor: "pointer",
+                          }}
+                          onClick={() => setImportPreviewTab("TREE")}
+                        >
+                          Phân cấp cha con
+                        </button>
+                      </div>
+                    )}
                   </div>
 
-                  <div className="asset-import-preview-toolbar">
+                  <div
+                    className="asset-import-preview-toolbar"
+                    data-hidden={importPreviewTab === "TABLE" ? undefined : "true"}
+                  >
                     <span>Trạng thái dòng</span>
                     <div>
                       <button
@@ -1105,70 +1231,86 @@ export function AssetCategoriesPage() {
                       </button>
                     </div>
                   </div>
-                </div>
 
-                <div className="asset-import-preview">
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>Dòng</th>
-                        <th>Nhóm</th>
-                        <th>Mã</th>
-                        <th>Tên danh mục</th>
-                        <th>Danh mục cha</th>
-                        <th>Thao tác</th>
-                        <th>Trạng thái</th>
-                        <th>Ghi chú kiểm tra</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {importRows.length === 0 || importPreviewRows.length === 0 ? (
-                        <tr className="asset-table-empty-row">
-                          <td colSpan={8}>
-                            <div className="asset-table-empty-state">
-                              {importRows.length === 0
-                                ? "Chọn file Excel để xem dữ liệu trước khi import."
-                                : "Không có dòng phù hợp bộ lọc."}
-                            </div>
-                          </td>
-                        </tr>
-                      ) : (
-                        importPreviewRows.map((row) => {
-                          const isResultRow = "status" in row;
-                          const source = importRows.find((item) => item.rowNumber === row.rowNumber) || (row as any);
-                          const status = isResultRow ? row.status : undefined;
-                          return (
-                            <tr key={row.rowNumber} data-status={status}>
-                              <td>{row.rowNumber}</td>
-                              <td>{source?.group || "—"}</td>
-                              <td>{row.code || source?.code || "—"}</td>
-                              <td>{row.name || source?.name || "—"}</td>
-                              <td>{row.parentCode || source?.parentCode || "—"}</td>
-                              <td>{isResultRow ? importActionLabel(row.action) : "—"}</td>
-                              <td>
-                                {status ? (
-                                  <span className="asset-import-row-status">
-                                    {importStatusLabel(status)}
-                                  </span>
-                                ) : (
-                                  "—"
-                                )}
-                              </td>
-                              <td className="asset-import-message-cell">
-                                {isResultRow ? (
-                                  <span className="asset-import-note" title={renderImportNotes(row)}>
-                                    {renderImportNotes(row)}
-                                  </span>
-                                ) : (
-                                  "—"
-                                )}
+                  <div className="asset-import-preview">
+                    {importPreviewTab === "TREE" ? (
+                      <div className="category-structure-rows" style={{ padding: "12px" }}>
+                        {renderImportPreviewTree(
+                          importRows,
+                          expandedImportTreeCodes,
+                          toggleImportTreeNode,
+                        )}
+                      </div>
+                    ) : (
+                      <table>
+                        <thead>
+                          <tr>
+                            <th>Dòng</th>
+                            <th>Nhóm</th>
+                            <th>Mã</th>
+                            <th>Tên danh mục</th>
+                            <th>Danh mục cha</th>
+                            <th>Thao tác</th>
+                            <th>Trạng thái</th>
+                            <th>Ghi chú kiểm tra</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {importRows.length === 0 || importPreviewRows.length === 0 ? (
+                            <tr className="asset-table-empty-row">
+                              <td colSpan={8}>
+                                <div className="asset-table-empty-state">
+                                  {importRows.length === 0
+                                    ? "Chọn file Excel để xem dữ liệu trước khi import."
+                                    : "Không có dòng phù hợp bộ lọc."}
+                                </div>
                               </td>
                             </tr>
-                          );
-                        })
-                      )}
-                    </tbody>
-                  </table>
+                          ) : (
+                            importPreviewRows.map((row) => {
+                              const isResultRow = "status" in row;
+                              const source =
+                                importRows.find((item) => item.rowNumber === row.rowNumber) ||
+                                (row as any);
+                              const status = isResultRow ? row.status : undefined;
+                              return (
+                                <tr key={row.rowNumber} data-status={status}>
+                                  <td>{row.rowNumber}</td>
+                                  <td>{source?.group || "—"}</td>
+                                  <td>{row.code || source?.code || "—"}</td>
+                                  <td>{row.name || source?.name || "—"}</td>
+                                  <td>{row.parentCode || source?.parentCode || "—"}</td>
+                                  <td>{isResultRow ? importActionLabel(row.action) : "—"}</td>
+                                  <td>
+                                    {status ? (
+                                      <StatusBadge
+                                        value={status}
+                                        label={importStatusLabel(status)}
+                                      />
+                                    ) : (
+                                      "—"
+                                    )}
+                                  </td>
+                                  <td className="asset-import-message-cell">
+                                    {isResultRow ? (
+                                      <span
+                                        className="asset-import-note"
+                                        title={renderImportNotes(row)}
+                                      >
+                                        {renderImportNotes(row)}
+                                      </span>
+                                    ) : (
+                                      "—"
+                                    )}
+                                  </td>
+                                </tr>
+                              );
+                            })
+                          )}
+                        </tbody>
+                      </table>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -1214,8 +1356,8 @@ export function AssetCategoriesPage() {
                     <div className="asset-import-confirm-content">
                       <strong>Hủy phiên nhập danh mục?</strong>
                       <p>
-                        File đã chọn, dữ liệu preview và kết quả kiểm tra hiện tại sẽ bị xóa khỏi màn
-                        hình.
+                        File đã chọn, dữ liệu preview và kết quả kiểm tra hiện tại sẽ bị xóa khỏi
+                        màn hình.
                       </p>
                     </div>
                     <div className="asset-import-confirm-actions">

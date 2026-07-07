@@ -4669,7 +4669,7 @@ button:hover {
 }
 
 .asset-table {
-  max-height: min(640px, calc(100vh - 330px));
+  height: min(640px, calc(100vh - 330px));
   overflow: auto;
   scrollbar-gutter: stable;
   width: 100%;
@@ -4694,11 +4694,13 @@ button:hover {
 }
 
 .asset-table td {
-  background: #ffffff;
+  background: #fffdf0;
   color: #64748b;
   font-size: 12px;
   padding: 7px 10px;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .asset-table td.asset-table-sticky-select,
@@ -4708,7 +4710,7 @@ button:hover {
 }
 
 .asset-table tbody tr:hover td {
-  background: #f8fbff;
+  background: #fff6cc;
 }
 
 .asset-table tbody tr.is-selected td {
@@ -4734,7 +4736,7 @@ button:hover {
 }
 
 .asset-table .asset-table-sticky-select {
-  background: #ffffff;
+  background: #fffdf0;
   box-shadow: 8px 0 16px -16px rgba(15, 23, 42, 0.42);
   left: 0;
   position: sticky;
@@ -4748,7 +4750,7 @@ button:hover {
 }
 
 .asset-table tbody tr:hover td.asset-table-sticky-select {
-  background: #f8fbff;
+  background: #fff6cc;
 }
 
 .asset-table tbody tr.is-selected td.asset-table-sticky-select,
@@ -4857,11 +4859,11 @@ button:hover {
 }
 
 .asset-table td.asset-table-sticky-left {
-  background: #ffffff;
+  background: #fffdf0;
 }
 
 .asset-table tbody tr:hover td.asset-table-sticky-left {
-  background: #f8fbff;
+  background: #fff6cc;
 }
 
 .asset-table .asset-table-sticky-right {
@@ -4879,11 +4881,11 @@ button:hover {
 }
 
 .asset-table td.asset-table-sticky-right {
-  background: #ffffff;
+  background: #fffdf0;
 }
 
 .asset-table tbody tr:hover td.asset-table-sticky-right {
-  background: #f8fbff;
+  background: #fff6cc;
 }
 
 .asset-table-col-category {
@@ -6588,13 +6590,13 @@ table td,
 .asset-table tbody tr:hover td.asset-table-sticky-left,
 .asset-table tbody tr:hover td.asset-table-sticky-select,
 .asset-table tbody tr:hover td.asset-table-sticky-right {
-  background: #f5f7fa;
+  background: #fff6cc;
 }
 
 .asset-table tbody tr.is-selected td,
 .asset-table tbody tr.is-selected td.asset-table-sticky-left,
 .asset-table tbody tr.is-selected td.asset-table-sticky-select {
-  background: #e9f0f7;
+  background: #fff1b2;
 }
 
 .asset-category-filter-item,
@@ -6909,7 +6911,7 @@ tr[data-status="WARNING"] .asset-import-row-status {
 }
 
 .asset-table .asset-table-sticky-right {
-  background: #ffffff;
+  background: #fffdf0;
   box-shadow: -8px 0 16px -16px rgba(15, 23, 42, 0.42);
   position: sticky;
   right: 0;
@@ -6922,7 +6924,7 @@ tr[data-status="WARNING"] .asset-import-row-status {
 }
 
 .asset-table tbody tr:hover td.asset-table-sticky-right {
-  background: #f5f7fa;
+  background: #fff6cc;
 }
 
 .asset-table tbody tr.is-selected td.asset-table-sticky-right {
@@ -7369,7 +7371,7 @@ textarea,
 .category-parent-context {
   border-radius: 3px;
   background: #f8fafc;
-  border-color: #e4e7ec;
+  border-color: #cbd5e1;
 }
 
 .modal-head .icon-button,
@@ -8173,7 +8175,7 @@ textarea,
 #root .sidebar nav a:hover,
 #root .sidebar-group-button:hover {
   background: #f6f8fa !important;
-  border-color: #e4e7ec !important;
+  border-color: #cbd5e1 !important;
   color: #16324f;
 }
 
@@ -8326,7 +8328,7 @@ textarea,
 
 #root .asset-category-filter-item:hover {
   background: #f6f8fa !important;
-  border-color: #e4e7ec !important;
+  border-color: #cbd5e1 !important;
 }
 
 #root .asset-category-filter-item[data-selected="true"] {
@@ -8463,7 +8465,7 @@ textarea,
 
 #root .asset-selection-card:hover {
   border-color: #b8c4d0 !important;
-  background: #f8fafc !important;
+  background: #eef2f6 !important;
 }
 
 #root .asset-selection-actions {
@@ -8642,7 +8644,7 @@ textarea,
   min-height: 34px;
   padding: 6px 7px !important;
   border: 1px solid #d7dde5 !important;
-  background: #f8fafc !important;
+  background: #eef2f6 !important;
 }
 
 #root .booking-calendar-head {
@@ -9960,7 +9962,7 @@ textarea,
 }
 
 #root .category-org-viewport {
-  background: #f8fafc !important;
+  background: #eef2f6 !important;
 }
 
 #root .category-org-card,
@@ -10643,7 +10645,7 @@ textarea,
   contain: layout paint !important;
   overscroll-behavior: contain !important;
   scrollbar-gutter: stable both-edges !important;
-  background: #f8fafc !important;
+  background: #eef2f6 !important;
 }
 
 #root .category-org-forest {
@@ -10832,7 +10834,7 @@ textarea,
 #root .asset-table th,
 #root .asset-table td,
 #root .asset-table .status-badge {
-  border-color: #e4e7ec !important;
+  border-color: #cbd5e1 !important;
 }
 
 #root .asset-table .status-badge {
@@ -10935,7 +10937,7 @@ textarea,
 #root .booking-table .booking-table-sticky-left,
 #root .booking-table .booking-table-sticky-right {
   position: sticky !important;
-  background: #ffffff !important;
+  background: #fffdf0 !important;
 }
 
 #root .asset-table th.asset-table-sticky-select,
@@ -10996,13 +10998,13 @@ textarea,
 #root .asset-table tbody tr:hover td.asset-table-sticky-right,
 #root .booking-table tbody tr:hover td.booking-table-sticky-left,
 #root .booking-table tbody tr:hover td.booking-table-sticky-right {
-  background: #f5f7fa !important;
+  background: #fff6cc !important;
 }
 
 #root .asset-table tbody tr.is-selected td.asset-table-sticky-select,
 #root .asset-table tbody tr.is-selected td.asset-table-sticky-left,
 #root .asset-table tbody tr.is-selected td.asset-table-sticky-right {
-  background: #e9f0f7 !important;
+  background: #fff1b2 !important;
 }
 
 #root .booking-table-col-booking {
@@ -11780,7 +11782,7 @@ body,
   position: sticky !important;
   right: 0 !important;
   z-index: 24 !important;
-  background: #ffffff !important;
+  background: #fffdf0 !important;
   box-shadow: -8px 0 14px -16px rgba(15, 23, 42, 0.55) !important;
 }
 
@@ -11945,12 +11947,18 @@ body,
 }
 
 /* Final sticky column borders and sober status colors. */
-#root .asset-table th,
 #root .asset-table td,
-#root .booking-table th,
 #root .booking-table td {
   position: relative;
   z-index: 1;
+}
+
+#root .asset-table th,
+#root .booking-table th {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 50 !important;
+  background: #eef2f6 !important;
 }
 
 #root .asset-table .asset-table-sticky-select,
@@ -11991,8 +11999,6 @@ body,
   border-right: 1px solid #cfd8e3 !important;
   box-shadow: 10px 0 14px -16px rgba(15, 23, 42, 0.55) !important;
 }
-
-
 
 #root .asset-table-actions-col,
 #root .booking-table-actions-col {
@@ -12119,13 +12125,13 @@ body,
   min-height: 128px !important;
   place-items: center !important;
   border: 1px dashed #d7dde5 !important;
-  background: #f8fafc !important;
+  background: #eef2f6 !important;
 }
 
 #root .asset-table-empty-row td {
   height: 168px !important;
   padding: 14px !important;
-  background: #ffffff !important;
+  background: #fffdf0 !important;
   border-bottom: 1px solid #e5e9ef !important;
 }
 
@@ -12138,7 +12144,7 @@ body,
   min-height: 92px !important;
   place-items: center !important;
   border: 1px dashed #d7dde5 !important;
-  background: #f8fafc !important;
+  background: #eef2f6 !important;
 }
 
 #root .category-structure-empty {
@@ -12221,7 +12227,7 @@ body,
   min-height: 34px !important;
   padding: 0 9px !important;
   border: 1px solid #d7dde5 !important;
-  background: #f8fafc !important;
+  background: #eef2f6 !important;
 }
 
 #root .help-search input {
@@ -12964,20 +12970,18 @@ body,
 /* Added cell borders as requested */
 #root .asset-table th,
 #root .asset-table td {
-  border: 1px solid #e4e7ec !important;
+  border: 1px solid #cbd5e1 !important;
 }
-
 
 #root .asset-table th,
 #root .asset-table td {
   vertical-align: middle !important;
 }
 
-
 /* Booking table borders + Sticky column border fixes */
 #root .booking-table th,
 #root .booking-table td {
-  border: 1px solid #e4e7ec !important;
+  border: 1px solid #cbd5e1 !important;
   vertical-align: middle !important;
 }
 
@@ -12985,12 +12989,73 @@ body,
 #root .asset-table .asset-table-sticky-category,
 #root .booking-table .booking-table-sticky-booking,
 #root .booking-table .booking-table-sticky-asset {
-  box-shadow: inset -1px 0 0 #e4e7ec, 8px 0 16px -16px rgba(15, 23, 42, 0.5) !important;
+  box-shadow:
+    inset -1px 0 0 #cbd5e1,
+    8px 0 16px -16px rgba(15, 23, 42, 0.5) !important;
 }
-
 
 #root .booking-table .booking-table-sticky-status,
 #root .booking-table .booking-table-sticky-time {
-  box-shadow: inset -1px 0 0 #e4e7ec, 10px 0 14px -16px rgba(15, 23, 42, 0.55) !important;
+  box-shadow:
+    inset -1px 0 0 #cbd5e1,
+    10px 0 14px -16px rgba(15, 23, 42, 0.55) !important;
 }
 
+/* Override all Status Badge backgrounds */
+#root .badge {
+  background: transparent !important;
+  padding: 0 !important;
+  font-weight: 900 !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+#root .badge[class*="badge-"] {
+  background: transparent !important;
+}
+
+#root .asset-table th {
+  z-index: 50 !important;
+}
+
+#root .asset-table td {
+  z-index: 1 !important;
+}
+
+#root .asset-table th.asset-table-sticky-left,
+#root .asset-table th.asset-table-sticky-right,
+#root .asset-table th.asset-table-sticky-select {
+  z-index: 60 !important;
+}
+
+/* Fix Table Stacking Contexts */
+#root .asset-table thead,
+#root .booking-table thead {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 50 !important;
+}
+
+#root .asset-table tbody,
+#root .booking-table tbody {
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+/* Ensure empty row doesn't break z-index */
+#root .asset-table-empty-row td {
+  z-index: 1 !important;
+}
+
+/* Override all .status-badge backgrounds */
+#root .status-badge {
+  background: transparent !important;
+  padding: 0 !important;
+  font-weight: 900 !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+#root .status-badge[class*="status-"] {
+  background: transparent !important;
+}

@@ -1,8 +1,8 @@
 import type { Workbook } from "exceljs";
 import type {
-  AssetCategoryTree,
   AssetCategoryImportRowPayload,
   AssetCategoryImportValidationResponse,
+  AssetCategoryTree,
 } from "../services/types";
 
 export const CATEGORY_REFERENCE_SHEET_NAME = "DanhMuc_ThamChieu";
@@ -28,10 +28,19 @@ const statusReferenceRows = [
 function flattenCategoryRows(categories: AssetCategoryTree[]) {
   const rows: string[][] = [];
   const visit = (node: AssetCategoryTree, fallbackParentCode = "") => {
-    rows.push(["Danh mục", node.code, node.name, node.parentId ? fallbackParentCode : node.assetClass]);
-    node.children.forEach((child) => visit(child, node.code));
+    rows.push([
+      "Danh mục",
+      node.code,
+      node.name,
+      node.parentId ? fallbackParentCode : node.assetClass,
+    ]);
+    node.children.forEach((child) => {
+      visit(child, node.code);
+    });
   };
-  categories.forEach((root) => visit(root));
+  categories.forEach((root) => {
+    visit(root);
+  });
   return rows;
 }
 
@@ -114,7 +123,7 @@ export async function downloadCategoryImportTemplate(categories: AssetCategoryTr
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement("a");
   anchor.href = url;
-  anchor.download = "mau_import_danh_muc_tai_san_bimlab.xlsx";
+  anchor.download = "mau_download_danh_muc_tai_san_bimlab.xlsx";
   document.body.appendChild(anchor);
   anchor.click();
   anchor.remove();

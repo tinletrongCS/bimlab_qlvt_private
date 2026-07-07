@@ -1,5 +1,17 @@
 package com.bimlab.asset.service;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Set;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.bimlab.asset.dto.request.AssetCategoryImportCommitRequest;
 import com.bimlab.asset.dto.request.AssetCategoryImportRowRequest;
 import com.bimlab.asset.dto.request.AssetCategoryImportValidateRequest;
@@ -15,11 +27,8 @@ import com.bimlab.asset.model.status.AssetClass;
 import com.bimlab.asset.repository.AssetCatalogItemRepository;
 import com.bimlab.asset.repository.AssetCategoryRepository;
 import com.bimlab.asset.repository.AssetItemRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.util.*;
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -117,7 +126,8 @@ public class AssetCategoryService {
 
         int errorRows = (int) results.stream().filter(row -> !row.errors().isEmpty()).count();
         int warningRows = (int) results.stream().filter(row -> row.errors().isEmpty() && !row.warnings().isEmpty()).count();
-        int validRows = (int) results.stream().filter(row -> row.errors().isEmpty() && !"SKIP".equals(row.action())).count();
+        // int validRows = (int) results.stream().filter(row -> row.errors().isEmpty() && !"SKIP".equals(row.action())).count();
+        int validRows = (int) results.stream().filter(row -> row.errors().isEmpty() && "VALID".equals(row.status())).count();
         String uploadStatus = errorRows > 0 ? "HAS_ERROR" : "VALID";
 
         return new AssetCategoryImportValidationResponse(
@@ -396,7 +406,8 @@ public class AssetCategoryService {
     }
 
     private boolean isCategoryImportRow(AssetCategoryImportRowRequest row) {
-        return "danh muc".equals(normalizeText(row.group()));
+        String group = normalizeText(row.group()).replace(" ", "");
+        return "danhmuc".equals(group) || "danhmuccha".equals(group) || "danhmuctaisan".equals(group);
     }
 
     private AssetCategoryImportMessageResponse message(String field, String code, String message) {
