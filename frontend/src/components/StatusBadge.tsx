@@ -1,5 +1,6 @@
 interface StatusBadgeProps {
   value?: string;
+  label?: string;
 }
 
 const labelMap: Record<string, string> = {
@@ -20,11 +21,23 @@ const labelMap: Record<string, string> = {
   CANCELLED: "Đã hủy",
   REJECTED: "Từ chối",
   EXPIRED: "Quá hạn",
+  VALID: "Hợp lệ",
+  INVALID: "Không hợp lệ",
+  WARNING: "Cảnh báo",
+  HAS_ERROR: "Lỗi",
 };
 
-export function StatusBadge({ value }: StatusBadgeProps) {
+export function StatusBadge({ value, label }: StatusBadgeProps) {
   const status = value || "UNKNOWN";
-  return (
-    <span className={`badge badge-${status.toLowerCase()}`}>{labelMap[status] || status}</span>
-  );
+
+  const colorClass =
+    status === "VALID"
+      ? "active"
+      : status === "INVALID" || status === "HAS_ERROR"
+        ? "rejected"
+        : status === "WARNING"
+          ? "pending"
+          : status.toLowerCase();
+
+  return <span className={`badge badge-${colorClass}`}>{label || labelMap[status] || status}</span>;
 }

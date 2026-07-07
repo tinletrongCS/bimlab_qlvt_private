@@ -1,6 +1,10 @@
 package com.bimlab.asset.controller;
 
 import com.bimlab.asset.dto.request.AssetCategoryRequest;
+import com.bimlab.asset.dto.request.AssetCategoryImportCommitRequest;
+import com.bimlab.asset.dto.request.AssetCategoryImportValidateRequest;
+import com.bimlab.asset.dto.response.AssetCategoryImportCommitResponse;
+import com.bimlab.asset.dto.response.AssetCategoryImportValidationResponse;
 import com.bimlab.asset.dto.response.AssetCategoryResponse;
 import com.bimlab.asset.dto.response.AssetCategoryTreeResponse;
 import com.bimlab.asset.service.AssetCategoryService;
@@ -46,6 +50,20 @@ public class AssetCategoryController {
     @PreAuthorize("hasAuthority('asset_manage')")
     public AssetCategoryResponse create(@Valid @RequestBody AssetCategoryRequest req) {
         return service.createCategory(req);
+    }
+    // Lúc nhấn nút kiểm tra dữ liệu
+    @PostMapping("/import/validate")
+    @PreAuthorize("hasAuthority('asset_manage')")
+    public AssetCategoryImportValidationResponse validateImport(
+            @Valid @RequestBody AssetCategoryImportValidateRequest req) {
+        return service.validateCategoryImport(req);
+    }
+
+    @PostMapping("/import")
+    @PreAuthorize("hasAuthority('asset_manage')")
+    public AssetCategoryImportCommitResponse importCategories(
+            @Valid @RequestBody AssetCategoryImportCommitRequest req) {
+        return service.importCategories(req);
     }
 
     @PutMapping("/{id}")
