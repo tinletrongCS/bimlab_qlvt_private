@@ -18,6 +18,7 @@ const mocks = vi.hoisted(() => {
   };
   return {
     manager,
+    // biome-ignore lint/complexity/useArrowFunction: oidc-client UserManager is constructed with new.
     UserManager: vi.fn(function () {
       return manager;
     }),
