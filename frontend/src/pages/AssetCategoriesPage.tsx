@@ -600,8 +600,10 @@ export function AssetCategoriesPage() {
     if (!importPreview) return importRows as any[];
     let rows = importPreview.rows;
     if (importPreviewFilter === "VALID") rows = rows.filter((r) => r.status === "VALID");
-    else if (importPreviewFilter === "INVALID") rows = rows.filter((r) => r.status === "INVALID");
-    else if (importPreviewFilter === "WARNING") rows = rows.filter((r) => r.status === "WARNING");
+    else if (importPreviewFilter === "INVALID")
+      rows = rows.filter((r) => r.status === "INVALID" || r.status === "HAS_ERROR");
+    else if (importPreviewFilter === "WARNING")
+      rows = rows.filter((r) => r.warnings && r.warnings.length > 0);
     return rows;
   }, [importRows, importPreview, importPreviewFilter]);
 
