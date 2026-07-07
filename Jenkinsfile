@@ -346,16 +346,6 @@ BUILD_NUMBER=${env.BUILD_NUMBER ?: ''}
   post {
     always {
       junit allowEmptyResults: true, testResults: 'frontend/reports/**/*.xml,asset-service/target/surefire-reports/*.xml'
-      script {
-        try {
-          recordCoverage tools: [
-            [parser: 'JACOCO', pattern: '**/target/site/jacoco*/jacoco.xml'],
-            [parser: 'LCOV', pattern: '**/coverage/lcov.info']
-          ]
-        } catch (err) {
-          echo "Coverage publish skipped: ${err.class.simpleName}: ${err.message}"
-        }
-      }
       archiveArtifacts allowEmptyArchive: true, fingerprint: true, artifacts: 'ci-artifacts/**,frontend/dist/**,frontend/coverage/**,asset-service/target/site/jacoco*/**,asset-service/target/*.jar'
       sh 'docker logout "${REGISTRY_URL:-}" >/dev/null 2>&1 || true'
     }
