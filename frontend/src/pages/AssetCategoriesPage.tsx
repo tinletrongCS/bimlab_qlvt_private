@@ -701,7 +701,8 @@ export function AssetCategoriesPage() {
       setForm(emptyForm);
       setParentFieldsLocked(false);
       await refresh();
-    } catch {
+    closeImport();
+      } catch {
       toast.error("Không lưu được danh mục.");
     } finally {
       setSubmitting(false);
@@ -816,7 +817,8 @@ export function AssetCategoriesPage() {
         rows: result.rows,
       });
       await refresh();
-    } catch {
+    closeImport();
+      } catch {
       toast.error("Backend lưu danh mục đang chờ bạn implement phần TODO.");
     } finally {
       setImportBusy(false);
@@ -1153,53 +1155,55 @@ export function AssetCategoriesPage() {
                 </div>
 
                 <div className="asset-import-controls">
-                  <div className="asset-import-options">
-                    {importPreview?.uploadStatus === "VALID" && (
-                      <div className="asset-import-tabs" style={{ display: "flex", gap: "8px" }}>
-                        <button
-                          type="button"
-                          style={{
-                            padding: "4px 12px",
-                            fontSize: "11px",
-                            fontFamily: "inherit",
-                            background: importPreviewTab === "TABLE" ? "#e0f2fe" : "transparent",
-                            border: "none",
-                            color: importPreviewTab === "TABLE" ? "#0369a1" : "#6b7280",
-                            borderRadius: "4px",
-                            fontWeight: importPreviewTab === "TABLE" ? 500 : 400,
-                            cursor: "pointer",
-                          }}
-                          onClick={() => setImportPreviewTab("TABLE")}
-                        >
-                          Danh sách dòng
-                        </button>
-                        <button
-                          type="button"
-                          style={{
-                            padding: "4px 12px",
-                            fontSize: "11px",
-                            fontFamily: "inherit",
-                            background: importPreviewTab === "TREE" ? "#e0f2fe" : "transparent",
-                            border: "none",
-                            color: importPreviewTab === "TREE" ? "#0369a1" : "#6b7280",
-                            borderRadius: "4px",
-                            fontWeight: importPreviewTab === "TREE" ? 500 : 400,
-                            cursor: "pointer",
-                          }}
-                          onClick={() => setImportPreviewTab("TREE")}
-                        >
-                          Phân cấp cha con
-                        </button>
-                      </div>
-                    )}
-                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%", gap: "12px", flexWrap: "wrap" }}>
+                    <div className="asset-import-options">
+                      {importPreview?.uploadStatus === "VALID" && (
+                        <div className="asset-import-tabs" style={{ display: "flex", gap: "8px" }}>
+                          <button
+                            type="button"
+                            style={{
+                              padding: "4px 12px",
+                              fontSize: "11px",
+                              fontFamily: "inherit",
+                              background: importPreviewTab === "TABLE" ? "#e0f2fe" : "transparent",
+                              border: "none",
+                              color: importPreviewTab === "TABLE" ? "#0369a1" : "#6b7280",
+                              borderRadius: "4px",
+                              fontWeight: importPreviewTab === "TABLE" ? 500 : 400,
+                              cursor: "pointer",
+                            }}
+                            onClick={() => setImportPreviewTab("TABLE")}
+                          >
+                            Danh sách dòng
+                          </button>
+                          <button
+                            type="button"
+                            style={{
+                              padding: "4px 12px",
+                              fontSize: "11px",
+                              fontFamily: "inherit",
+                              background: importPreviewTab === "TREE" ? "#e0f2fe" : "transparent",
+                              border: "none",
+                              color: importPreviewTab === "TREE" ? "#0369a1" : "#6b7280",
+                              borderRadius: "4px",
+                              fontWeight: importPreviewTab === "TREE" ? 500 : 400,
+                              cursor: "pointer",
+                            }}
+                            onClick={() => setImportPreviewTab("TREE")}
+                          >
+                            Phân cấp cha con
+                          </button>
+                        </div>
+                      )}
+                    </div>
 
-                  <div
-                    className="asset-import-preview-toolbar"
-                    data-hidden={importPreviewTab === "TABLE" ? undefined : "true"}
-                  >
-                    <span>Trạng thái dòng</span>
-                    <div>
+                    <div
+                      className="asset-import-preview-toolbar"
+                      data-hidden={importPreviewTab === "TABLE" ? undefined : "true"}
+                      style={{ display: "flex", alignItems: "center", gap: "8px", margin: 0, padding: 0 }}
+                    >
+                      <span style={{ color: "#64748b", fontSize: "11px", fontWeight: 600 }}>Trạng thái dòng:</span>
+                      <div style={{ display: "flex", gap: "6px" }}>
                       <button
                         type="button"
                         data-active={importPreviewFilter === "ALL" ? "true" : undefined}
@@ -1234,6 +1238,8 @@ export function AssetCategoriesPage() {
                     </div>
                   </div>
 
+                  </div>
+
                   <div className="asset-import-preview">
                     {importPreviewTab === "TREE" ? (
                       <div className="category-structure-rows" style={{ padding: "12px" }}>
@@ -1248,9 +1254,8 @@ export function AssetCategoriesPage() {
                         <thead>
                           <tr>
                             <th>Dòng</th>
-                            <th>Nhóm</th>
-                            <th>Mã</th>
                             <th>Tên danh mục</th>
+                            <th>Mã</th>
                             <th>Danh mục cha</th>
                             <th>Thao tác</th>
                             <th>Trạng thái</th>
@@ -1260,7 +1265,7 @@ export function AssetCategoriesPage() {
                         <tbody>
                           {importRows.length === 0 || importPreviewRows.length === 0 ? (
                             <tr className="asset-table-empty-row">
-                              <td colSpan={8}>
+                              <td colSpan={7}>
                                 <div className="asset-table-empty-state">
                                   {importRows.length === 0
                                     ? "Chọn file Excel để xem dữ liệu trước khi import."
@@ -1278,9 +1283,8 @@ export function AssetCategoriesPage() {
                               return (
                                 <tr key={row.rowNumber} data-status={status}>
                                   <td>{row.rowNumber}</td>
-                                  <td>{source?.group || "—"}</td>
-                                  <td>{row.code || source?.code || "—"}</td>
                                   <td>{row.name || source?.name || "—"}</td>
+                                  <td>{row.code || source?.code || "—"}</td>
                                   <td>{row.parentCode || source?.parentCode || "—"}</td>
                                   <td>{isResultRow ? importActionLabel(row.action) : "—"}</td>
                                   <td>

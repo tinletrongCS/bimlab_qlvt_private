@@ -274,7 +274,7 @@ textarea:focus {
 
 .logout-button:hover {
   background: #dc2626;
-  border-color: #991b1b;
+  border-color: #ef4444;
   color: #ffffff;
 }
 
@@ -1111,7 +1111,7 @@ tbody tr:last-child td {
 
 .badge-pending {
   background: #fef9c3;
-  color: #a16207;
+  color: #f59e0b;
 }
 
 .badge-draft {
@@ -12057,7 +12057,7 @@ body,
 #root .badge-cancelled,
 #root .badge-expired {
   background: #f5e8e8 !important;
-  color: #991b1b !important;
+  color: #ef4444 !important;
 }
 
 #root .badge-completed {
@@ -12956,7 +12956,7 @@ body,
 }
 
 .import-status.invalid {
-  color: #991b1b;
+  color: #ef4444;
 }
 
 .import-status.warning {
@@ -13107,9 +13107,8 @@ body,
 
 #root .asset-import-preview-toolbar {
   display: flex !important;
-  justify-content: space-between !important;
   align-items: center !important;
-  width: 100% !important;
+  width: auto !important;
 }
 
 #root .asset-import-preview {
@@ -13121,8 +13120,8 @@ body,
   color: #166534 !important; /* Valid: Green */
 }
 #root .asset-import-summary > div:nth-child(3) strong {
-  color: #991b1b !important; /* Error: Red */
+  color: #ef4444 !important; /* Error: Red */
 }
 #root .asset-import-summary > div:nth-child(4) strong {
-  color: #a16207 !important; /* Warning: Yellow */
+  color: #f59e0b !important; /* Warning: Yellow */
 }
