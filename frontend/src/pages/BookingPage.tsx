@@ -1026,7 +1026,6 @@ export function BookingPage() {
           <div className="panel-title">
             <div>
               <h2>Hướng dẫn đặt lịch</h2>
-              <p>Quy trình thao tác với các chức năng hiện có trên màn hình.</p>
             </div>
           </div>
           <div className="booking-flow-list">

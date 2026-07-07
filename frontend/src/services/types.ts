@@ -129,6 +129,53 @@ export interface AssetCategoryPayload {
   active: boolean;
 }
 
+export interface AssetCategoryImportRowPayload {
+  rowNumber: number;
+  group?: string;
+  code?: string;
+  name?: string;
+  parentCode?: string;
+}
+
+export interface AssetCategoryImportMessage {
+  field?: string;
+  code: string;
+  message: string;
+}
+
+export interface AssetCategoryImportRowResult {
+  rowNumber: number;
+  status: "PENDING" | "VALID" | "INVALID" | "WARNING" | string;
+  code: string;
+  name: string;
+  parentCode?: string;
+  action: "PENDING" | "CREATE" | "UPDATE" | "SKIP" | string;
+  errors: AssetCategoryImportMessage[];
+  warnings: AssetCategoryImportMessage[];
+}
+
+export interface AssetCategoryImportValidationResponse {
+  uploadStatus: "PENDING" | "VALID" | "HAS_ERROR" | string;
+  totalRows: number;
+  validRows: number;
+  errorRows: number;
+  warningRows: number;
+  rows: AssetCategoryImportRowResult[];
+}
+
+export interface AssetCategoryImportCommitPayload {
+  rows: AssetCategoryImportRowPayload[];
+}
+
+export interface AssetCategoryImportCommitResponse {
+  uploadStatus: "IMPORTED" | "PARTIALLY_IMPORTED" | "FAILED" | string;
+  importedRows: number;
+  updatedRows: number;
+  skippedRows: number;
+  errorRows: number;
+  rows: AssetCategoryImportRowResult[];
+}
+
 export interface AssetPayload {
   assetCode: string;
   name: string;
