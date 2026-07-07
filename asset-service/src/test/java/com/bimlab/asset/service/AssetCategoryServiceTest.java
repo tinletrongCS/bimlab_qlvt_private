@@ -1,6 +1,9 @@
 package com.bimlab.asset.service;
 
+import com.bimlab.asset.dto.request.AssetCategoryImportCommitRequest;
+import com.bimlab.asset.dto.request.AssetCategoryImportRowRequest;
 import com.bimlab.asset.dto.request.AssetCategoryRequest;
+import com.bimlab.asset.dto.response.AssetCategoryImportCommitResponse;
 import com.bimlab.asset.dto.response.AssetCategoryTreeResponse;
 import com.bimlab.asset.model.AssetCategory;
 import com.bimlab.asset.model.AssetItem;
@@ -19,7 +22,9 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -109,6 +114,35 @@ class AssetCategoryServiceTest {
         service.deleteCategory(1L);
 
         verify(categories).delete(category);
+    }
+
+    @Test
+    void importCategories_importsReferenceParentRowsWhenDatabaseIsEmpty() {
+        when(categories.findAllByOrderByNameAsc()).thenReturn(List.of());
+        when(categories.save(any(AssetCategory.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        AssetCategoryImportCommitResponse result = service.importCategories(new AssetCategoryImportCommitRequest(List.of(
+                importRow(2, "Phân loại", "FIXED_ASSET", "Tài sản cố định", ""),
+                importRow(3, "Phân loại", "TOOL_EQUIPMENT", "Công cụ dụng cụ", ""),
+                importRow(4, "Loại tài sản cố định", "TANGIBLE", "Tài sản cố định hữu hình", "FIXED_ASSET"),
+                importRow(5, "Loại tài sản cố định", "INTANGIBLE", "Tài sản cố định vô hình", "FIXED_ASSET"),
+                importRow(6, "Loại công cụ dụng cụ", "SINGLE_USE", "Công cụ dụng cụ phân bổ 1 lần", "TOOL_EQUIPMENT"),
+                importRow(7, "Loại công cụ dụng cụ", "MULTI_USE", "Công cụ dụng cụ phân bổ nhiều lần", "TOOL_EQUIPMENT")
+        )));
+
+        assertEquals("SUCCESS", result.uploadStatus());
+        assertEquals(6, result.importedRows());
+        assertEquals(0, result.skippedRows());
+        verify(categories, times(6)).save(any(AssetCategory.class));
+    }
+
+    private AssetCategoryImportRowRequest importRow(
+            int rowNumber,
+            String group,
+            String code,
+            String name,
+            String parentCode) {
+        return new AssetCategoryImportRowRequest(rowNumber, group, code, name, parentCode);
     }
 
     private AssetCategory category(Long id, String code, String name, AssetCategory parent) {
