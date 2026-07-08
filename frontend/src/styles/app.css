@@ -1119,8 +1119,6 @@ tbody tr:last-child td {
   color: #475569;
 }
 
-
-
 .badge-rejected,
 .badge-liquidated,
 .badge-disposed {
@@ -5805,8 +5803,6 @@ tr[data-status="WARNING"] .asset-import-row-status {
   background: #ecfdf5;
   color: #047857;
 }
-
-
 
 .badge-cancelled,
 .badge-expired {
@@ -12026,18 +12022,6 @@ body,
   padding: 5px 8px !important;
 }
 
-#root 
-
-#root 
-
-#root 
-
-#root 
-
-#root 
-
-#root 
-
 /* Final asset insight chart polish. */
 #root .asset-insight-donut {
   border-radius: 9999px !important;
@@ -13136,8 +13120,6 @@ body,
 }
 
 /* Make blue badges brighter but text-only as requested previously */
-#root 
-
 /* Empty state styling */
 
 /* Asset list compact rows and text-only status colors. */
@@ -13166,10 +13148,6 @@ body,
 #root .asset-table .badge {
   color: #64748b !important;
 }
-
-#root .asset-table 
-
-#root .asset-table 
 
 /* FORCE STATUS COLORS ACROSS ALL TABLES */
 #root .badge.badge-in_stock,
