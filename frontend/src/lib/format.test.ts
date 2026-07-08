@@ -7,7 +7,7 @@ describe("format helpers", () => {
   });
 
   it("builds employee labels with sensible fallbacks", () => {
-    expect(employeeLabel()).toBe("—");
+    expect(employeeLabel()).toBe("--");
     expect(employeeLabel({ id: 7, fullName: "Nguyen Van A", employeeCode: "EMP-007" })).toBe(
       "Nguyen Van A · EMP-007",
     );
@@ -16,7 +16,7 @@ describe("format helpers", () => {
   });
 
   it("builds project labels with code prefix when available", () => {
-    expect(projectLabel()).toBe("—");
+    expect(projectLabel()).toBe("--");
     expect(projectLabel({ id: 1, code: "CDS-001", name: "BIM Lab" })).toBe("CDS-001 · BIM Lab");
     expect(projectLabel({ id: 2, name: "No Code" })).toBe("No Code");
   });
