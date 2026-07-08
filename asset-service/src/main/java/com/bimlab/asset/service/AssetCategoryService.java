@@ -407,7 +407,15 @@ public class AssetCategoryService {
 
     private boolean isCategoryImportRow(AssetCategoryImportRowRequest row) {
         String group = normalizeText(row.group()).replace(" ", "");
-        return "danhmuc".equals(group) || "danhmuccha".equals(group) || "danhmuctaisan".equals(group);
+        return Set.of(
+                "phanloai",
+                "phanloailopcon",
+                "loaitaisancodinh",
+                "loaicongcudungcu",
+                "danhmuc",
+                "danhmuccha",
+                "danhmuctaisan"
+        ).contains(group);
     }
 
     private AssetCategoryImportMessageResponse message(String field, String code, String message) {
