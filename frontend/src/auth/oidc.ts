@@ -1,4 +1,4 @@
-// Phase 2 PR#5/#6 — Keycloak OIDC (Authorization Code + PKCE) cho QLVT FE.
+// Phase 2 PR#5/#6 -- Keycloak OIDC (Authorization Code + PKCE) cho QLVT FE.
 //
 // Pin bảo mật:
 //  - Access token + refresh token lưu trong sessionStorage của phiên trình duyệt → reload không mất phiên,
@@ -37,7 +37,7 @@ function buildSettings(): UserManagerSettings {
     redirect_uri: import.meta.env.VITE_KEYCLOAK_REDIRECT_URI ?? `${origin}/`,
     post_logout_redirect_uri: `${origin}/login`,
     response_type: "code",
-    // Chỉ cần "openid" — user info + permissions lấy từ /api/asset/me (KHÔNG dùng OIDC profile/userinfo).
+    // Chỉ cần "openid" -- user info + permissions lấy từ /api/asset/me (KHÔNG dùng OIDC profile/userinfo).
     scope: "openid",
     // Access/refresh token theo phiên trình duyệt; state (PKCE) cũng dùng sessionStorage.
     userStore: new WebStorageStateStore({ store: window.sessionStorage }),
@@ -119,14 +119,14 @@ export async function handleOidcCallback(): Promise<boolean> {
 
 /**
  * Hoàn tất callback trong IFRAME silent-renew của oidc-client-ts (prompt=none): relay ?code/&error
- * về tab cha (postMessage) rồi DỪNG — KHÔNG render app. Nếu thiếu, iframe render full SPA, không báo
+ * về tab cha (postMessage) rồi DỪNG -- KHÔNG render app. Nếu thiếu, iframe render full SPA, không báo
  * về cha → signinSilent() ở cha timeout ~10s → mất phiên. Chỉ gọi khi ở iframe (self!==top + ?state&code|error).
  */
 export async function completeSilentRenewCallback(): Promise<void> {
   try {
     await userManager().signinSilentCallback();
   } catch {
-    // Tab cha tự xử lý timeout/lỗi — không làm gì thêm trong iframe.
+    // Tab cha tự xử lý timeout/lỗi -- không làm gì thêm trong iframe.
   }
 }
 
@@ -153,7 +153,7 @@ export async function keycloakLogin(): Promise<void> {
 }
 
 /**
- * Đăng xuất ĐẦY ĐỦ (PR#6 — Single Logout): gọi end-session endpoint của Keycloak (kết thúc session SSO)
+ * Đăng xuất ĐẦY ĐỦ (PR#6 -- Single Logout): gọi end-session endpoint của Keycloak (kết thúc session SSO)
  * + redirect về post_logout_redirect_uri (/login). id_token_hint lấy tự động từ user đã lưu.
  * Fallback: nếu signoutRedirect lỗi → dọn cục bộ.
  */

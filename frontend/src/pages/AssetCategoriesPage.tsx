@@ -836,7 +836,7 @@ export function AssetCategoriesPage() {
 
   const renderImportNotes = (row: AssetCategoryImportRowResult) => {
     const notes = [...row.errors, ...row.warnings].map((item) => item.message);
-    if (notes.length === 0) return "—";
+    if (notes.length === 0) return "--";
     return notes.map((note) => `- ${note}`).join("\n");
   };
 
@@ -1142,15 +1142,15 @@ export function AssetCategoriesPage() {
                   </div>
                   <div>
                     <span>Hợp lệ</span>
-                    <strong>{importPreview?.validRows ?? "—"}</strong>
+                    <strong>{importPreview?.validRows ?? "--"}</strong>
                   </div>
                   <div>
                     <span>Lỗi</span>
-                    <strong>{importPreview?.errorRows ?? "—"}</strong>
+                    <strong>{importPreview?.errorRows ?? "--"}</strong>
                   </div>
                   <div>
                     <span>Cảnh báo</span>
-                    <strong>{importPreview?.warningRows ?? "—"}</strong>
+                    <strong>{importPreview?.warningRows ?? "--"}</strong>
                   </div>
                 </div>
 
@@ -1301,10 +1301,10 @@ export function AssetCategoriesPage() {
                               return (
                                 <tr key={row.rowNumber} data-status={status}>
                                   <td>{row.rowNumber}</td>
-                                  <td>{row.name || source?.name || "—"}</td>
-                                  <td>{row.code || source?.code || "—"}</td>
-                                  <td>{row.parentCode || source?.parentCode || "—"}</td>
-                                  <td>{isResultRow ? importActionLabel(row.action) : "—"}</td>
+                                  <td>{row.name || source?.name || "--"}</td>
+                                  <td>{row.code || source?.code || "--"}</td>
+                                  <td>{row.parentCode || source?.parentCode || "--"}</td>
+                                  <td>{isResultRow ? importActionLabel(row.action) : "--"}</td>
                                   <td>
                                     {status ? (
                                       <StatusBadge
@@ -1312,7 +1312,7 @@ export function AssetCategoriesPage() {
                                         label={importStatusLabel(status)}
                                       />
                                     ) : (
-                                      "—"
+                                      "--"
                                     )}
                                   </td>
                                   <td className="asset-import-message-cell">
@@ -1324,7 +1324,7 @@ export function AssetCategoriesPage() {
                                         {renderImportNotes(row)}
                                       </span>
                                     ) : (
-                                      "—"
+                                      "--"
                                     )}
                                   </td>
                                 </tr>

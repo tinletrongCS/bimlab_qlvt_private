@@ -1119,10 +1119,7 @@ tbody tr:last-child td {
   color: #475569;
 }
 
-.badge-inactive {
-  background: #f1f5f9;
-  color: #64748b;
-}
+
 
 .badge-rejected,
 .badge-liquidated,
@@ -5809,10 +5806,7 @@ tr[data-status="WARNING"] .asset-import-row-status {
   color: #047857;
 }
 
-.badge-completed {
-  background: #f1f5f9;
-  color: #475569;
-}
+
 
 .badge-cancelled,
 .badge-expired {
@@ -8423,7 +8417,7 @@ textarea,
 #root table th {
   color: #1f2937 !important;
   font-size: 12px !important;
-  font-weight: 700 !important;
+  font-weight: 600 !important;
   letter-spacing: 0 !important;
 }
 
@@ -11408,8 +11402,9 @@ body,
 }
 
 #root .row-action-menu-list button:hover:not(:disabled) {
-  background: #eef4fa !important;
-  color: #15507f !important;
+  color: #2563eb !important; /* Prominent Blue */
+  background: transparent !important;
+  font-weight: 600 !important;
   transform: none !important;
 }
 
@@ -11721,8 +11716,9 @@ body,
 }
 
 .overflow-actions-menu button:hover:not(:disabled) {
-  background: #eef4fa !important;
-  color: #15507f !important;
+  color: #2563eb !important; /* Prominent Blue */
+  background: transparent !important;
+  font-weight: 600 !important;
   transform: none !important;
 }
 
@@ -11744,7 +11740,8 @@ body,
   border: 1px solid transparent !important;
   background: transparent !important;
   box-shadow: none !important;
-  color: #15507f !important;
+  color: #2563eb !important; /* Prominent Blue */
+  font-weight: 600 !important;
 }
 
 #root .overflow-actions-trigger:hover {
@@ -12024,51 +12021,22 @@ body,
   border: 0 !important;
   box-shadow: none !important;
   font-size: 11.5px !important;
-  font-weight: 700 !important;
+  font-weight: 600 !important;
   line-height: 1.1 !important;
   padding: 5px 8px !important;
 }
 
-#root .badge-in_stock,
-#root .badge-confirmed,
-#root .badge-approved {
-  background: #e8f1f8 !important;
-  color: #15507f !important;
-}
+#root 
 
-#root .badge-assigned,
-#root .badge-in_use,
-#root .badge-active {
-  background: #e7f3ed !important;
-  color: #166534 !important;
-}
+#root 
 
-#root .badge-maintenance,
-#root .badge-pending,
-#root .badge-pending_approval,
-#root .badge-draft {
-  background: #f6efe2 !important;
-  color: #92400e !important;
-}
+#root 
 
-#root .badge-disposed,
-#root .badge-liquidated,
-#root .badge-rejected,
-#root .badge-cancelled,
-#root .badge-expired {
-  background: #f5e8e8 !important;
-  color: #ef4444 !important;
-}
+#root 
 
-#root .badge-completed {
-  background: #e9eef3 !important;
-  color: #334155 !important;
-}
+#root 
 
-#root .badge-inactive {
-  background: #eef1f4 !important;
-  color: #475569 !important;
-}
+#root 
 
 /* Final asset insight chart polish. */
 #root .asset-insight-donut {
@@ -12267,7 +12235,7 @@ body,
   background: #eaf2f8 !important;
   border-color: #c8d8e6 !important;
   color: #0f3f67 !important;
-  font-weight: 700 !important;
+  font-weight: 600 !important;
 }
 
 #root .help-detail {
@@ -12742,7 +12710,7 @@ body,
 #root .dashboard-hero-copy span {
   color: #1c4a6a !important;
   font-size: 13px !important;
-  font-weight: 700 !important;
+  font-weight: 600 !important;
   text-shadow: 0 0 8px rgba(255, 255, 255, 0.9) !important;
 }
 
@@ -13005,7 +12973,7 @@ body,
 #root .badge {
   background: transparent !important;
   padding: 0 !important;
-  font-weight: 900 !important;
+  font-weight: 600 !important;
   box-shadow: none !important;
   border: none !important;
 }
@@ -13051,7 +13019,7 @@ body,
 #root .status-badge {
   background: transparent !important;
   padding: 0 !important;
-  font-weight: 900 !important;
+  font-weight: 600 !important;
   box-shadow: none !important;
   border: none !important;
 }
@@ -13117,29 +13085,20 @@ body,
 
 /* Colorize the summary statistics */
 #root .asset-import-summary > div:nth-child(2) strong {
-  color: #166534 !important; /* Valid: Green */
+  color: #16a34a !important; /* Bright Green */
+  background: transparent !important;
+  font-weight: 600 !important; /* Valid: Green */
 }
 #root .asset-import-summary > div:nth-child(3) strong {
-  color: #ef4444 !important; /* Error: Red */
+  color: #ef4444 !important; /* Red */
+  background: transparent !important;
+  font-weight: 600 !important; /* Error: Red */
 }
 #root .asset-import-summary > div:nth-child(4) strong {
   color: #f59e0b !important; /* Warning: Yellow */
 }
 
-/* Fix empty state text centering */
-#root .asset-table,
-#root .asset-import-preview,
-#root .booking-table-container,
-#root .category-structure-detail {
-  container-type: inline-size !important;
-}
-
-#root .asset-table-empty-state,
-#root .booking-table-empty-state {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: flex-start !important; /* Start from left so sticky left: 0 works immediately */
-}
+/* Start from left so sticky left: 0 works immediately */
 
 #root .sticky-empty-text {
   position: sticky !important;
@@ -13150,8 +13109,110 @@ body,
   box-sizing: border-box !important;
 }
 
-/* Ensure empty state has white background as requested */
-#root .asset-table-empty-state,
-#root .booking-table-empty-state {
-  background: #ffffff !important;
+/* Revert table aesthetics and reduce padding */
+#root .asset-table td,
+#root .booking-table td,
+#root .asset-table td.asset-table-sticky-left,
+#root .asset-table td.asset-table-sticky-right,
+#root .asset-table td.asset-table-sticky-select,
+#root .asset-table td.asset-table-sticky-asset,
+#root .asset-table td.asset-table-sticky-category,
+#root .asset-table td.asset-table-actions-col {
+  padding: 4px 6px !important;
+  font-size: 11.5px !important;
+}
+
+#root .asset-table th,
+#root .booking-table th {
+  padding: 6px 8px !important;
+}
+
+/* Financial totals and prominent blue statuses */
+#root .text-primary,
+#root .text-blue-500,
+#root .text-blue-600,
+#root .text-blue-700 {
+  color: #2563eb !important; /* Brighter, vibrant blue */
+}
+
+/* Make blue badges brighter but text-only as requested previously */
+#root 
+
+/* Empty state styling */
+
+/* Asset list compact rows and text-only status colors. */
+#root .asset-table td,
+#root .asset-table td.asset-table-sticky-left,
+#root .asset-table td.asset-table-sticky-right,
+#root .asset-table td.asset-table-sticky-select,
+#root .asset-table td.asset-table-sticky-asset,
+#root .asset-table td.asset-table-sticky-category,
+#root .asset-table td.asset-table-actions-col {
+  padding: 2px 6px !important;
+  font-size: 11px !important;
+  line-height: 1.2 !important;
+}
+
+#root .asset-table th {
+  padding: 4px 6px !important;
+}
+
+#root .asset-table .asset-name-cell strong,
+#root .asset-table .asset-muted-stack strong,
+#root .asset-table .asset-muted-stack span {
+  line-height: 1.2 !important;
+}
+
+#root .asset-table .badge {
+  color: #64748b !important;
+}
+
+#root .asset-table 
+
+#root .asset-table 
+
+/* FORCE STATUS COLORS ACROSS ALL TABLES */
+#root .badge.badge-in_stock,
+#root .badge.badge-confirmed,
+#root .badge.badge-approved {
+  color: #2563eb !important;
+  background: transparent !important;
+  font-weight: 600 !important;
+}
+
+#root .badge.badge-assigned,
+#root .badge.badge-in_use,
+#root .badge.badge-active {
+  color: #16a34a !important;
+  background: transparent !important;
+  font-weight: 600 !important;
+}
+
+#root .badge.badge-maintenance,
+#root .badge.badge-pending,
+#root .badge.badge-pending_approval,
+#root .badge.badge-draft {
+  color: #f59e0b !important;
+  background: transparent !important;
+  font-weight: 600 !important;
+}
+
+#root .badge.badge-disposed,
+#root .badge.badge-liquidated,
+#root .badge.badge-rejected,
+#root .badge.badge-cancelled,
+#root .badge.badge-expired,
+#root .badge.badge-has_error,
+#root .badge.badge-invalid {
+  color: #ef4444 !important;
+  background: transparent !important;
+  font-weight: 600 !important;
+}
+
+#root .badge.badge-completed,
+#root .badge.badge-inactive,
+#root .badge.badge-unknown {
+  color: #64748b !important;
+  background: transparent !important;
+  font-weight: 600 !important;
 }

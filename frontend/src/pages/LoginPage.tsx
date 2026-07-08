@@ -113,7 +113,7 @@ function FloatingShapes() {
 }
 
 export function LoginPage() {
-  // Keycloak-only: đăng nhập qua SSO (Authorization Code + PKCE) — không còn form username/password.
+  // Keycloak-only: đăng nhập qua SSO (Authorization Code + PKCE) -- không còn form username/password.
   const { user, bootstrapping, login, loginError, submitting } = useAuth();
   const location = useLocation();
   const loginSceneRef = useRef<HTMLDivElement>(null);

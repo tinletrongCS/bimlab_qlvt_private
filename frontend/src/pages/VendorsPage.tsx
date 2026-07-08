@@ -31,13 +31,13 @@ export function VendorsPage() {
         emptyText="Chưa có nhà cung cấp"
         columns={[
           { key: "name", title: "Tên", render: (item) => <strong>{item.name}</strong> },
-          { key: "tax", title: "Mã số thuế", render: (item) => item.taxCode || "—" },
+          { key: "tax", title: "Mã số thuế", render: (item) => item.taxCode || "--" },
           {
             key: "contact",
             title: "Liên hệ",
-            render: (item) => item.contactName || item.email || "—",
+            render: (item) => item.contactName || item.email || "--",
           },
-          { key: "phone", title: "Điện thoại", render: (item) => item.phone || "—" },
+          { key: "phone", title: "Điện thoại", render: (item) => item.phone || "--" },
           {
             key: "status",
             title: "Trạng thái",

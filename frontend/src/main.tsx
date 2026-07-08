@@ -6,7 +6,7 @@ import "./styles/app.css";
 import "./styles/booking-overrides.css";
 
 // oidc-client-ts silent-renew (prompt=none) load lại SPA này trong IFRAME ẩn tại redirect_uri.
-// Trong iframe chỉ relay kết quả (?state + code|error) về tab cha rồi DỪNG — KHÔNG render app
+// Trong iframe chỉ relay kết quả (?state + code|error) về tab cha rồi DỪNG -- KHÔNG render app
 // (render thì iframe không postMessage về cha → cha timeout ~10s → mất phiên). Guard self!==top
 // nên tab chính KHÔNG bị ảnh hưởng; dynamic import để legacy bundle không kéo oidc-client-ts.
 const sp = new URLSearchParams(window.location.search);

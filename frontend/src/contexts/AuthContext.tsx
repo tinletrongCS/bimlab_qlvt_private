@@ -71,7 +71,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const current = await loadCurrentUser();
         if (!cancelled) setUser(current);
       } catch {
-        // No active session — fall through to login screen.
+        // No active session -- fall through to login screen.
       } finally {
         if (!cancelled) setBootstrapping(false);
       }
