@@ -17,7 +17,7 @@ export function TransfersPage() {
   }, [ensureTransfers]);
 
   const canManage = hasPermission("asset_manage");
-  const empLabel = (id?: number) => (id ? employeeLabel(employees.find((e) => e.id === id)) : "—");
+  const empLabel = (id?: number) => (id ? employeeLabel(employees.find((e) => e.id === id)) : "--");
 
   return (
     <section className="panel">
@@ -52,8 +52,8 @@ export function TransfersPage() {
             title: "Đến",
             render: (item) => <span className="muted-cell">{empLabel(item.toEmployeeId)}</span>,
           },
-          { key: "reason", title: "Lý do", render: (item) => item.reason || "—" },
-          { key: "by", title: "Người ghi", render: (item) => item.performedBy || "—" },
+          { key: "reason", title: "Lý do", render: (item) => item.reason || "--" },
+          { key: "by", title: "Người ghi", render: (item) => item.performedBy || "--" },
           {
             key: "actions",
             title: "",

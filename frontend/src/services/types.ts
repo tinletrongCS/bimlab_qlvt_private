@@ -1,5 +1,5 @@
 // Mirrors backend Permission enum (QLVT/asset-service/.../security/Permission.java).
-// Q1.5: removed FE-only `asset_assign` — no BE endpoint enforces it; remove drift.
+// Q1.5: removed FE-only `asset_assign` -- no BE endpoint enforces it; remove drift.
 export type Permission =
   | "asset_access"
   | "asset_view_self"

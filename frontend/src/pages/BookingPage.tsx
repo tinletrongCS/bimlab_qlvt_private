@@ -204,7 +204,7 @@ function toNullableNumber(value: string) {
 }
 
 function formatDateTime(value?: string) {
-  if (!value) return "—";
+  if (!value) return "--";
   return new Date(value).toLocaleString("vi-VN", {
     day: "2-digit",
     month: "2-digit",
@@ -284,10 +284,10 @@ function bookingTimeRange(value: AssetBooking) {
   const start = new Date(value.startTime);
   const end = new Date(value.endTime);
   const startLabel = Number.isNaN(start.getTime())
-    ? "—"
+    ? "--"
     : start.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
   const endLabel = Number.isNaN(end.getTime())
-    ? "—"
+    ? "--"
     : end.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
   return `${startLabel} - ${endLabel}`;
 }
@@ -684,7 +684,7 @@ export function BookingPage() {
       locked: true,
       render: (item) => (
         <div className="asset-muted-stack">
-          <strong>{item.assetName || "—"}</strong>
+          <strong>{item.assetName || "--"}</strong>
           <span>{item.assetCode || `#${item.assetId}`}</span>
         </div>
       ),
@@ -707,27 +707,27 @@ export function BookingPage() {
     {
       id: "owner",
       label: "Phụ trách",
-      render: (item) => item.requestedByEmployeeId || item.createdBy || "—",
+      render: (item) => item.requestedByEmployeeId || item.createdBy || "--",
     },
     {
       id: "purpose",
       label: "Mục đích",
-      render: (item) => item.purpose || "—",
+      render: (item) => item.purpose || "--",
     },
     {
       id: "department",
       label: "Phòng ban",
-      render: (item) => item.departmentId || "—",
+      render: (item) => item.departmentId || "--",
     },
     {
       id: "site",
       label: "Chi nhánh",
-      render: (item) => item.siteId || "—",
+      render: (item) => item.siteId || "--",
     },
     {
       id: "project",
       label: "Dự án",
-      render: (item) => item.projectId || "—",
+      render: (item) => item.projectId || "--",
     },
     {
       id: "autoRelease",
@@ -747,7 +747,7 @@ export function BookingPage() {
     {
       id: "createdBy",
       label: "Người tạo",
-      render: (item) => item.createdBy || "—",
+      render: (item) => item.createdBy || "--",
     },
     {
       id: "updatedAt",
@@ -1500,7 +1500,7 @@ export function BookingPage() {
               <div className="booking-detail-summary">
                 <div>
                   <span>Phòng họp</span>
-                  <strong>{selectedBooking.assetName || "—"}</strong>
+                  <strong>{selectedBooking.assetName || "--"}</strong>
                   <small>{selectedBooking.assetCode || `#${selectedBooking.assetId}`}</small>
                 </div>
                 <div>
@@ -1531,7 +1531,7 @@ export function BookingPage() {
                 </div>
                 <div>
                   <span>Người phụ trách</span>
-                  <strong>{selectedBooking.requestedByEmployeeId || "—"}</strong>
+                  <strong>{selectedBooking.requestedByEmployeeId || "--"}</strong>
                 </div>
                 <div>
                   <span>Phòng ban / site / dự án</span>
@@ -1542,16 +1542,16 @@ export function BookingPage() {
                       selectedBooking.projectId,
                     ]
                       .filter(Boolean)
-                      .join(" · ") || "—"}
+                      .join(" · ") || "--"}
                   </strong>
                 </div>
                 <div className="booking-detail-wide">
                   <span>Mục đích</span>
-                  <strong>{selectedBooking.purpose || "—"}</strong>
+                  <strong>{selectedBooking.purpose || "--"}</strong>
                 </div>
                 <div className="booking-detail-wide">
                   <span>Ghi chú</span>
-                  <strong>{selectedBooking.notes || "—"}</strong>
+                  <strong>{selectedBooking.notes || "--"}</strong>
                 </div>
               </div>
             </div>

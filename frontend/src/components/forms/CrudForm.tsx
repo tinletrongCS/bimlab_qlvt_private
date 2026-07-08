@@ -752,8 +752,8 @@ function CrudFormInner({
             value={form.applyToAsset}
             onChange={(value) => setField("applyToAsset", value)}
             options={[
-              ["true", "Có — đồng bộ người dùng/phòng ban lên tài sản"],
-              ["false", "Không — chỉ ghi nhận lịch sử"],
+              ["true", "Có -- đồng bộ người dùng/phòng ban lên tài sản"],
+              ["false", "Không -- chỉ ghi nhận lịch sử"],
             ]}
           />
         </>

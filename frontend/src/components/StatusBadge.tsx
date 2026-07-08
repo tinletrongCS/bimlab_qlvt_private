@@ -29,15 +29,25 @@ const labelMap: Record<string, string> = {
 
 export function StatusBadge({ value, label }: StatusBadgeProps) {
   const status = value || "UNKNOWN";
+  const normalizedStatus = status
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
 
   const colorClass =
-    status === "VALID"
-      ? "active"
-      : status === "INVALID" || status === "HAS_ERROR"
-        ? "rejected"
-        : status === "WARNING"
-          ? "pending"
-          : status.toLowerCase();
+    normalizedStatus.includes("cap phat") || normalizedStatus.includes("dang su dung")
+      ? "assigned"
+      : normalizedStatus.includes("thanh ly") ||
+          normalizedStatus.includes("disposed") ||
+          normalizedStatus.includes("liquidated")
+        ? "disposed"
+        : status === "VALID"
+          ? "active"
+          : status === "INVALID" || status === "HAS_ERROR"
+            ? "rejected"
+            : status === "WARNING"
+              ? "pending"
+              : status.toLowerCase();
 
   return <span className={`badge badge-${colorClass}`}>{label || labelMap[status] || status}</span>;
 }
