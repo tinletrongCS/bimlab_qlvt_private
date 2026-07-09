@@ -109,7 +109,6 @@ export function addCategoryReferenceSheet(
   return sheet;
 }
 
-
 export function addHierarchicalCategorySheet(workbook: Workbook, categories: AssetCategoryTree[]) {
   const sheet = workbook.addWorksheet("Cay_DanhMuc");
 
@@ -126,7 +125,7 @@ export function addHierarchicalCategorySheet(workbook: Workbook, categories: Ass
 
   const cols = [];
   for (let i = 0; i <= maxDepth; i++) {
-    cols.push({ header: "Danh mục Cấp " + (i + 1), key: "level_" + i, width: 30 });
+    cols.push({ header: `Danh mục Cấp ${i + 1}`, key: `level_${i}`, width: 30 });
   }
   cols.push({ header: "Mã", key: "code", width: 24 });
   cols.push({ header: "Loại tài sản", key: "assetClass", width: 24 });
@@ -137,11 +136,15 @@ export function addHierarchicalCategorySheet(workbook: Workbook, categories: Ass
       code: node.code,
       assetClass: node.assetClass,
     };
-    rowData["level_" + depth] = node.name;
+    rowData[`level_${depth}`] = node.name;
     sheet.addRow(rowData);
-    node.children.forEach(child => addRow(child, depth + 1));
+    node.children.forEach((child) => {
+      addRow(child, depth + 1);
+    });
   };
-  categories.forEach(root => addRow(root, 0));
+  categories.forEach((root) => {
+    addRow(root, 0);
+  });
 
   const levelColors = [
     "FFE0F2FE", // Level 1 - sky 100
@@ -172,7 +175,7 @@ export function addHierarchicalCategorySheet(workbook: Workbook, categories: Ass
         bottom: { style: "thin", color: { argb: "FFD9E2EC" } },
         right: { style: "thin", color: { argb: "FFD9E2EC" } },
       };
-      
+
       if (colNumber <= maxDepth + 1) {
         // Color the category columns based on depth
         const color = levelColors[(colNumber - 1) % levelColors.length];
@@ -186,7 +189,6 @@ export function addHierarchicalCategorySheet(workbook: Workbook, categories: Ass
 
   return sheet;
 }
-
 
 export async function downloadCategoryImportTemplate(categories: AssetCategoryTree[]) {
   const ExcelJS = await import("exceljs");
