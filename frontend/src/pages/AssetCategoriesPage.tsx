@@ -851,14 +851,14 @@ export function AssetCategoriesPage() {
         <div className="asset-page-actions category-page-actions">
           <button
             type="button"
-            className="asset-template-button"
+            className="asset-add-button btn-download-green"
             onClick={() => void handleDownloadCategoryTemplate()}
           >
             <FiDownload /> Tải danh mục
           </button>
           <button
             type="button"
-            className="asset-import-button"
+            className="asset-add-button btn-upload-blue"
             onClick={() => {
               resetImport();
               setImportOpen(true);

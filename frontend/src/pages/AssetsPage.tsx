@@ -23,6 +23,7 @@ import {
   FiUpload,
   FiX,
 } from "react-icons/fi";
+import { SearchableSelect } from "../components/forms/SearchableSelect";
 import { OverflowActions } from "../components/OverflowActions";
 import { StatusBadge } from "../components/StatusBadge";
 import { useActions } from "../contexts/ActionsContext";
@@ -1157,7 +1158,11 @@ export function AssetsPage() {
   }, [useDateFrom, useDateTo]);
 
   const filteredAssets = useMemo(() => {
-    const normalized = query.trim().toLowerCase();
+    const normalized = query
+      .trim()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase();
     const valueRange = ASSET_VALUE_FILTERS.find((item) => item.value === valueFilter);
     const selectedCategoryIds = selectedCategoryNode
       ? (categoryDescendantIds.get(selectedCategoryNode.id) ??
@@ -1213,6 +1218,8 @@ export function AssetsPage() {
       ]
         .filter(Boolean)
         .join(" ")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
         .toLowerCase();
       const matchesQuery = !normalized || searchable.includes(normalized);
       return (
@@ -1371,7 +1378,7 @@ export function AssetsPage() {
   const reloadAssetList = async () => {
     setListRefreshing(true);
     try {
-      await ensureAssets(true);
+      await ensureAssets(true, true);
     } finally {
       setListRefreshing(false);
     }
@@ -1654,12 +1661,12 @@ export function AssetsPage() {
     {
       id: "categoryCode",
       label: "Mã danh mục",
-      render: (item) => item.assetCategory?.code || "--",
+      render: (item) => highlightSearchText(item.assetCategory?.code || "--", query),
     },
     {
       id: "serialNumber",
       label: "Serial/MAC",
-      render: (item) => item.serialNumber || "--",
+      render: (item) => highlightSearchText(item.serialNumber || "--", query),
     },
     {
       id: "status",
@@ -1864,10 +1871,18 @@ export function AssetsPage() {
       </header>
 
       <div className="asset-page-actions">
-        <button type="button" className="asset-template-button" onClick={handleDownloadTemplate}>
+        <button
+          type="button"
+          className="asset-add-button btn-download-green"
+          onClick={handleDownloadTemplate}
+        >
           <FiDownload /> Tải mẫu Excel
         </button>
-        <button type="button" className="asset-import-button" onClick={() => setImportOpen(true)}>
+        <button
+          type="button"
+          className="asset-add-button btn-upload-blue"
+          onClick={() => setImportOpen(true)}
+        >
           <FiUpload /> Tải lên file Excel
         </button>
         {canManage && (
@@ -1951,9 +1966,9 @@ export function AssetsPage() {
             </label>
             <label className="asset-filter-field">
               <span>Trạng thái</span>
-              <select
+              <SearchableSelect
                 value={statusFilter}
-                onChange={(event) => setStatusFilter(event.target.value as AssetStatusFilter)}
+                onChange={(val: string) => setStatusFilter(val as AssetStatusFilter)}
               >
                 {(["ALL", "IN_STOCK", "ASSIGNED", "MAINTENANCE", "DISPOSED"] as const).map(
                   (status) => (
@@ -1962,20 +1977,20 @@ export function AssetsPage() {
                     </option>
                   ),
                 )}
-              </select>
+              </SearchableSelect>
             </label>
             <label className="asset-filter-field">
               <span>Giá trị</span>
-              <select
+              <SearchableSelect
                 value={valueFilter}
-                onChange={(event) => setValueFilter(event.target.value as AssetValueFilter)}
+                onChange={(val: string) => setValueFilter(val as AssetValueFilter)}
               >
                 {ASSET_VALUE_FILTERS.map((item) => (
                   <option key={item.value} value={item.value}>
                     {item.label}
                   </option>
                 ))}
-              </select>
+              </SearchableSelect>
             </label>
             <label className="asset-date-filter">
               <span>Từ ngày sử dụng</span>
@@ -2281,11 +2296,11 @@ export function AssetsPage() {
                 <div className="asset-selection-actions">
                   <label className="asset-bulk-action-select">
                     <span>Thao tác</span>
-                    <select
+                    <SearchableSelect
                       value={bulkPanelAction || ""}
                       disabled={selectedAssets.length === 0 || bulkActionBusy}
-                      onChange={(event) => {
-                        const action = event.target.value as Exclude<AssetBulkAction, null> | "";
+                      onChange={(val: string) => {
+                        const action = val as Exclude<AssetBulkAction, null> | "";
                         if (!action) {
                           setBulkPanelAction(null);
                           return;
@@ -2301,7 +2316,7 @@ export function AssetsPage() {
                       <option value="qr" disabled>
                         In QR theo nhóm
                       </option>
-                    </select>
+                    </SearchableSelect>
                   </label>
                   <button
                     type="button"
@@ -2364,12 +2379,10 @@ export function AssetsPage() {
                           <div className="asset-bulk-form-row">
                             <label>
                               <span>Trạng thái mới</span>
-                              <select
+                              <SearchableSelect
                                 value={bulkStatus}
-                                onChange={(event) =>
-                                  setBulkStatus(
-                                    event.target.value as (typeof ASSET_MUTABLE_STATUSES)[number],
-                                  )
+                                onChange={(val: string) =>
+                                  setBulkStatus(val as (typeof ASSET_MUTABLE_STATUSES)[number])
                                 }
                               >
                                 {ASSET_MUTABLE_STATUSES.map((status) => (
@@ -2377,7 +2390,7 @@ export function AssetsPage() {
                                     {statusLabel(status)}
                                   </option>
                                 ))}
-                              </select>
+                              </SearchableSelect>
                             </label>
                             <button
                               type="button"
@@ -2402,9 +2415,9 @@ export function AssetsPage() {
                           <div className="asset-bulk-form-row three">
                             <label>
                               <span>Chi nhánh mới</span>
-                              <select
+                              <SearchableSelect
                                 value={bulkSiteId}
-                                onChange={(event) => setBulkSiteId(event.target.value)}
+                                onChange={(val: string) => setBulkSiteId(val)}
                               >
                                 <option value="">Giữ nguyên chi nhánh</option>
                                 {workSites.map((site) => (
@@ -2412,13 +2425,13 @@ export function AssetsPage() {
                                     {site.name}
                                   </option>
                                 ))}
-                              </select>
+                              </SearchableSelect>
                             </label>
                             <label>
                               <span>Phòng ban mới</span>
-                              <select
+                              <SearchableSelect
                                 value={bulkDepartmentId}
-                                onChange={(event) => setBulkDepartmentId(event.target.value)}
+                                onChange={(val: string) => setBulkDepartmentId(val)}
                               >
                                 <option value="">Giữ nguyên phòng ban</option>
                                 {departments.map((department) => (
@@ -2426,13 +2439,13 @@ export function AssetsPage() {
                                     {department.name}
                                   </option>
                                 ))}
-                              </select>
+                              </SearchableSelect>
                             </label>
                             <label>
                               <span>Người giữ mới</span>
-                              <select
+                              <SearchableSelect
                                 value={bulkEmployeeId}
-                                onChange={(event) => setBulkEmployeeId(event.target.value)}
+                                onChange={(val: string) => setBulkEmployeeId(val)}
                               >
                                 <option value="">Giữ nguyên người giữ</option>
                                 {employees.map((employee) => (
@@ -2440,7 +2453,7 @@ export function AssetsPage() {
                                     {employeeLabel(employee)}
                                   </option>
                                 ))}
-                              </select>
+                              </SearchableSelect>
                             </label>
                             <button
                               type="button"
@@ -2463,9 +2476,9 @@ export function AssetsPage() {
                           <div className="asset-bulk-form-row three">
                             <label>
                               <span>Chi nhánh</span>
-                              <select
+                              <SearchableSelect
                                 value={bulkSiteId}
-                                onChange={(event) => setBulkSiteId(event.target.value)}
+                                onChange={(val: string) => setBulkSiteId(val)}
                               >
                                 <option value="">Giữ nguyên chi nhánh</option>
                                 {workSites.map((site) => (
@@ -2473,13 +2486,13 @@ export function AssetsPage() {
                                     {site.name}
                                   </option>
                                 ))}
-                              </select>
+                              </SearchableSelect>
                             </label>
                             <label>
                               <span>Phòng ban</span>
-                              <select
+                              <SearchableSelect
                                 value={bulkDepartmentId}
-                                onChange={(event) => setBulkDepartmentId(event.target.value)}
+                                onChange={(val: string) => setBulkDepartmentId(val)}
                               >
                                 <option value="">Giữ nguyên phòng ban</option>
                                 {departments.map((department) => (
@@ -2487,13 +2500,13 @@ export function AssetsPage() {
                                     {department.name}
                                   </option>
                                 ))}
-                              </select>
+                              </SearchableSelect>
                             </label>
                             <label>
                               <span>Nhân sự nhận</span>
-                              <select
+                              <SearchableSelect
                                 value={bulkEmployeeId}
-                                onChange={(event) => setBulkEmployeeId(event.target.value)}
+                                onChange={(val: string) => setBulkEmployeeId(val)}
                               >
                                 <option value="">Chọn nhân sự</option>
                                 {employees.map((employee) => (
@@ -2501,7 +2514,7 @@ export function AssetsPage() {
                                     {employeeLabel(employee)}
                                   </option>
                                 ))}
-                              </select>
+                              </SearchableSelect>
                             </label>
                             <button
                               type="button"
@@ -2725,9 +2738,9 @@ export function AssetsPage() {
                     </label>
                     <label>
                       <span>Trạng thái</span>
-                      <select
+                      <SearchableSelect
                         value={assetDraft.status || "IN_STOCK"}
-                        onChange={(event) => updateAssetDraft("status", event.target.value)}
+                        onChange={(val: string) => updateAssetDraft("status", val)}
                         disabled={!canManage || assetSaving}
                       >
                         <option value="IN_STOCK">Trong kho</option>
@@ -2735,7 +2748,7 @@ export function AssetsPage() {
                         <option value="MAINTENANCE">Bảo trì</option>
                         <option value="DISPOSED">Đã thanh lý</option>
                         <option value="LOST">Mất</option>
-                      </select>
+                      </SearchableSelect>
                     </label>
                     <label>
                       <span>Nguồn hình thành</span>
@@ -2752,11 +2765,9 @@ export function AssetsPage() {
                   <div className="asset-detail-fields">
                     <label>
                       <span>Site hiện tại</span>
-                      <select
-                        value={assetDraft.siteId ?? ""}
-                        onChange={(event) =>
-                          updateAssetDraft("siteId", optionalNumber(event.target.value))
-                        }
+                      <SearchableSelect
+                        value={assetDraft.siteId != null ? String(assetDraft.siteId) : ""}
+                        onChange={(val: string) => updateAssetDraft("siteId", optionalNumber(val))}
                         disabled={!canManage || assetSaving}
                       >
                         <option value="">Chưa gán chi nhánh</option>
@@ -2765,48 +2776,72 @@ export function AssetsPage() {
                             {site.name}
                           </option>
                         ))}
-                      </select>
+                      </SearchableSelect>
                     </label>
                     <label>
                       <span>Phòng ban quản lý</span>
-                      <select
-                        value={assetDraft.departmentId ?? ""}
-                        onChange={(event) =>
-                          updateAssetDraft("departmentId", optionalNumber(event.target.value))
+                      <SearchableSelect
+                        value={
+                          assetDraft.departmentId != null ? String(assetDraft.departmentId) : ""
+                        }
+                        onChange={(val: string) =>
+                          updateAssetDraft("departmentId", optionalNumber(val))
                         }
                         disabled={!canManage || assetSaving}
                       >
                         <option value="">Chưa gán phòng ban</option>
-                        {departments.map((department) => (
-                          <option key={department.id} value={department.id}>
-                            {department.name}
-                          </option>
-                        ))}
-                      </select>
+                        {departments
+                          .filter(
+                            (d) =>
+                              !assetDraft.siteId ||
+                              (d as any).siteId === assetDraft.siteId ||
+                              (d as any).siteId === undefined,
+                          )
+                          .map((department) => (
+                            <option key={department.id} value={department.id}>
+                              {department.name}
+                            </option>
+                          ))}
+                      </SearchableSelect>
                     </label>
                     <label>
                       <span>Nhân sự đang giữ</span>
-                      <select
-                        value={assetDraft.assignedEmployeeId ?? ""}
-                        onChange={(event) =>
-                          updateAssetDraft("assignedEmployeeId", optionalNumber(event.target.value))
+                      <SearchableSelect
+                        value={
+                          assetDraft.assignedEmployeeId != null
+                            ? String(assetDraft.assignedEmployeeId)
+                            : ""
+                        }
+                        onChange={(val: string) =>
+                          updateAssetDraft("assignedEmployeeId", optionalNumber(val))
                         }
                         disabled={!canManage || assetSaving}
                       >
                         <option value="">Chưa gán người giữ</option>
-                        {employees.map((employee) => (
-                          <option key={employee.id} value={employee.id}>
-                            {employeeLabel(employee)}
-                          </option>
-                        ))}
-                      </select>
+                        {employees
+                          .filter((e) => {
+                            if (!assetDraft.departmentId) return true;
+                            const deptName = departments.find(
+                              (d) => d.id === assetDraft.departmentId,
+                            )?.name;
+                            if ((e as any).departmentId)
+                              return (e as any).departmentId === assetDraft.departmentId;
+                            if (e.departmentName && deptName) return e.departmentName === deptName;
+                            return true;
+                          })
+                          .map((employee) => (
+                            <option key={employee.id} value={employee.id}>
+                              {employeeLabel(employee)}
+                            </option>
+                          ))}
+                      </SearchableSelect>
                     </label>
                     <label>
                       <span>Dự án</span>
-                      <select
-                        value={assetDraft.projectId ?? ""}
-                        onChange={(event) =>
-                          updateAssetDraft("projectId", optionalNumber(event.target.value))
+                      <SearchableSelect
+                        value={assetDraft.projectId != null ? String(assetDraft.projectId) : ""}
+                        onChange={(val: string) =>
+                          updateAssetDraft("projectId", optionalNumber(val))
                         }
                         disabled={!canManage || assetSaving}
                       >
@@ -2816,7 +2851,7 @@ export function AssetsPage() {
                             {projectLabel(project)}
                           </option>
                         ))}
-                      </select>
+                      </SearchableSelect>
                     </label>
                     <div>
                       <span>Ngày đưa vào sử dụng</span>
@@ -3207,20 +3242,16 @@ export function AssetsPage() {
                       <span style={{ color: "#64748b", fontSize: "11px", fontWeight: 600 }}>
                         Chế độ nhập dữ liệu:
                       </span>
-                      <select
+                      <SearchableSelect
                         value={importMode}
-                        onChange={(event) => setImportMode(event.target.value as ImportMode)}
+                        onChange={(val: string) => setImportMode(val as ImportMode)}
                         style={{
-                          padding: "4px 8px",
-                          borderRadius: "4px",
-                          border: "1px solid #dbe3ef",
-                          fontSize: "11px",
-                          color: "#334155",
+                          width: "200px",
                         }}
                       >
                         <option value="VALID_ROWS_ONLY">Chỉ nhập những dòng hợp lệ</option>
                         <option value="ALL_OR_NOTHING">Tất cả hoặc không nhập</option>
-                      </select>
+                      </SearchableSelect>
                     </label>
                   </div>
 
