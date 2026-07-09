@@ -28,7 +28,7 @@ import { StatusBadge } from "../components/StatusBadge";
 import { useActions } from "../contexts/ActionsContext";
 import { useAppData } from "../contexts/AppDataContext";
 import { useAuth } from "../contexts/AuthContext";
-import { addCategoryReferenceSheet } from "../lib/categoryExcel";
+import { addCategoryReferenceSheet, addHierarchicalCategorySheet } from "../lib/categoryExcel";
 import { employeeLabel, money, projectLabel } from "../lib/format";
 import {
   commitAssetImport,
@@ -913,6 +913,7 @@ async function downloadAssetImportTemplate(categories: AssetCategoryTree[]) {
   });
 
   addCategoryReferenceSheet(workbook, { categories });
+  addHierarchicalCategorySheet(workbook, categories);
 
   const buffer = await workbook.xlsx.writeBuffer();
   const blob = new Blob([buffer], {
