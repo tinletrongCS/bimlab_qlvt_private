@@ -109,12 +109,92 @@ export function addCategoryReferenceSheet(
   return sheet;
 }
 
+
+export function addHierarchicalCategorySheet(workbook: Workbook, categories: AssetCategoryTree[]) {
+  const sheet = workbook.addWorksheet("Cay_DanhMuc");
+
+  const getMaxDepth = (nodes: AssetCategoryTree[], currentDepth = 0): number => {
+    let max = currentDepth;
+    for (const node of nodes) {
+      if (node.children && node.children.length > 0) {
+        max = Math.max(max, getMaxDepth(node.children, currentDepth + 1));
+      }
+    }
+    return max;
+  };
+  const maxDepth = Math.max(0, getMaxDepth(categories));
+
+  const cols = [];
+  for (let i = 0; i <= maxDepth; i++) {
+    cols.push({ header: "Danh mục Cấp " + (i + 1), key: "level_" + i, width: 30 });
+  }
+  cols.push({ header: "Mã", key: "code", width: 24 });
+  cols.push({ header: "Loại tài sản", key: "assetClass", width: 24 });
+  sheet.columns = cols;
+
+  const addRow = (node: AssetCategoryTree, depth: number) => {
+    const rowData: Record<string, string> = {
+      code: node.code,
+      assetClass: node.assetClass,
+    };
+    rowData["level_" + depth] = node.name;
+    sheet.addRow(rowData);
+    node.children.forEach(child => addRow(child, depth + 1));
+  };
+  categories.forEach(root => addRow(root, 0));
+
+  const levelColors = [
+    "FFE0F2FE", // Level 1 - sky 100
+    "FFECFCCB", // Level 2 - lime 100
+    "FFFEF9C3", // Level 3 - yellow 100
+    "FFFFEDD5", // Level 4 - orange 100
+    "FFFCE7F3", // Level 5 - pink 100
+    "FFF3E8FF", // Level 6 - purple 100
+    "FFEDE9FE", // Level 7
+  ];
+
+  sheet.getRow(1).eachCell((cell) => {
+    cell.font = { bold: true, color: { argb: "FFFFFFFF" } };
+    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF1F4E79" } };
+    cell.alignment = { vertical: "middle", horizontal: "center", wrapText: true };
+  });
+
+  sheet.eachRow((row, rowNumber) => {
+    if (rowNumber === 1) {
+      row.height = 24;
+      return;
+    }
+    row.height = 20;
+    row.eachCell((cell, colNumber) => {
+      cell.border = {
+        top: { style: "thin", color: { argb: "FFD9E2EC" } },
+        left: { style: "thin", color: { argb: "FFD9E2EC" } },
+        bottom: { style: "thin", color: { argb: "FFD9E2EC" } },
+        right: { style: "thin", color: { argb: "FFD9E2EC" } },
+      };
+      
+      if (colNumber <= maxDepth + 1) {
+        // Color the category columns based on depth
+        const color = levelColors[(colNumber - 1) % levelColors.length];
+        cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: color } };
+        cell.alignment = { vertical: "middle", horizontal: "left", wrapText: true };
+      } else {
+        cell.alignment = { vertical: "middle", horizontal: "left", wrapText: false };
+      }
+    });
+  });
+
+  return sheet;
+}
+
+
 export async function downloadCategoryImportTemplate(categories: AssetCategoryTree[]) {
   const ExcelJS = await import("exceljs");
   const workbook = new ExcelJS.Workbook();
   workbook.creator = "BIMLAB QLVT";
   workbook.created = new Date();
   addCategoryReferenceSheet(workbook, { categories, includeStatuses: false });
+  addHierarchicalCategorySheet(workbook, categories);
 
   const buffer = await workbook.xlsx.writeBuffer();
   const blob = new Blob([buffer], {

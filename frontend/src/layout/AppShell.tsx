@@ -225,11 +225,11 @@ export function AppShell() {
         <button type="button" className="brand" onClick={() => window.location.reload()}>
           {sidebarCompact ? (
             <span className="brand-compact-mark" aria-hidden="true">
-              <img src="/lgBL.ico" alt="" />
+              <img src="/simple.png" alt="" />
             </span>
           ) : (
             <>
-              <img src="https://bimlab.com.vn/assets/img/bimlab-logo.png" alt="BIMLab" />
+              <img src="/full_dark.png" alt="BIMLab" />
               <p>Quản lý tài sản</p>
             </>
           )}
