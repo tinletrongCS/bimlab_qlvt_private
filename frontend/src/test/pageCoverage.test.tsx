@@ -304,7 +304,9 @@ describe("QLVT pages", () => {
 
     await user.click(screen.getByRole("button", { name: "Duyệt" }));
 
-    await waitFor(() => expect(api.updatePurchaseRequestStatus).toHaveBeenCalledWith(1, "APPROVED"));
+    await waitFor(() =>
+      expect(api.updatePurchaseRequestStatus).toHaveBeenCalledWith(1, "APPROVED"),
+    );
   });
 
   it("updates a contract from the contracts route", async () => {
