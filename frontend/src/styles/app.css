@@ -171,7 +171,7 @@ textarea:focus {
 }
 
 .brand:hover {
-  background: #0d2540;
+  background: transparent !important;
   box-shadow: none;
   transform: none;
 }
@@ -1819,7 +1819,7 @@ tbody tr:last-child td {
 }
 
 .brand:hover {
-  background: #f9fafb;
+  background: transparent !important;
   box-shadow: none;
   transform: none;
 }
@@ -3696,7 +3696,7 @@ button:hover {
   align-items: center;
   background: #ffffff;
   border: 1px solid #e5e7eb;
-  border-radius: 10px;
+  border-radius: 0 !important;
   display: inline-flex;
   height: 40px;
   justify-content: center;
@@ -8086,7 +8086,7 @@ textarea,
 }
 
 #root .brand:hover {
-  background: #f6f8fa !important;
+  background: transparent !important;
 }
 
 #root .brand img {
@@ -10091,7 +10091,7 @@ textarea,
 }
 
 #root .brand:hover {
-  background: rgba(255, 255, 255, 0.08) !important;
+  background: transparent !important;
 }
 
 #root .brand p {
@@ -10382,11 +10382,11 @@ textarea,
   width: auto !important;
   max-width: 132px !important;
   height: auto !important;
-  max-height: 32px !important;
+  max-height: 40px !important;
   padding: 4px 7px !important;
   border: 0 !important;
   border-radius: 0 !important;
-  background: #ffffff !important;
+  background: transparent !important;
   box-shadow: none !important;
 }
 
@@ -10410,9 +10410,9 @@ textarea,
   height: 34px !important;
   min-height: 34px !important;
   place-items: center !important;
-  border: 1px solid rgba(255, 255, 255, 0.65) !important;
-  border-radius: 2px !important;
-  background: #ffffff !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
   box-shadow: none !important;
   overflow: hidden !important;
 }
@@ -10420,9 +10420,9 @@ textarea,
 #root .sidebar.compact .brand-compact-mark img {
   display: block !important;
   width: 28px !important;
-  max-width: 28px !important;
+  max-width: 34px !important;
   height: 28px !important;
-  max-height: 28px !important;
+  max-height: 34px !important;
   padding: 0 !important;
   border: 0 !important;
   background: transparent !important;
@@ -13083,15 +13083,6 @@ body,
 }
 
 /* Start from left so sticky left: 0 works immediately */
-
-#root .sticky-empty-text {
-  position: sticky !important;
-  left: 0 !important;
-  width: 100cqw !important;
-  text-align: center !important;
-  display: block !important;
-  box-sizing: border-box !important;
-}
 
 /* Revert table aesthetics and reduce padding */
 #root .asset-table td,

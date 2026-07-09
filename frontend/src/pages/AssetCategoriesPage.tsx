@@ -1283,11 +1283,9 @@ export function AssetCategoriesPage() {
                             <tr className="asset-table-empty-row">
                               <td colSpan={7}>
                                 <div className="asset-table-empty-state">
-                                  <span className="sticky-empty-text">
-                                    {importRows.length === 0
-                                      ? "Chọn file Excel để xem dữ liệu trước khi import."
-                                      : "Không có dòng phù hợp bộ lọc."}
-                                  </span>
+                                  {importRows.length === 0
+                                    ? "Chọn file Excel để xem dữ liệu trước khi import."
+                                    : "Không có dòng phù hợp bộ lọc."}
                                 </div>
                               </td>
                             </tr>
