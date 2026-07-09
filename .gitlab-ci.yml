@@ -1,0 +1,51 @@
+stages:
+  - check
+
+workflow:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - when: never
+
+frontend-check:
+  stage: check
+  image: node:22-alpine
+  variables:
+    CI: "true"
+    PNPM_HOME: /tmp/pnpm
+    PNPM_STORE_DIR: /tmp/pnpm-store
+  cache:
+    key:
+      files:
+        - frontend/pnpm-lock.yaml
+    paths:
+      - .pnpm-store/
+  before_script:
+    - export PATH="$PNPM_HOME/bin:$PATH"
+    - npm install -g pnpm@10.33.2 --prefix "$PNPM_HOME"
+    - cd frontend
+    - pnpm config set store-dir "$CI_PROJECT_DIR/.pnpm-store"
+    - pnpm install --frozen-lockfile
+  script:
+    - pnpm lint
+    - pnpm test:coverage -- --reporter=default --reporter=junit --outputFile=reports/vitest-junit.xml
+    - pnpm build
+  artifacts:
+    when: always
+    reports:
+      junit: frontend/reports/vitest-junit.xml
+    paths:
+      - frontend/reports/
+    expire_in: 7 days
+
+asset-service-check:
+  stage: check
+  image: maven:3.9-eclipse-temurin-21
+  cache:
+    key: maven-asset-service
+    paths:
+      - .m2/repository/
+  variables:
+    MAVEN_OPTS: "-Dmaven.repo.local=$CI_PROJECT_DIR/.m2/repository"
+  script:
+    - cd asset-service
+    - mvn -q test

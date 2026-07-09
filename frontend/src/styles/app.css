@@ -274,7 +274,7 @@ textarea:focus {
 
 .logout-button:hover {
   background: #dc2626;
-  border-color: #991b1b;
+  border-color: #ef4444;
   color: #ffffff;
 }
 
@@ -1111,17 +1111,12 @@ tbody tr:last-child td {
 
 .badge-pending {
   background: #fef9c3;
-  color: #a16207;
+  color: #f59e0b;
 }
 
 .badge-draft {
   background: #f1f5f9;
   color: #475569;
-}
-
-.badge-inactive {
-  background: #f1f5f9;
-  color: #64748b;
 }
 
 .badge-rejected,
@@ -4669,7 +4664,7 @@ button:hover {
 }
 
 .asset-table {
-  max-height: min(640px, calc(100vh - 330px));
+  height: min(640px, calc(100vh - 330px));
   overflow: auto;
   scrollbar-gutter: stable;
   width: 100%;
@@ -4699,6 +4694,8 @@ button:hover {
   font-size: 12px;
   padding: 7px 10px;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .asset-table td.asset-table-sticky-select,
@@ -4708,7 +4705,7 @@ button:hover {
 }
 
 .asset-table tbody tr:hover td {
-  background: #f8fbff;
+  background: #f9fafb;
 }
 
 .asset-table tbody tr.is-selected td {
@@ -4748,7 +4745,7 @@ button:hover {
 }
 
 .asset-table tbody tr:hover td.asset-table-sticky-select {
-  background: #f8fbff;
+  background: #f9fafb;
 }
 
 .asset-table tbody tr.is-selected td.asset-table-sticky-select,
@@ -4861,7 +4858,7 @@ button:hover {
 }
 
 .asset-table tbody tr:hover td.asset-table-sticky-left {
-  background: #f8fbff;
+  background: #f9fafb;
 }
 
 .asset-table .asset-table-sticky-right {
@@ -4883,7 +4880,7 @@ button:hover {
 }
 
 .asset-table tbody tr:hover td.asset-table-sticky-right {
-  background: #f8fbff;
+  background: #f9fafb;
 }
 
 .asset-table-col-category {
@@ -5807,11 +5804,6 @@ tr[data-status="WARNING"] .asset-import-row-status {
   color: #047857;
 }
 
-.badge-completed {
-  background: #f1f5f9;
-  color: #475569;
-}
-
 .badge-cancelled,
 .badge-expired {
   background: #fee2e2;
@@ -6341,6 +6333,8 @@ textarea,
 .asset-bulk-panel select,
 .asset-toolbar input,
 .asset-toolbar select,
+.category-filters input,
+.category-filters select,
 .category-editor input,
 .category-editor select,
 .category-editor textarea {
@@ -6586,13 +6580,13 @@ table td,
 .asset-table tbody tr:hover td.asset-table-sticky-left,
 .asset-table tbody tr:hover td.asset-table-sticky-select,
 .asset-table tbody tr:hover td.asset-table-sticky-right {
-  background: #f5f7fa;
+  background: #f9fafb;
 }
 
 .asset-table tbody tr.is-selected td,
 .asset-table tbody tr.is-selected td.asset-table-sticky-left,
 .asset-table tbody tr.is-selected td.asset-table-sticky-select {
-  background: #e9f0f7;
+  background: #eff6ff;
 }
 
 .asset-category-filter-item,
@@ -6793,6 +6787,8 @@ textarea,
 .asset-bulk-panel select,
 .asset-toolbar input,
 .asset-toolbar select,
+.category-filters input,
+.category-filters select,
 .asset-import-file-button,
 .asset-import-summary > div,
 .asset-import-row-status,
@@ -6918,7 +6914,7 @@ tr[data-status="WARNING"] .asset-import-row-status {
 }
 
 .asset-table tbody tr:hover td.asset-table-sticky-right {
-  background: #f5f7fa;
+  background: #f9fafb;
 }
 
 .asset-table tbody tr.is-selected td.asset-table-sticky-right {
@@ -7365,7 +7361,7 @@ textarea,
 .category-parent-context {
   border-radius: 3px;
   background: #f8fafc;
-  border-color: #e4e7ec;
+  border-color: #cbd5e1;
 }
 
 .modal-head .icon-button,
@@ -8169,7 +8165,7 @@ textarea,
 #root .sidebar nav a:hover,
 #root .sidebar-group-button:hover {
   background: #f6f8fa !important;
-  border-color: #e4e7ec !important;
+  border-color: #cbd5e1 !important;
   color: #16324f;
 }
 
@@ -8253,6 +8249,8 @@ textarea,
 #root .modal-actions button,
 #root .asset-toolbar button,
 #root .asset-toolbar select,
+.category-filters input,
+.category-filters select,
 #root .booking-filters select,
 #root .booking-filters input,
 #root .asset-filter-field select,
@@ -8320,7 +8318,7 @@ textarea,
 
 #root .asset-category-filter-item:hover {
   background: #f6f8fa !important;
-  border-color: #e4e7ec !important;
+  border-color: #cbd5e1 !important;
 }
 
 #root .asset-category-filter-item[data-selected="true"] {
@@ -8415,7 +8413,7 @@ textarea,
 #root table th {
   color: #1f2937 !important;
   font-size: 12px !important;
-  font-weight: 700 !important;
+  font-weight: 600 !important;
   letter-spacing: 0 !important;
 }
 
@@ -8457,7 +8455,7 @@ textarea,
 
 #root .asset-selection-card:hover {
   border-color: #b8c4d0 !important;
-  background: #f8fafc !important;
+  background: #eef2f6 !important;
 }
 
 #root .asset-selection-actions {
@@ -8636,7 +8634,7 @@ textarea,
   min-height: 34px;
   padding: 6px 7px !important;
   border: 1px solid #d7dde5 !important;
-  background: #f8fafc !important;
+  background: #eef2f6 !important;
 }
 
 #root .booking-calendar-head {
@@ -9774,21 +9772,21 @@ textarea,
   grid-template-rows: auto auto auto minmax(0, auto);
   min-height: 0;
   overflow: hidden;
-  border-color: var(--bimlab-line) !important;
+  border: 0 !important;
   background: var(--bimlab-blue-soft-2) !important;
 }
 
 #root .category-filters {
   padding: 5px;
-  border: 1px solid var(--bimlab-line);
-  background: #ffffff;
+  border: 0 !important;
+  background: transparent !important;
 }
 
 #root .category-org-viewport {
   height: 420px;
   min-height: 420px;
   max-height: 420px;
-  border-color: var(--bimlab-line) !important;
+  border: 0 !important;
   background:
     linear-gradient(90deg, rgba(21, 80, 127, 0.035) 1px, transparent 1px),
     linear-gradient(180deg, rgba(21, 80, 127, 0.035) 1px, transparent 1px), var(--bimlab-blue-soft) !important;
@@ -9954,7 +9952,7 @@ textarea,
 }
 
 #root .category-org-viewport {
-  background: #f8fafc !important;
+  background: #eef2f6 !important;
 }
 
 #root .category-org-card,
@@ -10637,7 +10635,7 @@ textarea,
   contain: layout paint !important;
   overscroll-behavior: contain !important;
   scrollbar-gutter: stable both-edges !important;
-  background: #f8fafc !important;
+  background: #eef2f6 !important;
 }
 
 #root .category-org-forest {
@@ -10826,7 +10824,7 @@ textarea,
 #root .asset-table th,
 #root .asset-table td,
 #root .asset-table .status-badge {
-  border-color: #e4e7ec !important;
+  border-color: #cbd5e1 !important;
 }
 
 #root .asset-table .status-badge {
@@ -10990,13 +10988,13 @@ textarea,
 #root .asset-table tbody tr:hover td.asset-table-sticky-right,
 #root .booking-table tbody tr:hover td.booking-table-sticky-left,
 #root .booking-table tbody tr:hover td.booking-table-sticky-right {
-  background: #f5f7fa !important;
+  background: #f9fafb !important;
 }
 
 #root .asset-table tbody tr.is-selected td.asset-table-sticky-select,
 #root .asset-table tbody tr.is-selected td.asset-table-sticky-left,
 #root .asset-table tbody tr.is-selected td.asset-table-sticky-right {
-  background: #e9f0f7 !important;
+  background: #eff6ff !important;
 }
 
 #root .booking-table-col-booking {
@@ -11400,8 +11398,9 @@ body,
 }
 
 #root .row-action-menu-list button:hover:not(:disabled) {
-  background: #eef4fa !important;
-  color: #15507f !important;
+  color: #2563eb !important; /* Prominent Blue */
+  background: transparent !important;
+  font-weight: 600 !important;
   transform: none !important;
 }
 
@@ -11713,8 +11712,9 @@ body,
 }
 
 .overflow-actions-menu button:hover:not(:disabled) {
-  background: #eef4fa !important;
-  color: #15507f !important;
+  color: #2563eb !important; /* Prominent Blue */
+  background: transparent !important;
+  font-weight: 600 !important;
   transform: none !important;
 }
 
@@ -11736,7 +11736,8 @@ body,
   border: 1px solid transparent !important;
   background: transparent !important;
   box-shadow: none !important;
-  color: #15507f !important;
+  color: #2563eb !important; /* Prominent Blue */
+  font-weight: 600 !important;
 }
 
 #root .overflow-actions-trigger:hover {
@@ -11939,12 +11940,18 @@ body,
 }
 
 /* Final sticky column borders and sober status colors. */
-#root .asset-table th,
 #root .asset-table td,
-#root .booking-table th,
 #root .booking-table td {
   position: relative;
   z-index: 1;
+}
+
+#root .asset-table th,
+#root .booking-table th {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 50 !important;
+  background: #eef2f6 !important;
 }
 
 #root .asset-table .asset-table-sticky-select,
@@ -11986,12 +11993,6 @@ body,
   box-shadow: 10px 0 14px -16px rgba(15, 23, 42, 0.55) !important;
 }
 
-#root .asset-table-col-status,
-#root .booking-table-col-status {
-  border-left: 1px solid #e1e7ef !important;
-  border-right: 1px solid #d7dde5 !important;
-}
-
 #root .asset-table-actions-col,
 #root .booking-table-actions-col {
   border-left: 1px solid #d7dde5 !important;
@@ -12016,50 +12017,9 @@ body,
   border: 0 !important;
   box-shadow: none !important;
   font-size: 11.5px !important;
-  font-weight: 700 !important;
+  font-weight: 600 !important;
   line-height: 1.1 !important;
   padding: 5px 8px !important;
-}
-
-#root .badge-in_stock,
-#root .badge-confirmed,
-#root .badge-approved {
-  background: #e8f1f8 !important;
-  color: #15507f !important;
-}
-
-#root .badge-assigned,
-#root .badge-in_use,
-#root .badge-active {
-  background: #e7f3ed !important;
-  color: #166534 !important;
-}
-
-#root .badge-maintenance,
-#root .badge-pending,
-#root .badge-pending_approval,
-#root .badge-draft {
-  background: #f6efe2 !important;
-  color: #92400e !important;
-}
-
-#root .badge-disposed,
-#root .badge-liquidated,
-#root .badge-rejected,
-#root .badge-cancelled,
-#root .badge-expired {
-  background: #f5e8e8 !important;
-  color: #991b1b !important;
-}
-
-#root .badge-completed {
-  background: #e9eef3 !important;
-  color: #334155 !important;
-}
-
-#root .badge-inactive {
-  background: #eef1f4 !important;
-  color: #475569 !important;
 }
 
 /* Final asset insight chart polish. */
@@ -12083,105 +12043,6 @@ body,
 
 #root .asset-insight-bars i {
   border-radius: 9999px !important;
-}
-
-/* EOF asset status column fix: keep row separators visible inside the sticky status column. */
-#root .asset-table .asset-table-col-status {
-  width: 118px !important;
-  min-width: 118px !important;
-  max-width: 118px !important;
-  border-left: 1px solid #e1e7ef !important;
-  border-right: 1px solid #d7dde5 !important;
-  border-bottom: 1px solid #e2e8f0 !important;
-  box-shadow:
-    inset 1px 0 0 #e1e7ef,
-    inset -1px 0 0 #d7dde5,
-    inset 0 -1px 0 #e2e8f0 !important;
-}
-
-#root .asset-table tbody td.asset-table-col-status {
-  background: #ffffff !important;
-}
-
-#root .asset-table tbody td.asset-table-col-status::after {
-  background: #e2e8f0;
-  bottom: 0;
-  content: "";
-  height: 1px;
-  left: 0;
-  pointer-events: none;
-  position: absolute;
-  right: 0;
-  z-index: 2;
-}
-
-#root .asset-table tbody tr:hover td.asset-table-col-status {
-  background: #f8fbff !important;
-}
-
-#root .asset-table tbody tr.is-selected td.asset-table-col-status,
-#root .asset-table tbody tr.is-selected:hover td.asset-table-col-status {
-  background: #e9f0f7 !important;
-}
-
-#root .asset-table .asset-table-sticky-status {
-  border-right: 1px solid #cfd8e3 !important;
-  box-shadow:
-    inset 1px 0 0 #e1e7ef,
-    inset -1px 0 0 #cfd8e3,
-    inset 0 -1px 0 #e2e8f0,
-    10px 0 14px -16px rgba(15, 23, 42, 0.55) !important;
-}
-
-#root .asset-table th.asset-table-col-status {
-  background: #eef2f6 !important;
-}
-
-/* EOF asset status normal column: status is visible by default but no longer locked/sticky. */
-#root .asset-table .asset-table-sticky-status,
-#root .asset-table table.is-single-select .asset-table-sticky-status {
-  left: auto !important;
-  position: relative !important;
-  z-index: 1 !important;
-  box-shadow: none !important;
-}
-
-#root .asset-table .asset-table-col-status {
-  background: inherit !important;
-  border-left: 1px solid #e5e9ef !important;
-  border-right: 1px solid #e5e9ef !important;
-  border-bottom: 1px solid #e5e9ef !important;
-  box-shadow: none !important;
-}
-
-#root .asset-table th.asset-table-col-status {
-  background: #f5f7fa !important;
-  color: #334155 !important;
-}
-
-#root .asset-table tbody td.asset-table-col-status {
-  background: #ffffff !important;
-}
-
-#root .asset-table tbody td.asset-table-col-status::after {
-  background: #e5e9ef !important;
-  bottom: 0;
-  content: "";
-  height: 1px;
-  left: 0;
-  pointer-events: none;
-  position: absolute;
-  right: 0;
-  z-index: 2;
-}
-
-#root .asset-table tbody tr:hover td.asset-table-col-status {
-  background: #f8fbff !important;
-}
-
-#root .asset-table tbody tr.is-selected td.asset-table-col-status,
-#root .asset-table tbody tr.is-selected:hover td.asset-table-col-status {
-  background: #e9f0f7 !important;
 }
 
 /* Final production polish: consistent empty states, quieter reload skeleton, and help page tone. */
@@ -12216,7 +12077,7 @@ body,
   min-height: 128px !important;
   place-items: center !important;
   border: 1px dashed #d7dde5 !important;
-  background: #f8fafc !important;
+  background: #eef2f6 !important;
 }
 
 #root .asset-table-empty-row td {
@@ -12235,7 +12096,7 @@ body,
   min-height: 92px !important;
   place-items: center !important;
   border: 1px dashed #d7dde5 !important;
-  background: #f8fafc !important;
+  background: #eef2f6 !important;
 }
 
 #root .category-structure-empty {
@@ -12318,7 +12179,7 @@ body,
   min-height: 34px !important;
   padding: 0 9px !important;
   border: 1px solid #d7dde5 !important;
-  background: #f8fafc !important;
+  background: #eef2f6 !important;
 }
 
 #root .help-search input {
@@ -12358,7 +12219,7 @@ body,
   background: #eaf2f8 !important;
   border-color: #c8d8e6 !important;
   color: #0f3f67 !important;
-  font-weight: 700 !important;
+  font-weight: 600 !important;
 }
 
 #root .help-detail {
@@ -12833,7 +12694,7 @@ body,
 #root .dashboard-hero-copy span {
   color: #1c4a6a !important;
   font-size: 13px !important;
-  font-weight: 700 !important;
+  font-weight: 600 !important;
   text-shadow: 0 0 8px rgba(255, 255, 255, 0.9) !important;
 }
 
@@ -13009,4 +12870,327 @@ body,
   #root .dashboard-hero-copy img {
     width: 140px !important;
   }
+}
+/* Category Excel import uses the same reference sheet as the asset import template. */
+.category-page-actions {
+  margin-bottom: 8px;
+}
+
+.asset-import-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0 6px;
+}
+
+.asset-import-file-note {
+  margin: 0 0 8px;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.asset-import-note {
+  display: block;
+  max-width: 360px;
+  overflow: hidden;
+  color: var(--text-muted);
+  text-overflow: ellipsis;
+  white-space: pre-line;
+}
+
+.import-status {
+  font-weight: 650;
+}
+
+.import-status.valid {
+  color: #166534;
+}
+
+.import-status.invalid {
+  color: #ef4444;
+}
+
+.import-status.warning {
+  color: #92400e;
+}
+
+.import-status.pending {
+  color: var(--text-muted);
+}
+
+/* Added cell borders as requested */
+#root .asset-table th,
+#root .asset-table td {
+  border: 1px solid #cbd5e1 !important;
+}
+
+#root .asset-table th,
+#root .asset-table td {
+  vertical-align: middle !important;
+}
+
+/* Booking table borders + Sticky column border fixes */
+#root .booking-table th,
+#root .booking-table td {
+  border: 1px solid #cbd5e1 !important;
+  vertical-align: middle !important;
+}
+
+#root .asset-table .asset-table-sticky-asset,
+#root .asset-table .asset-table-sticky-category,
+#root .booking-table .booking-table-sticky-booking,
+#root .booking-table .booking-table-sticky-asset {
+  box-shadow:
+    inset -1px 0 0 #cbd5e1,
+    8px 0 16px -16px rgba(15, 23, 42, 0.5) !important;
+}
+
+#root .booking-table .booking-table-sticky-status,
+#root .booking-table .booking-table-sticky-time {
+  box-shadow:
+    inset -1px 0 0 #cbd5e1,
+    10px 0 14px -16px rgba(15, 23, 42, 0.55) !important;
+}
+
+/* Override all Status Badge backgrounds */
+#root .badge {
+  background: transparent !important;
+  padding: 0 !important;
+  font-weight: 600 !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+#root .badge[class*="badge-"] {
+  background: transparent !important;
+}
+
+#root .asset-table th {
+  z-index: 50 !important;
+}
+
+#root .asset-table td {
+  z-index: 1 !important;
+}
+
+#root .asset-table th.asset-table-sticky-left,
+#root .asset-table th.asset-table-sticky-right,
+#root .asset-table th.asset-table-sticky-select {
+  z-index: 60 !important;
+}
+
+/* Fix Table Stacking Contexts */
+#root .asset-table thead,
+#root .booking-table thead {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 50 !important;
+}
+
+#root .asset-table tbody,
+#root .booking-table tbody {
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+/* Ensure empty row doesn't break z-index */
+#root .asset-table-empty-row td {
+  z-index: 1 !important;
+}
+
+/* Override all .status-badge backgrounds */
+#root .status-badge {
+  background: transparent !important;
+  padding: 0 !important;
+  font-weight: 600 !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+#root .status-badge[class*="status-"] {
+  background: transparent !important;
+}
+
+/* Fix Import Preview Scrolling */
+#root .asset-import-preview {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  max-height: 480px !important;
+  overflow: auto !important;
+}
+
+/* Fix Note Truncation */
+#root .asset-import-message-cell {
+  max-width: 250px !important;
+}
+
+#root .asset-import-note {
+  display: block;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Fix overlap between file row and summary */
+#root .asset-import-body {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 16px !important;
+  overflow-y: auto !important;
+}
+
+#root .asset-import-file-row {
+  flex-shrink: 0 !important;
+  min-height: fit-content !important;
+}
+
+#root .asset-import-summary {
+  flex-shrink: 0 !important;
+}
+
+#root .asset-import-controls {
+  flex: 1 1 auto !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+#root .asset-import-preview-toolbar {
+  display: flex !important;
+  align-items: center !important;
+  width: auto !important;
+}
+
+#root .asset-import-preview {
+  flex: 1 1 auto !important;
+}
+
+/* Colorize the summary statistics */
+#root .asset-import-summary > div:nth-child(2) strong {
+  color: #16a34a !important; /* Bright Green */
+  background: transparent !important;
+  font-weight: 600 !important; /* Valid: Green */
+}
+#root .asset-import-summary > div:nth-child(3) strong {
+  color: #ef4444 !important; /* Red */
+  background: transparent !important;
+  font-weight: 600 !important; /* Error: Red */
+}
+#root .asset-import-summary > div:nth-child(4) strong {
+  color: #f59e0b !important; /* Warning: Yellow */
+}
+
+/* Start from left so sticky left: 0 works immediately */
+
+#root .sticky-empty-text {
+  position: sticky !important;
+  left: 0 !important;
+  width: 100cqw !important;
+  text-align: center !important;
+  display: block !important;
+  box-sizing: border-box !important;
+}
+
+/* Revert table aesthetics and reduce padding */
+#root .asset-table td,
+#root .booking-table td,
+#root .asset-table td.asset-table-sticky-left,
+#root .asset-table td.asset-table-sticky-right,
+#root .asset-table td.asset-table-sticky-select,
+#root .asset-table td.asset-table-sticky-asset,
+#root .asset-table td.asset-table-sticky-category,
+#root .asset-table td.asset-table-actions-col {
+  padding: 4px 6px !important;
+  font-size: 11.5px !important;
+}
+
+#root .asset-table th,
+#root .booking-table th {
+  padding: 6px 8px !important;
+}
+
+/* Financial totals and prominent blue statuses */
+#root .text-primary,
+#root .text-blue-500,
+#root .text-blue-600,
+#root .text-blue-700 {
+  color: #2563eb !important; /* Brighter, vibrant blue */
+}
+
+/* Make blue badges brighter but text-only as requested previously */
+/* Empty state styling */
+
+/* Asset list compact rows and text-only status colors. */
+#root .asset-table td,
+#root .asset-table td.asset-table-sticky-left,
+#root .asset-table td.asset-table-sticky-right,
+#root .asset-table td.asset-table-sticky-select,
+#root .asset-table td.asset-table-sticky-asset,
+#root .asset-table td.asset-table-sticky-category,
+#root .asset-table td.asset-table-actions-col {
+  padding: 2px 6px !important;
+  font-size: 11px !important;
+  line-height: 1.2 !important;
+}
+
+#root .asset-table th {
+  padding: 4px 6px !important;
+}
+
+#root .asset-table .asset-name-cell strong,
+#root .asset-table .asset-muted-stack strong,
+#root .asset-table .asset-muted-stack span {
+  line-height: 1.2 !important;
+}
+
+#root .asset-table .badge {
+  color: #64748b !important;
+}
+
+/* FORCE STATUS COLORS ACROSS ALL TABLES */
+#root .badge.badge-in_stock,
+#root .badge.badge-confirmed,
+#root .badge.badge-approved {
+  color: #2563eb !important;
+  background: transparent !important;
+  font-weight: 600 !important;
+}
+
+#root .badge.badge-assigned,
+#root .badge.badge-in_use,
+#root .badge.badge-active {
+  color: #16a34a !important;
+  background: transparent !important;
+  font-weight: 600 !important;
+}
+
+#root .badge.badge-maintenance,
+#root .badge.badge-pending,
+#root .badge.badge-pending_approval,
+#root .badge.badge-draft {
+  color: #f59e0b !important;
+  background: transparent !important;
+  font-weight: 600 !important;
+}
+
+#root .badge.badge-disposed,
+#root .badge.badge-liquidated,
+#root .badge.badge-rejected,
+#root .badge.badge-cancelled,
+#root .badge.badge-expired,
+#root .badge.badge-has_error,
+#root .badge.badge-invalid {
+  color: #ef4444 !important;
+  background: transparent !important;
+  font-weight: 600 !important;
+}
+
+#root .badge.badge-completed,
+#root .badge.badge-inactive,
+#root .badge.badge-unknown {
+  color: #64748b !important;
+  background: transparent !important;
+  font-weight: 600 !important;
 }

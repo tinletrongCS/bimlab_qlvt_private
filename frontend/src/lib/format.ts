@@ -7,13 +7,13 @@ export const money = new Intl.NumberFormat("vi-VN", {
 });
 
 export function employeeLabel(employee?: EmployeeLite): string {
-  if (!employee) return "—";
+  if (!employee) return "--";
   const name = employee.fullName || employee.name || `Nhân viên #${employee.id}`;
   return employee.employeeCode ? `${name} · ${employee.employeeCode}` : name;
 }
 
 export function projectLabel(project?: ProjectLite): string {
-  if (!project) return "—";
+  if (!project) return "--";
   return project.code ? `${project.code} · ${project.name}` : project.name;
 }
 

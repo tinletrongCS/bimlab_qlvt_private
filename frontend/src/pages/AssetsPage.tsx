@@ -28,6 +28,7 @@ import { StatusBadge } from "../components/StatusBadge";
 import { useActions } from "../contexts/ActionsContext";
 import { useAppData } from "../contexts/AppDataContext";
 import { useAuth } from "../contexts/AuthContext";
+import { addCategoryReferenceSheet } from "../lib/categoryExcel";
 import { employeeLabel, money, projectLabel } from "../lib/format";
 import {
   commitAssetImport,
@@ -65,7 +66,8 @@ type AssetTableColumnId =
   | "vendor"
   | "project"
   | "purchaseDate"
-  | "warrantyUntil";
+  | "warrantyUntil"
+  | "categoryCode";
 
 interface AssetTableColumnConfig {
   id: AssetTableColumnId;
@@ -96,6 +98,7 @@ const ASSET_TABLE_STORAGE_KEY = "qlvt.assetList.tableColumns.v1";
 const ASSET_TABLE_COLUMNS: AssetTableColumnConfig[] = [
   { id: "asset", label: "Tài sản", locked: true, defaultVisible: true },
   { id: "category", label: "Danh mục", locked: true, defaultVisible: true },
+  { id: "categoryCode", label: "Mã danh mục", defaultVisible: false },
   { id: "serialNumber", label: "Serial/MAC", defaultVisible: false },
   { id: "status", label: "Trạng thái", defaultVisible: true },
   { id: "purchaseCost", label: "Giá trị mua", defaultVisible: true },
@@ -113,6 +116,7 @@ const ASSET_TABLE_COLUMNS: AssetTableColumnConfig[] = [
 const ASSET_TABLE_COLUMN_WIDTHS: Record<AssetTableColumnId, number> = {
   asset: 190,
   category: 150,
+  categoryCode: 150,
   serialNumber: 160,
   status: 118,
   purchaseCost: 138,
@@ -208,6 +212,17 @@ function collectCategoryIds(node: AssetCategoryTree): Set<number> {
     });
   });
   return ids;
+}
+
+function collectCategoryCodes(node: AssetCategoryTree): Set<string> {
+  const codes = new Set<string>();
+  if (node.code) codes.add(node.code);
+  node.children.forEach((child) => {
+    collectCategoryCodes(child).forEach((code) => {
+      codes.add(code);
+    });
+  });
+  return codes;
 }
 
 function findCategoryPath(nodes: AssetCategoryTree[], path: string[]): AssetCategoryTree[] {
@@ -327,7 +342,7 @@ function importStatusLabel(status?: string) {
 }
 
 function dateTimeLabel(value?: string) {
-  if (!value) return "—";
+  if (!value) return "--";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
   return date.toLocaleString("vi-VN");
@@ -341,79 +356,19 @@ function dateKey(value?: string) {
   return normalized.length >= 10 ? normalized.slice(0, 10) : normalized;
 }
 
-function assetCategoryTokens(asset: AssetItem): Set<string> {
-  return new Set(
-    [
-      asset.category,
-      asset.assetCategory?.name,
-      asset.assetCategory?.code,
-      asset.assetClass,
-      asset.fixedAssetType,
-      asset.toolUsageType,
-      classLabel(asset.assetClass),
-      classLabel(asset.fixedAssetType),
-      classLabel(asset.toolUsageType),
-    ]
-      .filter(Boolean)
-      .map((value) => normalize(String(value))),
-  );
-}
-
-function categoryNodeTerms(node: AssetCategoryTree): Set<string> {
-  const name = normalize(node.name);
-  const code = normalize(node.code);
-  const source = `${name} ${code}`;
-  const terms = new Set([name, code].filter(Boolean));
-
-  if (
-    source.includes("fixed_asset") ||
-    source.includes("tscd") ||
-    source.includes("tai san co dinh")
-  ) {
-    terms.add("fixed_asset");
-    terms.add("tai san co dinh");
-  }
-  if (
-    source.includes("tool_equipment") ||
-    source.includes("ccdc") ||
-    source.includes("cong cu dung cu")
-  ) {
-    terms.add("tool_equipment");
-    terms.add("cong cu dung cu");
-  }
-  if (source.includes("intangible") || source.includes("vo hinh")) {
-    terms.add("intangible");
-    terms.add("vo hinh");
-  } else if (source.includes("tangible") || source.includes("huu hinh")) {
-    terms.add("tangible");
-    terms.add("huu hinh");
-  }
-  if (
-    source.includes("single_use") ||
-    source.includes("dung mot lan") ||
-    source.includes("dung 1 lan")
-  ) {
-    terms.add("single_use");
-    terms.add("dung mot lan");
-  }
-  if (source.includes("multi_use") || source.includes("dung nhieu lan")) {
-    terms.add("multi_use");
-    terms.add("dung nhieu lan");
-  }
-
-  return terms;
-}
-
 function assetMatchesCategoryNode(
   asset: AssetItem,
   node: AssetCategoryTree,
   descendantIds?: Set<number> | null,
+  descendantCodes?: Set<string> | null,
 ) {
   const assetCategoryId = asset.assetCategory?.id;
   if (assetCategoryId && descendantIds?.has(assetCategoryId)) return true;
-  const tokens = assetCategoryTokens(asset);
-  const nodeTerms = categoryNodeTerms(node);
-  return Array.from(nodeTerms).some((term) => tokens.has(term));
+
+  const assetCategoryCode = asset.category || asset.assetCategory?.code;
+  if (assetCategoryCode && descendantCodes?.has(assetCategoryCode)) return true;
+
+  return false;
 }
 
 function AssetCategoryFilterNode({
@@ -501,8 +456,6 @@ function AssetListPagination({
   const safePage = Math.min(page, pageCount);
   const start = total === 0 ? 0 : (safePage - 1) * pageSize + 1;
   const end = Math.min(safePage * pageSize, total);
-
-  if (total === 0) return null;
 
   return (
     <div className="table-pagination asset-list-pagination">
@@ -789,7 +742,7 @@ function downloadImportCsv(result: AssetImportValidationResponse) {
   URL.revokeObjectURL(url);
 }
 
-async function downloadAssetImportTemplate() {
+async function downloadAssetImportTemplate(categories: AssetCategoryTree[]) {
   const ExcelJS = await import("exceljs");
   const workbook = new ExcelJS.Workbook();
   workbook.creator = "BIMLab QLVT";
@@ -798,7 +751,6 @@ async function downloadAssetImportTemplate() {
   const sheet = workbook.addWorksheet("HoSoTaiSan_import", {
     views: [{ state: "frozen", ySplit: 4 }],
   });
-  const lookup = workbook.addWorksheet("DanhMuc_ThamChieu");
 
   const fieldKeys = [
     "assets.asset_code",
@@ -960,55 +912,7 @@ async function downloadAssetImportTemplate() {
     });
   });
 
-  lookup.columns = [
-    { header: "Nhóm", key: "group", width: 24 },
-    { header: "Mã/Giá trị nhập", key: "code", width: 28 },
-    { header: "Diễn giải", key: "label", width: 46 },
-    { header: "Danh mục cha", key: "parentCode", width: 28 },
-  ];
-  [
-    ["Phân loại", "FIXED_ASSET", "Tài sản cố định", ""],
-    ["Phân loại", "TOOL_EQUIPMENT", "Công cụ dụng cụ", ""],
-    ["Phân loại lớp con", "TANGIBLE", "Tài sản cố định hữu hình", "FIXED_ASSET"],
-    ["Phân loại lớp con", "INTANGIBLE", "Tài sản cố định vô hình", "FIXED_ASSET"],
-    ["Phân loại lớp con", "SINGLE_USE", "Công cụ dụng cụ sử dụng một lần", "TOOL_EQUIPMENT"],
-    ["Phân loại lớp con", "MULTI_USE", "Công cụ dụng cụ sử dụng nhiều lần", "TOOL_EQUIPMENT"],
-    ["Danh mục ví dụ", "IT_EQUIPMENT", "Thiết bị CNTT", "TANGIBLE"],
-    ["Danh mục ví dụ", "MONITOR", "Màn hình", "IT_EQUIPMENT"],
-    ["Danh mục ví dụ", "LAPTOP", "Laptop", "IT_EQUIPMENT"],
-    ["Danh mục ví dụ", "PRINTER", "Máy in", "IT_EQUIPMENT"],
-    ["Danh mục ví dụ", "OFFICE_EQUIPMENT", "Thiết bị văn phòng", "TANGIBLE"],
-    ["Danh mục ví dụ", "CHAIR", "Ghế", "OFFICE_EQUIPMENT"],
-    ["Danh mục ví dụ", "TABLE", "Bàn", "OFFICE_EQUIPMENT"],
-    ["Danh mục ví dụ", "SOFTWARE", "Phần mềm", "INTANGIBLE"],
-    ["Danh mục ví dụ", "LICENSE", "Bản quyền/phần mềm", "SOFTWARE"],
-    ["Trạng thái", "IN_STOCK", "Trong kho", ""],
-    ["Trạng thái", "ASSIGNED", "Đã cấp phát", ""],
-    ["Trạng thái", "MAINTENANCE", "Bảo trì", ""],
-    ["Trạng thái", "DISPOSED", "Đã thanh lý", ""],
-    ["Trạng thái", "LOST", "Mất", ""],
-    ["Trạng thái", "PENDING", "Chờ xử lý", ""],
-  ].forEach(([group, code, label, parentCode]) => {
-    lookup.addRow({ group, code, label, parentCode });
-  });
-
-  lookup.getRow(1).eachCell((cell) => {
-    cell.font = { name: "Be Vietnam Pro", size: 12, bold: true, color: { argb: "FFFFFFFF" } };
-    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF154D7C" } };
-    cell.alignment = { vertical: "middle", horizontal: "center" };
-  });
-  lookup.eachRow((row, rowNumber) => {
-    row.height = rowNumber === 1 ? 28 : 22;
-    row.eachCell((cell) => {
-      cell.font = {
-        name: "Be Vietnam Pro",
-        size: rowNumber === 1 ? 12 : 11,
-        bold: rowNumber === 1,
-        color: { argb: rowNumber === 1 ? "FFFFFFFF" : "FF111827" },
-      };
-      cell.border = { bottom: { style: "thin", color: { argb: "FFE5E7EB" } } };
-    });
-  });
+  addCategoryReferenceSheet(workbook, { categories });
 
   const buffer = await workbook.xlsx.writeBuffer();
   const blob = new Blob([buffer], {
@@ -1017,7 +921,7 @@ async function downloadAssetImportTemplate() {
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
-  link.download = "mau_import_danh_sach_tai_san_bimlab.xlsx";
+  link.download = "mau_import_danh_sach_danh_muc_tai_san_bimlab.xlsx";
   link.click();
   URL.revokeObjectURL(url);
 }
@@ -1110,11 +1014,11 @@ export function AssetsPage() {
   const employeeName = (id?: number) =>
     id ? employeeLabel(employees.find((employee) => employee.id === id)) : "Chưa gán người dùng";
   const departmentName = (id?: number) =>
-    id ? departments.find((department) => department.id === id)?.name || `Phòng ban #${id}` : "—";
+    id ? departments.find((department) => department.id === id)?.name || `Phòng ban #${id}` : "--";
   const siteName = (id?: number) =>
-    id ? workSites.find((site) => site.id === id)?.name || `Site #${id}` : "—";
+    id ? workSites.find((site) => site.id === id)?.name || `Site #${id}` : "--";
   const projectName = (id?: number) =>
-    id ? projectLabel(projects.find((project) => project.id === id)) : "—";
+    id ? projectLabel(projects.find((project) => project.id === id)) : "--";
 
   const categoryDescendantIds = useMemo(() => {
     const idsByCategory = new Map<number, Set<number>>();
@@ -1132,19 +1036,37 @@ export function AssetsPage() {
     return idsByCategory;
   }, [categoryTree]);
 
+  const categoryDescendantCodes = useMemo(() => {
+    const codesByCategory = new Map<number, Set<string>>();
+    const visit = (node: AssetCategoryTree): Set<string> => {
+      const codes = new Set<string>();
+      if (node.code) codes.add(node.code);
+      node.children.forEach((child) => {
+        visit(child).forEach((code) => {
+          codes.add(code);
+        });
+      });
+      codesByCategory.set(node.id, codes);
+      return codes;
+    };
+    categoryTree.forEach(visit);
+    return codesByCategory;
+  }, [categoryTree]);
+
   const categoryAssetCounts = useMemo(() => {
     const counts = new Map<number, number>();
     const visit = (node: AssetCategoryTree) => {
       const descendantIds = categoryDescendantIds.get(node.id) ?? collectCategoryIds(node);
+      const descendantCodes = categoryDescendantCodes.get(node.id) ?? collectCategoryCodes(node);
       const count = assets.filter((asset) =>
-        assetMatchesCategoryNode(asset, node, descendantIds),
+        assetMatchesCategoryNode(asset, node, descendantIds, descendantCodes),
       ).length;
       counts.set(node.id, count);
       node.children.forEach(visit);
     };
     categoryTree.forEach(visit);
     return counts;
-  }, [assets, categoryDescendantIds, categoryTree]);
+  }, [assets, categoryDescendantIds, categoryDescendantCodes, categoryTree]);
 
   const resetAssetFilters = () => {
     setCategoryPath([]);
@@ -1240,13 +1162,24 @@ export function AssetsPage() {
       ? (categoryDescendantIds.get(selectedCategoryNode.id) ??
         collectCategoryIds(selectedCategoryNode))
       : null;
+    const selectedCategoryCodes = selectedCategoryNode
+      ? (categoryDescendantCodes.get(selectedCategoryNode.id) ??
+        collectCategoryCodes(selectedCategoryNode))
+      : null;
     return assets.filter((asset) => {
       const matchesStatus = statusFilter === "ALL" || asset.status === statusFilter;
       const assetCategoryId = asset.assetCategory?.id;
+      const assetCategoryCode = asset.category || asset.assetCategory?.code;
       const matchesCategory =
         !selectedCategoryNode ||
         (assetCategoryId && selectedCategoryIds?.has(assetCategoryId)) ||
-        assetMatchesCategoryNode(asset, selectedCategoryNode, selectedCategoryIds);
+        (assetCategoryCode && selectedCategoryCodes?.has(assetCategoryCode)) ||
+        assetMatchesCategoryNode(
+          asset,
+          selectedCategoryNode,
+          selectedCategoryIds,
+          selectedCategoryCodes,
+        );
       const matchesSite = siteFilter === "ALL" || asset.siteId === Number(siteFilter);
       const matchesDepartment =
         departmentFilter === "ALL" || asset.departmentId === Number(departmentFilter);
@@ -1297,6 +1230,7 @@ export function AssetsPage() {
   }, [
     assets,
     categoryDescendantIds,
+    categoryDescendantCodes,
     departments,
     employees,
     projects,
@@ -1687,9 +1621,14 @@ export function AssetsPage() {
       label: "Tài sản",
       locked: true,
       render: (item) => (
-        <div className="asset-name-cell">
-          <strong>{highlightSearchText(item.name, query)}</strong>
-          <span>{highlightSearchText(item.assetCode, query)}</span>
+        <div
+          className="asset-name-cell"
+          title={`${item.name} - ${item.assetCode}`}
+          style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+        >
+          <strong style={{ overflow: "hidden", textOverflow: "ellipsis", display: "block" }}>
+            {highlightSearchText(item.name, query)}
+          </strong>
         </div>
       ),
     },
@@ -1697,23 +1636,29 @@ export function AssetsPage() {
       id: "category",
       label: "Danh mục",
       render: (item) => (
-        <div className="asset-muted-stack">
-          <strong>
+        <div
+          className="asset-name-cell"
+          title={item.assetCategory?.name || item.category || "Chưa phân loại"}
+          style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+        >
+          <strong style={{ overflow: "hidden", textOverflow: "ellipsis", display: "block" }}>
             {highlightSearchText(
               item.assetCategory?.name || item.category || "Chưa phân loại",
               query,
             )}
           </strong>
-          <span>
-            {highlightSearchText(item.assetCategory?.code || "Chưa có mã danh mục", query)}
-          </span>
         </div>
       ),
     },
     {
+      id: "categoryCode",
+      label: "Mã danh mục",
+      render: (item) => item.assetCategory?.code || "--",
+    },
+    {
       id: "serialNumber",
       label: "Serial/MAC",
-      render: (item) => item.serialNumber || "—",
+      render: (item) => item.serialNumber || "--",
     },
     {
       id: "status",
@@ -1741,7 +1686,7 @@ export function AssetsPage() {
     {
       id: "source",
       label: "Nguồn hình thành",
-      render: (item) => item.source || "—",
+      render: (item) => item.source || "--",
     },
     {
       id: "site",
@@ -1761,7 +1706,7 @@ export function AssetsPage() {
     {
       id: "vendor",
       label: "Nhà cung cấp",
-      render: (item) => item.vendor?.name || "—",
+      render: (item) => item.vendor?.name || "--",
     },
     {
       id: "project",
@@ -1771,12 +1716,12 @@ export function AssetsPage() {
     {
       id: "purchaseDate",
       label: "Ngày mua",
-      render: (item) => item.purchaseDate || "—",
+      render: (item) => item.purchaseDate || "--",
     },
     {
       id: "warrantyUntil",
       label: "Bảo hành đến",
-      render: (item) => item.warrantyUntil || "—",
+      render: (item) => item.warrantyUntil || "--",
     },
   ];
   const assetColumnById = new Map(assetTableColumns.map((column) => [column.id, column]));
@@ -1893,7 +1838,7 @@ export function AssetsPage() {
   const handleDownloadTemplate = async () => {
     const loadingToast = toast.loading("Đang tạo file mẫu Excel...");
     try {
-      await downloadAssetImportTemplate();
+      await downloadAssetImportTemplate(categoryTree);
       toast.success("Đã tải file mẫu Excel.", { id: loadingToast });
     } catch {
       toast.error("Không tạo được file mẫu Excel.", { id: loadingToast });
@@ -1914,7 +1859,6 @@ export function AssetsPage() {
       <header className="asset-page-header">
         <div>
           <h2>Danh sách tài sản</h2>
-          <span>Quản lý, lọc và cập nhật thông tin tài sản</span>
         </div>
       </header>
 
@@ -2057,14 +2001,14 @@ export function AssetsPage() {
                 <span className="asset-total-value-line">
                   Tổng giá trị của tài sản đang hiển thị:{" "}
                   <span className="asset-total-value" style={{ whiteSpace: "nowrap" }}>
-                    <span style={{ color: "#007bff", fontWeight: 600 }}>
+                    <span style={{ color: "#2563eb", fontWeight: 600 }}>
                       {money.format(filteredValue)}
                     </span>
 
                     {filteredAssets.length !== assets.length && (
                       <>
                         {" / "}
-                        <span style={{ color: "#007bff", fontWeight: 600 }}>
+                        <span style={{ color: "#2563eb", fontWeight: 600 }}>
                           {money.format(totalValue)}
                         </span>{" "}
                         toàn bộ
@@ -2245,18 +2189,28 @@ export function AssetsPage() {
                             </label>
                           </td>
                         )}
-                        {configuredAssetColumns.map((column) => (
-                          <td
-                            key={column.id}
-                            className={`asset-table-col-${column.id} ${
-                              ["asset", "category"].includes(column.id)
-                                ? `asset-table-sticky-left asset-table-sticky-${column.id}`
-                                : ""
-                            } ${column.align ? `align-${column.align}` : ""}`}
-                          >
-                            {column.render(item)}
-                          </td>
-                        ))}
+                        {configuredAssetColumns.map((column) => {
+                          const content = column.render(item);
+                          const titleText =
+                            typeof content === "string"
+                              ? content
+                              : typeof content === "number"
+                                ? String(content)
+                                : undefined;
+                          return (
+                            <td
+                              key={column.id}
+                              title={titleText}
+                              className={`asset-table-col-${column.id} ${
+                                ["asset", "category"].includes(column.id)
+                                  ? `asset-table-sticky-left asset-table-sticky-${column.id}`
+                                  : ""
+                              } ${column.align ? `align-${column.align}` : ""}`}
+                            >
+                              {content}
+                            </td>
+                          );
+                        })}
                         <td className="asset-table-actions-col asset-table-sticky-right">
                           <OverflowActions
                             label={`Mở thao tác cho ${item.assetCode}`}
@@ -2724,7 +2678,7 @@ export function AssetsPage() {
                     </label>
                     <label>
                       <span>Mã danh mục</span>
-                      <input value={selectedAsset.assetCategory?.code || "—"} disabled />
+                      <input value={selectedAsset.assetCategory?.code || "--"} disabled />
                     </label>
                     <label>
                       <span>Loại tài sản</span>
@@ -2865,11 +2819,11 @@ export function AssetsPage() {
                     </label>
                     <div>
                       <span>Ngày đưa vào sử dụng</span>
-                      <strong>{selectedAsset.useDate || "—"}</strong>
+                      <strong>{selectedAsset.useDate || "--"}</strong>
                     </div>
                     <div>
                       <span>Nguồn hình thành</span>
-                      <strong>{assetDraft.source || "—"}</strong>
+                      <strong>{assetDraft.source || "--"}</strong>
                     </div>
                   </div>
                 </section>
@@ -3092,19 +3046,19 @@ export function AssetsPage() {
                   <div className="asset-detail-readonly-grid">
                     <div>
                       <span>Ngày thanh lý</span>
-                      <strong>{selectedAsset.disposalDate || "—"}</strong>
+                      <strong>{selectedAsset.disposalDate || "--"}</strong>
                     </div>
                     <div>
                       <span>Giá thanh lý</span>
                       <strong>
                         {selectedAsset.disposalPrice
                           ? money.format(Number(selectedAsset.disposalPrice))
-                          : "—"}
+                          : "--"}
                       </strong>
                     </div>
                     <div>
                       <span>Lý do thanh lý</span>
-                      <strong>{selectedAsset.disposalReason || "—"}</strong>
+                      <strong>{selectedAsset.disposalReason || "--"}</strong>
                     </div>
                     <div>
                       <span>Nhà cung cấp</span>
@@ -3177,7 +3131,7 @@ export function AssetsPage() {
             <div className="asset-qr-placeholder">
               <FiGrid />
               <strong>{qrAsset.name}</strong>
-              <span>Tính năng sinh và in QR sẽ được hiện thực ở bước sau.</span>
+              <span>Updated soon.</span>
             </div>
             <div className="modal-actions">
               <button type="button" className="secondary" onClick={() => setQrAsset(null)}>
@@ -3224,66 +3178,97 @@ export function AssetsPage() {
                 </div>
                 <div>
                   <span>Hợp lệ</span>
-                  <strong>{importResult?.validRows ?? "—"}</strong>
+                  <strong>{importResult?.validRows ?? "--"}</strong>
                 </div>
                 <div>
                   <span>Lỗi</span>
-                  <strong>{importResult?.errorRows ?? "—"}</strong>
+                  <strong>{importResult?.errorRows ?? "--"}</strong>
                 </div>
                 <div>
                   <span>Cảnh báo</span>
-                  <strong>{importResult?.warningRows ?? "—"}</strong>
+                  <strong>{importResult?.warningRows ?? "--"}</strong>
                 </div>
               </div>
 
               <div className="asset-import-controls">
-                <div className="asset-import-options">
-                  <label>
-                    <span>Chế độ nhập dữ liệu</span>
-                    <select
-                      value={importMode}
-                      onChange={(event) => setImportMode(event.target.value as ImportMode)}
-                    >
-                      <option value="VALID_ROWS_ONLY">Chỉ nhập những dòng hợp lệ</option>
-                      <option value="ALL_OR_NOTHING">Tất cả hoặc không nhập</option>
-                    </select>
-                  </label>
-                </div>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    width: "100%",
+                    gap: "12px",
+                    flexWrap: "wrap",
+                  }}
+                >
+                  <div className="asset-import-options">
+                    <label style={{ display: "flex", alignItems: "center", gap: "8px", margin: 0 }}>
+                      <span style={{ color: "#64748b", fontSize: "11px", fontWeight: 600 }}>
+                        Chế độ nhập dữ liệu:
+                      </span>
+                      <select
+                        value={importMode}
+                        onChange={(event) => setImportMode(event.target.value as ImportMode)}
+                        style={{
+                          padding: "4px 8px",
+                          borderRadius: "4px",
+                          border: "1px solid #dbe3ef",
+                          fontSize: "11px",
+                          color: "#334155",
+                        }}
+                      >
+                        <option value="VALID_ROWS_ONLY">Chỉ nhập những dòng hợp lệ</option>
+                        <option value="ALL_OR_NOTHING">Tất cả hoặc không nhập</option>
+                      </select>
+                    </label>
+                  </div>
 
-                <div className="asset-import-preview-toolbar">
-                  <span>Trạng thái dòng</span>
-                  <div>
-                    <button
-                      type="button"
-                      data-active={importPreviewFilter === "ALL" ? "true" : undefined}
-                      onClick={() => setImportPreviewFilter("ALL")}
-                    >
-                      Tất cả <strong>{importResult?.totalRows ?? importRows.length}</strong>
-                    </button>
-                    <button
-                      type="button"
-                      data-active={importPreviewFilter === "VALID" ? "true" : undefined}
-                      disabled={!importResult}
-                      onClick={() => setImportPreviewFilter("VALID")}
-                    >
-                      Hợp lệ <strong>{importResult?.validRows ?? 0}</strong>
-                    </button>
-                    <button
-                      type="button"
-                      data-active={importPreviewFilter === "INVALID" ? "true" : undefined}
-                      disabled={!importResult}
-                      onClick={() => setImportPreviewFilter("INVALID")}
-                    >
-                      Lỗi <strong>{importResult?.errorRows ?? 0}</strong>
-                    </button>
-                    <button
-                      type="button"
-                      data-active={importPreviewFilter === "WARNING" ? "true" : undefined}
-                      disabled={!importResult}
-                      onClick={() => setImportPreviewFilter("WARNING")}
-                    >
-                      Cảnh báo <strong>{importResult?.warningRows ?? 0}</strong>
-                    </button>
+                  <div
+                    className="asset-import-preview-toolbar"
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      margin: 0,
+                      padding: 0,
+                    }}
+                  >
+                    <span style={{ color: "#64748b", fontSize: "11px", fontWeight: 600 }}>
+                      Trạng thái dòng:
+                    </span>
+                    <div style={{ display: "flex", gap: "6px" }}>
+                      <button
+                        type="button"
+                        data-active={importPreviewFilter === "ALL" ? "true" : undefined}
+                        onClick={() => setImportPreviewFilter("ALL")}
+                      >
+                        Tất cả <strong>{importResult?.totalRows ?? importRows.length}</strong>
+                      </button>
+                      <button
+                        type="button"
+                        data-active={importPreviewFilter === "VALID" ? "true" : undefined}
+                        disabled={!importResult}
+                        onClick={() => setImportPreviewFilter("VALID")}
+                      >
+                        Hợp lệ <strong>{importResult?.validRows ?? 0}</strong>
+                      </button>
+                      <button
+                        type="button"
+                        data-active={importPreviewFilter === "INVALID" ? "true" : undefined}
+                        disabled={!importResult}
+                        onClick={() => setImportPreviewFilter("INVALID")}
+                      >
+                        Lỗi <strong>{importResult?.errorRows ?? 0}</strong>
+                      </button>
+                      <button
+                        type="button"
+                        data-active={importPreviewFilter === "WARNING" ? "true" : undefined}
+                        disabled={!importResult}
+                        onClick={() => setImportPreviewFilter("WARNING")}
+                      >
+                        Cảnh báo <strong>{importResult?.warningRows ?? 0}</strong>
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -3333,28 +3318,29 @@ export function AssetsPage() {
                             <td>{row.rowNumber}</td>
                             <td>
                               <div className="asset-name-cell">
-                                <strong>{isResultRow ? row.assetName : source?.name || "—"}</strong>
-                                {source?.assetCode && <span>{source.assetCode}</span>}
+                                <strong>
+                                  {isResultRow ? row.assetName : source?.name || "--"}
+                                </strong>
                               </div>
                             </td>
                             <td>{isResultRow ? row.categoryCode : source?.categoryCode}</td>
-                            <td>{source?.assetClass || "—"}</td>
-                            <td>{source?.classType || "—"}</td>
-                            <td>{source?.departmentName || "—"}</td>
-                            <td>{source?.siteName || "—"}</td>
-                            <td>{source?.serialNumber || "—"}</td>
-                            <td>{source?.useDate || "—"}</td>
+                            <td>{source?.assetClass || "--"}</td>
+                            <td>{source?.classType || "--"}</td>
+                            <td>{source?.departmentName || "--"}</td>
+                            <td>{source?.siteName || "--"}</td>
+                            <td>{source?.serialNumber || "--"}</td>
+                            <td>{source?.useDate || "--"}</td>
                             <td>
-                              {source?.originalCost ? money.format(source.originalCost) : "—"}
+                              {source?.originalCost ? money.format(source.originalCost) : "--"}
                             </td>
-                            <td>{source?.bookValue ? money.format(source.bookValue) : "—"}</td>
+                            <td>{source?.bookValue ? money.format(source.bookValue) : "--"}</td>
                             <td>
                               {status ? (
-                                <span className="asset-import-row-status">
-                                  {importStatusLabel(status)}
-                                </span>
+                                <StatusBadge value={status} label={importStatusLabel(status)} />
+                              ) : source?.status ? (
+                                <StatusBadge value={source.status} />
                               ) : (
-                                source?.status || "—"
+                                "--"
                               )}
                             </td>
                             <td className="asset-import-message-cell">
@@ -3368,7 +3354,7 @@ export function AssetsPage() {
                                   {rowMessages.length > 1 ? ` (+${rowMessages.length - 1})` : ""}
                                 </span>
                               ) : (
-                                "—"
+                                "--"
                               )}
                             </td>
                           </tr>

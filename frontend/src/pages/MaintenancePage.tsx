@@ -46,12 +46,12 @@ export function MaintenancePage() {
           {
             key: "vendor",
             title: "Nhà cung cấp",
-            render: (item) => item.vendor?.name || item.performedBy || "—",
+            render: (item) => item.vendor?.name || item.performedBy || "--",
           },
           {
             key: "next",
             title: "Lần tiếp theo",
-            render: (item) => item.nextMaintenanceDate || "—",
+            render: (item) => item.nextMaintenanceDate || "--",
           },
           {
             key: "status",

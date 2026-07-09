@@ -123,7 +123,7 @@ BUILD_NUMBER=${env.BUILD_NUMBER ?: ''}
                 pnpm install --frozen-lockfile
                 rm -rf .pnpm-store
                 pnpm lint
-                pnpm test -- --reporter=default --reporter=junit --outputFile=reports/vitest-junit.xml
+                pnpm test:coverage -- --reporter=default --reporter=junit --outputFile=reports/vitest-junit.xml
                 pnpm build
                 if [ "${RUN_SECURITY_AUDIT:-false}" = "true" ]; then pnpm audit --audit-level high; fi
               '
@@ -346,7 +346,7 @@ BUILD_NUMBER=${env.BUILD_NUMBER ?: ''}
   post {
     always {
       junit allowEmptyResults: true, testResults: 'frontend/reports/**/*.xml,asset-service/target/surefire-reports/*.xml'
-      archiveArtifacts allowEmptyArchive: true, fingerprint: true, artifacts: 'ci-artifacts/**,frontend/dist/**,asset-service/target/*.jar'
+      archiveArtifacts allowEmptyArchive: true, fingerprint: true, artifacts: 'ci-artifacts/**,frontend/dist/**,frontend/coverage/**,asset-service/target/site/jacoco*/**,asset-service/target/*.jar'
       sh 'docker logout "${REGISTRY_URL:-}" >/dev/null 2>&1 || true'
     }
     failure {

@@ -36,10 +36,10 @@ export function SubscriptionsPage() {
             title: "Phần mềm",
             render: (item) => <strong>{item.softwareName}</strong>,
           },
-          { key: "plan", title: "Gói", render: (item) => item.planName || "—" },
-          { key: "vendor", title: "Nhà cung cấp", render: (item) => item.vendor?.name || "—" },
+          { key: "plan", title: "Gói", render: (item) => item.planName || "--" },
+          { key: "vendor", title: "Nhà cung cấp", render: (item) => item.vendor?.name || "--" },
           { key: "seat", title: "Seat", render: (item) => <SeatUsage subscription={item} /> },
-          { key: "renewal", title: "Gia hạn", render: (item) => item.renewalDate || "—" },
+          { key: "renewal", title: "Gia hạn", render: (item) => item.renewalDate || "--" },
           {
             key: "status",
             title: "Trạng thái",
