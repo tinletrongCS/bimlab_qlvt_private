@@ -141,8 +141,8 @@ textarea:focus {
 }
 
 .sidebar {
-  background: #0a1f36;
-  border-right: 1px solid #061220;
+  background: #1e293b;
+  border-right: 1px solid #0f172a;
   color: #ffffff;
   display: flex;
   flex-direction: column;
@@ -3912,9 +3912,7 @@ button:hover {
   gap: 8px;
 }
 
-.asset-page .panel-actions button,
-.asset-template-button,
-.asset-import-button {
+.asset-page .panel-actions button {
   border-radius: 8px;
   font-size: 12px;
   min-height: 34px;
@@ -4158,42 +4156,6 @@ button:hover {
 .asset-category-filter-chain select {
   flex: 1 1 150px;
   min-width: 150px;
-}
-
-.asset-template-button,
-.asset-import-button {
-  border: 1px solid transparent;
-  box-shadow: none;
-}
-
-.asset-template-button {
-  background: #ecfdf5;
-  border-color: #a7f3d0;
-  color: #047857;
-}
-
-.asset-import-button {
-  background: #eff6ff;
-  border-color: #bfdbfe;
-  color: #154d7c;
-}
-
-.asset-template-button:hover,
-.asset-import-button:hover {
-  box-shadow: none;
-  transform: none;
-}
-
-.asset-template-button:hover {
-  background: #d1fae5;
-  border-color: #6ee7b7;
-  color: #065f46;
-}
-
-.asset-import-button:hover {
-  background: #dbeafe;
-  border-color: #93c5fd;
-  color: #154d7c;
 }
 
 .asset-search {
@@ -5198,10 +5160,10 @@ button:hover {
 
 .asset-import-file-button {
   align-items: center;
-  background: #eff6ff;
-  border: 1px solid #bfdbfe;
-  border-radius: 8px;
-  color: #154d7c;
+  background: #0284c7;
+  border: none;
+  border-radius: 4px;
+  color: #000000;
   cursor: pointer;
   display: inline-flex;
   flex: 0 0 auto;
@@ -5216,8 +5178,7 @@ button:hover {
 }
 
 .asset-import-file-button:hover {
-  background: #dbeafe;
-  border-color: #93c5fd;
+  background: #0369a1;
 }
 
 .asset-import-file-button input {
@@ -6657,30 +6618,6 @@ table td,
   font-weight: 700;
 }
 
-.asset-template-button {
-  background: #f1f5f2;
-  border-color: #cbd8cf;
-  color: var(--qlvt-success);
-}
-
-.asset-template-button:hover {
-  background: #e6eee8;
-  border-color: #b6c8bb;
-  color: #0f563c;
-}
-
-.asset-import-button {
-  background: var(--qlvt-primary-soft);
-  border-color: #b8c6d6;
-  color: var(--qlvt-primary);
-}
-
-.asset-import-button:hover {
-  background: #dfe7ef;
-  border-color: #a8b8c8;
-  color: var(--qlvt-primary-hover);
-}
-
 .login-card,
 .auth-page {
   border-radius: var(--qlvt-radius-md);
@@ -6735,8 +6672,6 @@ button,
 .table-pagination-controls button,
 .category-view-tabs button,
 .category-panel-controls .secondary,
-.asset-template-button,
-.asset-import-button,
 .asset-import-preview-toolbar button,
 .booking-form-actions button,
 .booking-table-head button {
@@ -6977,8 +6912,6 @@ button,
 .table-pagination-controls button,
 .category-view-tabs button,
 .category-panel-controls .secondary,
-.asset-template-button,
-.asset-import-button,
 .asset-import-preview-toolbar button,
 .booking-form-actions button,
 .booking-table-head button,
@@ -7231,8 +7164,6 @@ button,
 .category-view-tabs button,
 .category-panel-controls .secondary,
 .asset-column-config-toggle,
-.asset-template-button,
-.asset-import-button,
 .asset-import-file-button,
 .asset-import-preview-toolbar button,
 .booking-form-actions button,
@@ -7249,9 +7180,9 @@ textarea,
 .modal-body input,
 .modal-body select,
 .modal-body textarea,
-.crud-form input,
-.crud-form select,
-.crud-form textarea,
+.crud-modal input,
+.crud-modal select,
+.crud-modal textarea,
 .category-editor input,
 .category-editor select,
 .category-editor textarea,
@@ -7330,7 +7261,7 @@ textarea,
 
 .category-editor label,
 .modal-body label,
-.crud-form label {
+.crud-modal label {
   color: #344054;
   font-size: 12px;
   font-weight: 600;
@@ -9370,7 +9301,8 @@ textarea,
 }
 
 #root .category-org-viewport {
-  max-height: 380px;
+  height: 450px;
+  max-height: 450px;
   padding: 8px !important;
   overflow: auto;
 }
@@ -9657,15 +9589,6 @@ textarea,
   min-height: 29px !important;
 }
 
-#root .asset-page-actions .asset-import-button,
-#root .asset-page-actions .asset-template-button {
-  border-color: #9ec4de !important;
-  background: #ffffff !important;
-  color: var(--bimlab-blue) !important;
-}
-
-#root .asset-page-actions .asset-import-button:hover,
-#root .asset-page-actions .asset-template-button:hover,
 #root .asset-page-actions .secondary:hover {
   border-color: var(--bimlab-blue) !important;
   background: #edf7fc !important;
@@ -9907,7 +9830,7 @@ textarea,
   #root .category-card-copy,
   #root .category-card-copy strong,
   #root .category-card-copy span {
-    max-width: 320px;
+    max-width: 380px;
   }
 }
 
@@ -9976,51 +9899,16 @@ textarea,
   color: #154d7c !important;
 }
 
-#root .asset-page-actions .asset-template-button,
-#root .asset-template-button {
-  min-height: 34px !important;
-  padding: 7px 10px !important;
-  border: 1px solid #a7f3d0 !important;
-  background: #ecfdf5 !important;
-  color: #047857 !important;
-  font-size: 12px !important;
-}
-
-#root .asset-page-actions .asset-template-button:hover,
-#root .asset-template-button:hover {
-  border-color: #6ee7b7 !important;
-  background: #d1fae5 !important;
-  color: #065f46 !important;
-}
-
-#root .asset-page-actions .asset-import-button,
-#root .asset-import-button {
-  min-height: 34px !important;
-  padding: 7px 10px !important;
-  border: 1px solid #bfdbfe !important;
-  background: #eff6ff !important;
-  color: #154d7c !important;
-  font-size: 12px !important;
-}
-
-#root .asset-page-actions .asset-import-button:hover,
-#root .asset-import-button:hover {
-  border-color: #93c5fd !important;
-  background: #dbeafe !important;
-  color: #154d7c !important;
-}
-
 #root .asset-page-actions .asset-add-button {
   min-height: 34px !important;
   padding: 7px 10px !important;
-  border: 1px solid #b8c6d6 !important;
+  border: none !important;
   background: #16324f !important;
   color: #ffffff !important;
   font-size: 12px !important;
 }
 
 #root .asset-page-actions .asset-add-button:hover {
-  border-color: #16324f !important;
   background: #1f3d5a !important;
   color: #ffffff !important;
 }
@@ -10813,9 +10701,7 @@ textarea,
   box-shadow: none !important;
 }
 
-#root .asset-page-actions .asset-add-button,
-#root .asset-page-actions .asset-template-button,
-#root .asset-page-actions .asset-import-button {
+#root .asset-page-actions .asset-add-button {
   min-height: 34px !important;
   padding: 7px 10px !important;
   font-size: 12px !important;
@@ -13184,4 +13070,598 @@ body,
   color: #64748b !important;
   background: transparent !important;
   font-weight: 600 !important;
+}
+
+.category-tree-select-container {
+  position: relative;
+}
+.category-tree-dropdown {
+  position: relative;
+}
+.category-tree-input {
+  cursor: pointer;
+  background-color: #fff;
+}
+.category-tree-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+}
+.category-tree-popup {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 1001;
+  background: #fff;
+  border: 1px solid var(--qlvt-border);
+  border-radius: 4px;
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  max-height: 300px;
+  overflow-y: auto;
+  margin-top: 4px;
+}
+.category-tree-node {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  cursor: pointer;
+  border-bottom: 1px solid #f3f4f6;
+  font-size: 12px;
+  color: var(--qlvt-text);
+}
+.category-tree-node:hover {
+  background: #f9fafb;
+}
+.category-tree-node.selected {
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-weight: 600;
+}
+.category-tree-node.parent {
+  color: var(--qlvt-muted);
+}
+.tree-expander {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--qlvt-muted);
+  margin-right: 4px;
+}
+.tree-leaf-spacer {
+  width: 24px;
+  height: 20px;
+}
+.tree-icon {
+  margin-right: 8px;
+  color: #9ca3b8;
+  display: flex;
+  align-items: center;
+}
+.tree-label {
+  flex: 1;
+}
+.tree-code {
+  font-size: 11px;
+  color: #9ca3b8;
+  background: #f3f4f6;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-left: 8px;
+}
+.category-tree-loading,
+.category-tree-empty {
+  padding: 12px;
+  text-align: center;
+  color: var(--qlvt-muted);
+  font-size: 12px;
+}
+
+/* Searchable Select */
+.searchable-select-container {
+  position: relative;
+  width: 100%;
+}
+.searchable-select-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  cursor: pointer;
+}
+.searchable-select-input {
+  width: 100%;
+  cursor: pointer;
+  background-color: #ffffff !important;
+  padding-right: 28px !important;
+}
+.searchable-select-icon {
+  position: absolute;
+  right: 8px;
+  color: var(--qlvt-muted);
+  pointer-events: none;
+}
+.searchable-select-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 1001;
+  background: #fff;
+  border: 1px solid var(--qlvt-border);
+  border-radius: 4px;
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  max-height: 250px;
+  overflow-y: auto;
+  margin-top: 4px;
+}
+.searchable-select-option {
+  padding: 8px 12px;
+  cursor: pointer;
+  border-bottom: 1px solid #f3f4f6;
+  font-size: 12px;
+  color: var(--qlvt-text);
+}
+.searchable-select-option:last-child {
+  border-bottom: none;
+}
+
+.category-tree-input-inline {
+  flex: 1;
+  background-color: #f9fafb !important;
+  color: var(--qlvt-text);
+  font-weight: 600;
+  cursor: default;
+  min-height: 32px;
+  padding: 6px 9px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  font-size: 13px;
+}
+#root .asset-table td {
+  font-weight: 600 !important;
+}
+
+/* ── Category tree inline box (used in modal) ── */
+.category-tree-inline-box {
+  border: 1px solid var(--qlvt-border);
+  border-radius: 4px;
+  background: #fff;
+  height: 450px;
+  max-height: 450px;
+  overflow-x: auto;
+  overflow-y: auto;
+  margin-top: 4px;
+}
+.category-tree-selected-row {
+  display: flex;
+  gap: 6px;
+}
+.category-tree-code-inline {
+  width: 140px;
+  flex-shrink: 0;
+  background-color: #f9fafb !important;
+  color: var(--qlvt-muted);
+  font-weight: 500;
+  font-size: 11px !important;
+  cursor: default;
+  min-height: 32px;
+  padding: 6px 9px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+}
+.category-tree-loading,
+.category-tree-empty {
+  padding: 16px;
+  text-align: center;
+  color: var(--qlvt-muted);
+  font-size: 12px;
+}
+
+/* SearchableSelect option hover/selected */
+.searchable-select-option:hover {
+  background: #f0fdf4;
+  color: #334155;
+}
+.searchable-select-option.selected {
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-weight: 400;
+}
+.searchable-select-empty {
+  padding: 12px;
+  text-align: center;
+  color: var(--qlvt-muted);
+  font-size: 12px;
+}
+
+/* Category tree green hover (matching category management page) */
+.category-tree-inline-box .category-tree-node:hover {
+  background: #f8fafc !important;
+  color: #334155 !important;
+}
+.category-tree-inline-box .category-tree-node:hover .tree-label {
+  color: #334155;
+}
+.category-tree-inline-box .category-tree-node:hover .tree-code {
+  color: #64748b;
+}
+.category-tree-inline-box .category-tree-node:hover .tree-icon {
+  color: #64748b;
+}
+.category-tree-inline-box .category-tree-node.selected {
+  background: #f1f5f9 !important;
+  color: #334155 !important;
+}
+.category-tree-inline-box .category-tree-node.selected .tree-label {
+  color: #334155;
+  font-weight: 700;
+}
+.category-tree-inline-box .category-tree-node.selected .tree-code {
+  color: #64748b;
+  font-weight: 600;
+}
+.category-tree-inline-box .category-tree-node.leaf {
+  cursor: pointer;
+}
+.category-tree-inline-box .category-tree-node.parent {
+  cursor: pointer;
+  color: #64748b;
+}
+
+/* ── Wide modal for 2-column asset form ── */
+#root .crud-modal-wide {
+  max-width: 1100px !important;
+  width: 1100px !important;
+}
+
+.crud-modal-two-col {
+  display: flex;
+  gap: 16px;
+  width: 100%;
+}
+.crud-modal-col-left {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.crud-modal-col-right {
+  width: 380px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+}
+.crud-modal-col-right .category-tree-select-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+.crud-modal-col-right .category-tree-inline-box {
+  flex: 1;
+  max-height: none;
+  min-height: 300px;
+}
+
+/* ── SearchableSelect icon rotation ── */
+.searchable-select-icon.rotated {
+  transform: rotate(180deg);
+}
+.searchable-select-icon {
+  transition: transform 0.2s ease;
+}
+
+#root .crud-modal-wide .modal-body {
+  display: block !important;
+}
+#root .crud-modal-two-col {
+  display: flex;
+  gap: 24px;
+  width: 100%;
+}
+#root .crud-modal-col-left {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  padding-bottom: 120px;
+}
+@media (max-width: 860px) {
+  #root .crud-modal-two-col {
+    flex-direction: column;
+  }
+  #root .crud-modal-col-right {
+    width: 100%;
+  }
+}
+
+/* User requested bold, table-header colored labels */
+.modal-body label,
+.crud-modal label,
+.modal-body .form-label-text,
+.crud-modal .form-label-text {
+  font-weight: 700 !important;
+  color: #1f2937 !important;
+}
+
+.tree-expander:hover {
+  background: #f1f5f9 !important;
+  color: #475569 !important;
+  border-radius: 4px;
+}
+
+/* User requested input fields background to be light gray — only text inputs and textareas */
+.modal-body input:not(.searchable-select-input),
+.modal-body textarea,
+.category-editor input:not(.searchable-select-input),
+.category-editor textarea,
+.crud-modal input:not(.searchable-select-input),
+.crud-modal textarea {
+  background-color: #f1f5f9 !important;
+}
+/* Searchable select (dropdown) input stays white */
+.crud-modal .searchable-select-input,
+.modal-body .searchable-select-input,
+.category-editor .searchable-select-input {
+  background-color: #ffffff !important;
+}
+
+/* Fix import preview margin */
+.asset-import-preview-toolbar {
+  margin-bottom: -10px !important;
+}
+
+/* Fix Asset column width */
+.asset-table-col-asset {
+  width: 320px !important;
+  min-width: 320px !important;
+  max-width: 320px !important;
+  word-wrap: break-word;
+}
+
+/* Logo hover effects */
+#root .brand,
+#root .brand:hover,
+#root .brand-compact-mark,
+#root .brand-compact-mark:hover {
+  background: transparent !important;
+  cursor: pointer !important;
+}
+
+/* Fix logo size to be square */
+#root .brand img {
+  width: auto !important;
+  height: auto !important;
+  max-width: 140px !important;
+  max-height: 48px !important;
+  object-fit: contain !important;
+}
+
+#root .sidebar.compact .brand-compact-mark img {
+  width: 36px !important;
+  height: 36px !important;
+  max-width: 36px !important;
+  max-height: 36px !important;
+  object-fit: contain !important;
+}
+
+/* Notes textarea: tall gray area */
+.crud-notes-textarea {
+  width: 100% !important;
+  min-height: 120px !important;
+  resize: vertical !important;
+  background-color: #f1f5f9 !important;
+  border: 1px solid #d1d5db !important;
+  border-radius: 3px !important;
+  padding: 10px 12px !important;
+  font-family: Inter, Arial, sans-serif !important;
+  font-size: 12px !important;
+  line-height: 1.5 !important;
+  color: #1f2937 !important;
+}
+
+/* Force no border on all buttons as requested */
+button {
+  border: none !important;
+}
+
+/* Force normal font weight on dropdown inputs and options */
+.searchable-select-input,
+.searchable-select-option,
+.category-tree-node,
+.category-tree-input-inline,
+.searchable-select-option.selected {
+  font-weight: normal !important;
+}
+
+/* Ensure green background for download buttons */
+#root .asset-page-actions .asset-add-button.btn-download-green {
+  background: #166534 !important;
+}
+#root .asset-page-actions .asset-add-button.btn-download-green:hover {
+  background: #14532d !important;
+}
+
+/* Ensure blue background for upload buttons */
+#root .asset-page-actions .asset-add-button.btn-upload-blue {
+  background: #0041c2 !important;
+}
+#root .asset-page-actions .asset-add-button.btn-upload-blue:hover {
+  background: #0369a1 !important;
+}
+
+/* ── Sync detail modal with crud modal ("Thêm mới" template) ── */
+
+/* Detail modal labels: bold, dark color like crud modal */
+.asset-detail-section label span,
+.asset-detail-hero span,
+.asset-detail-readonly-grid span {
+  font-weight: 700 !important;
+  color: #1f2937 !important;
+  font-size: 12px !important;
+}
+
+/* Detail modal inputs: same sizing as crud modal (border-radius 3px, padding, font) */
+.asset-detail-fields input,
+.asset-detail-fields select,
+.asset-detail-section textarea {
+  border: 1px solid #d1d5db !important;
+  border-radius: 3px !important;
+  font-size: 12px !important;
+  min-height: 32px !important;
+  padding: 6px 9px !important;
+}
+
+/* Detail modal text inputs: gray background, same as crud modal */
+.asset-detail-fields input:not(.searchable-select-input) {
+  background-color: #f1f5f9 !important;
+}
+.asset-detail-fields input:disabled,
+.asset-detail-fields select:disabled,
+.asset-detail-section textarea:disabled {
+  background: #f1f5f9 !important;
+  color: #64748b !important;
+  cursor: not-allowed !important;
+}
+
+/* Detail searchable select: white background */
+.asset-detail-fields .searchable-select-input,
+.asset-detail-modal .searchable-select-input {
+  background-color: #ffffff !important;
+}
+
+/* Detail sections: remove borders and shadow to match crud modal flat look */
+.asset-detail-section {
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 4px !important;
+  padding: 14px 0 !important;
+  border-bottom: 1px solid #f3f4f6 !important;
+}
+
+.asset-detail-section:last-child {
+  border-bottom: none !important;
+}
+
+/* Detail section h3: same style as crud modal section headers */
+.asset-detail-section h3 {
+  color: #1f2937 !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  margin: 0 0 12px !important;
+  padding-bottom: 8px !important;
+  border-bottom: 1px solid #e5e7eb !important;
+}
+
+/* Detail hero: softer borders */
+.asset-detail-hero {
+  border-radius: 4px !important;
+}
+
+/* Detail readonly grid: smaller border-radius */
+.asset-detail-readonly-grid > div {
+  border-radius: 4px !important;
+}
+
+/* Detail modal: same width as crud modal wide */
+.asset-detail-modal {
+  width: min(1120px, calc(100vw - 32px)) !important;
+}
+
+/* Detail body: match crud modal padding */
+.asset-detail-body {
+  padding: 16px 24px 20px !important;
+}
+
+/* Detail grid: tighter gap */
+.asset-detail-grid {
+  gap: 0 14px !important;
+}
+
+/* Detail fields grid: same gap as crud modal */
+.asset-detail-fields {
+  gap: 10px !important;
+}
+
+/* Detail modal dropdown values: not bold */
+.asset-detail-modal .searchable-select-option {
+  font-weight: normal !important;
+}
+/* User overrides */
+#root .category-org-viewport {
+  height: clamp(400px, 55vh, 650px) !important;
+  min-height: 400px !important;
+  max-height: 650px !important;
+}
+
+#root .category-management-section .category-structure-grid {
+  min-height: 470px !important;
+}
+
+#root .category-org-card:hover {
+  background: #ecfdf5 !important;
+  color: #22c55e !important;
+}
+
+#root .category-org-card:hover strong,
+#root .category-org-card:hover span {
+  color: #22c55e !important;
+}
+
+.sidebar {
+  background: #1e293b !important;
+  border-right: 1px solid #0f172a !important;
+}
+/* Extra User overrides */
+#root .category-org-card {
+  border: 1px solid #cbd5e1 !important;
+}
+
+#root .category-down-line,
+#root .category-connector-cap .left,
+#root .category-connector-cap .right,
+#root .category-connector-cap .down {
+  background: #94a3b8 !important;
+}
+
+#root .category-connector-cap .left,
+#root .category-connector-cap .right {
+  height: 2px !important;
+}
+
+#root .category-connector-cap .down,
+#root .category-down-line {
+  width: 2px !important;
+}
+
+#root .sidebar {
+  background: #1e293b !important;
+  border-right: 1px solid #0f172a !important;
+}
+
+#root .sidebar-group-button:hover,
+#root .sidebar a:hover {
+  background: rgba(255, 255, 255, 0.05) !important;
+}
+
+#root .category-org-forest {
+  gap: 20px !important;
+}
+#root .category-child-slot {
+  padding-inline: 4px !important;
 }

@@ -23,6 +23,8 @@ import {
   FiUpload,
   FiX,
 } from "react-icons/fi";
+import { useNavigate } from "react-router-dom";
+import { SearchableSelect } from "../components/forms/SearchableSelect";
 import { OverflowActions } from "../components/OverflowActions";
 import { StatusBadge } from "../components/StatusBadge";
 import { useActions } from "../contexts/ActionsContext";
@@ -293,6 +295,9 @@ function buildAssetPayload(item: AssetItem): AssetPayload {
     capacityUnit: item.capacityUnit || "",
     realCapacity: item.realCapacity ?? null,
     technicalDescription: item.technicalDescription || "",
+    disposalDate: item.disposalDate || "",
+    disposalPrice: item.disposalPrice ?? null,
+    disposalReason: item.disposalReason || "",
   };
 }
 
@@ -931,6 +936,7 @@ export function AssetsPage() {
   const { hasPermission } = useAuth();
   const {
     assets,
+    vendors,
     employees,
     departments,
     workSites,
@@ -939,6 +945,7 @@ export function AssetsPage() {
     ensureAssetDetailLookups,
   } = useAppData();
   const { openModal } = useActions();
+  const navigate = useNavigate();
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<AssetStatusFilter>("ALL");
   const [categoryPath, setCategoryPath] = useState<string[]>([]);
@@ -1157,7 +1164,11 @@ export function AssetsPage() {
   }, [useDateFrom, useDateTo]);
 
   const filteredAssets = useMemo(() => {
-    const normalized = query.trim().toLowerCase();
+    const normalized = query
+      .trim()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase();
     const valueRange = ASSET_VALUE_FILTERS.find((item) => item.value === valueFilter);
     const selectedCategoryIds = selectedCategoryNode
       ? (categoryDescendantIds.get(selectedCategoryNode.id) ??
@@ -1213,6 +1224,8 @@ export function AssetsPage() {
       ]
         .filter(Boolean)
         .join(" ")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
         .toLowerCase();
       const matchesQuery = !normalized || searchable.includes(normalized);
       return (
@@ -1371,7 +1384,7 @@ export function AssetsPage() {
   const reloadAssetList = async () => {
     setListRefreshing(true);
     try {
-      await ensureAssets(true);
+      await ensureAssets(true, true);
     } finally {
       setListRefreshing(false);
     }
@@ -1654,12 +1667,12 @@ export function AssetsPage() {
     {
       id: "categoryCode",
       label: "Mã danh mục",
-      render: (item) => item.assetCategory?.code || "--",
+      render: (item) => highlightSearchText(item.assetCategory?.code || "--", query),
     },
     {
       id: "serialNumber",
       label: "Serial/MAC",
-      render: (item) => item.serialNumber || "--",
+      render: (item) => highlightSearchText(item.serialNumber || "--", query),
     },
     {
       id: "status",
@@ -1864,10 +1877,18 @@ export function AssetsPage() {
       </header>
 
       <div className="asset-page-actions">
-        <button type="button" className="asset-template-button" onClick={handleDownloadTemplate}>
+        <button
+          type="button"
+          className="asset-add-button btn-download-green"
+          onClick={handleDownloadTemplate}
+        >
           <FiDownload /> Tải mẫu Excel
         </button>
-        <button type="button" className="asset-import-button" onClick={() => setImportOpen(true)}>
+        <button
+          type="button"
+          className="asset-add-button btn-upload-blue"
+          onClick={() => setImportOpen(true)}
+        >
           <FiUpload /> Tải lên file Excel
         </button>
         {canManage && (
@@ -1876,7 +1897,7 @@ export function AssetsPage() {
             className="asset-add-button"
             onClick={() => openModal({ type: "asset", mode: "create" })}
           >
-            Thêm mới
+            Thêm thủ công
           </button>
         )}
       </div>
@@ -1951,9 +1972,9 @@ export function AssetsPage() {
             </label>
             <label className="asset-filter-field">
               <span>Trạng thái</span>
-              <select
+              <SearchableSelect
                 value={statusFilter}
-                onChange={(event) => setStatusFilter(event.target.value as AssetStatusFilter)}
+                onChange={(val: string) => setStatusFilter(val as AssetStatusFilter)}
               >
                 {(["ALL", "IN_STOCK", "ASSIGNED", "MAINTENANCE", "DISPOSED"] as const).map(
                   (status) => (
@@ -1962,20 +1983,20 @@ export function AssetsPage() {
                     </option>
                   ),
                 )}
-              </select>
+              </SearchableSelect>
             </label>
             <label className="asset-filter-field">
               <span>Giá trị</span>
-              <select
+              <SearchableSelect
                 value={valueFilter}
-                onChange={(event) => setValueFilter(event.target.value as AssetValueFilter)}
+                onChange={(val: string) => setValueFilter(val as AssetValueFilter)}
               >
                 {ASSET_VALUE_FILTERS.map((item) => (
                   <option key={item.value} value={item.value}>
                     {item.label}
                   </option>
                 ))}
-              </select>
+              </SearchableSelect>
             </label>
             <label className="asset-date-filter">
               <span>Từ ngày sử dụng</span>
@@ -2281,11 +2302,11 @@ export function AssetsPage() {
                 <div className="asset-selection-actions">
                   <label className="asset-bulk-action-select">
                     <span>Thao tác</span>
-                    <select
+                    <SearchableSelect
                       value={bulkPanelAction || ""}
                       disabled={selectedAssets.length === 0 || bulkActionBusy}
-                      onChange={(event) => {
-                        const action = event.target.value as Exclude<AssetBulkAction, null> | "";
+                      onChange={(val: string) => {
+                        const action = val as Exclude<AssetBulkAction, null> | "";
                         if (!action) {
                           setBulkPanelAction(null);
                           return;
@@ -2295,13 +2316,11 @@ export function AssetsPage() {
                     >
                       <option value="">Chọn thao tác</option>
                       <option value="status">Cập nhật trạng thái</option>
-                      <option value="move">Chuyển vị trí</option>
-                      <option value="assign">Cấp phát</option>
-                      <option value="return">Thu hồi</option>
+
                       <option value="qr" disabled>
                         In QR theo nhóm
                       </option>
-                    </select>
+                    </SearchableSelect>
                   </label>
                   <button
                     type="button"
@@ -2364,12 +2383,10 @@ export function AssetsPage() {
                           <div className="asset-bulk-form-row">
                             <label>
                               <span>Trạng thái mới</span>
-                              <select
+                              <SearchableSelect
                                 value={bulkStatus}
-                                onChange={(event) =>
-                                  setBulkStatus(
-                                    event.target.value as (typeof ASSET_MUTABLE_STATUSES)[number],
-                                  )
+                                onChange={(val: string) =>
+                                  setBulkStatus(val as (typeof ASSET_MUTABLE_STATUSES)[number])
                                 }
                               >
                                 {ASSET_MUTABLE_STATUSES.map((status) => (
@@ -2377,7 +2394,7 @@ export function AssetsPage() {
                                     {statusLabel(status)}
                                   </option>
                                 ))}
-                              </select>
+                              </SearchableSelect>
                             </label>
                             <button
                               type="button"
@@ -2402,9 +2419,9 @@ export function AssetsPage() {
                           <div className="asset-bulk-form-row three">
                             <label>
                               <span>Chi nhánh mới</span>
-                              <select
+                              <SearchableSelect
                                 value={bulkSiteId}
-                                onChange={(event) => setBulkSiteId(event.target.value)}
+                                onChange={(val: string) => setBulkSiteId(val)}
                               >
                                 <option value="">Giữ nguyên chi nhánh</option>
                                 {workSites.map((site) => (
@@ -2412,13 +2429,13 @@ export function AssetsPage() {
                                     {site.name}
                                   </option>
                                 ))}
-                              </select>
+                              </SearchableSelect>
                             </label>
                             <label>
                               <span>Phòng ban mới</span>
-                              <select
+                              <SearchableSelect
                                 value={bulkDepartmentId}
-                                onChange={(event) => setBulkDepartmentId(event.target.value)}
+                                onChange={(val: string) => setBulkDepartmentId(val)}
                               >
                                 <option value="">Giữ nguyên phòng ban</option>
                                 {departments.map((department) => (
@@ -2426,13 +2443,13 @@ export function AssetsPage() {
                                     {department.name}
                                   </option>
                                 ))}
-                              </select>
+                              </SearchableSelect>
                             </label>
                             <label>
                               <span>Người giữ mới</span>
-                              <select
+                              <SearchableSelect
                                 value={bulkEmployeeId}
-                                onChange={(event) => setBulkEmployeeId(event.target.value)}
+                                onChange={(val: string) => setBulkEmployeeId(val)}
                               >
                                 <option value="">Giữ nguyên người giữ</option>
                                 {employees.map((employee) => (
@@ -2440,7 +2457,7 @@ export function AssetsPage() {
                                     {employeeLabel(employee)}
                                   </option>
                                 ))}
-                              </select>
+                              </SearchableSelect>
                             </label>
                             <button
                               type="button"
@@ -2463,9 +2480,9 @@ export function AssetsPage() {
                           <div className="asset-bulk-form-row three">
                             <label>
                               <span>Chi nhánh</span>
-                              <select
+                              <SearchableSelect
                                 value={bulkSiteId}
-                                onChange={(event) => setBulkSiteId(event.target.value)}
+                                onChange={(val: string) => setBulkSiteId(val)}
                               >
                                 <option value="">Giữ nguyên chi nhánh</option>
                                 {workSites.map((site) => (
@@ -2473,13 +2490,13 @@ export function AssetsPage() {
                                     {site.name}
                                   </option>
                                 ))}
-                              </select>
+                              </SearchableSelect>
                             </label>
                             <label>
                               <span>Phòng ban</span>
-                              <select
+                              <SearchableSelect
                                 value={bulkDepartmentId}
-                                onChange={(event) => setBulkDepartmentId(event.target.value)}
+                                onChange={(val: string) => setBulkDepartmentId(val)}
                               >
                                 <option value="">Giữ nguyên phòng ban</option>
                                 {departments.map((department) => (
@@ -2487,13 +2504,13 @@ export function AssetsPage() {
                                     {department.name}
                                   </option>
                                 ))}
-                              </select>
+                              </SearchableSelect>
                             </label>
                             <label>
                               <span>Nhân sự nhận</span>
-                              <select
+                              <SearchableSelect
                                 value={bulkEmployeeId}
-                                onChange={(event) => setBulkEmployeeId(event.target.value)}
+                                onChange={(val: string) => setBulkEmployeeId(val)}
                               >
                                 <option value="">Chọn nhân sự</option>
                                 {employees.map((employee) => (
@@ -2501,7 +2518,7 @@ export function AssetsPage() {
                                     {employeeLabel(employee)}
                                   </option>
                                 ))}
-                              </select>
+                              </SearchableSelect>
                             </label>
                             <button
                               type="button"
@@ -2637,11 +2654,13 @@ export function AssetsPage() {
               <div className="asset-detail-hero">
                 <div>
                   <span>Mã tài sản</span>
-                  <strong>{selectedAsset.assetCode}</strong>
+                  <strong style={{ color: "#2563eb", fontWeight: 700, fontSize: "14px" }}>
+                    {selectedAsset.assetCode}
+                  </strong>
                 </div>
                 <div>
                   <span>Danh mục</span>
-                  <strong>
+                  <strong style={{ color: "#2563eb", fontWeight: 700, fontSize: "14px" }}>
                     {selectedAsset.assetCategory?.name ||
                       selectedAsset.category ||
                       "Chưa phân loại"}
@@ -2649,11 +2668,37 @@ export function AssetsPage() {
                 </div>
                 <div>
                   <span>Phân loại</span>
-                  <strong>{classLabel(selectedAsset.assetClass)}</strong>
+                  <strong style={{ color: "#2563eb", fontWeight: 700, fontSize: "14px" }}>
+                    {classLabel(selectedAsset.assetClass)}
+                  </strong>
                 </div>
                 <div>
                   <span>Trạng thái</span>
-                  <StatusBadge value={selectedAsset.status} />
+                  <strong style={{ color: "#2563eb", fontWeight: 700, fontSize: "14px" }}>
+                    {{
+                      ACTIVE: "Đang hoạt động",
+                      INACTIVE: "Ngưng hoạt động",
+                      IN_STOCK: "Trong kho",
+                      ASSIGNED: "Đã cấp phát",
+                      MAINTENANCE: "Bảo trì",
+                      DISPOSED: "Đã thanh lý",
+                      LIQUIDATED: "Đã thanh lý",
+                      DRAFT: "Bản nháp",
+                      PENDING: "Chờ duyệt",
+                      PENDING_APPROVAL: "Chờ duyệt",
+                      APPROVED: "Đã duyệt",
+                      CONFIRMED: "Đã xác nhận",
+                      IN_USE: "Đang sử dụng",
+                      COMPLETED: "Hoàn tất",
+                      CANCELLED: "Đã hủy",
+                      REJECTED: "Từ chối",
+                      EXPIRED: "Quá hạn",
+                      VALID: "Hợp lệ",
+                      INVALID: "Không hợp lệ",
+                      WARNING: "Cảnh báo",
+                      HAS_ERROR: "Lỗi",
+                    }[selectedAsset.status || ""] || selectedAsset.status}
+                  </strong>
                 </div>
               </div>
 
@@ -2725,9 +2770,9 @@ export function AssetsPage() {
                     </label>
                     <label>
                       <span>Trạng thái</span>
-                      <select
+                      <SearchableSelect
                         value={assetDraft.status || "IN_STOCK"}
-                        onChange={(event) => updateAssetDraft("status", event.target.value)}
+                        onChange={(val: string) => updateAssetDraft("status", val)}
                         disabled={!canManage || assetSaving}
                       >
                         <option value="IN_STOCK">Trong kho</option>
@@ -2735,7 +2780,7 @@ export function AssetsPage() {
                         <option value="MAINTENANCE">Bảo trì</option>
                         <option value="DISPOSED">Đã thanh lý</option>
                         <option value="LOST">Mất</option>
-                      </select>
+                      </SearchableSelect>
                     </label>
                     <label>
                       <span>Nguồn hình thành</span>
@@ -2748,84 +2793,85 @@ export function AssetsPage() {
                   </div>
                 </section>
                 <section className="asset-detail-section">
-                  <h3>Sử dụng, đơn vị và vị trí</h3>
+                  <h3
+                    style={{
+                      margin: "0 0 12px 0",
+                      paddingBottom: "8px",
+                      borderBottom: "2px solid #e2e8f0",
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                      }}
+                    >
+                      <span>Sử dụng, đơn vị và vị trí</span>
+                      <button
+                        type="button"
+                        style={{
+                          color: "#2563eb",
+                          textDecoration: "underline",
+                          background: "none",
+                          padding: 0,
+                          fontWeight: 500,
+                          fontSize: "13px",
+                          border: "none",
+                          cursor: "pointer",
+                        }}
+                        onClick={() => window.open("/transfers", "_blank")}
+                      >
+                        Bàn giao
+                      </button>
+                    </div>
+                  </h3>
                   <div className="asset-detail-fields">
                     <label>
                       <span>Site hiện tại</span>
-                      <select
-                        value={assetDraft.siteId ?? ""}
-                        onChange={(event) =>
-                          updateAssetDraft("siteId", optionalNumber(event.target.value))
-                        }
-                        disabled={!canManage || assetSaving}
-                      >
-                        <option value="">Chưa gán chi nhánh</option>
-                        {workSites.map((site) => (
-                          <option key={site.id} value={site.id}>
-                            {site.name}
-                          </option>
-                        ))}
-                      </select>
+                      <input
+                        type="text"
+                        value={workSites.find((s) => s.id === assetDraft.siteId)?.name || "--"}
+                        disabled
+                      />
                     </label>
                     <label>
                       <span>Phòng ban quản lý</span>
-                      <select
-                        value={assetDraft.departmentId ?? ""}
-                        onChange={(event) =>
-                          updateAssetDraft("departmentId", optionalNumber(event.target.value))
+                      <input
+                        type="text"
+                        value={
+                          departments.find((d) => d.id === assetDraft.departmentId)?.name || "--"
                         }
-                        disabled={!canManage || assetSaving}
-                      >
-                        <option value="">Chưa gán phòng ban</option>
-                        {departments.map((department) => (
-                          <option key={department.id} value={department.id}>
-                            {department.name}
-                          </option>
-                        ))}
-                      </select>
+                        disabled
+                      />
                     </label>
                     <label>
                       <span>Nhân sự đang giữ</span>
-                      <select
-                        value={assetDraft.assignedEmployeeId ?? ""}
-                        onChange={(event) =>
-                          updateAssetDraft("assignedEmployeeId", optionalNumber(event.target.value))
+                      <input
+                        type="text"
+                        value={
+                          employees.find((e) => e.id === assetDraft.assignedEmployeeId)?.name ||
+                          "--"
                         }
-                        disabled={!canManage || assetSaving}
-                      >
-                        <option value="">Chưa gán người giữ</option>
-                        {employees.map((employee) => (
-                          <option key={employee.id} value={employee.id}>
-                            {employeeLabel(employee)}
-                          </option>
-                        ))}
-                      </select>
+                        disabled
+                      />
                     </label>
                     <label>
                       <span>Dự án</span>
-                      <select
-                        value={assetDraft.projectId ?? ""}
-                        onChange={(event) =>
-                          updateAssetDraft("projectId", optionalNumber(event.target.value))
-                        }
-                        disabled={!canManage || assetSaving}
-                      >
-                        <option value="">Chưa gán dự án</option>
-                        {projects.map((project) => (
-                          <option key={project.id} value={project.id}>
-                            {projectLabel(project)}
-                          </option>
-                        ))}
-                      </select>
+                      <input
+                        type="text"
+                        value={projects.find((p) => p.id === assetDraft.projectId)?.name || "--"}
+                        disabled
+                      />
                     </label>
-                    <div>
+                    <label>
                       <span>Ngày đưa vào sử dụng</span>
-                      <strong>{selectedAsset.useDate || "--"}</strong>
-                    </div>
-                    <div>
+                      <input type="date" value={selectedAsset.useDate || ""} disabled />
+                    </label>
+                    <label>
                       <span>Nguồn hình thành</span>
-                      <strong>{assetDraft.source || "--"}</strong>
-                    </div>
+                      <input type="text" value={assetDraft.source || ""} disabled />
+                    </label>
                   </div>
                 </section>
 
@@ -2834,61 +2880,176 @@ export function AssetsPage() {
                   <div className="asset-detail-fields">
                     <label>
                       <span>Nguyên giá</span>
-                      <input
-                        type="number"
-                        value={assetDraft.originalCost ?? ""}
-                        onChange={(event) =>
-                          updateAssetDraft("originalCost", optionalNumber(event.target.value))
-                        }
-                        disabled={!canManage || assetSaving}
-                      />
+                      <div style={{ position: "relative" }}>
+                        <input
+                          type="text"
+                          inputMode="decimal"
+                          value={
+                            assetDraft.originalCost != null
+                              ? money.format(assetDraft.originalCost)
+                              : ""
+                          }
+                          onChange={(event) =>
+                            updateAssetDraft(
+                              "originalCost",
+                              optionalNumber(event.target.value.replace(/[^0-9]/g, "")),
+                            )
+                          }
+                          disabled={!canManage || assetSaving}
+                          style={{ width: "100%", paddingRight: "30px" }}
+                        />
+                        <span
+                          style={{
+                            position: "absolute",
+                            right: "10px",
+                            top: "50%",
+                            transform: "translateY(-50%)",
+                            color: "#6b7280",
+                            fontWeight: 700,
+                            fontSize: "12px",
+                          }}
+                        >
+                          đ
+                        </span>
+                      </div>
                     </label>
                     <label>
                       <span>Giá mua/ghi nhận</span>
-                      <input
-                        type="number"
-                        value={assetDraft.purchaseCost ?? ""}
-                        onChange={(event) =>
-                          updateAssetDraft("purchaseCost", optionalNumber(event.target.value))
-                        }
-                        disabled={!canManage || assetSaving}
-                      />
+                      <div style={{ position: "relative" }}>
+                        <input
+                          type="text"
+                          inputMode="decimal"
+                          value={
+                            assetDraft.purchaseCost != null
+                              ? money.format(assetDraft.purchaseCost)
+                              : ""
+                          }
+                          onChange={(event) =>
+                            updateAssetDraft(
+                              "purchaseCost",
+                              optionalNumber(event.target.value.replace(/[^0-9]/g, "")),
+                            )
+                          }
+                          disabled={!canManage || assetSaving}
+                          style={{ width: "100%", paddingRight: "30px" }}
+                        />
+                        <span
+                          style={{
+                            position: "absolute",
+                            right: "10px",
+                            top: "50%",
+                            transform: "translateY(-50%)",
+                            color: "#6b7280",
+                            fontWeight: 700,
+                            fontSize: "12px",
+                          }}
+                        >
+                          đ
+                        </span>
+                      </div>
                     </label>
                     <label>
                       <span>Hao mòn lũy kế</span>
-                      <input
-                        type="number"
-                        value={assetDraft.accumulatedDepreciation ?? ""}
-                        onChange={(event) =>
-                          updateAssetDraft(
-                            "accumulatedDepreciation",
-                            optionalNumber(event.target.value),
-                          )
-                        }
-                        disabled={!canManage || assetSaving}
-                      />
+                      <div style={{ position: "relative" }}>
+                        <input
+                          type="text"
+                          inputMode="decimal"
+                          value={
+                            assetDraft.accumulatedDepreciation != null
+                              ? money.format(assetDraft.accumulatedDepreciation)
+                              : ""
+                          }
+                          onChange={(event) =>
+                            updateAssetDraft(
+                              "accumulatedDepreciation",
+                              optionalNumber(event.target.value.replace(/[^0-9]/g, "")),
+                            )
+                          }
+                          disabled={!canManage || assetSaving}
+                          style={{ width: "100%", paddingRight: "30px" }}
+                        />
+                        <span
+                          style={{
+                            position: "absolute",
+                            right: "10px",
+                            top: "50%",
+                            transform: "translateY(-50%)",
+                            color: "#6b7280",
+                            fontWeight: 700,
+                            fontSize: "12px",
+                          }}
+                        >
+                          đ
+                        </span>
+                      </div>
                     </label>
                     <label>
                       <span>Giá trị sổ sách</span>
-                      <input
-                        type="number"
-                        value={assetDraft.bookValue ?? ""}
-                        onChange={(event) =>
-                          updateAssetDraft("bookValue", optionalNumber(event.target.value))
-                        }
-                        disabled={!canManage || assetSaving}
-                      />
+                      <div style={{ position: "relative" }}>
+                        <input
+                          type="text"
+                          inputMode="decimal"
+                          value={
+                            assetDraft.bookValue != null ? money.format(assetDraft.bookValue) : ""
+                          }
+                          onChange={(event) =>
+                            updateAssetDraft(
+                              "bookValue",
+                              optionalNumber(event.target.value.replace(/[^0-9]/g, "")),
+                            )
+                          }
+                          disabled={!canManage || assetSaving}
+                          style={{ width: "100%", paddingRight: "30px" }}
+                        />
+                        <span
+                          style={{
+                            position: "absolute",
+                            right: "10px",
+                            top: "50%",
+                            transform: "translateY(-50%)",
+                            color: "#6b7280",
+                            fontWeight: 700,
+                            fontSize: "12px",
+                          }}
+                        >
+                          đ
+                        </span>
+                      </div>
                     </label>
                     <label>
                       <span>Giá trị còn lại</span>
-                      <input
-                        type="number"
-                        value={assetDraft.residualValue ?? ""}
-                        onChange={(event) =>
-                          updateAssetDraft("residualValue", optionalNumber(event.target.value))
-                        }
-                        disabled={!canManage || assetSaving}
-                      />
+                      <div style={{ position: "relative" }}>
+                        <input
+                          type="text"
+                          inputMode="decimal"
+                          value={
+                            assetDraft.residualValue != null
+                              ? money.format(assetDraft.residualValue)
+                              : ""
+                          }
+                          onChange={(event) =>
+                            updateAssetDraft(
+                              "residualValue",
+                              optionalNumber(event.target.value.replace(/[^0-9]/g, "")),
+                            )
+                          }
+                          disabled={!canManage || assetSaving}
+                          style={{ width: "100%", paddingRight: "30px" }}
+                        />
+                        <span
+                          style={{
+                            position: "absolute",
+                            right: "10px",
+                            top: "50%",
+                            transform: "translateY(-50%)",
+                            color: "#6b7280",
+                            fontWeight: 700,
+                            fontSize: "12px",
+                          }}
+                        >
+                          đ
+                        </span>
+                      </div>
                     </label>
                     <label>
                       <span>Ngày mua</span>
@@ -3044,35 +3205,85 @@ export function AssetsPage() {
 
                 <section className="asset-detail-section">
                   <h3>Thanh lý và hệ thống</h3>
-                  <div className="asset-detail-readonly-grid">
-                    <div>
+                  <div className="asset-detail-fields">
+                    <label>
                       <span>Ngày thanh lý</span>
-                      <strong>{selectedAsset.disposalDate || "--"}</strong>
-                    </div>
-                    <div>
+                      <input
+                        type="date"
+                        value={assetDraft.disposalDate || ""}
+                        onChange={(e) => updateAssetDraft("disposalDate", e.target.value)}
+                        disabled={!canManage || assetSaving}
+                      />
+                    </label>
+                    <label>
                       <span>Giá thanh lý</span>
-                      <strong>
-                        {selectedAsset.disposalPrice
-                          ? money.format(Number(selectedAsset.disposalPrice))
-                          : "--"}
-                      </strong>
-                    </div>
-                    <div>
+                      <div style={{ position: "relative" }}>
+                        <input
+                          type="text"
+                          inputMode="decimal"
+                          value={
+                            assetDraft.disposalPrice != null
+                              ? money.format(assetDraft.disposalPrice)
+                              : ""
+                          }
+                          onChange={(e) =>
+                            updateAssetDraft(
+                              "disposalPrice",
+                              optionalNumber(e.target.value.replace(/[^0-9]/g, "")),
+                            )
+                          }
+                          disabled={!canManage || assetSaving}
+                          style={{ width: "100%", paddingRight: "30px" }}
+                        />
+                        <span
+                          style={{
+                            position: "absolute",
+                            right: "10px",
+                            top: "50%",
+                            transform: "translateY(-50%)",
+                            color: "#6b7280",
+                            fontWeight: 700,
+                            fontSize: "12px",
+                          }}
+                        >
+                          đ
+                        </span>
+                      </div>
+                    </label>
+                    <label>
                       <span>Lý do thanh lý</span>
-                      <strong>{selectedAsset.disposalReason || "--"}</strong>
-                    </div>
-                    <div>
+                      <input
+                        type="text"
+                        value={assetDraft.disposalReason || ""}
+                        onChange={(e) => updateAssetDraft("disposalReason", e.target.value)}
+                        disabled={!canManage || assetSaving}
+                      />
+                    </label>
+                    <label>
                       <span>Nhà cung cấp</span>
-                      <strong>{selectedAsset.vendor?.name || "Chưa có nhà cung cấp"}</strong>
-                    </div>
-                    <div>
+                      <SearchableSelect
+                        value={assetDraft.vendorId != null ? String(assetDraft.vendorId) : ""}
+                        onChange={(val: string) =>
+                          updateAssetDraft("vendorId", optionalNumber(val))
+                        }
+                        disabled={!canManage || assetSaving}
+                      >
+                        <option value="">Chưa có nhà cung cấp</option>
+                        {vendors.map((v) => (
+                          <option key={v.id} value={v.id}>
+                            {v.name}
+                          </option>
+                        ))}
+                      </SearchableSelect>
+                    </label>
+                    <label>
                       <span>Ngày tạo</span>
-                      <strong>{dateTimeLabel(selectedAsset.createdAt)}</strong>
-                    </div>
-                    <div>
+                      <input type="text" value={dateTimeLabel(selectedAsset.createdAt)} disabled />
+                    </label>
+                    <label>
                       <span>Cập nhật lần cuối</span>
-                      <strong>{dateTimeLabel(selectedAsset.updatedAt)}</strong>
-                    </div>
+                      <input type="text" value={dateTimeLabel(selectedAsset.updatedAt)} disabled />
+                    </label>
                   </div>
                 </section>
 
@@ -3207,20 +3418,16 @@ export function AssetsPage() {
                       <span style={{ color: "#64748b", fontSize: "11px", fontWeight: 600 }}>
                         Chế độ nhập dữ liệu:
                       </span>
-                      <select
+                      <SearchableSelect
                         value={importMode}
-                        onChange={(event) => setImportMode(event.target.value as ImportMode)}
+                        onChange={(val: string) => setImportMode(val as ImportMode)}
                         style={{
-                          padding: "4px 8px",
-                          borderRadius: "4px",
-                          border: "1px solid #dbe3ef",
-                          fontSize: "11px",
-                          color: "#334155",
+                          width: "200px",
                         }}
                       >
                         <option value="VALID_ROWS_ONLY">Chỉ nhập những dòng hợp lệ</option>
                         <option value="ALL_OR_NOTHING">Tất cả hoặc không nhập</option>
-                      </select>
+                      </SearchableSelect>
                     </label>
                   </div>
 

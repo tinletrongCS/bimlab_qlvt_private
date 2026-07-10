@@ -3,6 +3,7 @@ import toast from "react-hot-toast";
 import {
   FiDownload,
   FiFileText,
+  FiMaximize,
   FiPlus,
   FiRefreshCw,
   FiSave,
@@ -190,6 +191,7 @@ function CategoryNode({
   onDelete,
   onCreateChild,
   searchQuery,
+  readOnly = false,
 }: {
   node: AssetCategoryTree;
   depth?: number;
@@ -200,6 +202,7 @@ function CategoryNode({
   onDelete: (category: AssetCategory) => void;
   onCreateChild: (category: AssetCategory) => void;
   searchQuery: string;
+  readOnly?: boolean;
 }) {
   const open = expandedIds.has(node.id);
   const hasChildren = node.children.length > 0;
@@ -210,7 +213,7 @@ function CategoryNode({
         className="category-org-card"
         data-selected={selectedId === node.id ? "true" : undefined}
         onClick={() => {
-          onEdit(node);
+          if (!readOnly) onEdit(node);
           if (hasChildren) onToggle(node.id);
         }}
         title={hasChildren ? (open ? "Thu gọn" : "Mở rộng") : node.name}
@@ -228,7 +231,7 @@ function CategoryNode({
               className="category-expand-button"
               onClick={(event) => {
                 event.stopPropagation();
-                onEdit(node);
+                if (!readOnly) onEdit(node);
                 onToggle(node.id);
               }}
               title={open ? "Thu gọn" : "Mở rộng"}
@@ -236,30 +239,34 @@ function CategoryNode({
               {open ? "−" : `+${node.children.length}`}
             </button>
           )}
-          <button
-            type="button"
-            className="category-icon-action"
-            onClick={(event) => {
-              event.stopPropagation();
-              onEdit(node);
-              onCreateChild(node);
-            }}
-            title="Thêm danh mục con"
-          >
-            <FiPlus />
-          </button>
-          <button
-            type="button"
-            className="category-icon-action danger"
-            onClick={(event) => {
-              event.stopPropagation();
-              onEdit(node);
-              onDelete(node);
-            }}
-            title="Xóa"
-          >
-            <FiTrash2 />
-          </button>
+          {!readOnly && (
+            <>
+              <button
+                type="button"
+                className="category-icon-action"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onEdit(node);
+                  onCreateChild(node);
+                }}
+                title="Thêm danh mục con"
+              >
+                <FiPlus />
+              </button>
+              <button
+                type="button"
+                className="category-icon-action danger"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onEdit(node);
+                  onDelete(node);
+                }}
+                title="Xóa"
+              >
+                <FiTrash2 />
+              </button>
+            </>
+          )}
         </div>
       </div>
 
@@ -286,6 +293,7 @@ function CategoryNode({
                   onDelete={onDelete}
                   onCreateChild={onCreateChild}
                   searchQuery={searchQuery}
+                  readOnly={readOnly}
                 />
               </div>
             ))}
@@ -551,6 +559,7 @@ export function AssetCategoriesPage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
+  const [maximizeOpen, setMaximizeOpen] = useState(false);
   const [parentFieldsLocked, setParentFieldsLocked] = useState(false);
   const [expandedTreeIds, setExpandedTreeIds] = useState<Set<number>>(new Set());
   const [expandedStructureIds, setExpandedStructureIds] = useState<Set<number>>(new Set());
@@ -851,14 +860,14 @@ export function AssetCategoriesPage() {
         <div className="asset-page-actions category-page-actions">
           <button
             type="button"
-            className="asset-template-button"
+            className="asset-add-button btn-download-green"
             onClick={() => void handleDownloadCategoryTemplate()}
           >
             <FiDownload /> Tải danh mục
           </button>
           <button
             type="button"
-            className="asset-import-button"
+            className="asset-add-button btn-upload-blue"
             onClick={() => {
               resetImport();
               setImportOpen(true);
@@ -938,25 +947,56 @@ export function AssetCategoriesPage() {
               ) : filteredCategories.length === 0 ? (
                 <div className="empty-state">Chưa có danh mục.</div>
               ) : (
-                <div className="category-org-viewport">
-                  <div className="category-org-forest">
-                    {filteredTree.map((node) => (
-                      <CategoryNode
-                        key={node.id}
-                        node={node}
-                        expandedIds={expandedTreeIds}
-                        selectedId={selectedCategoryId ?? undefined}
-                        onToggle={toggleTreeNode}
-                        onEdit={startEdit}
-                        onDelete={remove}
-                        onCreateChild={startCreateChild}
-                        searchQuery={categorySearch}
-                      />
-                    ))}
+                <div style={{ position: "relative" }}>
+                  <div className="category-org-viewport">
+                    <div className="category-org-forest">
+                      {filteredTree.map((node) => (
+                        <CategoryNode
+                          key={node.id}
+                          node={node}
+                          expandedIds={expandedTreeIds}
+                          selectedId={selectedCategoryId ?? undefined}
+                          onToggle={toggleTreeNode}
+                          onEdit={startEdit}
+                          onDelete={remove}
+                          onCreateChild={startCreateChild}
+                          searchQuery={categorySearch}
+                        />
+                      ))}
+                    </div>
                   </div>
+                  <button
+                    type="button"
+                    onClick={() => setMaximizeOpen(true)}
+                    title="Phóng to sơ đồ"
+                    style={{
+                      position: "absolute",
+                      bottom: "16px",
+                      right: "16px",
+                      background: "#ffffff",
+                      border: "1px solid #e5e7eb",
+                      borderRadius: "8px",
+                      padding: "8px",
+                      cursor: "pointer",
+                      boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <FiMaximize size={18} color="#6b7280" />
+                  </button>
                 </div>
               )}
             </div>
+
+            {maximizeOpen && (
+              <MaximizedTreeModal
+                tree={filteredTree}
+                searchQuery={categorySearch}
+                onClose={() => setMaximizeOpen(false)}
+              />
+            )}
 
             {!loading && filteredCategories.length > 0 && (
               <div className="category-tree-panel category-management-section">
@@ -1402,5 +1442,68 @@ export function AssetCategoriesPage() {
         )}
       </div>
     </section>
+  );
+}
+
+function MaximizedTreeModal({
+  tree,
+  onClose,
+  searchQuery,
+}: {
+  tree: AssetCategoryTree[];
+  onClose: () => void;
+  searchQuery: string;
+}) {
+  const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
+  const [selectedId, setSelectedId] = useState<number | undefined>(undefined);
+
+  const toggle = (id: number) => {
+    const next = new Set(expandedIds);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    setExpandedIds(next);
+  };
+
+  return (
+    <div className="modal-backdrop" style={{ zIndex: 9999 }}>
+      <div
+        className="crud-modal"
+        style={{
+          width: "80vw",
+          maxWidth: "900px",
+          height: "85vh",
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
+        <div className="modal-head" style={{ padding: "12px 20px" }}>
+          <h2 style={{ fontSize: "16px", margin: 0 }}>Sơ đồ phân cấp danh mục</h2>
+          <button type="button" className="icon-button" onClick={onClose}>
+            <FiX />
+          </button>
+        </div>
+        <div
+          className="modal-body"
+          style={{ flex: 1, overflow: "auto", padding: "20px", background: "#f8fafc" }}
+        >
+          <div className="category-org-forest">
+            {tree.map((node) => (
+              <CategoryNode
+                key={node.id}
+                node={node}
+                expandedIds={expandedIds}
+                selectedId={selectedId}
+                onToggle={toggle}
+                onEdit={(cat) => setSelectedId(cat.id)}
+                onDelete={() => {}}
+                onCreateChild={() => {}}
+                searchQuery={searchQuery}
+                readOnly
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
