@@ -4,6 +4,7 @@ import com.bimlab.asset.dto.request.AssetCategoryImportCommitRequest;
 import com.bimlab.asset.dto.request.AssetCategoryImportRowRequest;
 import com.bimlab.asset.dto.request.AssetCategoryRequest;
 import com.bimlab.asset.dto.response.AssetCategoryImportCommitResponse;
+import com.bimlab.asset.dto.response.AssetCategoryResponse;
 import com.bimlab.asset.dto.response.AssetCategoryTreeResponse;
 import com.bimlab.asset.model.AssetCategory;
 import com.bimlab.asset.model.AssetItem;
@@ -18,6 +19,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -36,6 +38,67 @@ class AssetCategoryServiceTest {
     @Mock AssetCatalogItemRepository catalogItems;
 
     @InjectMocks AssetCategoryService service;
+
+    @Test
+    void listAndGetCategoryMapStoredValues() {
+        AssetCategory root = category(1L, "IT", "Information technology", null);
+        root.setDescription("Devices");
+        when(categories.findAllByOrderByNameAsc()).thenReturn(List.of(root));
+        when(categories.findById(1L)).thenReturn(Optional.of(root));
+
+        List<AssetCategoryResponse> listed = service.listCategories();
+        AssetCategoryResponse found = service.getCategory(1L);
+
+        assertEquals(1, listed.size());
+        assertEquals("IT", listed.get(0).code());
+        assertEquals("Devices", found.description());
+        assertThrows(NoSuchElementException.class, () -> service.getCategory(2L));
+    }
+
+    @Test
+    void createCategoryPersistsParentAndClass() {
+        AssetCategory parent = category(1L, "ROOT", "Root", null);
+        when(categories.findById(1L)).thenReturn(Optional.of(parent));
+        when(categories.save(any(AssetCategory.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        AssetCategoryRequest request = new AssetCategoryRequest(
+                "LAP", "Laptop", 1L, "FIXED_ASSET", "Portable computer", true);
+
+        AssetCategoryResponse result = service.createCategory(request);
+
+        assertEquals("LAP", result.code());
+        assertEquals(1L, result.parentId());
+        assertEquals("FIXED_ASSET", result.assetClass());
+    }
+
+    @Test
+    void createCategoryRejectsDuplicateAndMissingParent() {
+        AssetCategoryRequest duplicate = new AssetCategoryRequest(
+                "IT", "IT", null, "FIXED_ASSET", null, true);
+        when(categories.existsByCode("IT")).thenReturn(true);
+        assertThrows(IllegalArgumentException.class, () -> service.createCategory(duplicate));
+
+        AssetCategoryRequest missingParent = new AssetCategoryRequest(
+                "LAP", "Laptop", 99L, "FIXED_ASSET", null, true);
+        when(categories.existsByCode("LAP")).thenReturn(false);
+        when(categories.findById(99L)).thenReturn(Optional.empty());
+        assertThrows(NoSuchElementException.class, () -> service.createCategory(missingParent));
+    }
+
+    @Test
+    void updateCategoryPersistsChangedValues() {
+        AssetCategory existing = category(1L, "OLD", "Old", null);
+        AssetCategory parent = category(2L, "ROOT", "Root", null);
+        when(categories.findById(1L)).thenReturn(Optional.of(existing));
+        when(categories.findById(2L)).thenReturn(Optional.of(parent));
+        when(categories.save(existing)).thenReturn(existing);
+
+        AssetCategoryResponse result = service.updateCategory(1L, new AssetCategoryRequest(
+                "NEW", "New", 2L, "fixed_asset", "Changed", false));
+
+        assertEquals("NEW", result.code());
+        assertEquals(2L, result.parentId());
+        assertEquals(false, result.active());
+    }
 
     @Test
     void listCategoryTree_nestsChildrenUnderRoot() {

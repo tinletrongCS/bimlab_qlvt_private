@@ -109,4 +109,45 @@ describe("asset api client", () => {
 
     await expect(mocks.responseErrorHandler()?.(error)).rejects.toBe(error);
   });
+
+  it("covers CRUD and workflow endpoint wrappers", async () => {
+    const client = await import("./api");
+    for (const method of ["get", "post", "put", "patch"] as const) {
+      mocks.api[method].mockResolvedValue({ data: { ok: method } });
+    }
+    mocks.api.delete.mockResolvedValue({});
+    const payload = { name: "x" } as any;
+
+    await Promise.all([
+      client.loadDashboard(), client.loadUtilization(), client.loadVendors(),
+      client.createVendor(payload), client.updateVendor(1, payload), client.deleteVendor(1),
+      client.loadAssets(), client.createAsset(payload), client.updateAsset(1, payload), client.deleteAsset(1),
+      client.loadAssetCategories(), client.loadAssetCategoryTree(), client.createAssetCategory(payload),
+      client.updateAssetCategory(1, payload), client.deleteAssetCategory(1),
+      client.validateAssetCategoryImport([]), client.commitAssetCategoryImport({ rows: [] } as any),
+      client.loadDepreciation(1), client.disposeAsset(1, payload),
+      client.loadSubscriptions(), client.createSubscription(payload), client.updateSubscription(1, payload),
+      client.deleteSubscription(1), client.loadPurchaseRequests(), client.createPurchaseRequest(payload),
+      client.updatePurchaseRequest(1, payload), client.updatePurchaseRequestStatus(1, "APPROVED"),
+      client.deletePurchaseRequest(1), client.loadContracts(), client.createContract(payload),
+      client.updateContract(1, payload), client.updateContractStatus(1, "ACTIVE"), client.deleteContract(1),
+      client.loadMaintenanceRecords(), client.createMaintenanceRecord(payload),
+      client.updateMaintenanceRecord(1, payload), client.deleteMaintenanceRecord(1),
+      client.loadWarrantyExpiring(), client.loadWarrantyExpiring(7), client.loadTransfers(),
+      client.createTransfer(payload), client.deleteTransfer(1), client.loadAssetBookings(),
+      client.loadAssetBookings({ assetId: 1, status: "CONFIRMED" }),
+      client.checkAssetBookingAvailability({ assetId: 1, startTime: "a", endTime: "b" }),
+      client.createAssetBooking(payload), client.checkInAssetBooking(1),
+      client.checkOutAssetBooking(1, payload), client.cancelAssetBooking(1, payload),
+      client.loadEmployees(), client.loadDepartments(), client.loadWorkSites(), client.loadProjects(),
+    ]);
+
+    expect(mocks.api.get).toHaveBeenCalledWith("/asset/maintenance/warranty-expiring", {
+      params: { days: 30 },
+    });
+    expect(mocks.api.post).toHaveBeenCalledWith("/asset/bookings/1/check-in");
+    expect(mocks.api.get).toHaveBeenCalledWith("/asset/bookings/availability", {
+      params: { assetId: 1, startTime: "a", endTime: "b" },
+    });
+  });
 });

@@ -319,6 +319,7 @@ describe("QLVT asset and booking workflow coverage", () => {
     await user.click(screen.getByRole("button", { name: "Cấu hình cột" }));
     expect(screen.getByRole("dialog", { name: "Cấu hình cột" })).toBeVisible();
     fireEvent.click(screen.getByLabelText("Serial/MAC"));
+    await user.click(screen.getByRole("button", { name: /Mặc định/i }));
     await user.click(screen.getByRole("button", { name: /Áp dụng/i }));
 
     await user.click(screen.getByRole("button", { name: "Mở thao tác cho TS-001" }));
@@ -355,6 +356,101 @@ describe("QLVT asset and booking workflow coverage", () => {
         expect.objectContaining({ status: "MAINTENANCE" }),
       ),
     );
+  });
+
+  it("moves, assigns, returns, and deletes selected assets", async () => {
+    const user = userEvent.setup();
+    render(<AssetsPage />);
+    await screen.findByRole("heading", { name: "Danh sách tài sản" });
+    await user.click(screen.getByRole("button", { name: "Chọn nhiều" }));
+
+    const selectAsset = () =>
+      fireEvent.click(screen.getByTitle("Chọn TS-001").querySelector("input") as HTMLInputElement);
+    const actionSelect = () =>
+      screen.getAllByLabelText(/Thao tác/i).find((element) => element.tagName === "SELECT") as HTMLSelectElement;
+
+    selectAsset();
+    fireEvent.change(actionSelect(), { target: { value: "move" } });
+    fireEvent.change(screen.getByLabelText("Chi nhánh mới"), { target: { value: "1" } });
+    fireEvent.change(screen.getByLabelText("Phòng ban mới"), { target: { value: "2" } });
+    fireEvent.change(screen.getByLabelText("Người giữ mới"), { target: { value: "2" } });
+    await user.click(screen.getByRole("button", { name: "Lưu vị trí" }));
+    await waitFor(() => expect(mocks.updateAsset).toHaveBeenCalledTimes(1));
+
+    selectAsset();
+    fireEvent.change(actionSelect(), { target: { value: "assign" } });
+    fireEvent.change(screen.getByLabelText("Nhân sự nhận"), { target: { value: "2" } });
+    await user.click(screen.getByRole("button", { name: "Cấp phát" }));
+    await waitFor(() => expect(mocks.updateAsset).toHaveBeenCalledTimes(2));
+
+    selectAsset();
+    fireEvent.change(actionSelect(), { target: { value: "return" } });
+    await user.click(screen.getByRole("button", { name: "Xác nhận thu hồi" }));
+    await waitFor(() => expect(mocks.updateAsset).toHaveBeenCalledTimes(3));
+
+    selectAsset();
+    const workspace = screen.getByText("1 tài sản đã chọn").closest(".asset-selection-workspace");
+    await user.click(within(workspace as HTMLElement).getByRole("button", { name: "Xóa" }));
+    await waitFor(() => expect(mocks.deleteAsset).toHaveBeenCalledWith(1));
+  });
+
+  it("validates bulk actions and reports update and delete failures", async () => {
+    const user = userEvent.setup();
+    mocks.updateAsset.mockRejectedValueOnce(new Error("update failed"));
+    mocks.deleteAsset.mockRejectedValueOnce(new Error("delete failed"));
+    render(<AssetsPage />);
+    await screen.findByRole("heading", { name: "Danh sách tài sản" });
+    await user.click(screen.getByRole("button", { name: "Chọn nhiều" }));
+    fireEvent.click(screen.getByTitle("Chọn TS-001").querySelector("input") as HTMLInputElement);
+
+    const actionSelect = screen
+      .getAllByLabelText(/Thao tác/i)
+      .find((element) => element.tagName === "SELECT") as HTMLSelectElement;
+    fireEvent.change(actionSelect, { target: { value: "move" } });
+    await user.click(screen.getByRole("button", { name: "Lưu vị trí" }));
+    expect(mocks.toastError).toHaveBeenCalledWith(
+      "Chọn ít nhất một thông tin vị trí hoặc người giữ cần cập nhật.",
+    );
+
+    fireEvent.change(actionSelect, { target: { value: "assign" } });
+    await user.click(screen.getByRole("button", { name: "Cấp phát" }));
+    expect(mocks.toastError).toHaveBeenCalledWith(
+      "Chọn nhân sự nhận tài sản trước khi cấp phát.",
+    );
+
+    fireEvent.change(actionSelect, { target: { value: "status" } });
+    await user.click(screen.getByRole("button", { name: "Lưu trạng thái" }));
+    await waitFor(() =>
+      expect(mocks.toastError).toHaveBeenCalledWith("Không cập nhật được 1 tài sản đã chọn."),
+    );
+
+    await user.click(screen.getByRole("button", { name: "Xóa" }));
+    await waitFor(() =>
+      expect(mocks.toastError).toHaveBeenCalledWith("Không xóa được một số tài sản đã chọn."),
+    );
+  });
+
+  it("opens asset QR and resets active filters", async () => {
+    const user = userEvent.setup();
+    render(<AssetsPage />);
+    await screen.findByRole("heading", { name: "Danh sách tài sản" });
+
+    await user.click(screen.getByRole("button", { name: "Mở thao tác cho TS-001" }));
+    await user.click(await screen.findByRole("menuitem", { name: "Xem QR" }));
+    expect(await screen.findByRole("heading", { name: "Mã QR tài sản" })).toBeVisible();
+    expect(screen.getByText("Updated soon.")).toBeVisible();
+    await user.click(screen.getByRole("button", { name: "Đóng" }));
+
+    await user.type(
+      screen.getByPlaceholderText("Tìm theo mã, tên, serial, nhà cung cấp..."),
+      "Dell",
+    );
+    fireEvent.change(screen.getByLabelText(/Trạng thái/i), { target: { value: "ASSIGNED" } });
+    fireEvent.change(screen.getByLabelText(/Giá trị/i), { target: { value: "FROM_10M_TO_50M" } });
+    await user.click(screen.getByRole("button", { name: "Tất cả", exact: true }));
+    expect(screen.getByPlaceholderText("Tìm theo mã, tên, serial, nhà cung cấp...")).toHaveValue("");
+    expect(screen.getByLabelText(/Trạng thái/i)).toHaveValue("ALL");
+    expect(screen.getByLabelText(/Giá trị/i)).toHaveValue("ALL");
   });
 
   it("renders booking form, calendar, detail modal, and check-in action", async () => {
@@ -411,5 +507,123 @@ describe("QLVT asset and booking workflow coverage", () => {
     expect(await screen.findByRole("heading", { name: "Xác nhận nhận phòng" })).toBeVisible();
     await user.click(screen.getByRole("button", { name: "Xác nhận" }));
     await waitFor(() => expect(mocks.checkInAssetBooking).toHaveBeenCalledWith(1));
+  });
+
+  it("checks out, cancels, filters, and configures booking columns", async () => {
+    const user = userEvent.setup();
+    render(<BookingPage />);
+    await screen.findByText("Workshop team");
+
+    fireEvent.change(screen.getAllByLabelText(/Trạng thái/i).at(-1) as HTMLSelectElement, {
+      target: { value: "IN_USE" },
+    });
+    fireEvent.change(screen.getByLabelText(/Từ thời điểm/i), {
+      target: { value: "2026-07-20T00:00" },
+    });
+    fireEvent.change(screen.getByLabelText(/Đến thời điểm/i), {
+      target: { value: "2026-07-21T00:00" },
+    });
+
+    await user.click(screen.getByRole("button", { name: "Cấu hình cột" }));
+    expect(screen.getByRole("menu")).toBeVisible();
+    await user.click(screen.getByRole("button", { name: /Mặc định/i }));
+    await user.click(screen.getByRole("button", { name: /Áp dụng/i }));
+
+    await user.click(screen.getByRole("button", { name: "Mở thao tác cho BK-002" }));
+    await user.click(await screen.findByRole("menuitem", { name: "Trả phòng" }));
+    await user.click(screen.getByRole("button", { name: "Xác nhận" }));
+    await waitFor(() => expect(mocks.checkOutAssetBooking).toHaveBeenCalledWith(2, expect.anything()));
+
+    fireEvent.change(screen.getAllByLabelText(/Trạng thái/i).at(-1) as HTMLSelectElement, {
+      target: { value: "" },
+    });
+    await user.click(screen.getByRole("button", { name: "Mở thao tác cho BK-001" }));
+    await user.click(await screen.findByRole("menuitem", { name: "Hủy lịch" }));
+    await user.type(screen.getByLabelText("Lý do hủy"), "Đổi lịch họp");
+    await user.click(screen.getByRole("button", { name: "Xác nhận" }));
+    await waitFor(() =>
+      expect(mocks.cancelAssetBooking).toHaveBeenCalledWith(1, expect.objectContaining({
+        cancelReason: "Đổi lịch họp",
+      })),
+    );
+  });
+
+  it("parses, validates, imports, and exports an asset workbook", async () => {
+    const user = userEvent.setup();
+    const XLSX = await import("xlsx");
+    const keys = [
+      "assets.asset_code", "assets.name", "assets.asset_class", "fixed_asset_type",
+      "asset_categories.code", "assets.department_id", "assets.site_id", "catalog_item_code",
+      "depreciation_method", "series_mac_number", "depreciation_start_date", "use_date",
+      "useful_life_months", "original_cost", "book_value", "status", "country_code",
+      "manufacture_year", "installation_year", "technical_description",
+    ];
+    const worksheet = XLSX.utils.aoa_to_sheet([
+      keys,
+      keys.map(() => "Mô tả"),
+      [
+        "TS-NEW", "Máy trạm BIM", "Tài sản cố định", "TANGIBLE", "LAP (Laptop)",
+        "BIM", "Văn phòng HCM", "CAT-1", "STRAIGHT_LINE", "SN-NEW",
+        new Date("2026-07-01"), new Date("2026-07-02"), 60, 40_000_000, 35_000_000,
+        "Trong kho", "VN", 2026, 2026, "Máy dựng hình",
+      ],
+    ]);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "HoSoTaiSan_Import");
+    const bytes = XLSX.write(workbook, { type: "array", bookType: "xlsx" });
+    const validation = {
+      uploadStatus: "VALID",
+      totalRows: 1,
+      validRows: 1,
+      errorRows: 0,
+      warningRows: 0,
+      rows: [
+        {
+          rowNumber: 3,
+          status: "VALID",
+          assetCode: "TS-NEW",
+          name: "Máy trạm BIM",
+          categoryCode: "LAP",
+          action: "CREATE",
+          errors: [],
+          warnings: [{ field: "serialNumber", code: "CHECK", message: "Kiểm tra serial" }],
+        },
+      ],
+    };
+    mocks.validateAssetImport.mockResolvedValueOnce(validation);
+    mocks.commitAssetImport.mockResolvedValueOnce(validation);
+    Object.defineProperty(URL, "createObjectURL", { configurable: true, value: vi.fn(() => "blob:result") });
+    Object.defineProperty(URL, "revokeObjectURL", { configurable: true, value: vi.fn() });
+    vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined);
+    render(<AssetsPage />);
+    await screen.findByRole("heading", { name: "Danh sách tài sản" });
+
+    await user.click(screen.getByRole("button", { name: /Tải mẫu Excel/i }));
+    await waitFor(() => expect(URL.createObjectURL).toHaveBeenCalled());
+
+    await user.click(screen.getByRole("button", { name: /Tải lên file Excel/i }));
+    const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+    await user.upload(input, new File([bytes], "assets.xlsx"));
+    expect(await screen.findByText("Máy trạm BIM")).toBeVisible();
+    await user.click(screen.getByRole("button", { name: "Kiểm tra dữ liệu" }));
+    await waitFor(() => expect(mocks.validateAssetImport).toHaveBeenCalled());
+    await user.click(screen.getByRole("button", { name: "Import" }));
+    await waitFor(() => expect(mocks.commitAssetImport).toHaveBeenCalled());
+    await user.click(screen.getByRole("button", { name: /Tải kết quả/i }));
+
+    const warningSummary = screen.getByText(/Kiểm tra serial/i);
+    fireEvent.mouseEnter(warningSummary);
+    expect(document.querySelector(".asset-import-floating-tooltip")).toHaveTextContent(
+      "- Kiểm tra serial",
+    );
+    fireEvent.mouseLeave(warningSummary);
+
+    await user.click(screen.getByRole("button", { name: "Hủy" }));
+    expect(screen.getByText("Hủy phiên nhập tài sản?")).toBeVisible();
+    await user.click(screen.getByRole("button", { name: "Tiếp tục nhập" }));
+    expect(screen.queryByText("Hủy phiên nhập tài sản?")).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Hủy" }));
+    await user.click(screen.getByRole("button", { name: "Hủy phiên nhập" }));
+    expect(screen.queryByRole("heading", { name: "Tải danh sách tài sản" })).not.toBeInTheDocument();
   });
 });

@@ -4,6 +4,20 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import App from "../App";
 import * as api from "../services/api";
 
+const categoryExcelMocks = vi.hoisted(() => ({
+  download: vi.fn().mockResolvedValue(undefined),
+  parse: vi.fn().mockResolvedValue([
+    { rowNumber: 2, group: "Danh mục", code: "TB", name: "Thiết bị", parentCode: "" },
+    { rowNumber: 3, group: "Danh mục", code: "MON", name: "Màn hình", parentCode: "TB" },
+  ]),
+}));
+
+vi.mock("../lib/categoryExcel", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../lib/categoryExcel")>()),
+  downloadCategoryImportTemplate: categoryExcelMocks.download,
+  parseCategoryReferenceSheet: categoryExcelMocks.parse,
+}));
+
 const { asset, categories, categoryTree, employee, permissions, vendor } = vi.hoisted(() => {
   const permissions = [
     "asset_access",
@@ -217,6 +231,8 @@ vi.mock("../services/api", () => ({
   createAssetCategory: vi.fn().mockResolvedValue(categories[0]),
   updateAssetCategory: vi.fn().mockResolvedValue(categories[0]),
   deleteAssetCategory: vi.fn().mockResolvedValue(undefined),
+  validateAssetCategoryImport: vi.fn().mockResolvedValue({ rows: [] }),
+  commitAssetCategoryImport: vi.fn().mockResolvedValue({ rows: [] }),
   loadDepreciation: vi.fn().mockResolvedValue({
     assetId: 1,
     method: "STRAIGHT_LINE",
@@ -331,5 +347,86 @@ describe("QLVT pages", () => {
         }),
       ),
     );
+  });
+
+  it("manages category hierarchy and completes an import", async () => {
+    const user = userEvent.setup();
+    vi.mocked(api.validateAssetCategoryImport).mockResolvedValueOnce({
+      uploadStatus: "VALID",
+      totalRows: 2,
+      validRows: 2,
+      errorRows: 0,
+      warningRows: 1,
+      rows: [
+        {
+          rowNumber: 2,
+          status: "VALID",
+          code: "TB",
+          name: "Thiết bị",
+          parentCode: "",
+          action: "UPDATE",
+          errors: [],
+          warnings: [],
+        },
+        {
+          rowNumber: 3,
+          status: "VALID",
+          code: "MON",
+          name: "Màn hình",
+          parentCode: "TB",
+          action: "CREATE",
+          errors: [],
+          warnings: [{ field: "code", code: "CHECK", message: "Kiểm tra mã" }],
+        },
+      ],
+    } as any);
+    vi.mocked(api.commitAssetCategoryImport).mockResolvedValueOnce({
+      uploadStatus: "SUCCESS",
+      importedRows: 1,
+      updatedRows: 0,
+      skippedRows: 0,
+      errorRows: 0,
+      rows: [],
+    } as any);
+    await renderRoute("/asset-categories", "Thiết bị");
+
+    await user.type(screen.getByLabelText("Tìm danh mục"), "Laptop");
+    await user.click(screen.getByRole("button", { name: "Xóa nội dung tìm kiếm" }));
+    fireEvent.change(screen.getByLabelText("Loại danh mục"), { target: { value: "FIXED_ASSET" } });
+    fireEvent.change(screen.getByLabelText("Trạng thái"), { target: { value: "ACTIVE" } });
+
+    await user.clear(screen.getByLabelText("Tên danh mục"));
+    await user.type(screen.getByLabelText("Tên danh mục"), "Màn hình");
+    await user.type(screen.getByLabelText("Mã danh mục"), "MON");
+    await user.type(screen.getByLabelText("Mô tả"), "Màn hình văn phòng");
+    await user.click(screen.getByRole("button", { name: "Tạo danh mục" }));
+    await waitFor(() => expect(api.createAssetCategory).toHaveBeenCalled());
+
+    await user.click(screen.getAllByTitle("Thêm danh mục con")[0]);
+    expect(screen.getByText("Tạo danh mục con của")).toBeVisible();
+    await user.type(screen.getByLabelText("Tên danh mục"), "Máy trạm");
+    await user.type(screen.getByLabelText("Mã danh mục"), "WS");
+
+    await user.click(screen.getAllByTitle("Xóa")[0]);
+    await waitFor(() => expect(api.deleteAssetCategory).toHaveBeenCalled());
+
+    await user.click(screen.getByRole("button", { name: /Tải danh mục/i }));
+    await waitFor(() => expect(categoryExcelMocks.download).toHaveBeenCalled());
+
+    await user.click(screen.getByRole("button", { name: /Import danh mục/i }));
+    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+    await user.upload(fileInput, new File(["xlsx"], "categories.xlsx"));
+    await waitFor(() => expect(categoryExcelMocks.parse).toHaveBeenCalled());
+    await user.click(screen.getByRole("button", { name: "Kiểm tra dữ liệu" }));
+    await waitFor(() => expect(api.validateAssetCategoryImport).toHaveBeenCalled());
+    await user.click(screen.getByRole("button", { name: /Cảnh báo/i }));
+    await user.click(screen.getByRole("button", { name: /Lỗi/i }));
+    await user.click(screen.getByRole("button", { name: /Hợp lệ/i }));
+    await user.click(screen.getByRole("button", { name: /Tất cả/i }));
+    await user.click(screen.getByRole("button", { name: "Phân cấp cha con" }));
+    await user.click(screen.getAllByRole("button", { name: /Thiết bị/ }).at(-1) as HTMLElement);
+    await user.click(screen.getByRole("button", { name: "Danh sách dòng" }));
+    await user.click(screen.getByRole("button", { name: "Xác nhận nhập" }));
+    await waitFor(() => expect(api.commitAssetCategoryImport).toHaveBeenCalled());
   });
 });
