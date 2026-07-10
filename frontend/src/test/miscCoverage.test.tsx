@@ -17,7 +17,11 @@ describe("misc UI coverage", () => {
 
   it("searches and navigates help tree", async () => {
     const user = userEvent.setup();
-    render(<MemoryRouter><HelpPage /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <HelpPage />
+      </MemoryRouter>,
+    );
     await user.click(screen.getByRole("button", { name: "Tài sản" }));
     await user.click(screen.getAllByRole("button", { name: "Import Excel danh sách tài sản" })[0]);
     expect(screen.getByRole("heading", { name: "Import Excel danh sách tài sản" })).toBeVisible();

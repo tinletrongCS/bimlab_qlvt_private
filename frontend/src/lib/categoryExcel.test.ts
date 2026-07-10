@@ -1,8 +1,8 @@
 import { Workbook } from "exceljs";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
-  CATEGORY_REFERENCE_SHEET_NAME,
   addCategoryReferenceSheet,
+  CATEGORY_REFERENCE_SHEET_NAME,
   downloadCategoryImportTemplate,
   emptyCategoryImportResult,
   parseCategoryReferenceSheet,
@@ -94,7 +94,9 @@ describe("category Excel", () => {
     const revokeObjectURL = vi.fn();
     Object.defineProperty(URL, "createObjectURL", { configurable: true, value: createObjectURL });
     Object.defineProperty(URL, "revokeObjectURL", { configurable: true, value: revokeObjectURL });
-    const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined);
+    const click = vi
+      .spyOn(HTMLAnchorElement.prototype, "click")
+      .mockImplementation(() => undefined);
 
     await downloadCategoryImportTemplate(categories);
 

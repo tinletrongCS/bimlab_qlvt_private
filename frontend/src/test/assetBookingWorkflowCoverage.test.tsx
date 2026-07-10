@@ -367,7 +367,9 @@ describe("QLVT asset and booking workflow coverage", () => {
     const selectAsset = () =>
       fireEvent.click(screen.getByTitle("Chọn TS-001").querySelector("input") as HTMLInputElement);
     const actionSelect = () =>
-      screen.getAllByLabelText(/Thao tác/i).find((element) => element.tagName === "SELECT") as HTMLSelectElement;
+      screen
+        .getAllByLabelText(/Thao tác/i)
+        .find((element) => element.tagName === "SELECT") as HTMLSelectElement;
 
     selectAsset();
     fireEvent.change(actionSelect(), { target: { value: "move" } });
@@ -414,9 +416,7 @@ describe("QLVT asset and booking workflow coverage", () => {
 
     fireEvent.change(actionSelect, { target: { value: "assign" } });
     await user.click(screen.getByRole("button", { name: "Cấp phát" }));
-    expect(mocks.toastError).toHaveBeenCalledWith(
-      "Chọn nhân sự nhận tài sản trước khi cấp phát.",
-    );
+    expect(mocks.toastError).toHaveBeenCalledWith("Chọn nhân sự nhận tài sản trước khi cấp phát.");
 
     fireEvent.change(actionSelect, { target: { value: "status" } });
     await user.click(screen.getByRole("button", { name: "Lưu trạng thái" }));
@@ -447,8 +447,10 @@ describe("QLVT asset and booking workflow coverage", () => {
     );
     fireEvent.change(screen.getByLabelText(/Trạng thái/i), { target: { value: "ASSIGNED" } });
     fireEvent.change(screen.getByLabelText(/Giá trị/i), { target: { value: "FROM_10M_TO_50M" } });
-    await user.click(screen.getByRole("button", { name: "Tất cả", exact: true }));
-    expect(screen.getByPlaceholderText("Tìm theo mã, tên, serial, nhà cung cấp...")).toHaveValue("");
+    await user.click(screen.getByRole("button", { name: "Tất cả" }));
+    expect(screen.getByPlaceholderText("Tìm theo mã, tên, serial, nhà cung cấp...")).toHaveValue(
+      "",
+    );
     expect(screen.getByLabelText(/Trạng thái/i)).toHaveValue("ALL");
     expect(screen.getByLabelText(/Giá trị/i)).toHaveValue("ALL");
   });
@@ -532,7 +534,9 @@ describe("QLVT asset and booking workflow coverage", () => {
     await user.click(screen.getByRole("button", { name: "Mở thao tác cho BK-002" }));
     await user.click(await screen.findByRole("menuitem", { name: "Trả phòng" }));
     await user.click(screen.getByRole("button", { name: "Xác nhận" }));
-    await waitFor(() => expect(mocks.checkOutAssetBooking).toHaveBeenCalledWith(2, expect.anything()));
+    await waitFor(() =>
+      expect(mocks.checkOutAssetBooking).toHaveBeenCalledWith(2, expect.anything()),
+    );
 
     fireEvent.change(screen.getAllByLabelText(/Trạng thái/i).at(-1) as HTMLSelectElement, {
       target: { value: "" },
@@ -542,9 +546,12 @@ describe("QLVT asset and booking workflow coverage", () => {
     await user.type(screen.getByLabelText("Lý do hủy"), "Đổi lịch họp");
     await user.click(screen.getByRole("button", { name: "Xác nhận" }));
     await waitFor(() =>
-      expect(mocks.cancelAssetBooking).toHaveBeenCalledWith(1, expect.objectContaining({
-        cancelReason: "Đổi lịch họp",
-      })),
+      expect(mocks.cancelAssetBooking).toHaveBeenCalledWith(
+        1,
+        expect.objectContaining({
+          cancelReason: "Đổi lịch họp",
+        }),
+      ),
     );
   });
 
@@ -552,20 +559,51 @@ describe("QLVT asset and booking workflow coverage", () => {
     const user = userEvent.setup();
     const XLSX = await import("xlsx");
     const keys = [
-      "assets.asset_code", "assets.name", "assets.asset_class", "fixed_asset_type",
-      "asset_categories.code", "assets.department_id", "assets.site_id", "catalog_item_code",
-      "depreciation_method", "series_mac_number", "depreciation_start_date", "use_date",
-      "useful_life_months", "original_cost", "book_value", "status", "country_code",
-      "manufacture_year", "installation_year", "technical_description",
+      "assets.asset_code",
+      "assets.name",
+      "assets.asset_class",
+      "fixed_asset_type",
+      "asset_categories.code",
+      "assets.department_id",
+      "assets.site_id",
+      "catalog_item_code",
+      "depreciation_method",
+      "series_mac_number",
+      "depreciation_start_date",
+      "use_date",
+      "useful_life_months",
+      "original_cost",
+      "book_value",
+      "status",
+      "country_code",
+      "manufacture_year",
+      "installation_year",
+      "technical_description",
     ];
     const worksheet = XLSX.utils.aoa_to_sheet([
       keys,
       keys.map(() => "Mô tả"),
       [
-        "TS-NEW", "Máy trạm BIM", "Tài sản cố định", "TANGIBLE", "LAP (Laptop)",
-        "BIM", "Văn phòng HCM", "CAT-1", "STRAIGHT_LINE", "SN-NEW",
-        new Date("2026-07-01"), new Date("2026-07-02"), 60, 40_000_000, 35_000_000,
-        "Trong kho", "VN", 2026, 2026, "Máy dựng hình",
+        "TS-NEW",
+        "Máy trạm BIM",
+        "Tài sản cố định",
+        "TANGIBLE",
+        "LAP (Laptop)",
+        "BIM",
+        "Văn phòng HCM",
+        "CAT-1",
+        "STRAIGHT_LINE",
+        "SN-NEW",
+        new Date("2026-07-01"),
+        new Date("2026-07-02"),
+        60,
+        40_000_000,
+        35_000_000,
+        "Trong kho",
+        "VN",
+        2026,
+        2026,
+        "Máy dựng hình",
       ],
     ]);
     const workbook = XLSX.utils.book_new();
@@ -592,7 +630,10 @@ describe("QLVT asset and booking workflow coverage", () => {
     };
     mocks.validateAssetImport.mockResolvedValueOnce(validation);
     mocks.commitAssetImport.mockResolvedValueOnce(validation);
-    Object.defineProperty(URL, "createObjectURL", { configurable: true, value: vi.fn(() => "blob:result") });
+    Object.defineProperty(URL, "createObjectURL", {
+      configurable: true,
+      value: vi.fn(() => "blob:result"),
+    });
     Object.defineProperty(URL, "revokeObjectURL", { configurable: true, value: vi.fn() });
     vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined);
     render(<AssetsPage />);
@@ -624,6 +665,8 @@ describe("QLVT asset and booking workflow coverage", () => {
     expect(screen.queryByText("Hủy phiên nhập tài sản?")).not.toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Hủy" }));
     await user.click(screen.getByRole("button", { name: "Hủy phiên nhập" }));
-    expect(screen.queryByRole("heading", { name: "Tải danh sách tài sản" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: "Tải danh sách tài sản" }),
+    ).not.toBeInTheDocument();
   });
 });

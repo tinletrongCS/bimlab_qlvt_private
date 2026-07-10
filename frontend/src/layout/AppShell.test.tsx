@@ -21,9 +21,18 @@ vi.mock("../contexts/AuthContext", () => ({
 }));
 vi.mock("../contexts/AppDataContext", () => ({
   useAppData: () => ({
-    loading: state.loading, error: state.error, refresh: state.refresh,
-    vendors: [], employees: [], departments: [], workSites: [], projects: [], assets: [],
-    ensureLookups: vi.fn(), ensureAssets: vi.fn(), ensureVendors: vi.fn(),
+    loading: state.loading,
+    error: state.error,
+    refresh: state.refresh,
+    vendors: [],
+    employees: [],
+    departments: [],
+    workSites: [],
+    projects: [],
+    assets: [],
+    ensureLookups: vi.fn(),
+    ensureAssets: vi.fn(),
+    ensureVendors: vi.fn(),
   }),
 }));
 vi.mock("../contexts/ActionsContext", () => ({

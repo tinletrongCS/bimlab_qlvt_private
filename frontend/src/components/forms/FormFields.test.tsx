@@ -8,8 +8,8 @@ import {
   num,
   ProjectSelect,
   Select,
-  val,
   VendorSelect,
+  val,
   WorkSiteSelect,
 } from "./FormFields";
 
@@ -29,7 +29,15 @@ describe("FormFields", () => {
     const onChange = vi.fn();
     render(
       <>
-        <Select label="Status" value="A" onChange={onChange} options={[["A", "Active"], ["I", "Inactive"]]} />
+        <Select
+          label="Status"
+          value="A"
+          onChange={onChange}
+          options={[
+            ["A", "Active"],
+            ["I", "Inactive"],
+          ]}
+        />
         <VendorSelect vendors={[{ id: 1, name: "Vendor" } as any]} onChange={onChange} />
         <EmployeeSelect employees={[{ id: 2, fullName: "Alice" } as any]} onChange={onChange} />
         <DepartmentSelect departments={[{ id: 3, name: "BIM" }]} onChange={onChange} />
@@ -38,11 +46,16 @@ describe("FormFields", () => {
       </>,
     );
     for (const select of screen.getAllByRole("combobox")) {
-      if (select.querySelector('option[value="1"]')) fireEvent.change(select, { target: { value: "1" } });
-      else if (select.querySelector('option[value="2"]')) fireEvent.change(select, { target: { value: "2" } });
-      else if (select.querySelector('option[value="3"]')) fireEvent.change(select, { target: { value: "3" } });
-      else if (select.querySelector('option[value="4"]')) fireEvent.change(select, { target: { value: "4" } });
-      else if (select.querySelector('option[value="5"]')) fireEvent.change(select, { target: { value: "5" } });
+      if (select.querySelector('option[value="1"]'))
+        fireEvent.change(select, { target: { value: "1" } });
+      else if (select.querySelector('option[value="2"]'))
+        fireEvent.change(select, { target: { value: "2" } });
+      else if (select.querySelector('option[value="3"]'))
+        fireEvent.change(select, { target: { value: "3" } });
+      else if (select.querySelector('option[value="4"]'))
+        fireEvent.change(select, { target: { value: "4" } });
+      else if (select.querySelector('option[value="5"]'))
+        fireEvent.change(select, { target: { value: "5" } });
       else fireEvent.change(select, { target: { value: "I" } });
     }
     expect(onChange).toHaveBeenCalledTimes(6);
