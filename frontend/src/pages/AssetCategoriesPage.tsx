@@ -950,19 +950,19 @@ export function AssetCategoriesPage() {
                 <div style={{ position: "relative" }}>
                   <div className="category-org-viewport">
                     <div className="category-org-forest">
-                    {filteredTree.map((node) => (
-                      <CategoryNode
-                        key={node.id}
-                        node={node}
-                        expandedIds={expandedTreeIds}
-                        selectedId={selectedCategoryId ?? undefined}
-                        onToggle={toggleTreeNode}
-                        onEdit={startEdit}
-                        onDelete={remove}
-                        onCreateChild={startCreateChild}
-                        searchQuery={categorySearch}
-                      />
-                    ))}
+                      {filteredTree.map((node) => (
+                        <CategoryNode
+                          key={node.id}
+                          node={node}
+                          expandedIds={expandedTreeIds}
+                          selectedId={selectedCategoryId ?? undefined}
+                          onToggle={toggleTreeNode}
+                          onEdit={startEdit}
+                          onDelete={remove}
+                          onCreateChild={startCreateChild}
+                          searchQuery={categorySearch}
+                        />
+                      ))}
                     </div>
                   </div>
                   <button
@@ -1507,4 +1507,3 @@ function MaximizedTreeModal({
     </div>
   );
 }
-

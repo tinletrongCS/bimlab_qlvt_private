@@ -13649,7 +13649,6 @@ button {
   width: 2px !important;
 }
 
-
 #root .sidebar {
   background: #1e293b !important;
   border-right: 1px solid #0f172a !important;
@@ -13660,11 +13659,9 @@ button {
   background: rgba(255, 255, 255, 0.05) !important;
 }
 
-
 #root .category-org-forest {
   gap: 20px !important;
 }
 #root .category-child-slot {
   padding-inline: 4px !important;
 }
-
