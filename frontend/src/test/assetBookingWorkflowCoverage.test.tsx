@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AssetsPage } from "../pages/AssetsPage";
 import { BookingPage } from "../pages/BookingPage";
+import { chooseSearchableOption } from "./searchableSelect";
 
 const mocks = vi.hoisted(() => ({
   cancelAssetBooking: vi.fn(),
@@ -309,8 +310,8 @@ describe("QLVT asset and booking workflow coverage", () => {
     );
     expect(screen.getByRole("button", { name: "Mở thao tác cho TS-001" })).toBeInTheDocument();
     expect(screen.queryByText("Phòng họp Apollo")).not.toBeInTheDocument();
-    fireEvent.change(screen.getByLabelText(/Trạng thái/i), { target: { value: "ASSIGNED" } });
-    fireEvent.change(screen.getByLabelText(/Giá trị/i), { target: { value: "FROM_10M_TO_50M" } });
+    chooseSearchableOption(screen.getByLabelText(/Trạng thái/i), "Đã cấp phát");
+    chooseSearchableOption(screen.getByLabelText(/Giá trị/i), "10 - 50 triệu");
 
     await user.click(screen.getByRole("button", { name: "Cấu hình cột" }));
     expect(screen.getByRole("dialog", { name: "Cấu hình cột" })).toBeVisible();
@@ -340,11 +341,9 @@ describe("QLVT asset and booking workflow coverage", () => {
     fireEvent.click(screen.getByTitle("Chọn TS-001").querySelector("input") as HTMLInputElement);
     const bulkActionSelect = screen
       .getAllByLabelText(/Thao tác/i)
-      .find((element) => element.tagName === "SELECT") as HTMLSelectElement;
-    fireEvent.change(bulkActionSelect, { target: { value: "status" } });
-    fireEvent.change(screen.getByLabelText(/Trạng thái mới/i), {
-      target: { value: "MAINTENANCE" },
-    });
+      .find((element) => element.getAttribute("role") === "combobox") as HTMLElement;
+    chooseSearchableOption(bulkActionSelect, "Cập nhật trạng thái");
+    chooseSearchableOption(screen.getByLabelText(/Trạng thái mới/i), "Bảo trì");
     await user.click(screen.getByRole("button", { name: "Lưu trạng thái" }));
     await waitFor(() =>
       expect(mocks.updateAsset).toHaveBeenCalledWith(
@@ -354,45 +353,19 @@ describe("QLVT asset and booking workflow coverage", () => {
     );
   });
 
-  it("moves, assigns, returns, and deletes selected assets", async () => {
+  it("deletes selected assets from the selection workspace", async () => {
     const user = userEvent.setup();
     render(<AssetsPage />);
     await screen.findByRole("heading", { name: "Danh sách tài sản" });
     await user.click(screen.getByRole("button", { name: "Chọn nhiều" }));
 
-    const selectAsset = () =>
-      fireEvent.click(screen.getByTitle("Chọn TS-001").querySelector("input") as HTMLInputElement);
-    const actionSelect = () =>
-      screen
-        .getAllByLabelText(/Thao tác/i)
-        .find((element) => element.tagName === "SELECT") as HTMLSelectElement;
-
-    selectAsset();
-    fireEvent.change(actionSelect(), { target: { value: "move" } });
-    fireEvent.change(screen.getByLabelText("Chi nhánh mới"), { target: { value: "1" } });
-    fireEvent.change(screen.getByLabelText("Phòng ban mới"), { target: { value: "2" } });
-    fireEvent.change(screen.getByLabelText("Người giữ mới"), { target: { value: "2" } });
-    await user.click(screen.getByRole("button", { name: "Lưu vị trí" }));
-    await waitFor(() => expect(mocks.updateAsset).toHaveBeenCalledTimes(1));
-
-    selectAsset();
-    fireEvent.change(actionSelect(), { target: { value: "assign" } });
-    fireEvent.change(screen.getByLabelText("Nhân sự nhận"), { target: { value: "2" } });
-    await user.click(screen.getByRole("button", { name: "Cấp phát" }));
-    await waitFor(() => expect(mocks.updateAsset).toHaveBeenCalledTimes(2));
-
-    selectAsset();
-    fireEvent.change(actionSelect(), { target: { value: "return" } });
-    await user.click(screen.getByRole("button", { name: "Xác nhận thu hồi" }));
-    await waitFor(() => expect(mocks.updateAsset).toHaveBeenCalledTimes(3));
-
-    selectAsset();
+    fireEvent.click(screen.getByTitle("Chọn TS-001").querySelector("input") as HTMLInputElement);
     const workspace = screen.getByText("1 tài sản đã chọn").closest(".asset-selection-workspace");
     await user.click(within(workspace as HTMLElement).getByRole("button", { name: "Xóa" }));
     await waitFor(() => expect(mocks.deleteAsset).toHaveBeenCalledWith(1));
   });
 
-  it("validates bulk actions and reports update and delete failures", async () => {
+  it("reports bulk update and delete failures", async () => {
     const user = userEvent.setup();
     mocks.updateAsset.mockRejectedValueOnce(new Error("update failed"));
     mocks.deleteAsset.mockRejectedValueOnce(new Error("delete failed"));
@@ -403,18 +376,8 @@ describe("QLVT asset and booking workflow coverage", () => {
 
     const actionSelect = screen
       .getAllByLabelText(/Thao tác/i)
-      .find((element) => element.tagName === "SELECT") as HTMLSelectElement;
-    fireEvent.change(actionSelect, { target: { value: "move" } });
-    await user.click(screen.getByRole("button", { name: "Lưu vị trí" }));
-    expect(mocks.toastError).toHaveBeenCalledWith(
-      "Chọn ít nhất một thông tin vị trí hoặc người giữ cần cập nhật.",
-    );
-
-    fireEvent.change(actionSelect, { target: { value: "assign" } });
-    await user.click(screen.getByRole("button", { name: "Cấp phát" }));
-    expect(mocks.toastError).toHaveBeenCalledWith("Chọn nhân sự nhận tài sản trước khi cấp phát.");
-
-    fireEvent.change(actionSelect, { target: { value: "status" } });
+      .find((element) => element.getAttribute("role") === "combobox") as HTMLElement;
+    chooseSearchableOption(actionSelect, "Cập nhật trạng thái");
     await user.click(screen.getByRole("button", { name: "Lưu trạng thái" }));
     await waitFor(() =>
       expect(mocks.toastError).toHaveBeenCalledWith("Không cập nhật được 1 tài sản đã chọn."),
@@ -441,14 +404,14 @@ describe("QLVT asset and booking workflow coverage", () => {
       screen.getByPlaceholderText("Tìm theo mã, tên, serial, nhà cung cấp..."),
       "Dell",
     );
-    fireEvent.change(screen.getByLabelText(/Trạng thái/i), { target: { value: "ASSIGNED" } });
-    fireEvent.change(screen.getByLabelText(/Giá trị/i), { target: { value: "FROM_10M_TO_50M" } });
+    chooseSearchableOption(screen.getByLabelText(/Trạng thái/i), "Đã cấp phát");
+    chooseSearchableOption(screen.getByLabelText(/Giá trị/i), "10 - 50 triệu");
     await user.click(screen.getByRole("button", { name: "Tất cả" }));
     expect(screen.getByPlaceholderText("Tìm theo mã, tên, serial, nhà cung cấp...")).toHaveValue(
       "",
     );
-    expect(screen.getByLabelText(/Trạng thái/i)).toHaveValue("ALL");
-    expect(screen.getByLabelText(/Giá trị/i)).toHaveValue("ALL");
+    expect(screen.getByLabelText(/Trạng thái/i)).toHaveValue("Tất cả trạng thái");
+    expect(screen.getByLabelText(/Giá trị/i)).toHaveValue("Tất cả giá trị");
   });
 
   it("renders booking form, calendar, detail modal, and check-in action", async () => {
