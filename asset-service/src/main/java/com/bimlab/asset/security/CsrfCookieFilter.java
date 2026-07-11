@@ -10,7 +10,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 
 /**
- * F6: forces Spring Security to materialize the CSRF token early in the
+ * Forces Spring Security to materialize the CSRF token early in the
  * request lifecycle so the {@code XSRF-TOKEN} cookie is set on the
  * response. Without this, the cookie is only emitted lazily on requests
  * that explicitly access the token, which leaves the SPA without a

@@ -13,10 +13,6 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-/**
- * Q8: persistence-layer test using H2 in-memory. Confirms VendorRepository +
- * Vendor entity mapping round-trip cleanly (incl. Q5 enum mapping).
- */
 @DataJpaTest
 @ActiveProfiles("test")
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)

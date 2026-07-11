@@ -1,10 +1,5 @@
 package com.bimlab.asset.model.status;
 
-/**
- * Q5: helpers to parse user-supplied status strings into typed enums.
- * Throws {@link IllegalArgumentException} on null/blank/unknown — handled by
- * {@code GlobalExceptionHandler} as HTTP 400.
- */
 public final class StatusParser {
     private StatusParser() {}
 

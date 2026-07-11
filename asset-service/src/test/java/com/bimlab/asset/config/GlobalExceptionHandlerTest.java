@@ -11,12 +11,6 @@ import java.util.NoSuchElementException;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
-/**
- * F3: handlers must NOT echo raw e.getMessage() — previously these leaked
- * SQL/Hibernate internals + table names when downstream JPA exceptions wrapped
- * into IllegalStateException reached the controller. Now each handler returns
- * a static Vietnamese message; raw text is logged server-side only.
- */
 class GlobalExceptionHandlerTest {
 
     private final GlobalExceptionHandler handler = new GlobalExceptionHandler();

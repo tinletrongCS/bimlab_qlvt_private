@@ -17,18 +17,6 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 
-/**
- * Q2: Contract domain split from the original {@code AssetManagementService}.
- * Owns Contract CRUD + status transitions. Depends on:
- * <ul>
- *   <li>{@link VendorService} for vendor resolution in {@link #applyContract}</li>
- *   <li>{@link PurchaseRequestService} for PR resolution when a contract links
- *       to its source PR</li>
- * </ul>
- * Both dependencies are constructor-injected; the existing
- * {@code @Transactional} boundary on the calling method joins any propagated
- * transaction.
- */
 @Service
 @RequiredArgsConstructor
 public class ContractService {
@@ -72,7 +60,6 @@ public class ContractService {
                 && contracts.existsByContractNumber(req.contractNumber())) {
             throw new IllegalArgumentException("Số hợp đồng đã tồn tại: " + req.contractNumber());
         }
-        // Q7: capture old object key before mutation, delete in MinIO if replaced
         String oldKey = c.getAttachmentObjectKey();
         applyContract(c, req);
         Contract saved = contracts.save(c);

@@ -6,7 +6,7 @@ import org.springframework.security.oauth2.core.OAuth2TokenValidatorResult;
 import org.springframework.security.oauth2.jwt.Jwt;
 
 /**
- * Phase 1 — validator riêng cho token Keycloak: bắt buộc claim {@code aud} chứa
+ * Validator token Keycloak: bắt buộc claim {@code aud} chứa
  * audience của service (mặc định {@code asset-service}). Token legacy KHÔNG có
  * {@code aud} nên KHÔNG dùng validator này (xem KeycloakResourceServerConfig:
  * decoder legacy không gắn AudienceValidator). Ngăn token phát cho client/app

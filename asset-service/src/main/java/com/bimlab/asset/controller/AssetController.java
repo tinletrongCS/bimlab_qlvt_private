@@ -64,9 +64,6 @@ public class AssetController {
         return mapper.toResponse(service.createAsset(req));
     }
 
-    /*
-    TODO Kiểm tra dữ liệu được nhập vào từ excel trong trang quản lý danh sách tài sản
-     */
     @PostMapping("/import/validate")
     @PreAuthorize("hasAuthority('asset_manage')")
     public AssetImportValidationResponse validateImport(@Valid @RequestBody AssetImportValidateRequest req) {

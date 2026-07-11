@@ -1,5 +1,4 @@
 // Mirrors backend Permission enum (QLVT/asset-service/.../security/Permission.java).
-// Q1.5: removed FE-only `asset_assign` -- no BE endpoint enforces it; remove drift.
 export type Permission =
   | "asset_access"
   | "asset_view_self"
@@ -366,7 +365,7 @@ export interface Contract {
   paymentTerms?: string;
   status: string;
   attachmentUrl?: string;
-  // Q7: prefer attachmentObjectKey; attachmentUrl deprecated, kept for back-compat
+  // Prefer attachmentObjectKey; attachmentUrl is retained for compatibility.
   attachmentObjectKey?: string;
   notes?: string;
   createdAt?: string;
@@ -386,7 +385,7 @@ export interface ContractPayload {
   paymentTerms?: string;
   status?: string;
   attachmentUrl?: string;
-  // Q7: prefer attachmentObjectKey; attachmentUrl deprecated, kept for back-compat
+  // Prefer attachmentObjectKey; attachmentUrl is retained for compatibility.
   attachmentObjectKey?: string;
   notes?: string;
 }

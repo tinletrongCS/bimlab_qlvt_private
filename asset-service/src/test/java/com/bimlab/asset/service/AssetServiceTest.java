@@ -46,14 +46,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-/**
- * Q2: covers all behaviour previously split across DepreciationServiceTest
- * + UtilizationReportTest + the warranty-window portion of
- * MaintenanceServiceTest. Also adds previously-missing smoke coverage for
- * the basic Asset CRUD path (createAsset / updateAsset / getAsset missing
- * case) per Q2 R5 (zero vendor/subscription/asset-CRUD coverage was a
- * regression risk during the split).
- */
 @ExtendWith(MockitoExtension.class)
 class AssetServiceTest {
 
@@ -77,8 +69,6 @@ class AssetServiceTest {
                 .active(true)
                 .build();
     }
-
-    // ── Asset CRUD smoke (Q2 R5: previously untested) ────────────────────
 
     @Test
     void getAsset_throwsWhenMissing() {
@@ -120,8 +110,6 @@ class AssetServiceTest {
 
         assertNull(saved.getVendor());
     }
-
-    // ── Depreciation ─────────────────────────────────────────────────────
 
     @Test
     void straightLine_calculatesBookValueAfterYears() {
@@ -195,8 +183,6 @@ class AssetServiceTest {
         assertEquals(0, new BigDecimal("50").compareTo(snap.accumulatedDepreciation()));
         assertEquals(0, new BigDecimal("100.00").compareTo(snap.annualDepreciation()));
     }
-
-    // ── Import pipeline ──────────────────────────────────────────────────
 
     @Test
     void validateAssetImport_flagsInvalidRowsWarningsAndPreviewCode() {
@@ -280,8 +266,6 @@ class AssetServiceTest {
         assertEquals(7L, sequence.getCurrentNumber());
     }
 
-    // ── Dispose ──────────────────────────────────────────────────────────
-
     @Test
     void disposeAsset_setsStatusAndUnassigns() {
         AssetItem item = AssetItem.builder()
@@ -317,8 +301,6 @@ class AssetServiceTest {
         verify(assets, never()).save(any());
     }
 
-    // ── Warranty filter (was in MaintenanceServiceTest) ──────────────────
-
     @Test
     void warrantyExpiring_filtersAssetsInWindow() {
         AssetItem inWindow = AssetItem.builder().id(1L).warrantyUntil(LocalDate.now().plusDays(10)).status(AssetStatus.ASSIGNED).build();
@@ -333,8 +315,6 @@ class AssetServiceTest {
         assertEquals(1, expiring.size());
         assertEquals(1L, expiring.get(0).getId());
     }
-
-    // ── Utilization report (was in UtilizationReportTest) ────────────────
 
     @Test
     void utilizationReport_aggregatesByStatusAndCategory() {

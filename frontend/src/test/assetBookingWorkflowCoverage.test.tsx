@@ -307,10 +307,6 @@ describe("QLVT asset and booking workflow coverage", () => {
       screen.getByPlaceholderText("Tìm theo mã, tên, serial, nhà cung cấp..."),
       "Dell",
     );
-    // Sau khi lọc "Dell": tài sản Dell còn, Apollo biến mất (UI mới render mã gộp nên assert
-    // theo tên tài sản — node <strong> đơn — thay vì mã bị tách node).
-    // Sau khi lọc "Dell": hàng Dell còn (kiểm qua nút thao tác aria-label ổn định — UI mới
-    // render tên/mã tách node), Apollo biến mất.
     expect(screen.getByRole("button", { name: "Mở thao tác cho TS-001" })).toBeInTheDocument();
     expect(screen.queryByText("Phòng họp Apollo")).not.toBeInTheDocument();
     fireEvent.change(screen.getByLabelText(/Trạng thái/i), { target: { value: "ASSIGNED" } });

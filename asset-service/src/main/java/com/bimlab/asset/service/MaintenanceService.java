@@ -14,15 +14,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.NoSuchElementException;
 
-/**
- * Q2: Maintenance domain split from the original {@code AssetManagementService}.
- * Owns MaintenanceRecord CRUD. Depends on:
- * <ul>
- *   <li>{@link AssetService} for the parent-asset resolution required by every
- *       maintenance record</li>
- *   <li>{@link VendorService} for optional service-vendor attachment</li>
- * </ul>
- */
 @Service
 @RequiredArgsConstructor
 public class MaintenanceService {

@@ -7,7 +7,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.SecurityFilterChain;
 
 /**
- * Q8: minimal security config for @WebMvcTest slices.
+ * Minimal security config for @WebMvcTest slices.
  *
  * <p>The production {@link SecurityConfig} wires the Keycloak OAuth2 resource
  * server (AuthenticationManagerResolver + BearerTokenResolver), which isn't

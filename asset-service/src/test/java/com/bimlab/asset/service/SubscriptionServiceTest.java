@@ -24,11 +24,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
-/**
- * Q2 R5: Subscription CRUD was zero-coverage before the split. These smoke
- * tests lock the cross-domain vendor lookup contract used in
- * {@code applySubscription}.
- */
 @ExtendWith(MockitoExtension.class)
 class SubscriptionServiceTest {
 
