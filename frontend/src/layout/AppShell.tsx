@@ -139,6 +139,24 @@ export function AppShell() {
 
   const normalizedSidebarSearch = sidebarSearch.trim().toLowerCase();
   const searchActive = normalizedSidebarSearch.length > 0;
+
+  useEffect(() => {
+    let title = "BIMLab QLVT";
+    if (location.pathname.startsWith("/dashboard")) title = "Tổng quan | BIMLab QLVT";
+    else if (location.pathname.startsWith("/asset-categories"))
+      title = "Danh mục tài sản | BIMLab QLVT";
+    else if (location.pathname.startsWith("/assets")) title = "Danh sách tài sản | BIMLab QLVT";
+    else if (location.pathname.startsWith("/transfers")) title = "Bàn giao tài sản | BIMLab QLVT";
+    else if (location.pathname.startsWith("/maintenance")) title = "Bảo trì tài sản | BIMLab QLVT";
+    else if (location.pathname.startsWith("/booking")) title = "Đặt lịch tài sản | BIMLab QLVT";
+    else if (location.pathname.startsWith("/requests")) title = "Đề nghị mua sắm | BIMLab QLVT";
+    else if (location.pathname.startsWith("/vendors")) title = "Nhà cung cấp | BIMLab QLVT";
+    else if (location.pathname.startsWith("/contracts")) title = "Hợp đồng | BIMLab QLVT";
+    else if (location.pathname.startsWith("/subscriptions")) title = "Gói đăng ký | BIMLab QLVT";
+    else if (location.pathname.startsWith("/help")) title = "Hướng dẫn sử dụng | BIMLab QLVT";
+    document.title = title;
+  }, [location.pathname]);
+
   const permittedGroups = useMemo(
     () =>
       NAV_GROUPS.map((group) => {
