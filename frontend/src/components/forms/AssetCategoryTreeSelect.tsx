@@ -26,10 +26,10 @@ export function AssetCategoryTreeSelect({
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadAssetCategoryTree().then((data) => {
-      setTree(data);
-      setLoading(false);
-    });
+    loadAssetCategoryTree()
+      .then(setTree)
+      .catch(() => setTree([]))
+      .finally(() => setLoading(false));
   }, []);
 
   const toggleExpand = (e: MouseEvent, id: number) => {

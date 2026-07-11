@@ -23,7 +23,6 @@ import {
   FiUpload,
   FiX,
 } from "react-icons/fi";
-import { useNavigate } from "react-router-dom";
 import { SearchableSelect } from "../components/forms/SearchableSelect";
 import { OverflowActions } from "../components/OverflowActions";
 import { StatusBadge } from "../components/StatusBadge";
@@ -945,7 +944,6 @@ export function AssetsPage() {
     ensureAssetDetailLookups,
   } = useAppData();
   const { openModal } = useActions();
-  const navigate = useNavigate();
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<AssetStatusFilter>("ALL");
   const [categoryPath, setCategoryPath] = useState<string[]>([]);
