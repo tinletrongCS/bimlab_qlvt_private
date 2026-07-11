@@ -31,7 +31,6 @@ import java.util.List;
 @Validated
 public class MaintenanceController {
     private final MaintenanceService service;
-    // Q2: AssetService for F1 parent-asset lookup + warranty-expiring (asset-domain query).
     private final AssetService assetService;
     private final AssetAccessService access;
     private final MaintenanceRecordMapper mapper;
@@ -43,7 +42,7 @@ public class MaintenanceController {
         return service.listMaintenanceRecords().stream().map(mapper::toResponse).toList();
     }
 
-    // N4: paginated list — backward-compatible with legacy GET (no /paged) which still returns List<MaintenanceRecord>.
+    // Legacy GET without /paged remains compatible and returns List<MaintenanceRecord>.
     @GetMapping("/paged")
     @PreAuthorize("hasAnyAuthority('asset_access','asset_view_self','asset_view_team','asset_view_all','asset_manage','asset_finance_manage')")
     public Page<MaintenanceRecordResponse> listPaged(@PageableDefault(size = 20) Pageable pageable) {
@@ -51,7 +50,7 @@ public class MaintenanceController {
     }
 
 
-    // F1: maintenance records inherit scope from parent asset.
+    // Maintenance records inherit scope from parent asset.
     @GetMapping("/asset/{assetId}")
     @PreAuthorize("hasAnyAuthority('asset_access','asset_view_self','asset_view_team','asset_view_all','asset_manage','asset_finance_manage')")
     public List<MaintenanceRecordResponse> byAsset(@PathVariable Long assetId) {
@@ -87,7 +86,7 @@ public class MaintenanceController {
         service.deleteMaintenanceRecord(id);
     }
 
-    // F2: cap days to a sane range. Warranty-expiring is an asset-domain query
+    // Cap days to a sane range. Warranty-expiring is an asset-domain query
     // exposed via the maintenance controller for FE convenience.
     @GetMapping("/warranty-expiring")
     @PreAuthorize("hasAnyAuthority('asset_access','asset_view_self','asset_view_team','asset_view_all','asset_manage','asset_finance_manage','asset_finance_view')")

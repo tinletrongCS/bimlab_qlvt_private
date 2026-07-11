@@ -14,10 +14,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
-/**
- * Q7: MinIO object storage for contract attachments.
- * Ported from HRM employee-service MinioService; bucket default = qlvt-assets.
- */
 @Service
 @Slf4j
 public class MinioService {

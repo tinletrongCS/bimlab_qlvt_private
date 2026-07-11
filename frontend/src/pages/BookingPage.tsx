@@ -857,7 +857,6 @@ export function BookingPage() {
     <section className="booking-page page-grid">
       <div className="booking-hero panel">
         <div>
-          {/* <p className="eyebrow">BOOKING</p> */}
           <h2>Đặt lịch phòng họp</h2>
         </div>
         <div className="booking-hero-metrics">

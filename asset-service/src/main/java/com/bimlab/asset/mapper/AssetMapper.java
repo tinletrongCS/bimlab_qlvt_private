@@ -13,9 +13,6 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class AssetMapper {
-    /*
-    TODO Chú ý trong controller lúc gọi API không trả thằng về trong model
-     */
     public AssetResponse toResponse(AssetItem asset) {
         return toResponse(asset, true);
     }

@@ -22,12 +22,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-/**
- * F4 (preserved through Q2): server-side stamping of requesterEmployeeId +
- * status forcing on PurchaseRequest create/update. Previously the approver
- * could rewrite the audit trail by passing requesterEmployeeId in the body,
- * and any employee could submit a PR pre-approved by passing status=APPROVED.
- */
 @ExtendWith(MockitoExtension.class)
 class PurchaseRequestServiceTest {
 

@@ -38,7 +38,7 @@ public class ContractController {
         return service.listContracts().stream().map(mapper::toResponse).toList();
     }
 
-    // N4: paginated list — backward-compatible with legacy GET (no /paged) which still returns List<Contract>.
+    // Legacy GET without /paged remains compatible and returns List<Contract>.
     @GetMapping("/paged")
     @PreAuthorize("hasAnyAuthority('asset_access','asset_view_self','asset_view_team','asset_view_all','asset_manage','asset_finance_manage')")
     public Page<ContractResponse> listPaged(@PageableDefault(size = 20) Pageable pageable) {
@@ -46,7 +46,7 @@ public class ContractController {
     }
 
 
-    // F1: Contract has no employee owner — admin perms only (Q1 flattened gate).
+    // Contract has no employee owner; admin permissions only.
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyAuthority('contract_manage','asset_finance_manage','asset_manage','asset_view_all')")
     public ContractResponse get(@PathVariable Long id) {
@@ -80,7 +80,6 @@ public class ContractController {
         service.deleteContract(id);
     }
 
-    // Q7: upload a contract attachment to MinIO. Returns {fileKey, downloadUrl}.
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasAnyAuthority('contract_manage','asset_finance_manage','asset_manage')")
     public FileUploadResponse upload(@RequestParam("file") MultipartFile file) {
@@ -88,7 +87,7 @@ public class ContractController {
         return new FileUploadResponse(key, minioService.getPresignedUrl(key));
     }
 
-    // Q7: stream a contract attachment by object key (server-side fetch, no public URL leak).
+    // Stream by object key server-side without exposing a public URL.
     @GetMapping("/files/view")
     @PreAuthorize("hasAnyAuthority('contract_manage','asset_finance_manage','asset_manage','asset_view_all')")
     public ResponseEntity<InputStreamResource> view(@RequestParam("key") String key) {

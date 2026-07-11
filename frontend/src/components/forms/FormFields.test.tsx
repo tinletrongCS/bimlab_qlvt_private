@@ -1,5 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
+import { chooseSearchableOption } from "../../test/searchableSelect";
 import {
   DepartmentSelect,
   EmployeeSelect,
@@ -45,20 +46,17 @@ describe("FormFields", () => {
         <ProjectSelect projects={[{ id: 5, name: "Alpha", code: "A" }]} onChange={onChange} />
       </>,
     );
-    for (const select of screen.getAllByRole("combobox")) {
-      if (select.querySelector('option[value="1"]'))
-        fireEvent.change(select, { target: { value: "1" } });
-      else if (select.querySelector('option[value="2"]'))
-        fireEvent.change(select, { target: { value: "2" } });
-      else if (select.querySelector('option[value="3"]'))
-        fireEvent.change(select, { target: { value: "3" } });
-      else if (select.querySelector('option[value="4"]'))
-        fireEvent.change(select, { target: { value: "4" } });
-      else if (select.querySelector('option[value="5"]'))
-        fireEvent.change(select, { target: { value: "5" } });
-      else fireEvent.change(select, { target: { value: "I" } });
-    }
+    const [status, vendor, employee, department, workSite, project] =
+      screen.getAllByRole("combobox");
+    chooseSearchableOption(status, "Inactive");
+    chooseSearchableOption(vendor, "Vendor");
+    chooseSearchableOption(employee, "Alice");
+    chooseSearchableOption(department, "BIM");
+    chooseSearchableOption(workSite, "HCM");
+    chooseSearchableOption(project, "A · Alpha");
     expect(onChange).toHaveBeenCalledTimes(6);
+    expect(onChange).toHaveBeenCalledWith("I");
+    for (const id of ["1", "2", "3", "4", "5"]) expect(onChange).toHaveBeenCalledWith(id);
   });
 
   it("converts optional values", () => {

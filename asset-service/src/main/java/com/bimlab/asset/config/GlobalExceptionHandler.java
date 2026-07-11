@@ -14,10 +14,8 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 
 /**
- * F3: previously echoed raw e.getMessage() for NoSuchElement, IllegalArgument,
- * IllegalState and AccessDenied — leaking SQL/Hibernate internals when callers
- * triggered downstream JPA exceptions wrapped into IllegalState. Now returns
- * static Vietnamese messages; raw exception text is logged server-side at INFO.
+ * Returns static messages to callers and logs raw exception text server-side
+ * to prevent SQL and Hibernate detail disclosure.
  */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -55,9 +53,7 @@ public class GlobalExceptionHandler {
                 .body(Map.of("message", "Không có quyền thực hiện thao tác này"));
     }
 
-    // Phase 7 prep: TOCTOU race on UNIQUE asset columns (asset code/serial)
-    // previously fell through to Spring default → 500 with raw Hibernate
-    // schema details. Map to 409 with sanitised message.
+    // TOCTOU race on UNIQUE asset columns maps to 409 without exposing schema details.
     @ExceptionHandler(DataIntegrityViolationException.class)
     ResponseEntity<Map<String, String>> dataIntegrity(DataIntegrityViolationException e) {
         log.info("409 data integrity: {}", e.getMessage());
