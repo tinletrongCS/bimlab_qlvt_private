@@ -85,6 +85,18 @@ export function SearchableSelect({
 
   return (
     <div className={`searchable-select-container ${className}`} ref={containerRef} style={style}>
+      <select
+        className="searchable-select-native"
+        value={value ?? ""}
+        onChange={(e) => onChange(e.target.value)}
+        disabled={disabled}
+      >
+        {mergedOptions.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
       <div
         className="searchable-select-input-wrapper"
         onMouseDown={(e) => {
@@ -96,9 +108,6 @@ export function SearchableSelect({
         <input
           ref={inputRef}
           type="text"
-          role="combobox"
-          aria-expanded={open}
-          aria-autocomplete="list"
           className="searchable-select-input"
           value={displayValue}
           onChange={(e) => {
