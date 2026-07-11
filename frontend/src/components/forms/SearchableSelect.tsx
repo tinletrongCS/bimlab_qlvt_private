@@ -125,6 +125,20 @@ export function SearchableSelect({
         />
         <FiChevronDown className={`searchable-select-icon${open ? " rotated" : ""}`} />
       </div>
+      <select
+        aria-hidden="true"
+        className="searchable-select-native"
+        tabIndex={-1}
+        value={value ?? ""}
+        onChange={(e) => onChange(e.target.value)}
+        disabled={disabled}
+      >
+        {mergedOptions.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.value}
+          </option>
+        ))}
+      </select>
       {open && !disabled && (
         <div className="searchable-select-dropdown">
           {filteredOptions.length > 0 ? (

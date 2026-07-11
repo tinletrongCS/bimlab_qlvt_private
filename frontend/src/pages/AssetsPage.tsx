@@ -2314,7 +2314,9 @@ export function AssetsPage() {
                     >
                       <option value="">Chọn thao tác</option>
                       <option value="status">Cập nhật trạng thái</option>
-
+                      <option value="move">Chuyển vị trí</option>
+                      <option value="assign">Cấp phát</option>
+                      <option value="return">Thu hồi</option>
                       <option value="qr" disabled>
                         In QR theo nhóm
                       </option>
@@ -2791,38 +2793,26 @@ export function AssetsPage() {
                   </div>
                 </section>
                 <section className="asset-detail-section">
-                  <h3
-                    style={{
-                      margin: "0 0 12px 0",
-                      paddingBottom: "8px",
-                      borderBottom: "2px solid #e2e8f0",
-                    }}
-                  >
-                    <div
+                  <h3>
+                    <span>Sử dụng, đơn vị và vị trí</span>
+                    <button
+                      type="button"
                       style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
+                        float: "right",
+                        marginTop: "-2px",
+                        color: "#2563eb",
+                        textDecoration: "underline",
+                        background: "none",
+                        padding: 0,
+                        fontWeight: 500,
+                        fontSize: "13px",
+                        border: "none",
+                        cursor: "pointer",
                       }}
+                      onClick={() => window.open("/transfers", "_blank")}
                     >
-                      <span>Sử dụng, đơn vị và vị trí</span>
-                      <button
-                        type="button"
-                        style={{
-                          color: "#2563eb",
-                          textDecoration: "underline",
-                          background: "none",
-                          padding: 0,
-                          fontWeight: 500,
-                          fontSize: "13px",
-                          border: "none",
-                          cursor: "pointer",
-                        }}
-                        onClick={() => window.open("/transfers", "_blank")}
-                      >
-                        Bàn giao
-                      </button>
-                    </div>
+                      Bàn giao
+                    </button>
                   </h3>
                   <div className="asset-detail-fields">
                     <label>
