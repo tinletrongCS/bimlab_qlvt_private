@@ -4,11 +4,9 @@ path = r'D:\BIMLAB\bimlab_qlvt\frontend\src\pages\AssetCategoriesPage.tsx'
 with open(path, 'r', encoding='utf-8') as f:
     content = f.read()
 
-# 1. Add StatusBadge import
 if 'StatusBadge' not in content:
     content = content.replace('import { PanelHeader } from "../components/PanelHeader";', 'import { PanelHeader } from "../components/PanelHeader";\nimport { StatusBadge } from "../components/StatusBadge";')
 
-# 2. Add tree render function
 tree_func = '''
 function renderImportPreviewTree(rows: AssetCategoryImportRowPayload[]) {
   const byCode = new Map<string, any>();
@@ -62,7 +60,6 @@ function renderImportPreviewTree(rows: AssetCategoryImportRowPayload[]) {
 if 'renderImportPreviewTree' not in content:
     content = content.replace('export function AssetCategoriesPage() {', tree_func + '\nexport function AssetCategoriesPage() {')
 
-# 3. Add importPreviewTab state
 if 'importPreviewTab' not in content:
     content = content.replace(
         'const [importPreviewFilter, setImportPreviewFilter] = useState<',
@@ -76,10 +73,8 @@ if 'setImportPreviewTab("TABLE");' not in content:
     )
 
 
-# Now use regular expressions to reliably replace blocks despite indentation differences.
 import re
 
-# 4. Replace asset-import-options content
 content = re.sub(
     r'<div className="asset-import-options">[\s]*</div>',
     '''<div className="asset-import-options">
@@ -106,22 +101,18 @@ content = re.sub(
     flags=re.MULTILINE
 )
 
-# 5. Conditionally hide toolbar
 content = re.sub(
     r'(<div className="asset-import-preview-toolbar">)',
     r'{importPreviewTab === "TABLE" && (\n                  \1',
     content
 )
 
-# Add closing tag for toolbar. 
-# The toolbar ends right before <div className="asset-import-preview">
 content = re.sub(
     r'(</div>\n\s*</div>\n\s*)(<div className="asset-import-preview">)',
     r'\1  )}\n                \2',
     content
 )
 
-# 6. Conditionally render table or tree inside asset-import-preview
 content = re.sub(
     r'(<div className="asset-import-preview">\n\s*)(<table>)',
     r'''\1{importPreviewTab === "TREE" ? (
@@ -139,7 +130,6 @@ content = re.sub(
     content
 )
 
-# 7. Use StatusBadge
 content = re.sub(
     r'<span className="asset-import-row-status">[\s]*\{importStatusLabel\(status\)\}[\s]*</span>',
     '<StatusBadge value={status} label={importStatusLabel(status)} />',

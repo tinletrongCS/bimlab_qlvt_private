@@ -21,7 +21,7 @@ import java.util.List;
  * {@code KeycloakResourceServerConfig}):
  * <ul>
  *   <li><b>Legacy</b> ({@code resolveFromApi=false}): dùng claim {@code permissions} (kể cả rỗng) →
- *       KHÔNG bao giờ gọi resolver → authorities byte-identical filter cũ (rollback gate Phase 1).</li>
+ *       KHÔNG bao giờ gọi resolver → authorities byte-identical filter cũ.</li>
  *   <li><b>Keycloak</b> ({@code resolveFromApi=true}): username = {@code preferred_username} (fallback
  *       {@code sub}) vì {@code sub} của token KC là UUID/có thể vắng, KHÔNG phải username; LUÔN resolve
  *       role→permissions qua {@link RolePermissionResolver}, BỎ QUA mọi claim permissions (defense: ai thêm

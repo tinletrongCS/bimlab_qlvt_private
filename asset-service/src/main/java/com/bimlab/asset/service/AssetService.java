@@ -43,10 +43,6 @@ import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-/**
- * Q2: Asset domain split from the original {@code AssetManagementService}.
- * Q5: status fields are type-safe {@link AssetStatus} enums.
- */
 @Service
 @RequiredArgsConstructor
 public class AssetService {
@@ -667,7 +663,7 @@ public class AssetService {
                 .map(a -> a.getPurchaseCost() == null ? BigDecimal.ZERO : a.getPurchaseCost())
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        // Q5: enum.name() keeps the JSON shape stable for FE (Map<String,Long>).
+        // enum.name() keeps JSON shape stable for FE (Map<String,Long>).
         Map<String, Long> byStatus = all.stream()
                 .collect(Collectors.groupingBy(a -> a.getStatus().name(), Collectors.counting()));
         Map<String, Long> byCategory = all.stream()

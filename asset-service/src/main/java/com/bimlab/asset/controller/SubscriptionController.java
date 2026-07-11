@@ -28,7 +28,7 @@ public class SubscriptionController {
         return service.listSubscriptions().stream().map(mapper::toResponse).toList();
     }
 
-    // N4: paginated list — backward-compatible with legacy GET (no /paged) which still returns List<Subscription>.
+    // Legacy GET without /paged remains compatible and returns List<Subscription>.
     @GetMapping("/paged")
     @PreAuthorize("hasAnyAuthority('asset_access','asset_view_self','asset_view_team','asset_view_all','asset_manage','asset_finance_manage')")
     public Page<SubscriptionResponse> listPaged(@PageableDefault(size = 20) Pageable pageable) {
@@ -36,7 +36,7 @@ public class SubscriptionController {
     }
 
 
-    // F1: Subscription is master data — admin perms only (Q1 flattened gate).
+    // Subscription is master data; admin permissions only.
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyAuthority('subscription_manage','asset_manage','asset_view_all')")
     public SubscriptionResponse get(@PathVariable Long id) {

@@ -41,7 +41,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let cancelled = false;
     async function bootstrap() {
       try {
-        // PR#6: refresh token rotation thất bại / token hết hạn → mất phiên → logout UI (về /login).
+        // Refresh token rotation thất bại / token hết hạn → mất phiên → logout UI (về /login).
         // Toast cho user biết lý do (đăng xuất từ app khác qua SLO, hoặc hết hạn) thay vì văng im lặng.
         onSessionLost((reason) => {
           if (!cancelled) {

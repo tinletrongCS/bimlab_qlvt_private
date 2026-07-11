@@ -17,13 +17,6 @@ import { SubscriptionsPage } from "./pages/SubscriptionsPage";
 import { TransfersPage } from "./pages/TransfersPage";
 import { VendorsPage } from "./pages/VendorsPage";
 
-/**
- * Q6: thin router shell. State lives in AuthProvider + AppDataProvider +
- * ActionsProvider; each page reads what it needs via the typed hooks.
- * Routes are wrapped in ProtectedRoute so unauthenticated users land on
- * /login and an unauthorized user (missing permission) is bounced to
- * /dashboard.
- */
 function App() {
   return (
     <BrowserRouter>

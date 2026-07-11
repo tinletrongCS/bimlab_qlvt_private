@@ -18,7 +18,7 @@ public record ContractRequest(
         String currency,
         String paymentTerms,
         String status,
-        // F5: restrict to https?:// or relative path; defensive against SSRF if
+        // Restrict to https?:// or relative path; defensive against SSRF if
         // a future server-side renderer/fetcher consumes this field.
         @Size(max = 2048)
         @Pattern(
@@ -26,7 +26,7 @@ public record ContractRequest(
                 message = "URL không hợp lệ"
         )
         String attachmentUrl,
-        // Q7: object key in MinIO bucket (preferred over attachmentUrl)
+        // Prefer MinIO object key over attachmentUrl.
         @Size(max = 500) String attachmentObjectKey,
         String notes,
         Long assetId,

@@ -20,11 +20,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-/**
- * Q2 R5: Vendor CRUD was zero-coverage before the split. These smoke tests
- * lock the public surface so the resolver consumed by Subscription /
- * Contract / Maintenance / Asset cannot silently regress.
- */
 @ExtendWith(MockitoExtension.class)
 class VendorServiceTest {
 

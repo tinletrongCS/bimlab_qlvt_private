@@ -33,12 +33,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-/**
- * Booking module (production hardening 2026-07-02):
- * - create() stamps requester/createdBy from the JWT principal, never from the body (anti-impersonation);
- * - lifecycle endpoints (check-in/out/cancel/auto-release) were 500 stubs, now implemented with a
- *   per-record owner-or-admin guard and clean state-machine errors (409 via IllegalStateException).
- */
 @ExtendWith(MockitoExtension.class)
 class AssetBookingServiceTest {
 

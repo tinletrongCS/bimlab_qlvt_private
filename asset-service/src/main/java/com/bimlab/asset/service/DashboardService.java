@@ -10,12 +10,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/**
- * Q2-followup N1: dashboard counts extracted out of {@link com.bimlab.asset.controller.AssetDashboardController}
- * so the controller no longer wires 5 repositories directly. Owns simple
- * cross-domain count aggregation only — heavier utilization reporting stays
- * in {@link AssetService}.
- */
 @Service
 @RequiredArgsConstructor
 public class DashboardService {

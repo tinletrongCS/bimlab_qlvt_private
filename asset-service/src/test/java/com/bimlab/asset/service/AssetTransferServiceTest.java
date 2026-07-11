@@ -23,12 +23,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-/**
- * Q2: targets {@link AssetTransferService}. Asset resolution routes through
- * the injected {@link AssetService} mock; the cross-repo asset write
- * under {@code @Transactional} still hits {@link AssetItemRepository}
- * directly (see Q2 R1).
- */
 @ExtendWith(MockitoExtension.class)
 class AssetTransferServiceTest {
 

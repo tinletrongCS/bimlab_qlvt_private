@@ -12,11 +12,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/**
- * Q7: reflection-based wiring guard for contract upload/view endpoints.
- * Mirrors MethodSecurityWiringTest pattern — assert annotations are present
- * without spinning up a full @WebMvcTest (Q1 lesson: brittle).
- */
 class ContractUploadControllerTest {
 
     @Test

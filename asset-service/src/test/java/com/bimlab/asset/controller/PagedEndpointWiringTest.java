@@ -11,12 +11,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/**
- * N4: reflection-based wiring guard for the new /paged endpoints across all
- * 7 list-bearing controllers. Mirrors {@code MethodSecurityWiringTest} pattern —
- * asserts annotations + @PreAuthorize gating + Page<T> return shape without
- * spinning up a full @WebMvcTest (Q1 lesson: brittle).
- */
 class PagedEndpointWiringTest {
 
     @Test
