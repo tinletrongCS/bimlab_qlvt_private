@@ -1,10 +1,8 @@
-// Phase 2 PR#5/#6 -- Keycloak OIDC (Authorization Code + PKCE) cho QLVT FE.
-//
 // Pin bảo mật:
 //  - Access token + refresh token lưu trong sessionStorage của phiên trình duyệt → reload không mất phiên,
 //    vẫn không dùng localStorage dài hạn.
 //  - State handshake PKCE (code_verifier + state) sống qua redirect → sessionStorage (mặc định, ngắn hạn).
-//  - PR#6: refresh token rotation qua automaticSilentRenew (oidc-client-ts dùng refresh_token, KHÔNG iframe
+//  - Refresh token rotation qua automaticSilentRenew (oidc-client-ts dùng refresh_token, KHÔNG iframe
 //    → tránh chặn third-party-cookie). Logout = signoutRedirect (end-session SLO của Keycloak).
 import {
   type User,
@@ -41,7 +39,7 @@ function buildSettings(): UserManagerSettings {
     scope: "openid",
     // Access/refresh token theo phiên trình duyệt; state (PKCE) cũng dùng sessionStorage.
     userStore: new WebStorageStateStore({ store: window.sessionStorage }),
-    // PR#6: tự gia hạn access token (5') bằng refresh token TRƯỚC khi hết hạn 60s.
+    // Tự gia hạn access token (5') bằng refresh token TRƯỚC khi hết hạn 60s.
     automaticSilentRenew: true,
     accessTokenExpiringNotificationTimeInSeconds: 60,
     // OIDC Session Management: nhúng check-session iframe của Keycloak, phát hiện
@@ -153,7 +151,7 @@ export async function keycloakLogin(): Promise<void> {
 }
 
 /**
- * Đăng xuất ĐẦY ĐỦ (PR#6 -- Single Logout): gọi end-session endpoint của Keycloak (kết thúc session SSO)
+ * Đăng xuất ĐẦY ĐỦ: gọi end-session endpoint của Keycloak (kết thúc session SSO)
  * + redirect về post_logout_redirect_uri (/login). id_token_hint lấy tự động từ user đã lưu.
  * Fallback: nếu signoutRedirect lỗi → dọn cục bộ.
  */

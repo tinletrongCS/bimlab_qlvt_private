@@ -20,11 +20,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
-/**
- * Q2: targets {@link MaintenanceService}. Parent-asset resolution mocked
- * through {@link AssetService}. Warranty-window filter moved to
- * {@code AssetServiceTest} since it is an asset-domain query.
- */
 @ExtendWith(MockitoExtension.class)
 class MaintenanceServiceTest {
 

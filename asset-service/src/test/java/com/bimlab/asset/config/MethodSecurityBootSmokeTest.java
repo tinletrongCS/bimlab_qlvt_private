@@ -11,13 +11,6 @@ import org.springframework.test.context.ActiveProfiles;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/**
- * N9 (deferred-from-Q2-followup, landed in Q8): boot smoke that asserts the
- * Spring Security method-security infrastructure is actually wired into the
- * application context. If {@code @EnableMethodSecurity} is silently absent,
- * every {@code @PreAuthorize} in the codebase no-ops — a hard-to-spot
- * authorization regression. This test fails loudly if that ever happens.
- */
 // MOCK environment (not NONE) so the production SecurityConfig.filterChain
 // — which @Autowires HttpSecurity — can resolve. We don't actually hit
 // any HTTP endpoint here; only verifying the method-security wiring.

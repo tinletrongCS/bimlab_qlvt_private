@@ -32,10 +32,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-/**
- * Q8: HTTP-layer contract tests for VendorController. Mirror coverage for the
- * other 6 list-bearing controllers is in their own *WebMvcTest classes.
- */
 @WebMvcTest(VendorController.class)
 @Import({TestSecurityConfig.class, VendorMapper.class})
 @AutoConfigureMockMvc(addFilters = false)
@@ -45,7 +41,7 @@ class VendorControllerWebMvcTest {
     @Autowired ObjectMapper objectMapper;
 
     @MockBean VendorService vendorService;
-    // Q1 declarative gate doesn't reference AssetAccessService here, but other
+    // This gate doesn't reference AssetAccessService, but other
     // controllers do; mocking it keeps the slice config reusable.
     @MockBean AssetAccessService assetAccessService;
 

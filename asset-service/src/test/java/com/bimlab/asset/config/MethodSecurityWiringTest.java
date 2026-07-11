@@ -19,18 +19,6 @@ import java.util.regex.Pattern;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/**
- * Q1: regression guard for the {@code @EnableMethodSecurity} + {@code @PreAuthorize}
- * wiring. A bootless reflection check is enough — if either side disappears,
- * every controller endpoint silently downgrades to "authenticated only" with no
- * authority requirement.
- *
- * <p>Why bootless: a full {@code @WebMvcTest} would pull
- * {@code AssetServiceApplication} (JPA + DataSource) into context and require
- * a test database. The annotation-presence assertion catches the only failure
- * mode this MR is concerned about (silent disable of method security) and runs
- * in milliseconds.
- */
 class MethodSecurityWiringTest {
 
     @Test

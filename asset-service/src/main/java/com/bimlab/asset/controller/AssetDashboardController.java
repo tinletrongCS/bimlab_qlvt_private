@@ -10,10 +10,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-/**
- * Q2-followup N1: thin controller — count aggregation moved to {@link DashboardService};
- * utilization report continues to route through {@link AssetService}.
- */
 @RestController
 @RequestMapping("/api/asset/dashboard")
 @RequiredArgsConstructor

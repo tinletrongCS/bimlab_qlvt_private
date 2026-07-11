@@ -6714,7 +6714,6 @@ table td,
   }
 }
 
-/* QLVT hard-edge polish pass: remove playful pills/bright badges/active bars. */
 :root {
   --qlvt-radius-xs: 2px;
   --qlvt-radius-sm: 3px;
@@ -6960,7 +6959,6 @@ table td,
   font-weight: 500;
 }
 
-/* Final density pass for asset list controls. */
 .content {
   padding-left: 12px;
 }
@@ -7072,7 +7070,6 @@ tr[data-status="INVALID"] .asset-import-row-status {
   }
 }
 
-/* Compact interaction pass. */
 .asset-list-layout.category-collapsed {
   grid-template-columns: 36px minmax(0, 1fr);
 }
@@ -7219,7 +7216,6 @@ table td {
   font-size: 11.5px;
 }
 
-/* Final QLVT enterprise consistency pass across residual forms, tabs and modals. */
 button,
 .primary,
 .primary-action,
@@ -7524,7 +7520,6 @@ textarea,
   color: #101828;
 }
 
-/* Hard-edge density pass requested for QLVT shell and asset list. */
 .sidebar,
 .sidebar.compact,
 .topbar,
@@ -7806,7 +7801,6 @@ textarea,
   border-radius: 0 !important;
 }
 
-/* Final QLVT hard-edge enforcement: applies to login, skeletons, portals and every app page. */
 :root {
   --qlvt-radius-xs: 0 !important;
   --qlvt-radius-sm: 0 !important;
@@ -8062,7 +8056,6 @@ textarea,
   background: #f6f8fa !important;
 }
 
-/* QLVT UX consolidation pass: compact, sharp, consistent page layouts. */
 #root {
   color: #1f2937;
 }
@@ -9090,7 +9083,6 @@ textarea,
   }
 }
 
-/* Dense professional pass: remove excess whitespace, stacked borders and double focus halos. */
 #root .app-shell {
   grid-template-columns: 232px minmax(0, 1fr) !important;
   gap: 0 !important;
@@ -9603,7 +9595,6 @@ textarea,
   }
 }
 
-/* BIMLAB color accent pass for Asset List and Asset Categories. */
 :root {
   --bimlab-blue: #15507f;
   --bimlab-blue-strong: #0f3f67;
@@ -9911,7 +9902,6 @@ textarea,
   }
 }
 
-/* Restore neutral colors after BIMLAB accent experiment while keeping the compact layout. */
 #root .asset-page-header {
   background: #ffffff !important;
   color: #1f2937 !important;
@@ -10025,7 +10015,6 @@ textarea,
   color: #ffffff !important;
 }
 
-/* Internal-admin compact layout and BIMLAB LAB-blue sidebar. */
 :root {
   --qlvt-lab-blue: #123f63;
   --qlvt-lab-blue-hover: #1b5b88;
@@ -10277,7 +10266,6 @@ textarea,
   }
 }
 
-/* Consolidated QLVT UI overrides: keep the final layer small and predictable. */
 :root {
   --qlvt-control-radius: 2px;
   --qlvt-border-soft: #d7dde5;
@@ -11151,7 +11139,6 @@ textarea,
   }
 }
 
-/* Final scroll containment: wide tables scroll inside their own frame only. */
 html,
 body,
 #root {
@@ -11326,7 +11313,6 @@ body,
   }
 }
 
-/* Final compact action menus, table containment and category layout tuning. */
 #root .sidebar nav a svg,
 #root .sidebar-group-button svg {
   width: 16px !important;
@@ -11674,7 +11660,6 @@ body,
   }
 }
 
-/* Final table action and insight layout fixes. */
 .overflow-actions-backdrop {
   position: fixed;
   inset: 0;
@@ -11939,7 +11924,6 @@ body,
   }
 }
 
-/* Final sticky column borders and sober status colors. */
 #root .asset-table td,
 #root .booking-table td {
   position: relative;
@@ -12022,7 +12006,6 @@ body,
   padding: 5px 8px !important;
 }
 
-/* Final asset insight chart polish. */
 #root .asset-insight-donut {
   border-radius: 9999px !important;
   cursor: help;
@@ -12045,7 +12028,6 @@ body,
   border-radius: 9999px !important;
 }
 
-/* Final production polish: consistent empty states, quieter reload skeleton, and help page tone. */
 #root,
 #root * {
   font-family:
@@ -12295,7 +12277,6 @@ body,
   }
 }
 
-/* Dashboard and navigation depth pass. */
 #root .dashboard-command-center {
   align-items: center !important;
   box-sizing: border-box !important;
@@ -12457,15 +12438,6 @@ body,
   }
 }
 
-/* ==========================================================================
-   QLVT HERO SECTION
-   Gom toàn bộ override chính của các hero tại đây để dễ chỉnh giao diện.
-   - Dashboard: .dashboard-command-center, .dashboard-hero-copy, pattern-*
-   - Help: .help-hero
-   - Booking: .booking-hero, .booking-hero-metrics
-   ========================================================================== */
-
-/* --- KEYFRAMES CHO CHUYỂN ĐỘNG NHANH & LIÊN TỤC --- */
 @keyframes pan-grid {
   0% {
     background-position:
@@ -12519,8 +12491,6 @@ body,
   }
 }
 
-/* --- DASHBOARD HERO CHÍNH --- */
-/* --- KEYFRAMES MƯỢT MÀ, KHÔNG GIẬT LẮC --- */
 /* Di chuyển background phải là bội số của background-size (100px và 20px) để loop hoàn hảo */
 @keyframes blueprint-scroll {
   0% {
@@ -12585,7 +12555,6 @@ body,
   }
 }
 
-/* --- DASHBOARD HERO CHÍNH --- */
 #root .dashboard-command-center {
   align-items: center !important;
   min-height: 230px !important;
@@ -12667,7 +12636,6 @@ body,
   );
 }
 
-/* --- BẢO VỆ NỘI DUNG CHỮ --- */
 #root .dashboard-hero-copy {
   position: relative;
   z-index: 2;
@@ -12698,7 +12666,6 @@ body,
   text-shadow: 0 0 8px rgba(255, 255, 255, 0.9) !important;
 }
 
-/* --- HỌA TIẾT ABSTRACT (XÂY DỰNG/ĐO ĐẠC) --- */
 #root .dashboard-hero-pattern {
   display: block !important;
   position: absolute;
@@ -12780,9 +12747,6 @@ body,
   border-radius: 50%;
   animation: pulse-ring-smooth 4s infinite alternate ease-in-out;
 }
-/*
-  DASHBOARD END
-*/
 #root .help-hero {
   min-height: 82px !important;
   border: 1px solid #d7dde5 !important;
@@ -12919,7 +12883,6 @@ body,
   color: var(--text-muted);
 }
 
-/* Added cell borders as requested */
 #root .asset-table th,
 #root .asset-table td {
   border: 1px solid #cbd5e1 !important;
@@ -12930,7 +12893,6 @@ body,
   vertical-align: middle !important;
 }
 
-/* Booking table borders + Sticky column border fixes */
 #root .booking-table th,
 #root .booking-table td {
   border: 1px solid #cbd5e1 !important;
@@ -12953,7 +12915,6 @@ body,
     10px 0 14px -16px rgba(15, 23, 42, 0.55) !important;
 }
 
-/* Override all Status Badge backgrounds */
 #root .badge {
   background: transparent !important;
   padding: 0 !important;
@@ -12980,7 +12941,6 @@ body,
   z-index: 60 !important;
 }
 
-/* Fix Table Stacking Contexts */
 #root .asset-table thead,
 #root .booking-table thead {
   position: sticky !important;
@@ -12994,12 +12954,10 @@ body,
   z-index: 1 !important;
 }
 
-/* Ensure empty row doesn't break z-index */
 #root .asset-table-empty-row td {
   z-index: 1 !important;
 }
 
-/* Override all .status-badge backgrounds */
 #root .status-badge {
   background: transparent !important;
   padding: 0 !important;
@@ -13012,7 +12970,6 @@ body,
   background: transparent !important;
 }
 
-/* Fix Import Preview Scrolling */
 #root .asset-import-preview {
   width: 100% !important;
   max-width: 100% !important;
@@ -13021,7 +12978,6 @@ body,
   overflow: auto !important;
 }
 
-/* Fix Note Truncation */
 #root .asset-import-message-cell {
   max-width: 250px !important;
 }
@@ -13034,7 +12990,6 @@ body,
   text-overflow: ellipsis;
 }
 
-/* Fix overlap between file row and summary */
 #root .asset-import-body {
   display: flex !important;
   flex-direction: column !important;
@@ -13067,24 +13022,22 @@ body,
   flex: 1 1 auto !important;
 }
 
-/* Colorize the summary statistics */
 #root .asset-import-summary > div:nth-child(2) strong {
-  color: #16a34a !important; /* Bright Green */
+  color: #16a34a !important;
   background: transparent !important;
-  font-weight: 600 !important; /* Valid: Green */
+  font-weight: 600 !important;
 }
 #root .asset-import-summary > div:nth-child(3) strong {
   color: #ef4444 !important; /* Red */
   background: transparent !important;
-  font-weight: 600 !important; /* Error: Red */
+  font-weight: 600 !important;
 }
 #root .asset-import-summary > div:nth-child(4) strong {
-  color: #f59e0b !important; /* Warning: Yellow */
+  color: #f59e0b !important;
 }
 
 /* Start from left so sticky left: 0 works immediately */
 
-/* Revert table aesthetics and reduce padding */
 #root .asset-table td,
 #root .booking-table td,
 #root .asset-table td.asset-table-sticky-left,
@@ -13102,18 +13055,13 @@ body,
   padding: 6px 8px !important;
 }
 
-/* Financial totals and prominent blue statuses */
 #root .text-primary,
 #root .text-blue-500,
 #root .text-blue-600,
 #root .text-blue-700 {
-  color: #2563eb !important; /* Brighter, vibrant blue */
+  color: #2563eb !important;
 }
 
-/* Make blue badges brighter but text-only as requested previously */
-/* Empty state styling */
-
-/* Asset list compact rows and text-only status colors. */
 #root .asset-table td,
 #root .asset-table td.asset-table-sticky-left,
 #root .asset-table td.asset-table-sticky-right,
@@ -13140,7 +13088,6 @@ body,
   color: #64748b !important;
 }
 
-/* FORCE STATUS COLORS ACROSS ALL TABLES */
 #root .badge.badge-in_stock,
 #root .badge.badge-confirmed,
 #root .badge.badge-approved {
