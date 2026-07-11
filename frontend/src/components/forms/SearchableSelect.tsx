@@ -96,6 +96,9 @@ export function SearchableSelect({
         <input
           ref={inputRef}
           type="text"
+          role="combobox"
+          aria-expanded={open}
+          aria-autocomplete="list"
           className="searchable-select-input"
           value={displayValue}
           onChange={(e) => {
