@@ -71,9 +71,9 @@ interface AppDataContextValue {
   projects: ProjectLite[];
   loading: boolean;
   error: string;
-  refresh: () => Promise<void>;
+  refresh: (silent?: boolean) => Promise<void>;
   ensureDashboard: () => Promise<void>;
-  ensureAssets: (force?: boolean) => Promise<void>;
+  ensureAssets: (force?: boolean, silent?: boolean) => Promise<void>;
   ensureVendors: () => Promise<void>;
   ensureSubscriptions: () => Promise<void>;
   ensureRequests: () => Promise<void>;
@@ -187,8 +187,12 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   );
 
   const ensureAssets = useCallback(
-    (force = false) =>
-      loadKeys(force ? ["assets"] : ["assets", "employees", "departments", "workSites"], force),
+    (force = false, silent = false) =>
+      loadKeys(
+        force ? ["assets"] : ["assets", "employees", "departments", "workSites"],
+        force,
+        silent,
+      ),
     [loadKeys],
   );
 
@@ -205,14 +209,17 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     [loadKeys],
   );
 
-  const refresh = useCallback(async () => {
-    const loadedKeys = Array.from(loadedRef.current);
-    if (loadedKeys.length === 0) {
-      await ensureDashboard();
-      return;
-    }
-    await loadKeys(loadedKeys, true);
-  }, [ensureDashboard, loadKeys]);
+  const refresh = useCallback(
+    async (silent = true) => {
+      const loadedKeys = Array.from(loadedRef.current);
+      if (loadedKeys.length === 0) {
+        await ensureDashboard();
+        return;
+      }
+      await loadKeys(loadedKeys, true, silent);
+    },
+    [ensureDashboard, loadKeys],
+  );
 
   const clearError = useCallback(() => setErrorState(""), []);
   const setError = useCallback((message: string) => setErrorState(message), []);
