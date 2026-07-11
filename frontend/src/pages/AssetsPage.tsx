@@ -2314,7 +2314,9 @@ export function AssetsPage() {
                     >
                       <option value="">Chọn thao tác</option>
                       <option value="status">Cập nhật trạng thái</option>
-
+                      <option value="move">Chuyển vị trí</option>
+                      <option value="assign">Cấp phát</option>
+                      <option value="return">Thu hồi</option>
                       <option value="qr" disabled>
                         In QR theo nhóm
                       </option>
