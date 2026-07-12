@@ -1,4 +1,4 @@
-import type { KeyboardEvent } from "react";
+import { type KeyboardEvent, useState } from "react";
 import { employeeLabel, projectLabel } from "../../lib/format";
 import type {
   DepartmentLite,
@@ -7,6 +7,7 @@ import type {
   Vendor,
   WorkSiteLite,
 } from "../../services/types";
+import { SearchableSelect } from "./SearchableSelect";
 
 interface FieldProps {
   label: string;
@@ -14,25 +15,70 @@ interface FieldProps {
   onChange: (value: string) => void;
   type?: string;
   required?: boolean;
+  disabled?: boolean;
+  placeholder?: string;
 }
 
-export function Field({ label, value, onChange, type = "text", required = false }: FieldProps) {
+export function Field({
+  label,
+  value,
+  onChange,
+  type = "text",
+  required = false,
+  disabled = false,
+  placeholder,
+}: FieldProps) {
   const isNumber = type === "number";
+  const isCurrency = type === "currency";
+  const [isFocused, setIsFocused] = useState(false);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let val = e.target.value;
+    if (isNumber) {
+      val = normalizeNumberInput(val);
+    } else if (isCurrency) {
+      val = val.replace(/[^0-9]/g, "");
+    }
+    onChange(val);
+  };
+
+  const displayValue =
+    isCurrency && value && !isFocused ? Number(value).toLocaleString("en-US") : value || "";
 
   return (
     <label>
       <FormLabel required={required}>{label}</FormLabel>
-      <input
-        value={value || ""}
-        onChange={(event) =>
-          onChange(isNumber ? normalizeNumberInput(event.target.value) : event.target.value)
-        }
-        onKeyDown={isNumber ? blockNumberTextInput : undefined}
-        type={isNumber ? "text" : type}
-        inputMode={isNumber ? "decimal" : undefined}
-        autoCapitalize="none"
-        required={required}
-      />
+      <div style={{ position: "relative" }}>
+        <input
+          value={displayValue}
+          onChange={handleChange}
+          onKeyDown={isNumber ? blockNumberTextInput : undefined}
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => setIsFocused(false)}
+          type={isCurrency ? "text" : isNumber ? "text" : type}
+          inputMode={isNumber || isCurrency ? "decimal" : undefined}
+          autoCapitalize="none"
+          required={required}
+          disabled={disabled}
+          placeholder={placeholder}
+          style={isCurrency ? { paddingRight: "30px", width: "100%" } : { width: "100%" }}
+        />
+        {isCurrency && (
+          <span
+            style={{
+              position: "absolute",
+              right: "10px",
+              top: "50%",
+              transform: "translateY(-50%)",
+              color: "#6b7280",
+              fontWeight: 700,
+              fontSize: "12px",
+            }}
+          >
+            đ
+          </span>
+        )}
+      </div>
     </label>
   );
 }
@@ -49,17 +95,11 @@ export function Select({ label, value, onChange, options, required = false }: Se
   return (
     <label>
       <FormLabel required={required}>{label}</FormLabel>
-      <select
+      <SearchableSelect
         value={value || options[0]?.[0] || ""}
-        onChange={(event) => onChange(event.target.value)}
-        required={required}
-      >
-        {options.map(([key, labelText]) => (
-          <option key={key} value={key}>
-            {labelText}
-          </option>
-        ))}
-      </select>
+        onChange={onChange}
+        options={options.map(([k, v]) => ({ value: k, label: v }))}
+      />
     </label>
   );
 }
@@ -76,14 +116,14 @@ export function VendorSelect({
   return (
     <label>
       <FormLabel>Nhà cung cấp</FormLabel>
-      <select value={value || ""} onChange={(event) => onChange(event.target.value)}>
-        <option value="">Không chọn</option>
-        {vendors.map((vendor) => (
-          <option key={vendor.id} value={vendor.id}>
-            {vendor.name}
-          </option>
-        ))}
-      </select>
+      <SearchableSelect
+        value={value || ""}
+        onChange={onChange}
+        options={[
+          { value: "", label: "Không chọn" },
+          ...vendors.map((v) => ({ value: String(v.id), label: v.name })),
+        ]}
+      />
     </label>
   );
 }
@@ -100,14 +140,15 @@ export function EmployeeSelect({
   return (
     <label>
       <FormLabel>Nhân viên sử dụng</FormLabel>
-      <select value={value || ""} onChange={(event) => onChange(event.target.value)}>
-        <option value="">Không gán</option>
-        {employees.map((employee) => (
-          <option key={employee.id} value={employee.id}>
-            {employeeLabel(employee)}
-          </option>
-        ))}
-      </select>
+      <SearchableSelect
+        value={value || ""}
+        onChange={onChange}
+        placeholder="Không gán"
+        options={[
+          { value: "", label: "Không gán" },
+          ...employees.map((e) => ({ value: String(e.id), label: employeeLabel(e) })),
+        ]}
+      />
     </label>
   );
 }
@@ -124,14 +165,14 @@ export function DepartmentSelect({
   return (
     <label>
       <FormLabel>Phòng ban</FormLabel>
-      <select value={value || ""} onChange={(event) => onChange(event.target.value)}>
-        <option value="">Không chọn</option>
-        {departments.map((department) => (
-          <option key={department.id} value={department.id}>
-            {department.name}
-          </option>
-        ))}
-      </select>
+      <SearchableSelect
+        value={value || ""}
+        onChange={onChange}
+        options={[
+          { value: "", label: "Không chọn" },
+          ...departments.map((d) => ({ value: String(d.id), label: d.name })),
+        ]}
+      />
     </label>
   );
 }
@@ -148,14 +189,14 @@ export function WorkSiteSelect({
   return (
     <label>
       <FormLabel>Site làm việc</FormLabel>
-      <select value={value || ""} onChange={(event) => onChange(event.target.value)}>
-        <option value="">Không chọn</option>
-        {workSites.map((site) => (
-          <option key={site.id} value={site.id}>
-            {site.name}
-          </option>
-        ))}
-      </select>
+      <SearchableSelect
+        value={value || ""}
+        onChange={onChange}
+        options={[
+          { value: "", label: "Không chọn" },
+          ...workSites.map((s) => ({ value: String(s.id), label: s.name })),
+        ]}
+      />
     </label>
   );
 }
@@ -172,14 +213,14 @@ export function ProjectSelect({
   return (
     <label>
       <FormLabel>Dự án CDS</FormLabel>
-      <select value={value || ""} onChange={(event) => onChange(event.target.value)}>
-        <option value="">Không chọn</option>
-        {projects.map((project) => (
-          <option key={project.id} value={project.id}>
-            {projectLabel(project)}
-          </option>
-        ))}
-      </select>
+      <SearchableSelect
+        value={value || ""}
+        onChange={onChange}
+        options={[
+          { value: "", label: "Không chọn" },
+          ...projects.map((p) => ({ value: String(p.id), label: projectLabel(p) })),
+        ]}
+      />
     </label>
   );
 }

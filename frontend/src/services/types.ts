@@ -215,6 +215,9 @@ export interface AssetPayload {
   capacityUnit?: string;
   realCapacity?: number | null;
   technicalDescription?: string;
+  disposalDate?: string;
+  disposalPrice?: number | null;
+  disposalReason?: string;
 }
 
 export interface AssetImportRowPayload {

@@ -207,7 +207,7 @@ export function LoginPage() {
           <span className="corner corner-br" />
 
           <div className="login-logo">
-            <img src="https://bimlab.com.vn/assets/img/bimlab-logo.png" alt="BIMLab" />
+            <img src="/full_dark.png" alt="BIMLab" />
           </div>
           <p className="login-subtitle">HỆ THỐNG QUẢN LÝ TÀI SẢN</p>
 
