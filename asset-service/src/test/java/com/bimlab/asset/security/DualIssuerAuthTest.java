@@ -38,7 +38,6 @@ class DualIssuerAuthTest {
 
     private static final boolean KEYCLOAK = true;   // resolveFromApi=true
 
-    // ── KEYCLOAK (resolveFromApi=true): LUÔN resolve role; bỏ qua claim ──
     @Test
     void converter_keycloak_resolvesRole() {
         RecordingResolver resolver = new RecordingResolver(List.of("asset_manage", "asset_view_all"));
@@ -100,7 +99,6 @@ class DualIssuerAuthTest {
         assertEquals(Set.of(), authStrings(auth));
     }
 
-    // ── AudienceValidator: nhánh Keycloak ────────────────────────────────
     @Test
     void audience_pass_whenContainsRequired() {
         Jwt token = jwt(Jwt.withTokenValue("x").subject("a").audience(List.of("asset-service")));
@@ -115,7 +113,6 @@ class DualIssuerAuthTest {
         assertEquals(true, r.hasErrors());
     }
 
-    // ── AzpValidator: hardening nhánh Keycloak (allowed client = qlvt) ────
     @Test
     void azp_pass_whenAllowedClient() {
         Jwt token = jwt(Jwt.withTokenValue("x").subject("a").claim("azp", "qlvt"));

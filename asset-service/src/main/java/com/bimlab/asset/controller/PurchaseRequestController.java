@@ -33,7 +33,7 @@ public class PurchaseRequestController {
         return service.listPurchaseRequests().stream().map(mapper::toResponse).toList();
     }
 
-    // N4: paginated list — backward-compatible with legacy GET (no /paged) which still returns List<PurchaseRequest>.
+    // Legacy GET without /paged remains compatible and returns List<PurchaseRequest>.
     @GetMapping("/paged")
     @PreAuthorize("hasAnyAuthority('asset_access','asset_view_self','asset_view_team','asset_view_all','asset_manage','asset_finance_manage')")
     public Page<PurchaseRequestResponse> listPaged(@PageableDefault(size = 20) Pageable pageable) {
@@ -41,7 +41,7 @@ public class PurchaseRequestController {
     }
 
 
-    // F1: requester can see own PR; otherwise admin perm required.
+    // Requester can see own PR; otherwise admin permission required.
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyAuthority('asset_access','asset_view_self','asset_view_team','asset_view_all','asset_manage','asset_finance_manage')")
     public PurchaseRequestResponse get(@PathVariable Long id) {
@@ -50,8 +50,8 @@ public class PurchaseRequestController {
         return mapper.toResponse(pr);
     }
 
-    // F4: server stamps requesterEmployeeId from the JWT principal; status forced PENDING.
-    // Q2: always call the 2-arg form — the 1-arg overload is deprecated to avoid
+    // Server stamps requesterEmployeeId from the JWT principal; status forced PENDING.
+    // Always call the 2-arg form; the 1-arg overload is deprecated to avoid
     // accidental null-requester writes that would corrupt the audit trail.
     @PostMapping
     @PreAuthorize("hasAnyAuthority('purchase_request_create','asset_manage')")

@@ -290,6 +290,12 @@ describe("QLVT pages", () => {
     await renderRoute(path, text);
   });
 
+  it("lists upcoming bookings on the dashboard", async () => {
+    await renderRoute("/dashboard", "Hệ thống quản lý tài sản");
+    expect(await screen.findByText("Họp điều phối")).toBeVisible();
+    expect(screen.getByText(/20-07 · /)).toBeVisible();
+  });
+
   it("creates and deletes a vendor from the vendors route", async () => {
     const user = userEvent.setup();
     await renderRoute("/vendors", "Công ty Thiết bị BIM");

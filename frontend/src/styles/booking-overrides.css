@@ -300,7 +300,6 @@
   }
 }
 
-/* Align booking with QLVT enterprise density overrides. */
 .booking-page .panel,
 .booking-form-panel,
 .booking-flow-panel,
@@ -345,7 +344,6 @@
   font-size: 11.5px;
 }
 
-/* Booking list and calendar now follow the same dense QLVT table language as Assets. */
 .booking-calendar-panel {
   position: relative;
 }
@@ -710,7 +708,6 @@
   }
 }
 
-/* Compact calendar rewrite: month = dense grid, week/day = agenda timeline. */
 .booking-page .asset-column-backdrop,
 .booking-page .asset-column-backdrop:hover,
 .booking-page .asset-column-backdrop:focus,
@@ -995,7 +992,6 @@
   }
 }
 
-/* Final booking calendar polish: quick filters, selected day, status colors and robust sticky columns. */
 .booking-calendar-filter-row {
   display: grid;
   grid-template-columns: minmax(140px, 0.55fr) minmax(220px, 1.2fr) minmax(160px, 0.75fr);
@@ -1420,7 +1416,6 @@
   width: 100%;
 }
 
-/* Google Calendar style booking surface: left mini calendar + fixed-height time grid. */
 .booking-calendar-shell {
   display: grid;
   grid-template-columns: 228px minmax(0, 1fr);
@@ -1912,7 +1907,6 @@
   gap: 5px !important;
 }
 
-/* Booking UX consolidation: compact controls, light hover and overlap-safe events. */
 .booking-page .booking-layout {
   grid-template-columns: minmax(360px, 0.85fr) minmax(330px, 1.15fr) !important;
   gap: 6px !important;
@@ -2018,7 +2012,6 @@
   }
 }
 
-/* Final dense booking layout pass. */
 .booking-page .booking-layout {
   grid-template-columns: minmax(0, 7fr) minmax(280px, 3fr) !important;
   gap: 4px !important;
@@ -2201,7 +2194,6 @@
   background: #f8fbff !important;
 }
 
-/* Ultimate booking table lock. Keep this at EOF: only booking, room, actions are fixed. */
 #root .booking-table {
   isolation: isolate !important;
   overflow: hidden !important;
@@ -2330,7 +2322,6 @@
   background: #f8fbff !important;
 }
 
-/* Definitive booking table contract: only booking, room and actions are fixed. */
 #root .booking-table th,
 #root .booking-table td {
   position: relative !important;
@@ -2417,7 +2408,6 @@
   background: #f8fbff !important;
 }
 
-/* Final booking sticky correction. This file is loaded after app.css. */
 #root .booking-table {
   isolation: isolate !important;
 }
@@ -2526,7 +2516,6 @@
   background: #f8fbff !important;
 }
 
-/* EOF booking table contract: do not add booking table overrides below this block. */
 #root .booking-table {
   isolation: isolate !important;
   overflow: hidden !important;
@@ -2631,7 +2620,6 @@
   background: #f8fbff !important;
 }
 
-/* EOF booking calendar/list sync. Calendar uses the same visual surface as booking list. */
 #root .booking-calendar-panel {
   border-color: #d7dde5 !important;
   background: #ffffff !important;

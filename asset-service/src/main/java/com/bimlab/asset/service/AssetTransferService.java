@@ -18,17 +18,9 @@ import java.util.List;
 import java.util.NoSuchElementException;
 
 /**
- * Q2: AssetTransfer domain split from the original
- * {@code AssetManagementService}. Owns Transfer CRUD.
- *
- * <p>Transaction note (Q2 risk R1): {@link #createTransfer} writes BOTH the
- * transfer row AND (conditionally) the parent {@link AssetItem}'s
- * assignment fields under a single {@code @Transactional} boundary. We
- * inject {@link AssetItemRepository} directly for that write rather than
- * routing through {@link AssetService}, which keeps the existing
- * transactional behaviour identical to the pre-split monolith. Reading the
- * asset still routes through {@link AssetService#getAsset(Long)} for
- * consistent {@code NoSuchElementException} messaging.
+ * {@link #createTransfer} writes the transfer and parent asset assignment under
+ * one {@code @Transactional} boundary. The asset write uses
+ * {@link AssetItemRepository} directly to remain in that transaction.
  */
 @Service
 @RequiredArgsConstructor

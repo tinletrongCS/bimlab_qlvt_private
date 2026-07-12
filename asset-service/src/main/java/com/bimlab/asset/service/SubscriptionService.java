@@ -14,11 +14,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.NoSuchElementException;
 
-/**
- * Q2: Subscription domain split from the original {@code AssetManagementService}.
- * Owns Subscription CRUD. Depends on {@link VendorService} for the
- * {@code vendorId → Vendor} resolution inside {@link #applySubscription}.
- */
 @Service
 @RequiredArgsConstructor
 public class SubscriptionService {
