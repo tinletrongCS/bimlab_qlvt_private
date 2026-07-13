@@ -28,7 +28,7 @@ public class VendorController {
         return service.listVendors().stream().map(mapper::toResponse).toList();
     }
 
-    // N4: paginated list — backward-compatible with legacy GET (no /paged) which still returns List<Vendor>.
+    // Legacy GET without /paged remains compatible and returns List<Vendor>.
     @GetMapping("/paged")
     @PreAuthorize("hasAnyAuthority('asset_access','asset_view_self','asset_view_team','asset_view_all','asset_manage','asset_finance_manage')")
     public Page<VendorResponse> listPaged(@PageableDefault(size = 20) Pageable pageable) {
@@ -36,7 +36,7 @@ public class VendorController {
     }
 
 
-    // F1: Vendor is master data — admin perms only (Q1 flattened gate).
+    // Vendor is master data; admin permissions only.
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyAuthority('vendor_manage','asset_manage','asset_view_all')")
     public VendorResponse get(@PathVariable Long id) {

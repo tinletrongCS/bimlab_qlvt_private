@@ -14,7 +14,7 @@ export function ProtectedRoute({ children, permission }: ProtectedRouteProps) {
   const location = useLocation();
 
   if (bootstrapping) {
-    return <LoadingSkeleton />;
+    return <LoadingSkeleton variant="login" />;
   }
 
   if (!user) {

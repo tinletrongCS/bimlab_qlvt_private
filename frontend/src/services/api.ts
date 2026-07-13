@@ -1,14 +1,23 @@
 import axios from "axios";
 import { getAccessToken } from "../auth/oidc";
 import type {
-  AssetItem,
+  AssetBooking,
+  AssetBookingAvailability,
+  AssetBookingCancelPayload,
+  AssetBookingCheckoutPayload,
+  AssetBookingPayload,
+  AssetCategory,
+  AssetCategoryImportCommitPayload,
+  AssetCategoryImportCommitResponse,
+  AssetCategoryImportRowPayload,
+  AssetCategoryImportValidationResponse,
+  AssetCategoryPayload,
+  AssetCategoryTree,
   AssetImportCommitPayload,
   AssetImportCommitResponse,
   AssetImportRowPayload,
   AssetImportValidationResponse,
-  AssetCategory,
-  AssetCategoryPayload,
-  AssetCategoryTree,
+  AssetItem,
   AssetPayload,
   AssetTransfer,
   AssetTransferPayload,
@@ -163,9 +172,7 @@ export async function loadAssetCategoryTree(): Promise<AssetCategoryTree[]> {
   return response.data;
 }
 
-export async function createAssetCategory(
-  payload: AssetCategoryPayload,
-): Promise<AssetCategory> {
+export async function createAssetCategory(payload: AssetCategoryPayload): Promise<AssetCategory> {
   const response = await api.post<AssetCategory>("/asset/categories", payload);
   return response.data;
 }
@@ -180,6 +187,26 @@ export async function updateAssetCategory(
 
 export async function deleteAssetCategory(id: number): Promise<void> {
   await api.delete(`/asset/categories/${id}`);
+}
+
+export async function validateAssetCategoryImport(
+  rows: AssetCategoryImportRowPayload[],
+): Promise<AssetCategoryImportValidationResponse> {
+  const response = await api.post<AssetCategoryImportValidationResponse>(
+    "/asset/categories/import/validate",
+    { rows },
+  );
+  return response.data;
+}
+
+export async function commitAssetCategoryImport(
+  payload: AssetCategoryImportCommitPayload,
+): Promise<AssetCategoryImportCommitResponse> {
+  const response = await api.post<AssetCategoryImportCommitResponse>(
+    "/asset/categories/import",
+    payload,
+  );
+  return response.data;
 }
 
 export async function loadDepreciation(id: number): Promise<DepreciationSnapshot> {
@@ -315,6 +342,53 @@ export async function createTransfer(payload: AssetTransferPayload): Promise<Ass
 
 export async function deleteTransfer(id: number): Promise<void> {
   await api.delete(`/asset/transfers/${id}`);
+}
+
+export async function loadAssetBookings(params?: {
+  assetId?: number;
+  status?: string;
+  fromTime?: string;
+  toTime?: string;
+}): Promise<AssetBooking[]> {
+  const response = await api.get<AssetBooking[]>("/asset/bookings", { params });
+  return response.data;
+}
+
+export async function checkAssetBookingAvailability(params: {
+  assetCode: string;
+  startTime: string;
+  endTime: string;
+}): Promise<AssetBookingAvailability> {
+  const response = await api.get<AssetBookingAvailability>("/asset/bookings/availability", {
+    params,
+  });
+  return response.data;
+}
+
+export async function createAssetBooking(payload: AssetBookingPayload): Promise<AssetBooking> {
+  const response = await api.post<AssetBooking>("/asset/bookings", payload);
+  return response.data;
+}
+
+export async function checkInAssetBooking(id: number): Promise<AssetBooking> {
+  const response = await api.post<AssetBooking>(`/asset/bookings/${id}/check-in`);
+  return response.data;
+}
+
+export async function checkOutAssetBooking(
+  id: number,
+  payload: AssetBookingCheckoutPayload,
+): Promise<AssetBooking> {
+  const response = await api.post<AssetBooking>(`/asset/bookings/${id}/check-out`, payload);
+  return response.data;
+}
+
+export async function cancelAssetBooking(
+  id: number,
+  payload: AssetBookingCancelPayload,
+): Promise<AssetBooking> {
+  const response = await api.post<AssetBooking>(`/asset/bookings/${id}/cancel`, payload);
+  return response.data;
 }
 
 export async function loadEmployees(): Promise<EmployeeLite[]> {

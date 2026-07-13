@@ -113,13 +113,20 @@ function FloatingShapes() {
 }
 
 export function LoginPage() {
-  // Keycloak-only: đăng nhập qua SSO (Authorization Code + PKCE) — không còn form username/password.
+  // Keycloak-only: đăng nhập qua SSO (Authorization Code + PKCE) -- không còn form username/password.
   const { user, bootstrapping, login, loginError, submitting } = useAuth();
   const location = useLocation();
   const loginSceneRef = useRef<HTMLDivElement>(null);
   const hasAnimated = useRef(false);
+  const hasStartedLogin = useRef(false);
 
   const redirectTo = (location.state as LocationState | null)?.from?.pathname || "/dashboard";
+
+  useEffect(() => {
+    if (user || bootstrapping || submitting || hasStartedLogin.current) return;
+    hasStartedLogin.current = true;
+    void login();
+  }, [user, bootstrapping, submitting, login]);
 
   useEffect(() => {
     if (user || bootstrapping || hasAnimated.current || !loginSceneRef.current) return;
@@ -200,7 +207,7 @@ export function LoginPage() {
           <span className="corner corner-br" />
 
           <div className="login-logo">
-            <img src="https://bimlab.com.vn/assets/img/bimlab-logo.png" alt="BIMLab" />
+            <img src="/full_dark.png" alt="BIMLab" />
           </div>
           <p className="login-subtitle">HỆ THỐNG QUẢN LÝ TÀI SẢN</p>
 

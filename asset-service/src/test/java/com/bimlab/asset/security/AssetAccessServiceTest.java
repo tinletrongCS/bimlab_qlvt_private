@@ -72,8 +72,6 @@ class AssetAccessServiceTest {
         assertFalse(access.hasAnyPermission(Permission.ASSET_MANAGE));
     }
 
-    // ── ensureSelfOrAny ───────────────────────────────────────────────────
-
     @Test
     void ensureSelfOrAny_pass_whenAdminPermission() {
         authenticateAs(99L, Permission.ASSET_MANAGE);
@@ -118,8 +116,6 @@ class AssetAccessServiceTest {
                 () -> access.ensureSelfOrAny(42L, Set.of(Permission.ASSET_MANAGE)));
     }
 
-    // ── ensurePartyOrAny ──────────────────────────────────────────────────
-
     @Test
     void ensurePartyOrAny_pass_whenCallerIsFromParty() {
         authenticateAs(7L, Permission.ASSET_VIEW_SELF);
@@ -145,8 +141,6 @@ class AssetAccessServiceTest {
                 () -> access.ensurePartyOrAny(7L, 99L, Set.of(Permission.ASSET_MANAGE)));
     }
 
-    // ── ensureAccess ──────────────────────────────────────────────────────
-
     @Test
     void ensureAccess_deny_whenUnauthenticated() {
         assertThrows(AccessDeniedException.class, access::ensureAccess);
@@ -164,7 +158,6 @@ class AssetAccessServiceTest {
         assertThrows(AccessDeniedException.class, access::ensureAccess);
     }
 
-    // ── ensureXxx: Q1 new coverage for previously-untested gates ─────────
 
     @Test
     void ensureAssetManage_pass_whenAssetManage() {

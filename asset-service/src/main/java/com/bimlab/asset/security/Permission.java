@@ -3,7 +3,7 @@ package com.bimlab.asset.security;
 import java.util.Set;
 
 /**
- * Q1: Type-safe enumeration of every QLVT permission authority that may
+ * Type-safe enumeration of every QLVT permission authority that may
  * appear in the {@code permissions} claim of a JWT. The {@link #code()}
  * value is the wire-format authority string (matched against
  * {@code SimpleGrantedAuthority.getAuthority()}).
@@ -11,11 +11,6 @@ import java.util.Set;
  * <p>Every {@code @PreAuthorize} expression in QLVT controllers references
  * a literal that is locked against this enum via {@code PermissionTest}.
  * Adding or renaming a value without updating that test will fail the build.
- *
- * <p><b>Note on {@code asset_assign}:</b> the QLVT frontend declares an
- * {@code asset_assign} permission in {@code types.ts} but no backend
- * endpoint enforces it today. The enum is the BE source of truth; the FE
- * drift is tracked as a Q1.5 follow-up.
  */
 public enum Permission {
     ASSET_ACCESS("asset_access"),
@@ -24,6 +19,7 @@ public enum Permission {
     ASSET_VIEW_ALL("asset_view_all"),
     ASSET_MANAGE("asset_manage"),
     ASSET_FINANCE_MANAGE("asset_finance_manage"),
+    ASSET_FINANCE_VIEW("asset_finance_view"),
     ASSET_REPORT_VIEW("asset_report_view"),
     VENDOR_MANAGE("vendor_manage"),
     SUBSCRIPTION_MANAGE("subscription_manage"),
@@ -67,6 +63,14 @@ public enum Permission {
 
         public static final Set<Permission> ASSET_ADMIN = Set.of(
                 ASSET_VIEW_TEAM, ASSET_VIEW_ALL, ASSET_MANAGE, ASSET_FINANCE_MANAGE);
+
+        /**
+         * Ai được thấy dữ liệu tài chính của tài sản (nguyên giá, khấu hao,
+         * giá trị sổ sách...). {@code asset_manage} nằm trong set vì người
+         * quản lý tài sản nhập/sửa các trường tiền tệ khi tạo và cập nhật.
+         */
+        public static final Set<Permission> FINANCE_VIEWERS = Set.of(
+                ASSET_FINANCE_VIEW, ASSET_FINANCE_MANAGE, ASSET_MANAGE);
 
         public static final Set<Permission> TRANSFER_ADMIN = ASSET_ADMIN;
 

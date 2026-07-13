@@ -13,10 +13,17 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class AssetMapper {
-    /*
-    TODO Chú ý trong controller lúc gọi API không trả thằng về trong model
-     */
     public AssetResponse toResponse(AssetItem asset) {
+        return toResponse(asset, true);
+    }
+
+    /**
+     * Map asset → response, che các trường tiền tệ khi caller không có quyền
+     * xem tài chính ({@code Permission.Sets.FINANCE_VIEWERS}). Các trường bị
+     * che trả về null: nguyên giá, giá mua, khấu hao lũy kế, giá trị sổ sách,
+     * giá trị còn lại, tỷ lệ khấu hao, giá thanh lý.
+     */
+    public AssetResponse toResponse(AssetItem asset, boolean includeFinance) {
         return new AssetResponse(
                 asset.getId(),
                 asset.getAssetCode(),
@@ -39,15 +46,15 @@ public class AssetMapper {
                 asset.getUseDate(),
                 asset.getDepreciationStartDate(),
                 asset.getWarrantyUntil(),
-                asset.getOriginalCost(),
-                asset.getPurchaseCost(),
-                asset.getAccumulatedDepreciation(),
-                asset.getBookValue(),
-                asset.getResidualValue(),
+                includeFinance ? asset.getOriginalCost() : null,
+                includeFinance ? asset.getPurchaseCost() : null,
+                includeFinance ? asset.getAccumulatedDepreciation() : null,
+                includeFinance ? asset.getBookValue() : null,
+                includeFinance ? asset.getResidualValue() : null,
                 asset.getDepreciationMethod(),
                 asset.getUsefulLifeMonths(),
                 asset.getUsefulLifeYears(),
-                asset.getDepreciationRate(),
+                includeFinance ? asset.getDepreciationRate() : null,
                 asset.getManufactureYear(),
                 asset.getInstallationYear(),
                 asset.getCountryCode(),
@@ -57,7 +64,7 @@ public class AssetMapper {
                 asset.getTechnicalDescription(),
                 enumName(asset.getStatus()),
                 asset.getDisposalDate(),
-                asset.getDisposalPrice(),
+                includeFinance ? asset.getDisposalPrice() : null,
                 asset.getDisposalReason(),
                 asset.getNotes(),
                 asset.getCreatedAt(),

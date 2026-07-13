@@ -37,14 +37,14 @@ export function ContractsPage() {
             render: (item) => <strong>{item.contractNumber}</strong>,
           },
           { key: "title", title: "Tiêu đề", render: (item) => item.title },
-          { key: "vendor", title: "Nhà cung cấp", render: (item) => item.vendor?.name || "—" },
+          { key: "vendor", title: "Nhà cung cấp", render: (item) => item.vendor?.name || "--" },
           {
             key: "value",
             title: "Giá trị",
             render: (item) => money.format(Number(item.contractValue || 0)),
           },
-          { key: "signDate", title: "Ngày ký", render: (item) => item.signDate || "—" },
-          { key: "effectiveTo", title: "Hiệu lực đến", render: (item) => item.effectiveTo || "—" },
+          { key: "signDate", title: "Ngày ký", render: (item) => item.signDate || "--" },
+          { key: "effectiveTo", title: "Hiệu lực đến", render: (item) => item.effectiveTo || "--" },
           {
             key: "status",
             title: "Trạng thái",

@@ -4,10 +4,12 @@ import { ActionsProvider } from "./contexts/ActionsContext";
 import { AppDataProvider } from "./contexts/AppDataContext";
 import { AuthProvider } from "./contexts/AuthContext";
 import { AppShell } from "./layout/AppShell";
-import { AssetsPage } from "./pages/AssetsPage";
 import { AssetCategoriesPage } from "./pages/AssetCategoriesPage";
+import { AssetsPage } from "./pages/AssetsPage";
+import { BookingPage } from "./pages/BookingPage";
 import { ContractsPage } from "./pages/ContractsPage";
 import { DashboardPage } from "./pages/DashboardPage";
+import { HelpPage } from "./pages/HelpPage";
 import { LoginPage } from "./pages/LoginPage";
 import { MaintenancePage } from "./pages/MaintenancePage";
 import { PurchaseRequestsPage } from "./pages/PurchaseRequestsPage";
@@ -15,13 +17,6 @@ import { SubscriptionsPage } from "./pages/SubscriptionsPage";
 import { TransfersPage } from "./pages/TransfersPage";
 import { VendorsPage } from "./pages/VendorsPage";
 
-/**
- * Q6: thin router shell. State lives in AuthProvider + AppDataProvider +
- * ActionsProvider; each page reads what it needs via the typed hooks.
- * Routes are wrapped in ProtectedRoute so unauthenticated users land on
- * /login and an unauthorized user (missing permission) is bounced to
- * /dashboard.
- */
 function App() {
   return (
     <BrowserRouter>
@@ -102,6 +97,14 @@ function App() {
                   }
                 />
                 <Route
+                  path="/booking"
+                  element={
+                    <ProtectedRoute permission="asset_manage">
+                      <BookingPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
                   path="/transfers"
                   element={
                     <ProtectedRoute permission="asset_manage">
@@ -109,6 +112,7 @@ function App() {
                     </ProtectedRoute>
                   }
                 />
+                <Route path="/help" element={<HelpPage />} />
                 <Route path="/" element={<Navigate to="/dashboard" replace />} />
               </Route>
               <Route path="*" element={<Navigate to="/dashboard" replace />} />

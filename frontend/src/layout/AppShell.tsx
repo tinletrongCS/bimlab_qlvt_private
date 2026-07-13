@@ -3,12 +3,14 @@ import {
   FiBarChart2,
   FiBox,
   FiBriefcase,
+  FiCalendar,
   FiChevronDown,
   FiChevronLeft,
   FiChevronRight,
   FiCreditCard,
   FiFileText,
   FiGrid,
+  FiHelpCircle,
   FiLogOut,
   FiMenu,
   FiRefreshCw,
@@ -18,7 +20,7 @@ import {
   FiTool,
   FiX,
 } from "react-icons/fi";
-import { NavLink, Outlet, useLocation } from "react-router-dom";
+import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { CrudForm } from "../components/forms/CrudForm";
 import { LoadingSkeleton } from "../components/LoadingSkeleton";
 import { UserAvatar } from "../components/UserAvatar";
@@ -60,8 +62,9 @@ const NAV_GROUPS: NavGroup[] = [
     children: [
       { to: "/assets", label: "Danh sách", icon: <FiBox />, permission: "asset_access" },
       { to: "/asset-categories", label: "Danh mục", icon: <FiGrid />, permission: "asset_manage" },
-      { to: "/transfers", label: "Luân chuyển", icon: <FiRepeat />, permission: "asset_manage" },
+      { to: "/transfers", label: "Bàn giao", icon: <FiRepeat />, permission: "asset_manage" },
       { to: "/maintenance", label: "Bảo trì", icon: <FiTool />, permission: "maintenance_manage" },
+      { to: "/booking", label: "Đặt lịch", icon: <FiCalendar />, permission: "asset_manage" },
     ],
   },
   {
@@ -86,6 +89,13 @@ const NAV_GROUPS: NavGroup[] = [
     label: "Gói đăng ký",
     icon: <FiCreditCard />,
     permission: "subscription_manage",
+    children: [],
+  },
+  {
+    key: "help",
+    to: "/help",
+    label: "Hướng dẫn sử dụng",
+    icon: <FiHelpCircle />,
     children: [],
   },
 ];
@@ -116,6 +126,7 @@ export function AppShell() {
   const { loading, error, refresh } = useAppData();
   const { submitting: actionSubmitting } = useActions();
   const location = useLocation();
+  const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [sidebarSearch, setSidebarSearch] = useState("");
@@ -128,6 +139,24 @@ export function AppShell() {
 
   const normalizedSidebarSearch = sidebarSearch.trim().toLowerCase();
   const searchActive = normalizedSidebarSearch.length > 0;
+
+  useEffect(() => {
+    let title = "BIMLab QLVT";
+    if (location.pathname.startsWith("/dashboard")) title = "Tổng quan | BIMLab QLVT";
+    else if (location.pathname.startsWith("/asset-categories"))
+      title = "Danh mục tài sản | BIMLab QLVT";
+    else if (location.pathname.startsWith("/assets")) title = "Danh sách tài sản | BIMLab QLVT";
+    else if (location.pathname.startsWith("/transfers")) title = "Bàn giao tài sản | BIMLab QLVT";
+    else if (location.pathname.startsWith("/maintenance")) title = "Bảo trì tài sản | BIMLab QLVT";
+    else if (location.pathname.startsWith("/booking")) title = "Đặt lịch tài sản | BIMLab QLVT";
+    else if (location.pathname.startsWith("/requests")) title = "Đề nghị mua sắm | BIMLab QLVT";
+    else if (location.pathname.startsWith("/vendors")) title = "Nhà cung cấp | BIMLab QLVT";
+    else if (location.pathname.startsWith("/contracts")) title = "Hợp đồng | BIMLab QLVT";
+    else if (location.pathname.startsWith("/subscriptions")) title = "Gói đăng ký | BIMLab QLVT";
+    else if (location.pathname.startsWith("/help")) title = "Hướng dẫn sử dụng | BIMLab QLVT";
+    document.title = title;
+  }, [location.pathname]);
+
   const permittedGroups = useMemo(
     () =>
       NAV_GROUPS.map((group) => {
@@ -193,8 +222,14 @@ export function AppShell() {
 
   const toggleGroup = (key: string) => setOpenGroups((prev) => ({ ...prev, [key]: !prev[key] }));
 
+  const handleLogout = async () => {
+    // Theo HRM: đợi SSO logout xử lý; nếu Keycloak không redirect thì fallback về /login.
+    await logout();
+    navigate("/login");
+  };
+
   return (
-    <main className="app-shell">
+    <main className={`app-shell ${sidebarCompact ? "sidebar-compact" : ""}`}>
       {mobileOpen && (
         <button
           type="button"
@@ -208,11 +243,11 @@ export function AppShell() {
         <button type="button" className="brand" onClick={() => window.location.reload()}>
           {sidebarCompact ? (
             <span className="brand-compact-mark" aria-hidden="true">
-              <img src="/lgBL.ico" alt="" />
+              <img src="/simple.png" alt="" />
             </span>
           ) : (
             <>
-              <img src="https://bimlab.com.vn/assets/img/bimlab-logo.png" alt="BIMLab" />
+              <img src="/full_dark.png" alt="BIMLab" />
               <p>Quản lý tài sản</p>
             </>
           )}
@@ -331,7 +366,7 @@ export function AppShell() {
           <button
             type="button"
             className="logout-button"
-            onClick={() => void logout()}
+            onClick={handleLogout}
             disabled={authSubmitting}
             title="Đăng xuất"
           >
@@ -368,6 +403,7 @@ export function AppShell() {
         {subnavItems.length > 0 && (
           <div className="section-tabs">
             <nav aria-label="Điều hướng nhóm chức năng QLVT">
+              <span className="section-tabs-parent">{currentGroup?.label}:</span>
               {subnavItems.map((item) => (
                 <NavLink key={item.to} to={item.to}>
                   {item.label}

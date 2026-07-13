@@ -3,6 +3,7 @@ import { type ModalPayload, type ModalState, useActions } from "../../contexts/A
 import { useAppData } from "../../contexts/AppDataContext";
 import { employeeLabel } from "../../lib/format";
 import { CrudModal } from "../CrudModal";
+import { AssetCategoryTreeSelect } from "./AssetCategoryTreeSelect";
 import {
   DepartmentSelect,
   EmployeeSelect,
@@ -90,6 +91,49 @@ function CrudFormInner({
   const [form, setForm] = useState<Record<string, string>>(() => initialForm(modal));
   const setField = (key: string, value: string) => setForm((prev) => ({ ...prev, [key]: value }));
   const titlePrefix = modal.mode === "create" ? "Thêm" : "Cập nhật";
+
+  useEffect(() => {
+    if (form.siteId) {
+      const siteDepts = departments.filter(
+        (d) => String((d as any).siteId) === form.siteId || (d as any).siteId === undefined,
+      );
+      if (form.departmentId && !siteDepts.some((d) => String(d.id) === form.departmentId)) {
+        setField("departmentId", "");
+      }
+    }
+  }, [form.siteId, departments]);
+
+  useEffect(() => {
+    if (form.departmentId) {
+      const deptName = departments.find((d) => String(d.id) === form.departmentId)?.name;
+      const deptEmployees = employees.filter((e) => {
+        if ((e as any).departmentId) return String((e as any).departmentId) === form.departmentId;
+        if (e.departmentName && deptName) return e.departmentName === deptName;
+        return true;
+      });
+      if (
+        form.assignedEmployeeId &&
+        !deptEmployees.some((e) => String(e.id) === form.assignedEmployeeId)
+      ) {
+        setField("assignedEmployeeId", "");
+      }
+    }
+  }, [form.departmentId, employees, departments]);
+
+  const filteredDepartments = form.siteId
+    ? departments.filter(
+        (d) => String((d as any).siteId) === form.siteId || (d as any).siteId === undefined,
+      )
+    : departments;
+
+  const filteredEmployees = form.departmentId
+    ? employees.filter((e) => {
+        const deptName = departments.find((d) => String(d.id) === form.departmentId)?.name;
+        if ((e as any).departmentId) return String((e as any).departmentId) === form.departmentId;
+        if (e.departmentName && deptName) return e.departmentName === deptName;
+        return true;
+      })
+    : employees;
 
   function submit(event: FormEvent) {
     event.preventDefault();
@@ -211,6 +255,7 @@ function CrudFormInner({
       submitting={submitting}
       onClose={onClose}
       onSubmit={submit}
+      wide={modal.type === "asset"}
     >
       {modal.type === "vendor" && (
         <>
@@ -258,115 +303,132 @@ function CrudFormInner({
         </>
       )}
       {modal.type === "asset" && (
-        <>
-          <Field
-            label="Mã tài sản"
-            value={form.assetCode}
-            onChange={(value) => setField("assetCode", value)}
-            required
-          />
-          <Field
-            label="Tên tài sản"
-            value={form.name}
-            onChange={(value) => setField("name", value)}
-            required
-          />
-          <Field
-            label="Nhóm tài sản"
-            value={form.category}
-            onChange={(value) => setField("category", value)}
-            required
-          />
-          <Field
-            label="Serial"
-            value={form.serialNumber}
-            onChange={(value) => setField("serialNumber", value)}
-          />
-          <VendorSelect
-            vendors={vendors}
-            value={form.vendorId}
-            onChange={(value) => setField("vendorId", value)}
-          />
-          <EmployeeSelect
-            employees={employees}
-            value={form.assignedEmployeeId}
-            onChange={(value) => {
-              setField("assignedEmployeeId", value);
-              setField("status", value ? "ASSIGNED" : "IN_STOCK");
-            }}
-          />
-          <DepartmentSelect
-            departments={departments}
-            value={form.departmentId}
-            onChange={(value) => setField("departmentId", value)}
-          />
-          <WorkSiteSelect
-            workSites={workSites}
-            value={form.siteId}
-            onChange={(value) => setField("siteId", value)}
-          />
-          <ProjectSelect
-            projects={projects}
-            value={form.projectId}
-            onChange={(value) => setField("projectId", value)}
-          />
-          <Field
-            label="Giá mua"
-            value={form.purchaseCost}
-            onChange={(value) => setField("purchaseCost", value)}
-            type="number"
-          />
-          <Field
-            label="Giá trị còn lại"
-            value={form.residualValue}
-            onChange={(value) => setField("residualValue", value)}
-            type="number"
-          />
-          <Field
-            label="Ngày mua"
-            value={form.purchaseDate}
-            onChange={(value) => setField("purchaseDate", value)}
-            type="date"
-          />
-          <Field
-            label="Bảo hành đến"
-            value={form.warrantyUntil}
-            onChange={(value) => setField("warrantyUntil", value)}
-            type="date"
-          />
-          <Select
-            label="Phương pháp khấu hao"
-            value={form.depreciationMethod}
-            onChange={(value) => setField("depreciationMethod", value)}
-            options={[
-              ["NONE", "Không khấu hao"],
-              ["STRAIGHT_LINE", "Đường thẳng"],
-              ["DECLINING_BALANCE", "Số dư giảm dần"],
-            ]}
-          />
-          <Field
-            label="Thời gian sử dụng (năm)"
-            value={form.usefulLifeYears}
-            onChange={(value) => setField("usefulLifeYears", value)}
-            type="number"
-          />
-          <Select
-            label="Trạng thái"
-            value={form.status}
-            onChange={(value) => setField("status", value)}
-            options={[
-              ["IN_STOCK", "Trong kho"],
-              ["ASSIGNED", "Đã cấp phát"],
-              ["MAINTENANCE", "Bảo trì"],
-              ["DISPOSED", "Đã thanh lý"],
-            ]}
-          />
-          <Field
-            label="Ghi chú"
-            value={form.notes}
-            onChange={(value) => setField("notes", value)}
-          />
-        </>
+        <div className="crud-modal-two-col">
+          <div className="crud-modal-col-left">
+            <Field
+              label="Mã tài sản"
+              value={form.assetCode}
+              onChange={(value) => setField("assetCode", value)}
+              disabled={modal.mode === "create"}
+              placeholder={modal.mode === "create" ? "Hệ thống tự sinh" : ""}
+              required={modal.mode !== "create"}
+            />
+            <Field
+              label="Tên tài sản"
+              value={form.name}
+              onChange={(value) => setField("name", value)}
+              required
+            />
+            <Field
+              label="Serial"
+              value={form.serialNumber}
+              onChange={(value) => setField("serialNumber", value)}
+            />
+            <VendorSelect
+              vendors={vendors}
+              value={form.vendorId}
+              onChange={(value) => setField("vendorId", value)}
+            />
+            <WorkSiteSelect
+              workSites={workSites}
+              value={form.siteId}
+              onChange={(value) => setField("siteId", value)}
+            />
+            <DepartmentSelect
+              departments={filteredDepartments}
+              value={form.departmentId}
+              onChange={(value) => setField("departmentId", value)}
+            />
+            <EmployeeSelect
+              employees={filteredEmployees}
+              value={form.assignedEmployeeId}
+              onChange={(value) => {
+                setField("assignedEmployeeId", value);
+                setField("status", value ? "ASSIGNED" : "IN_STOCK");
+              }}
+            />
+            <ProjectSelect
+              projects={projects}
+              value={form.projectId}
+              onChange={(value) => setField("projectId", value)}
+            />
+            <Field
+              label="Giá mua"
+              value={form.purchaseCost}
+              onChange={(value) => setField("purchaseCost", value)}
+              type="currency"
+            />
+            <Field
+              label="Giá trị còn lại"
+              value={form.residualValue}
+              onChange={(value) => setField("residualValue", value)}
+              type="currency"
+            />
+            <Field
+              label="Ngày mua"
+              value={form.purchaseDate}
+              onChange={(value) => setField("purchaseDate", value)}
+              type="date"
+            />
+            <Field
+              label="Bảo hành đến"
+              value={form.warrantyUntil}
+              onChange={(value) => setField("warrantyUntil", value)}
+              type="date"
+            />
+            <Select
+              label="Phương pháp khấu hao"
+              value={form.depreciationMethod}
+              onChange={(value) => setField("depreciationMethod", value)}
+              options={[
+                ["NONE", "Không khấu hao"],
+                ["STRAIGHT_LINE", "Tuyến tính"],
+                ["DECLINING_BALANCE", "Số dư giảm dần"],
+              ]}
+            />
+            <Field
+              label="Thời gian sử dụng (năm)"
+              value={form.usefulLifeYears}
+              onChange={(value) => setField("usefulLifeYears", value)}
+              type="number"
+            />
+            <Select
+              label="Trạng thái"
+              value={form.status}
+              onChange={(value) => setField("status", value)}
+              options={[
+                ["IN_STOCK", "Trong kho"],
+                ["ASSIGNED", "Đã cấp phát"],
+                ["MAINTENANCE", "Bảo trì"],
+                ["DISPOSED", "Đã thanh lý"],
+              ]}
+            />
+            <div style={{ gridColumn: "1 / -1" }}>
+              <label>
+                <FormLabel>Ghi chú</FormLabel>
+                <textarea
+                  className="crud-notes-textarea"
+                  value={form.notes || ""}
+                  onChange={(e) => setField("notes", e.target.value)}
+                  rows={4}
+                />
+              </label>
+            </div>
+          </div>
+          <div className="crud-modal-col-right">
+            <AssetCategoryTreeSelect
+              label="Danh mục tài sản"
+              value={form.category}
+              onChange={(name, code) => {
+                setField("category", name);
+                if (code) setField("categoryCode", code);
+              }}
+              categoryCode={form.categoryCode}
+              onCodeChange={(code) => setField("categoryCode", code)}
+              required
+            />
+          </div>
+        </div>
       )}
       {modal.type === "subscription" && (
         <>
@@ -402,7 +464,7 @@ function CrudFormInner({
             label="Chi phí"
             value={form.cost}
             onChange={(value) => setField("cost", value)}
-            type="number"
+            type="currency"
           />
           <Field
             label="Chu kỳ thanh toán"
@@ -430,11 +492,17 @@ function CrudFormInner({
               ["INACTIVE", "Ngưng hoạt động"],
             ]}
           />
-          <Field
-            label="Ghi chú"
-            value={form.notes}
-            onChange={(value) => setField("notes", value)}
-          />
+          <div style={{ gridColumn: "1 / -1" }}>
+            <label>
+              <FormLabel>Ghi chú</FormLabel>
+              <textarea
+                className="crud-notes-textarea"
+                value={form.notes || ""}
+                onChange={(e) => setField("notes", e.target.value)}
+                rows={4}
+              />
+            </label>
+          </div>
         </>
       )}
       {modal.type === "request" && (
@@ -465,7 +533,7 @@ function CrudFormInner({
             label="Chi phí dự kiến"
             value={form.estimatedCost}
             onChange={(value) => setField("estimatedCost", value)}
-            type="number"
+            type="currency"
           />
           <EmployeeSelect
             employees={employees}
@@ -504,11 +572,17 @@ function CrudFormInner({
               ["DRAFT", "Bản nháp"],
             ]}
           />
-          <Field
-            label="Ghi chú"
-            value={form.notes}
-            onChange={(value) => setField("notes", value)}
-          />
+          <div style={{ gridColumn: "1 / -1" }}>
+            <label>
+              <FormLabel>Ghi chú</FormLabel>
+              <textarea
+                className="crud-notes-textarea"
+                value={form.notes || ""}
+                onChange={(e) => setField("notes", e.target.value)}
+                rows={4}
+              />
+            </label>
+          </div>
         </>
       )}
       {modal.type === "contract" && (
@@ -586,11 +660,17 @@ function CrudFormInner({
               ["COMPLETED", "Hoàn thành"],
             ]}
           />
-          <Field
-            label="Ghi chú"
-            value={form.notes}
-            onChange={(value) => setField("notes", value)}
-          />
+          <div style={{ gridColumn: "1 / -1" }}>
+            <label>
+              <FormLabel>Ghi chú</FormLabel>
+              <textarea
+                className="crud-notes-textarea"
+                value={form.notes || ""}
+                onChange={(e) => setField("notes", e.target.value)}
+                rows={4}
+              />
+            </label>
+          </div>
         </>
       )}
       {modal.type === "maintenance" && (
@@ -632,7 +712,7 @@ function CrudFormInner({
             label="Chi phí"
             value={form.cost}
             onChange={(value) => setField("cost", value)}
-            type="number"
+            type="currency"
           />
           <VendorSelect
             vendors={vendors}
@@ -752,8 +832,8 @@ function CrudFormInner({
             value={form.applyToAsset}
             onChange={(value) => setField("applyToAsset", value)}
             options={[
-              ["true", "Có — đồng bộ người dùng/phòng ban lên tài sản"],
-              ["false", "Không — chỉ ghi nhận lịch sử"],
+              ["true", "Có -- đồng bộ người dùng/phòng ban lên tài sản"],
+              ["false", "Không -- chỉ ghi nhận lịch sử"],
             ]}
           />
         </>

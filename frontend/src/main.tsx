@@ -3,9 +3,10 @@ import { createRoot } from "react-dom/client";
 import { ToastBar, Toaster, toast } from "react-hot-toast";
 import App from "./App";
 import "./styles/app.css";
+import "./styles/booking-overrides.css";
 
 // oidc-client-ts silent-renew (prompt=none) load lại SPA này trong IFRAME ẩn tại redirect_uri.
-// Trong iframe chỉ relay kết quả (?state + code|error) về tab cha rồi DỪNG — KHÔNG render app
+// Trong iframe chỉ relay kết quả (?state + code|error) về tab cha rồi DỪNG -- KHÔNG render app
 // (render thì iframe không postMessage về cha → cha timeout ~10s → mất phiên). Guard self!==top
 // nên tab chính KHÔNG bị ảnh hưởng; dynamic import để legacy bundle không kéo oidc-client-ts.
 const sp = new URLSearchParams(window.location.search);
@@ -37,13 +38,13 @@ if (isSilentRenewIframe) {
                   alignItems: "center",
                   gap: "10px",
                   background: "#fff",
-                  borderRadius: "12px",
-                  padding: "10px 14px",
-                  boxShadow: "0 4px 20px rgba(0,0,0,0.08), 0 1px 6px rgba(0,0,0,0.04)",
+                  borderRadius: 0,
+                  padding: "8px 12px",
+                  boxShadow: "none",
                   cursor: "pointer",
                   minWidth: "260px",
                   maxWidth: "380px",
-                  border: "1px solid #e5e7eb",
+                  border: "1px solid #d7dde5",
                   userSelect: "none",
                 }}
               >
