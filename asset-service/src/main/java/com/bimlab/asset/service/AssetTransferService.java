@@ -15,6 +15,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.NoSuchElementException;
 
 /**
@@ -29,6 +31,7 @@ public class AssetTransferService {
     private final AssetItemRepository assets;
     private final AssetService assetService;
     private final AssetDocumentRepository assetDocuments;
+    private final AuditLogService auditLogService;
 
     @Transactional(readOnly = true)
     public List<AssetTransfer> listTransfers() {
@@ -87,6 +90,8 @@ public class AssetTransferService {
         AssetTransfer savedAssetTransfer = assetTransfers.save(assetTransfer);
 
         if (Boolean.TRUE.equals(req.applyToAsset())) {
+            Map<String, Object> before = assetSnapshot(asset);
+
             asset.setAssignedEmployeeId(req.toEmployeeId());
 
             if (req.toDepartmentId() != null) {
@@ -108,13 +113,89 @@ public class AssetTransferService {
             }
 
             assets.save(asset);
+            auditLogService.log(
+                    "ASSET_TRANSFER",
+                    AuditLogService.ENTITY_ASSET,
+                    asset.getId(),
+                    asset.getAssetCode(),
+                    "TRANSFER_APPLIED",
+                    "Cập nhật bàn giao/luân chuyển tài sản " + asset.getAssetCode(),
+                    before,
+                    assetSnapshot(asset),
+                    changedFields(before, assetSnapshot(asset))
+            );
         }
+
+        auditLogService.log(
+                "ASSET_TRANSFER",
+                AuditLogService.ENTITY_ASSET_TRANSFER,
+                savedAssetTransfer.getId(),
+                asset.getAssetCode(),
+                "TRANSFER_CREATED",
+                "Tạo bản ghi bàn giao/luân chuyển cho tài sản " + asset.getAssetCode(),
+                null,
+                transferSnapshot(savedAssetTransfer),
+                null
+        );
 
         return savedAssetTransfer;
     }
 
     @Transactional
     public void deleteTransfer(Long id) {
-        assetTransfers.delete(getTransfer(id));
+        AssetTransfer transfer = getTransfer(id);
+        auditLogService.log(
+                "ASSET_TRANSFER",
+                AuditLogService.ENTITY_ASSET_TRANSFER,
+                transfer.getId(),
+                transfer.getAsset() == null ? null : transfer.getAsset().getAssetCode(),
+                "TRANSFER_DELETED",
+                "Xóa bản ghi bàn giao/luân chuyển",
+                transferSnapshot(transfer),
+                null,
+                null
+        );
+        assetTransfers.delete(transfer);
+    }
+
+    private Map<String, Object> assetSnapshot(AssetItem asset) {
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("assignedEmployeeId", asset.getAssignedEmployeeId());
+        data.put("departmentId", asset.getDepartmentId());
+        data.put("siteId", asset.getSiteId());
+        data.put("projectId", asset.getProjectId());
+        data.put("status", asset.getStatus() == null ? null : asset.getStatus().name());
+        return data;
+    }
+
+    private Map<String, Object> transferSnapshot(AssetTransfer transfer) {
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("id", transfer.getId());
+        data.put("assetId", transfer.getAsset() == null ? null : transfer.getAsset().getId());
+        data.put("transferType", transfer.getTransferType());
+        data.put("fromEmployeeId", transfer.getFromEmployeeId());
+        data.put("toEmployeeId", transfer.getToEmployeeId());
+        data.put("fromDepartmentId", transfer.getFromDepartmentId());
+        data.put("toDepartmentId", transfer.getToDepartmentId());
+        data.put("fromSiteId", transfer.getFromSiteId());
+        data.put("toSiteId", transfer.getToSiteId());
+        data.put("fromProjectId", transfer.getFromProjectId());
+        data.put("toProjectId", transfer.getToProjectId());
+        data.put("transferDate", transfer.getTransferDate());
+        return data;
+    }
+
+    private Map<String, Object> changedFields(Map<String, Object> before, Map<String, Object> after) {
+        Map<String, Object> changed = new LinkedHashMap<>();
+        after.forEach((key, value) -> {
+            Object oldValue = before.get(key);
+            if (!java.util.Objects.equals(oldValue, value)) {
+                Map<String, Object> pair = new LinkedHashMap<>();
+                pair.put("before", oldValue);
+                pair.put("after", value);
+                changed.put(key, pair);
+            }
+        });
+        return changed;
     }
 }

@@ -30,36 +30,36 @@ public class AssetTransferController {
     private final AssetTransferMapper mapper;
 
     @GetMapping
-    @PreAuthorize("hasAnyAuthority('asset_access','asset_view_self','asset_view_team','asset_view_all','asset_manage','asset_finance_manage')")
+    @PreAuthorize("hasAnyAuthority('asset_transfers_view','asset_transfers_manage','asset_transfers_approve','asset_manage')")
     public List<AssetTransferResponse> list() {
         return service.listTransfers().stream().map(mapper::toResponse).toList();
     }
 
     @GetMapping("/paged")
-    @PreAuthorize("hasAnyAuthority('asset_access','asset_view_self','asset_view_team','asset_view_all','asset_manage','asset_finance_manage')")
+    @PreAuthorize("hasAnyAuthority('asset_transfers_view','asset_transfers_manage','asset_transfers_approve','asset_manage')")
     public Page<AssetTransferResponse> listPaged(@PageableDefault(size = 20) Pageable pageable) {
         return service.listTransfersPaged(pageable).map(mapper::toResponse);
     }
 
 
     @GetMapping("/asset/{assetId}")
-    @PreAuthorize("hasAnyAuthority('asset_access','asset_view_self','asset_view_team','asset_view_all','asset_manage','asset_finance_manage')")
+    @PreAuthorize("hasAnyAuthority('asset_transfers_view','asset_transfers_manage','asset_transfers_approve','asset_manage')")
     public List<AssetTransferResponse> byAsset(@PathVariable Long assetId) {
         AssetItem parent = assetService.getAsset(assetId);
-        access.ensureSelfOrAny(parent.getAssignedEmployeeId(), Permission.Sets.TRANSFER_ADMIN);
+        access.ensureSelfOrAny(parent.getAssignedEmployeeId(), Permission.Sets.TRANSFER_VIEWERS);
         return service.listTransfersByAsset(assetId).stream().map(mapper::toResponse).toList();
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('asset_access','asset_view_self','asset_view_team','asset_view_all','asset_manage','asset_finance_manage')")
+    @PreAuthorize("hasAnyAuthority('asset_transfers_view','asset_transfers_manage','asset_transfers_approve','asset_manage')")
     public AssetTransferResponse get(@PathVariable Long id) {
         AssetTransfer t = service.getTransfer(id);
-        access.ensurePartyOrAny(t.getFromEmployeeId(), t.getToEmployeeId(), Permission.Sets.TRANSFER_ADMIN);
+        access.ensurePartyOrAny(t.getFromEmployeeId(), t.getToEmployeeId(), Permission.Sets.TRANSFER_VIEWERS);
         return mapper.toResponse(t);
     }
 
     @PostMapping
-    @PreAuthorize("hasAuthority('asset_manage')")
+    @PreAuthorize("hasAnyAuthority('asset_transfers_manage','asset_manage')")
     public AssetTransferResponse create(@Valid @RequestBody AssetTransferRequest req) {
         AssetTransfer transfer = service.createTransfer(req);
         access.ensurePartyOrAny(transfer.getFromEmployeeId(), transfer.getToEmployeeId(), Permission.Sets.TRANSFER_ADMIN);
@@ -67,7 +67,7 @@ public class AssetTransferController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('asset_manage')")
+    @PreAuthorize("hasAnyAuthority('asset_transfers_manage','asset_manage')")
     public void delete(@PathVariable Long id) {
         service.deleteTransfer(id);
     }
