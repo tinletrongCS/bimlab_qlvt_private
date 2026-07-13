@@ -21,6 +21,17 @@ public enum Permission {
     ASSET_FINANCE_MANAGE("asset_finance_manage"),
     ASSET_FINANCE_VIEW("asset_finance_view"),
     ASSET_REPORT_VIEW("asset_report_view"),
+
+    /*
+    BÀN GIAO TÀI SẢN
+    asset_transfers_view: chỉ xem được phiếu bàn giao
+    asset_transfers_manage: được quyền thêm/sửa/xóa phiếu bàn giao
+    asset_transfers_approve: được quyền duyệt phiếu bàn giao
+    */
+    ASSET_TRANSFERS_VIEW("asset_transfers_view"),
+    ASSET_TRANSFERS_MANAGE("asset_transfers_manage"),
+    ASSET_TRANSFERS_APPROVE("asset_transfers_approve"),
+
     VENDOR_MANAGE("vendor_manage"),
     SUBSCRIPTION_MANAGE("subscription_manage"),
     PURCHASE_REQUEST_CREATE("purchase_request_create"),
@@ -71,8 +82,15 @@ public enum Permission {
          */
         public static final Set<Permission> FINANCE_VIEWERS = Set.of(
                 ASSET_FINANCE_VIEW, ASSET_FINANCE_MANAGE, ASSET_MANAGE);
-
-        public static final Set<Permission> TRANSFER_ADMIN = ASSET_ADMIN;
+        
+        
+        public static final Set<Permission> TRANSFER_VIEWERS = Set.of(
+                ASSET_TRANSFERS_VIEW, ASSET_TRANSFERS_MANAGE, ASSET_TRANSFERS_APPROVE,
+                ASSET_VIEW_TEAM, ASSET_VIEW_ALL, ASSET_MANAGE, ASSET_FINANCE_MANAGE);
+        
+        public static final Set<Permission> TRANSFER_ADMIN = Set.of(
+                ASSET_TRANSFERS_MANAGE, ASSET_TRANSFERS_APPROVE,
+                ASSET_VIEW_TEAM, ASSET_VIEW_ALL, ASSET_MANAGE, ASSET_FINANCE_MANAGE);
 
         public static final Set<Permission> MAINT_ADMIN = Set.of(
                 MAINTENANCE_MANAGE, ASSET_MANAGE, ASSET_VIEW_TEAM, ASSET_VIEW_ALL);

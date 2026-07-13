@@ -51,7 +51,7 @@ class AssetTransferControllerWebMvcTest {
     }
 
     @Test
-    @WithMockUser(authorities = {"asset_access"})
+    @WithMockUser(authorities = {"asset_transfers_view"})
     void list_returnsTransfers() throws Exception {
         when(assetTransferService.listTransfers()).thenReturn(List.of(sample()));
         mockMvc.perform(get("/api/asset/transfers"))
@@ -60,7 +60,7 @@ class AssetTransferControllerWebMvcTest {
     }
 
     @Test
-    @WithMockUser(authorities = {"asset_access"})
+    @WithMockUser(authorities = {"asset_transfers_view"})
     void listPaged_returnsPage() throws Exception {
         when(assetTransferService.listTransfersPaged(any())).thenReturn(new PageImpl<>(List.of(sample())));
         mockMvc.perform(get("/api/asset/transfers/paged"))
@@ -69,7 +69,7 @@ class AssetTransferControllerWebMvcTest {
     }
 
     @Test
-    @WithMockUser(authorities = {"asset_manage"})
+    @WithMockUser(authorities = {"asset_transfers_manage"})
     void create_returnsMappedTransfer() throws Exception {
         when(assetTransferService.createTransfer(any())).thenReturn(sample());
 
