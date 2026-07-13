@@ -5,6 +5,7 @@ import com.bimlab.asset.model.status.AssetStatus;
 import com.bimlab.asset.dto.request.AssetTransferRequest;
 import com.bimlab.asset.model.AssetItem;
 import com.bimlab.asset.model.AssetTransfer;
+import com.bimlab.asset.repository.AssetDocumentRepository;
 import com.bimlab.asset.repository.AssetItemRepository;
 import com.bimlab.asset.repository.AssetTransferRepository;
 import org.junit.jupiter.api.Test;
@@ -29,6 +30,8 @@ class AssetTransferServiceTest {
     @Mock AssetTransferRepository assetTransfers;
     @Mock AssetItemRepository assets;
     @Mock AssetService assetService;
+    @Mock AssetDocumentRepository assetDocuments;
+    @Mock AuditLogService auditLogService;
 
     @InjectMocks AssetTransferService service;
 
