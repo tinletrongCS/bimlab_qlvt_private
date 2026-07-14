@@ -863,7 +863,7 @@ export function AssetCategoriesPage() {
             className="asset-add-button btn-download-green"
             onClick={() => void handleDownloadCategoryTemplate()}
           >
-            <FiDownload /> In danh mục
+            <FiDownload /> Tải danh mục
           </button>
           <button
             type="button"
@@ -873,7 +873,7 @@ export function AssetCategoriesPage() {
               setImportOpen(true);
             }}
           >
-            <FiUpload /> Nhập danh mục
+            <FiUpload /> Import danh mục
           </button>
         </div>
 

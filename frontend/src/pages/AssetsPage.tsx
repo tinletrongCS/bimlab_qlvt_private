@@ -1887,7 +1887,7 @@ export function AssetsPage() {
           className="asset-add-button btn-upload-blue"
           onClick={() => setImportOpen(true)}
         >
-          <FiUpload /> Nhập tài sản
+          <FiUpload /> Tải lên file Excel
         </button>
         {canManage && (
           <button
@@ -2314,7 +2314,9 @@ export function AssetsPage() {
                     >
                       <option value="">Chọn thao tác</option>
                       <option value="status">Cập nhật trạng thái</option>
-
+                      <option value="move">Chuyển vị trí</option>
+                      <option value="assign">Cấp phát</option>
+                      <option value="return">Thu hồi</option>
                       <option value="qr" disabled>
                         In QR theo nhóm
                       </option>
@@ -2406,6 +2408,151 @@ export function AssetsPage() {
                         </>
                       )}
 
+                      {bulkPanelAction === "move" && (
+                        <>
+                          <div className="asset-bulk-panel-copy">
+                            <strong>Chuyển vị trí</strong>
+                            <span>
+                              Bỏ trống trường nào thì hệ thống giữ nguyên giá trị hiện tại.
+                            </span>
+                          </div>
+                          <div className="asset-bulk-form-row three">
+                            <label>
+                              <span>Chi nhánh mới</span>
+                              <SearchableSelect
+                                value={bulkSiteId}
+                                onChange={(val: string) => setBulkSiteId(val)}
+                              >
+                                <option value="">Giữ nguyên chi nhánh</option>
+                                {workSites.map((site) => (
+                                  <option key={site.id} value={site.id}>
+                                    {site.name}
+                                  </option>
+                                ))}
+                              </SearchableSelect>
+                            </label>
+                            <label>
+                              <span>Phòng ban mới</span>
+                              <SearchableSelect
+                                value={bulkDepartmentId}
+                                onChange={(val: string) => setBulkDepartmentId(val)}
+                              >
+                                <option value="">Giữ nguyên phòng ban</option>
+                                {departments.map((department) => (
+                                  <option key={department.id} value={department.id}>
+                                    {department.name}
+                                  </option>
+                                ))}
+                              </SearchableSelect>
+                            </label>
+                            <label>
+                              <span>Người giữ mới</span>
+                              <SearchableSelect
+                                value={bulkEmployeeId}
+                                onChange={(val: string) => setBulkEmployeeId(val)}
+                              >
+                                <option value="">Giữ nguyên người giữ</option>
+                                {employees.map((employee) => (
+                                  <option key={employee.id} value={employee.id}>
+                                    {employeeLabel(employee)}
+                                  </option>
+                                ))}
+                              </SearchableSelect>
+                            </label>
+                            <button
+                              type="button"
+                              className="primary-action"
+                              disabled={bulkActionBusy}
+                              onClick={() => void handleBulkMoveAssets()}
+                            >
+                              Lưu vị trí
+                            </button>
+                          </div>
+                        </>
+                      )}
+
+                      {bulkPanelAction === "assign" && (
+                        <>
+                          <div className="asset-bulk-panel-copy">
+                            <strong>Cấp phát tài sản</strong>
+                            <span>Cập nhật người giữ và chuyển trạng thái sang đã cấp phát.</span>
+                          </div>
+                          <div className="asset-bulk-form-row three">
+                            <label>
+                              <span>Chi nhánh</span>
+                              <SearchableSelect
+                                value={bulkSiteId}
+                                onChange={(val: string) => setBulkSiteId(val)}
+                              >
+                                <option value="">Giữ nguyên chi nhánh</option>
+                                {workSites.map((site) => (
+                                  <option key={site.id} value={site.id}>
+                                    {site.name}
+                                  </option>
+                                ))}
+                              </SearchableSelect>
+                            </label>
+                            <label>
+                              <span>Phòng ban</span>
+                              <SearchableSelect
+                                value={bulkDepartmentId}
+                                onChange={(val: string) => setBulkDepartmentId(val)}
+                              >
+                                <option value="">Giữ nguyên phòng ban</option>
+                                {departments.map((department) => (
+                                  <option key={department.id} value={department.id}>
+                                    {department.name}
+                                  </option>
+                                ))}
+                              </SearchableSelect>
+                            </label>
+                            <label>
+                              <span>Nhân sự nhận</span>
+                              <SearchableSelect
+                                value={bulkEmployeeId}
+                                onChange={(val: string) => setBulkEmployeeId(val)}
+                              >
+                                <option value="">Chọn nhân sự</option>
+                                {employees.map((employee) => (
+                                  <option key={employee.id} value={employee.id}>
+                                    {employeeLabel(employee)}
+                                  </option>
+                                ))}
+                              </SearchableSelect>
+                            </label>
+                            <button
+                              type="button"
+                              className="primary-action"
+                              disabled={bulkActionBusy}
+                              onClick={() => void handleBulkAssignAssets()}
+                            >
+                              Cấp phát
+                            </button>
+                          </div>
+                        </>
+                      )}
+
+                      {bulkPanelAction === "return" && (
+                        <>
+                          <div className="asset-bulk-panel-copy">
+                            <strong>Thu hồi tài sản</strong>
+                            <span>
+                              Xóa người giữ hiện tại và chuyển các tài sản đã chọn về trạng thái
+                              trong kho.
+                            </span>
+                          </div>
+                          <div className="asset-bulk-form-row compact">
+                            <button
+                              type="button"
+                              className="primary-action"
+                              disabled={bulkActionBusy}
+                              onClick={() => void handleBulkReturnAssets()}
+                            >
+                              Xác nhận thu hồi
+                            </button>
+                          </div>
+                        </>
+                      )}
                     </div>
                   )}
                 </div>
