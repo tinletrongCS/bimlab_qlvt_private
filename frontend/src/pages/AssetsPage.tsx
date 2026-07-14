@@ -2405,7 +2405,6 @@ export function AssetsPage() {
                           </div>
                         </>
                       )}
-
                     </div>
                   )}
                 </div>

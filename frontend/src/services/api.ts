@@ -340,6 +340,21 @@ export async function createTransfer(payload: AssetTransferPayload): Promise<Ass
   return response.data;
 }
 
+export async function submitTransfer(id: number): Promise<AssetTransfer> {
+  const response = await api.post<AssetTransfer>(`/asset/transfer/${id}/submit`);
+  return response.data;
+}
+
+export async function approveTransfer(id: number, reason?: string): Promise<AssetTransfer> {
+  const response = await api.post<AssetTransfer>(`/asset/transfer/${id}/approve`, { reason });
+  return response.data;
+}
+
+export async function rejectTransfer(id: number, reason: string): Promise<AssetTransfer> {
+  const response = await api.post<AssetTransfer>(`/asset/transfer/${id}/reject`, { reason });
+  return response.data;
+}
+
 export async function deleteTransfer(id: number): Promise<void> {
   await api.post(`/asset/transfer/${id}/cancel`, { reason: "Hủy phiếu từ giao diện" });
 }

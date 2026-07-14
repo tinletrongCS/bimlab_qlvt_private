@@ -13445,6 +13445,38 @@ button {
   font-weight: normal !important;
 }
 
+.transfer-asset-select .searchable-select-input,
+.transfer-asset-select .searchable-select-option,
+.transfer-asset-select .searchable-select-empty {
+  font-family: Inter, Arial, sans-serif !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+}
+
+.transfer-create-form .searchable-select-input {
+  min-height: 34px !important;
+  font-family: Inter, Arial, sans-serif !important;
+  font-size: 12px !important;
+}
+
+.transfer-create-form .searchable-select-input-wrapper,
+.transfer-create-form input[type="date"],
+.transfer-create-form input[type="text"],
+.transfer-create-form textarea {
+  min-height: 34px !important;
+}
+
+.transfer-attachment-link {
+  background: none !important;
+  border: none !important;
+  color: #2563eb !important;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 0;
+  text-decoration: underline;
+}
+
 /* Ensure green background for download buttons */
 #root .asset-page-actions .asset-add-button.btn-download-green {
   background: #166534 !important;
