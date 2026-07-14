@@ -33,7 +33,7 @@ interface NavItem {
   to: string;
   label: string;
   icon: ReactElement;
-  permission?: Permission;
+  permission?: Permission | Permission[];
 }
 
 interface NavGroup {
@@ -41,7 +41,7 @@ interface NavGroup {
   to: string;
   label: string;
   icon: ReactElement;
-  permission?: Permission;
+  permission?: Permission | Permission[];
   children: NavItem[];
 }
 
@@ -62,7 +62,17 @@ const NAV_GROUPS: NavGroup[] = [
     children: [
       { to: "/assets", label: "Danh sách", icon: <FiBox />, permission: "asset_access" },
       { to: "/asset-categories", label: "Danh mục", icon: <FiGrid />, permission: "asset_manage" },
-      { to: "/transfers", label: "Bàn giao", icon: <FiRepeat />, permission: "asset_manage" },
+      {
+        to: "/transfers",
+        label: "Bàn giao",
+        icon: <FiRepeat />,
+        permission: [
+          "asset_transfers_view",
+          "asset_transfers_manage",
+          "asset_transfers_approve",
+          "asset_manage",
+        ],
+      },
       { to: "/maintenance", label: "Bảo trì", icon: <FiTool />, permission: "maintenance_manage" },
       { to: "/booking", label: "Đặt lịch", icon: <FiCalendar />, permission: "asset_manage" },
     ],

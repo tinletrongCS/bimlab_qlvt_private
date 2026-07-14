@@ -231,7 +231,7 @@ function CrudFormInner({
     }
     if (modal.type === "transfer") {
       void onSubmit({
-        assetId: Number(form.assetId),
+        title: `${form.transferType} tài sản`,
         transferType: form.transferType,
         fromEmployeeId: num(form.fromEmployeeId),
         toEmployeeId: num(form.toEmployeeId),
@@ -240,10 +240,10 @@ function CrudFormInner({
         fromSiteId: num(form.fromSiteId),
         toSiteId: num(form.toSiteId),
         transferDate: form.transferDate,
+        plannedHandoverAt: `${form.transferDate}T09:00:00`,
         reason: empty(form.reason),
-        performedBy: empty(form.performedBy),
-        handoverDocumentUrl: empty(form.handoverDocumentUrl),
-        applyToAsset: form.applyToAsset === "true",
+        note: empty(form.performedBy),
+        lines: [{ assetId: Number(form.assetId) }],
       });
     }
   }
@@ -822,20 +822,6 @@ function CrudFormInner({
             value={form.performedBy}
             onChange={(value) => setField("performedBy", value)}
           />
-          <Field
-            label="URL biên bản bàn giao"
-            value={form.handoverDocumentUrl}
-            onChange={(value) => setField("handoverDocumentUrl", value)}
-          />
-          <Select
-            label="Cập nhật tài sản?"
-            value={form.applyToAsset}
-            onChange={(value) => setField("applyToAsset", value)}
-            options={[
-              ["true", "Có -- đồng bộ người dùng/phòng ban lên tài sản"],
-              ["false", "Không -- chỉ ghi nhận lịch sử"],
-            ]}
-          />
         </>
       )}
     </CrudModal>
@@ -941,8 +927,6 @@ function initialForm(modal: NonNullable<ModalState>): Record<string, string> {
     transferDate: new Date().toISOString().slice(0, 10),
     reason: "",
     performedBy: "",
-    handoverDocumentUrl: "",
-    applyToAsset: "true",
   };
 }
 

@@ -178,6 +178,11 @@ describe("asset api client", () => {
       params: { days: 30 },
     });
     expect(mocks.api.post).toHaveBeenCalledWith("/asset/bookings/1/check-in");
+    expect(mocks.api.get).toHaveBeenCalledWith("/asset/transfer");
+    expect(mocks.api.post).toHaveBeenCalledWith("/asset/transfer", payload);
+    expect(mocks.api.post).toHaveBeenCalledWith("/asset/transfer/1/cancel", {
+      reason: "Hủy phiếu từ giao diện",
+    });
     expect(mocks.api.get).toHaveBeenCalledWith("/asset/bookings/availability", {
       params: { assetCode: "TS-1", startTime: "a", endTime: "b" },
     });

@@ -9,6 +9,10 @@ import java.util.List;
 public interface AssetTransferRepository extends JpaRepository<AssetTransfer, Long> {
     List<AssetTransfer> findByAssetIdOrderByTransferDateDesc(Long assetId);
 
+    List<AssetTransfer> findByTransferHeaderIdOrderByLineNoAscIdAsc(Long transferHeaderId);
+
+    List<AssetTransfer> findByTransferHeaderIdInOrderByTransferHeaderIdAscLineNoAscIdAsc(List<Long> transferHeaderIds);
+
     default List<AssetTransfer> findAllSortedByDateDesc() {
         return findAll(Sort.by(Sort.Direction.DESC, "transferDate", "id"));
     }

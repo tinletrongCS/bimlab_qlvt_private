@@ -331,17 +331,17 @@ export async function loadWarrantyExpiring(days: number = 30): Promise<AssetItem
 }
 
 export async function loadTransfers(): Promise<AssetTransfer[]> {
-  const response = await api.get<AssetTransfer[]>("/asset/transfers");
+  const response = await api.get<AssetTransfer[]>("/asset/transfer");
   return response.data;
 }
 
 export async function createTransfer(payload: AssetTransferPayload): Promise<AssetTransfer> {
-  const response = await api.post<AssetTransfer>("/asset/transfers", payload);
+  const response = await api.post<AssetTransfer>("/asset/transfer", payload);
   return response.data;
 }
 
 export async function deleteTransfer(id: number): Promise<void> {
-  await api.delete(`/asset/transfers/${id}`);
+  await api.post(`/asset/transfer/${id}/cancel`, { reason: "Hủy phiếu từ giao diện" });
 }
 
 export async function loadAssetBookings(params?: {

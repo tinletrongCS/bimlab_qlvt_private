@@ -6,7 +6,7 @@ import type { Permission } from "../services/types";
 
 interface ProtectedRouteProps {
   children: ReactNode;
-  permission?: Permission;
+  permission?: Permission | Permission[];
 }
 
 export function ProtectedRoute({ children, permission }: ProtectedRouteProps) {

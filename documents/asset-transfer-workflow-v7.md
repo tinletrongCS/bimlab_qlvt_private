@@ -308,14 +308,14 @@ PENDING_APPROVAL -> CANCELLED
 
 Tối thiểu cho luồng phiếu:
 
-- `POST /api/asset/transfer-headers`
-- `GET /api/asset/transfer-headers`
-- `GET /api/asset/transfer-headers/{id}`
-- `POST /api/asset/transfer-headers/{id}/submit`
-- `POST /api/asset/transfer-headers/{id}/approve`
-- `POST /api/asset/transfer-headers/{id}/reject`
-- `POST /api/asset/transfer-headers/{id}/cancel`
-- `POST /api/asset/transfer-headers/{id}/documents`
+- `POST /api/asset/transfer`
+- `GET /api/asset/transfer`
+- `GET /api/asset/transfer/{id}`
+- `POST /api/asset/transfer/{id}/submit`
+- `POST /api/asset/transfer/{id}/approve`
+- `POST /api/asset/transfer/{id}/reject`
+- `POST /api/asset/transfer/{id}/cancel`
+- `POST /api/asset/transfer/{id}/documents`
 
 API audit đã có:
 

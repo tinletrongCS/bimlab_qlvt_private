@@ -107,7 +107,14 @@ function App() {
                 <Route
                   path="/transfers"
                   element={
-                    <ProtectedRoute permission="asset_manage">
+                    <ProtectedRoute
+                      permission={[
+                        "asset_transfers_view",
+                        "asset_transfers_manage",
+                        "asset_transfers_approve",
+                        "asset_manage",
+                      ]}
+                    >
                       <TransfersPage />
                     </ProtectedRoute>
                   }

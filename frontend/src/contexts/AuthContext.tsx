@@ -26,7 +26,7 @@ interface AuthContextValue {
   submitting: boolean;
   login: () => Promise<boolean>;
   logout: () => Promise<void>;
-  hasPermission: (permission?: Permission) => boolean;
+  hasPermission: (permission?: Permission | Permission[]) => boolean;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -109,9 +109,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const hasPermission = useCallback(
-    (permission?: Permission) => {
+    (permission?: Permission | Permission[]) => {
       if (!permission) return true;
       if (user?.role === "ADMIN") return true;
+      if (Array.isArray(permission))
+        return permission.some((item) => user?.permissions?.includes(item));
       return Boolean(user?.permissions?.includes(permission));
     },
     [user],
