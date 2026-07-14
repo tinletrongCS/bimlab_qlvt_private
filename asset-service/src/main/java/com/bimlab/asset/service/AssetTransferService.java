@@ -38,7 +38,6 @@ public class AssetTransferService {
         return assetTransfers.findAllSortedByDateDesc();
     }
 
-
     @Transactional(readOnly = true)
     public Page<AssetTransfer> listTransfersPaged(Pageable pageable) {
         return assetTransfers.findAll(pageable);
@@ -51,18 +50,20 @@ public class AssetTransferService {
     @Transactional(readOnly = true)
     public AssetTransfer getTransfer(Long id) {
         return assetTransfers.findById(id)
-                .orElseThrow(() -> new NoSuchElementException("Bản ghi luân chuyển không tồn tại"));
+                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy bản ghi bàn giao tài sản."));
     }
 
     @Transactional
     public AssetTransfer createTransfer(AssetTransferRequest req) {
+        // Lưu ý: ghi 1 log cho phiếu tài sản
+        // 1 log cho cho mỗi tài sản: TRANSFER_LINE_ADDED, entity_type = ASSET
         AssetItem asset = assetService.getAsset(req.assetId());
 
         AssetDocument document = null;
         if (req.handoverDocumentId() != null) {
             document = assetDocuments.findById(req.handoverDocumentId())
                     .orElseThrow(() -> new NoSuchElementException(
-                            "Không tìm thấy tài liệu với id: " + req.handoverDocumentId()
+                            "Không tìm thấy biên bản/hợp đồng với id: " + req.handoverDocumentId()
                     ));
         }
 
@@ -119,7 +120,7 @@ public class AssetTransferService {
                     asset.getId(),
                     asset.getAssetCode(),
                     "TRANSFER_APPLIED",
-                    "Cập nhật bàn giao/luân chuyển tài sản " + asset.getAssetCode(),
+                    "Cập nhật thông tin cho tài sản " + asset.getAssetCode() + " sau khi bàn giao",
                     before,
                     assetSnapshot(asset),
                     changedFields(before, assetSnapshot(asset))
@@ -132,7 +133,7 @@ public class AssetTransferService {
                 savedAssetTransfer.getId(),
                 asset.getAssetCode(),
                 "TRANSFER_CREATED",
-                "Tạo bản ghi bàn giao/luân chuyển cho tài sản " + asset.getAssetCode(),
+                "Phiên bàn giao tài sản cho " + asset.getAssetCode() + " hoàn tất",
                 null,
                 transferSnapshot(savedAssetTransfer),
                 null

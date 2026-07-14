@@ -5,7 +5,9 @@
 --   1. Tao bang header cho "phieu ban giao" de gom nhieu tai san vao mot phieu.
 --   2. Giu bang asset.asset_transfers hien co lam dong chi tiet tai san,
 --      tranh pha vo API/service cu dang ghi theo tung asset_id.
---   3. Bo sung bang tai lieu/bien ban cua phieu ban giao.
+--   3. Giữ bảng asset.asset_transfers hiện có làm dòng chi tiết tài sản,
+--      tránh phá vỡ API/service cũ đang ghi theo từng asset_id 
+--   3. Bổ sung bằng tài liệu/biên bản của phiên bàn giao. 
 --   4. Bo sung bang xac nhan nhieu nguoi: nguoi ban giao, nguoi nhan,
 --      quan ly, kho, ke toan... tuy luong nghiep vu.
 --   5. Backfill moi dong transfer cu thanh mot phieu LEGACY rieng de du lieu cu
@@ -13,10 +15,9 @@
 -- ============================================================================
 
 CREATE SCHEMA IF NOT EXISTS asset;
-
--- ---------------------------------------------------------------------------
--- Header cua phieu ban giao.
--- Mot header co the gom nhieu dong asset.asset_transfers.
+-------------------------------------
+-- Thông tin của 1 phiếu bàn giao
+-- Một header chứa nhiều dòng tài sản trong asset_transfers
 -- ---------------------------------------------------------------------------
 -- PHIẾU BÀN GIAO TÀI SẢN
 CREATE TABLE IF NOT EXISTS asset.asset_transfer_headers (
@@ -123,7 +124,7 @@ CREATE INDEX IF NOT EXISTS idx_asset_transfer_documents_type
     ON asset.asset_transfer_documents(document_type);
 
 -- ---------------------------------------------------------------------------
--- Cac buoc xac nhan/ky cua phieu ban giao.
+-- Các bước xác nhận/ ký của bàn giao 
 -- Moi dong la mot nguoi/vai tro can xac nhan: HANDOVER, RECEIVER, MANAGER...
 -- ---------------------------------------------------------------------------
 
@@ -158,7 +159,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS uk_asset_transfer_confirmations_unique_role
     );
 
 -- ---------------------------------------------------------------------------
--- Mo rong bang transfer cu thanh dong chi tiet cua phieu.
+-- Mở rộng transfer cũ thành dòng chi tiết của 1 phiếu bàn giao
 -- Nullable de service hien tai van chay duoc; backend moi se bat buoc gan header.
 -- ---------------------------------------------------------------------------
 

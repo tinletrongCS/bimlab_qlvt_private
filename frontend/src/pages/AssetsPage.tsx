@@ -1887,7 +1887,7 @@ export function AssetsPage() {
           className="asset-add-button btn-upload-blue"
           onClick={() => setImportOpen(true)}
         >
-          <FiUpload /> Tải lên file Excel
+          <FiUpload /> Nhập tài sản
         </button>
         {canManage && (
           <button
