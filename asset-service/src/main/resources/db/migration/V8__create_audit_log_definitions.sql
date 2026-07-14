@@ -7,7 +7,8 @@
 --   3. KHONG tao khoa ngoai tu audit_logs sang bang nay.
 --
 -- Ly do khong dung FK:
---   - Audit log la du lieu lich su, khong duoc fail chi vi thieu metadata.
+--   - Nội dung chỉ được dùng cho mục đích tra cứu enum
+--   - Audit log là dữ liệu lịch sử, không được fail chỉ vì thiếu metadata.
 --   - Action moi co the duoc backend ghi truoc, admin bo sung ten hien thi sau.
 --   - Doi ten hien thi khong lam thay doi ban ghi audit cu.
 --
@@ -48,7 +49,7 @@ CREATE TABLE IF NOT EXISTS asset.audit_log_definitions (
     updated_at TIMESTAMP NOT NULL DEFAULT now(),
     CONSTRAINT uk_audit_log_definitions_key UNIQUE (module, entity_type, action),
     CONSTRAINT ck_audit_log_definitions_severity
-        CHECK (default_severity IN ('INFO', 'WARNING', 'CRITICAL'))
+        CHECK (default_severity IN ('INFO', 'WARNING'))
 );
 
 CREATE INDEX IF NOT EXISTS idx_audit_log_definitions_module
