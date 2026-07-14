@@ -20,6 +20,21 @@ dc(){ docker compose "$@"; }   # auto-load docker-compose.yml[+override] + .env 
 dc config --services >/dev/null 2>&1 || { log "FATAL: 'docker compose config' lỗi ở $DEST"; exit 2; }
 APP=$(basename "$DEST")
 
+# api-gateway (stack platform) cache IP container theo lần resolve đầu; service stack app
+# vừa recreate là đổi IP -> gateway trỏ IP chết -> 503 (dính sau deploy HRM 2026-07-14).
+# Gọi sau MỌI lần recreate container (deploy ok lẫn rollback). Best-effort: lỗi chỉ log.
+restart_gateway(){
+  PLATFORM_DIR="$(dirname "$DEST")/platform"
+  [ "$DEST" = "$PLATFORM_DIR" ] && return 0            # platform tự recreate gateway của nó
+  [ -f "$PLATFORM_DIR/docker-compose.yml" ] || [ -f "$PLATFORM_DIR/compose.yml" ] || return 0
+  log "restart api-gateway (platform) để resolve IP container mới"
+  if ( cd "$PLATFORM_DIR" && docker compose restart api-gateway ); then
+    log "api-gateway đã restart"
+  else
+    log "!! không restart được api-gateway — chạy tay: cd $PLATFORM_DIR && docker compose restart api-gateway"
+  fi
+}
+
 # 1) Snapshot image của các service đang chạy để rollback (image ref + image id)
 SNAP="/tmp/ci-rollback-$APP.txt"; : > "$SNAP"
 for cid in $(dc ps -q 2>/dev/null); do
@@ -73,7 +88,9 @@ if [ "$ok" != 1 ]; then
     [ -n "$ref" ] && [ -n "$iid" ] && docker image tag "$iid" "$ref" 2>/dev/null && log "  khôi phục $ref"
   done < "$SNAP"
   dc up -d --no-build || true
+  restart_gateway
   log "đã rollback về image cũ (kiểm tra lại thủ công nếu cần)"
   exit 1
 fi
+restart_gateway
 log "DEPLOY OK — tất cả service của $APP healthy"
