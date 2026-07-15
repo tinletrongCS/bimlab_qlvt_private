@@ -1,20 +1,17 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
-import {
-  FiChevronLeft,
-  FiChevronRight,
-  FiChevronsLeft,
-  FiChevronsRight,
-  FiPlus,
-  FiTrash2,
-  FiX,
-} from "react-icons/fi";
+import { FiEye, FiPlus, FiTrash2, FiX } from "react-icons/fi";
 import { SearchableSelect } from "../components/forms/SearchableSelect";
 import { OverflowActions } from "../components/OverflowActions";
+import { useActions } from "../contexts/ActionsContext";
 import { useAppData } from "../contexts/AppDataContext";
 import { useAuth } from "../contexts/AuthContext";
-import { createTransfer } from "../services/api";
+import { createTransfer, uploadTransferDocument } from "../services/api";
 import type { AssetTransfer, EmployeeLite } from "../services/types";
+
+function employeeName(employee?: EmployeeLite): string {
+  return employee?.fullName || employee?.name || (employee ? `Nhân viên #${employee.id}` : "--");
+}
 
 interface TransferGroup {
   ticketId: string;
@@ -26,34 +23,28 @@ interface TransferGroup {
   first: AssetTransfer;
 }
 
-function employeeName(employee?: EmployeeLite): string {
-  if (!employee) return "--";
-  return employee.fullName || employee.name || `Nhân viên #${employee.id}`;
-}
-
-function CompactPagination({
+function TransferListPagination({
   page,
   pageSize,
   total,
-  itemLabel,
+  itemLabel = "phiếu",
   onPageChange,
   onPageSizeChange,
 }: {
   page: number;
   pageSize: number;
   total: number;
-  itemLabel: string;
+  itemLabel?: string;
   onPageChange: (page: number) => void;
   onPageSizeChange: (pageSize: number) => void;
 }) {
-  if (total === 0) return null;
   const pageCount = Math.max(1, Math.ceil(total / pageSize));
   const safePage = Math.min(page, pageCount);
-  const start = (safePage - 1) * pageSize + 1;
+  const start = total === 0 ? 0 : (safePage - 1) * pageSize + 1;
   const end = Math.min(safePage * pageSize, total);
 
   return (
-    <div className="table-pagination">
+    <div className="table-pagination asset-list-pagination">
       <div className="table-pagination-summary">
         Hiển thị{" "}
         <strong>
@@ -62,39 +53,35 @@ function CompactPagination({
         / <strong>{total}</strong> {itemLabel}
       </div>
       <div className="table-pagination-controls">
-        <select
-          value={pageSize}
-          onChange={(event) => onPageSizeChange(Number(event.target.value))}
-          aria-label="Số dòng mỗi trang"
-        >
-          {[5, 10, 20, 50].map((option) => (
-            <option key={option} value={option}>
-              {option}/trang
-            </option>
-          ))}
+        <select value={pageSize} onChange={(event) => onPageSizeChange(Number(event.target.value))}>
+          <option value="5">5 / trang</option>
+          <option value="10">10 / trang</option>
+          <option value="20">20 / trang</option>
+          <option value="50">50 / trang</option>
+          <option value="100">100 / trang</option>
         </select>
-        <button type="button" onClick={() => onPageChange(1)} disabled={safePage <= 1}>
-          <FiChevronsLeft />
+        <button type="button" disabled={safePage <= 1} onClick={() => onPageChange(1)}>
+          &laquo;
         </button>
-        <button type="button" onClick={() => onPageChange(safePage - 1)} disabled={safePage <= 1}>
-          <FiChevronLeft />
+        <button type="button" disabled={safePage <= 1} onClick={() => onPageChange(safePage - 1)}>
+          &lsaquo;
         </button>
         <span>
           {safePage} / {pageCount}
         </span>
         <button
           type="button"
-          onClick={() => onPageChange(safePage + 1)}
           disabled={safePage >= pageCount}
+          onClick={() => onPageChange(safePage + 1)}
         >
-          <FiChevronRight />
+          &rsaquo;
         </button>
         <button
           type="button"
-          onClick={() => onPageChange(pageCount)}
           disabled={safePage >= pageCount}
+          onClick={() => onPageChange(pageCount)}
         >
-          <FiChevronsRight />
+          &raquo;
         </button>
       </div>
     </div>
@@ -105,6 +92,7 @@ export function TransfersPage() {
   const { hasPermission } = useAuth();
   const { transfers, employees, departments, workSites, assets, ensureTransfers, ensureAssets } =
     useAppData();
+  const { deleteResource } = useActions();
 
   const [view, setView] = useState<"list" | "create" | "pending">("list");
   const [selectedTicket, setSelectedTicket] = useState<TransferGroup | null>(null);
@@ -115,6 +103,11 @@ export function TransfersPage() {
   const [filterDate, setFilterDate] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
 
+  const [listPage, setListPage] = useState(1);
+  const [listPageSize, setListPageSize] = useState(20);
+  const [assetPage, setAssetPage] = useState(1);
+  const [assetPageSize, setAssetPageSize] = useState(5);
+
   // Create form state
   const [transferType, setTransferType] = useState("Bàn giao");
   const [transferDate, setTransferDate] = useState(new Date().toISOString().split("T")[0]);
@@ -123,18 +116,15 @@ export function TransfersPage() {
   const [toDepartmentId, setToDepartmentId] = useState("");
   const [toSiteId, setToSiteId] = useState("");
   const [reason, setReason] = useState("");
-  const [requireAssignedApprovers, setRequireAssignedApprovers] = useState(false);
-  const [approverSelector, setApproverSelector] = useState("");
-  const [approverEmployeeIds, setApproverEmployeeIds] = useState<number[]>([]);
+
+  const [requireApproval, setRequireApproval] = useState(false);
+  const [approvedByUsers, setApprovedByUsers] = useState<string[]>([]);
+
   const [selectedAssetIds, setSelectedAssetIds] = useState<number[]>([]);
   const [assetSelector, setAssetSelector] = useState("");
 
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [transferPage, setTransferPage] = useState(1);
-  const [transferPageSize, setTransferPageSize] = useState(10);
-  const [selectedAssetPage, setSelectedAssetPage] = useState(1);
-  const [selectedAssetPageSize, setSelectedAssetPageSize] = useState(5);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -144,47 +134,67 @@ export function TransfersPage() {
     }
   }, [ensureTransfers, ensureAssets, view]);
 
-  const canManage = hasPermission(["asset_transfers_manage", "asset_manage"]);
-  const canApprove = hasPermission(["asset_transfers_approve", "asset_manage"]);
+  const canManage = hasPermission("asset_manage");
   const empLabel = (id?: number) => (id ? employeeName(employees.find((e) => e.id === id)) : "--");
-  const approverEmployeeIdSet = useMemo(() => new Set(approverEmployeeIds), [approverEmployeeIds]);
-  const availableApprovers = useMemo(
-    () => employees.filter((employee) => !approverEmployeeIdSet.has(employee.id)),
-    [employees, approverEmployeeIdSet],
-  );
-  const statusLabel = (status?: string) => {
-    if (status === "APPROVED") return "Đã phê duyệt";
-    if (status === "REJECTED") return "Từ chối";
-    if (status === "CANCELLED") return "Đã hủy";
-    if (status === "PENDING_APPROVAL") return "Chờ duyệt";
-    return status || "Chưa xác định";
-  };
+  const selectedAsset =
+    selectedAssetIds.length === 1
+      ? assets.find((asset) => asset.id === selectedAssetIds[0])
+      : undefined;
+  const lockSite = selectedAsset?.siteId != null;
+  const lockDepartment = selectedAsset?.departmentId != null;
+  const lockEmployee = selectedAsset?.assignedEmployeeId != null;
 
-  const availableDepartments = departments;
+  const availableDepartments = useMemo(() => {
+    if (lockDepartment && selectedAsset?.departmentId)
+      return departments.filter((department) => department.id === selectedAsset.departmentId);
+    return toSiteId ? departments : [];
+  }, [toSiteId, departments, lockDepartment, selectedAsset?.departmentId]);
 
   const availableEmployees = useMemo(() => {
-    if (!toDepartmentId) return employees;
+    if (lockEmployee && selectedAsset?.assignedEmployeeId)
+      return employees.filter((employee) => employee.id === selectedAsset.assignedEmployeeId);
+    if (!toDepartmentId) return [];
     const dept = departments.find((d) => d.id === Number(toDepartmentId));
     if (!dept) return employees;
-    // Map employee by departmentName since frontend EmployeeLite doesn't have departmentId
     return employees.filter((e) => e.departmentName === dept.name);
-  }, [toDepartmentId, employees, departments]);
+  }, [toDepartmentId, employees, departments, lockEmployee, selectedAsset?.assignedEmployeeId]);
 
   useEffect(() => {
+    if (!selectedAsset) return;
+    setToSiteId(selectedAsset.siteId ? String(selectedAsset.siteId) : "");
+    setToDepartmentId(selectedAsset.departmentId ? String(selectedAsset.departmentId) : "");
+    setToEmployeeId(
+      selectedAsset.assignedEmployeeId ? String(selectedAsset.assignedEmployeeId) : "",
+    );
+  }, [selectedAsset]);
+
+  useEffect(() => setAssetPage(1), [selectedAssetIds]);
+
+  const resetForm = () => {
+    setTransferType("Bàn giao");
+    setTransferDate(new Date().toISOString().split("T")[0]);
+    setDecisionDate(new Date().toISOString().split("T")[0]);
+    setToEmployeeId("");
     setToDepartmentId("");
-    setToEmployeeId("");
-  }, [toSiteId]);
-
-  useEffect(() => {
-    setToEmployeeId("");
-  }, [toDepartmentId]);
-
-  useEffect(() => {
-    if (transferType !== "Thu hồi") return;
     setToSiteId("");
-    setToDepartmentId("");
-    setToEmployeeId("");
-  }, [transferType]);
+    setReason("");
+    setRequireApproval(false);
+    setApprovedByUsers([]);
+    setSelectedAssetIds([]);
+    setSelectedFiles([]);
+  };
+
+  const handleTabChange = (newView: "list" | "create" | "pending") => {
+    setView(newView);
+    setSelectedTicket(null);
+    if (newView === "create") {
+      resetForm();
+      void ensureAssets(false, true);
+    } else {
+      void ensureTransfers();
+      setListPage(1);
+    }
+  };
 
   const groupedTransfers = useMemo(() => {
     return transfers.map((first) => ({
@@ -192,7 +202,7 @@ export function TransfersPage() {
       transferDate: first.transferDate,
       transferType: first.transferType,
       reason: first.reason ?? "",
-      status: statusLabel(first.status),
+      status: first.approvedBy ? "Đã phê duyệt" : "Chờ duyệt",
       assets: first.lines ?? [],
       first,
     }));
@@ -200,7 +210,7 @@ export function TransfersPage() {
 
   const filteredTransfers = useMemo(() => {
     return groupedTransfers.filter((t) => {
-      if (view === "pending" && t.first.status !== "PENDING_APPROVAL") return false;
+      if (view === "pending" && t.status !== "Chờ duyệt") return false;
       if (filterType && t.transferType !== filterType) return false;
       if (filterStatus && t.status !== filterStatus) return false;
       if (filterDate && t.transferDate !== filterDate) return false;
@@ -210,59 +220,46 @@ export function TransfersPage() {
     });
   }, [groupedTransfers, filterType, filterStatus, filterDate, searchQuery, view]);
 
-  useEffect(() => {
-    setTransferPage(1);
-  }, [filterType, filterStatus, filterDate, searchQuery, view]);
-
-  useEffect(() => {
-    setSelectedAssetPage(1);
-  }, [selectedAssetIds]);
-
-  const safeTransferPage = Math.min(
-    transferPage,
-    Math.max(1, Math.ceil(filteredTransfers.length / transferPageSize)),
+  // Pagination processing
+  const pageCount = Math.max(1, Math.ceil(filteredTransfers.length / listPageSize));
+  const safeListPage = Math.min(listPage, pageCount);
+  const pagedTransfers = useMemo(() => {
+    const startIndex = (safeListPage - 1) * listPageSize;
+    return filteredTransfers.slice(startIndex, startIndex + listPageSize);
+  }, [filteredTransfers, safeListPage, listPageSize]);
+  const safeAssetPage = Math.min(
+    assetPage,
+    Math.max(1, Math.ceil(selectedAssetIds.length / assetPageSize)),
   );
-  const visibleTransfers = filteredTransfers.slice(
-    (safeTransferPage - 1) * transferPageSize,
-    safeTransferPage * transferPageSize,
+  const pagedAssetIds = selectedAssetIds.slice(
+    (safeAssetPage - 1) * assetPageSize,
+    safeAssetPage * assetPageSize,
   );
-
-  const safeSelectedAssetPage = Math.min(
-    selectedAssetPage,
-    Math.max(1, Math.ceil(selectedAssetIds.length / selectedAssetPageSize)),
-  );
-  const visibleSelectedAssetIds = selectedAssetIds.slice(
-    (safeSelectedAssetPage - 1) * selectedAssetPageSize,
-    safeSelectedAssetPage * selectedAssetPageSize,
-  );
-
-  const selectedAssetIdSet = useMemo(() => new Set(selectedAssetIds), [selectedAssetIds]);
 
   // Available assets for selection
   const availableAssets = useMemo(() => {
     const pendingAssetIds = new Set<number>();
-    transfers.forEach((transfer) => {
-      if (transfer.status === "PENDING_APPROVAL") {
-        transfer.lines?.forEach((line) => {
-          pendingAssetIds.add(line.assetId);
-        });
-      }
+    transfers.forEach((t) => {
+      if (!t.approvedBy) t.lines?.forEach((line) => void pendingAssetIds.add(line.assetId));
     });
-    return assets.filter((a) => !selectedAssetIdSet.has(a.id) && !pendingAssetIds.has(a.id));
-  }, [assets, selectedAssetIdSet, transfers]);
-
-  const availableAssetIdSet = useMemo(
-    () => new Set(availableAssets.map((asset) => asset.id)),
-    [availableAssets],
-  );
+    return assets.filter((a) => !selectedAssetIds.includes(a.id) && !pendingAssetIds.has(a.id));
+  }, [assets, selectedAssetIds, transfers]);
 
   const handleSubmit = async () => {
     if (selectedAssetIds.length === 0) return toast.error("Vui lòng chọn ít nhất 1 tài sản");
-    if (requireAssignedApprovers && approverEmployeeIds.length === 0) {
-      return toast.error("Vui lòng chọn người xét duyệt");
-    }
     setIsSubmitting(true);
     try {
+      const documents = await Promise.all(
+        selectedFiles.map(async (file) => {
+          const uploaded = await uploadTransferDocument(file);
+          return {
+            fileName: file.name,
+            objectKey: uploaded.fileKey,
+            contentType: file.type,
+            sizeBytes: file.size,
+          };
+        }),
+      );
       await createTransfer({
         title: `${transferType} tài sản`,
         transferType,
@@ -272,22 +269,14 @@ export function TransfersPage() {
         transferDate,
         plannedHandoverAt: `${decisionDate}T09:00:00`,
         reason,
-        approverEmployeeIds: requireAssignedApprovers ? approverEmployeeIds : undefined,
+        approverEmployeeIds: requireApproval ? approvedByUsers.map(Number) : undefined,
+        documents,
         lines: selectedAssetIds.map((assetId) => ({ assetId })),
       });
       toast.success("Tạo phiếu bàn giao thành công!");
       void ensureTransfers();
 
-      // Reset form
-      setSelectedAssetIds([]);
-      setReason("");
-      setToEmployeeId("");
-      setToDepartmentId("");
-      setToSiteId("");
-      setSelectedFiles([]);
-      setRequireAssignedApprovers(false);
-      setApproverSelector("");
-      setApproverEmployeeIds([]);
+      resetForm();
     } catch (err) {
       console.error(err);
       toast.error("Có lỗi xảy ra khi gửi phiếu.");
@@ -368,6 +357,10 @@ export function TransfersPage() {
     setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const removeApprover = (empIdStr: string) => {
+    setApprovedByUsers((prev) => prev.filter((x) => x !== empIdStr));
+  };
+
   return (
     <div>
       {/* Header and Tabs */}
@@ -386,42 +379,31 @@ export function TransfersPage() {
           <button
             type="button"
             className={view === "list" ? "active" : ""}
-            onClick={() => {
-              setView("list");
-              setSelectedTicket(null);
-            }}
+            onClick={() => handleTabChange("list")}
           >
             Danh sách phiếu
           </button>
           <button
             type="button"
             className={view === "create" ? "active" : ""}
-            onClick={() => {
-              setView("create");
-              setSelectedTicket(null);
-            }}
+            onClick={() => handleTabChange("create")}
           >
             Tạo phiếu
           </button>
-          {canApprove && (
-            <button
-              type="button"
-              className={view === "pending" ? "active" : ""}
-              onClick={() => {
-                setView("pending");
-                setSelectedTicket(null);
-              }}
-            >
-              Phiếu chờ duyệt
-            </button>
-          )}
+          <button
+            type="button"
+            className={view === "pending" ? "active" : ""}
+            onClick={() => handleTabChange("pending")}
+          >
+            Phiếu chờ duyệt
+          </button>
         </div>
 
         {view !== "create" && canManage && (
           <button
             type="button"
-            className="primary-action"
-            onClick={() => setView("create")}
+            className="primary-action btn-download-green"
+            onClick={() => handleTabChange("create")}
             style={{ display: "flex", alignItems: "center", gap: "6px" }}
           >
             <FiPlus /> Thêm mới
@@ -578,7 +560,7 @@ export function TransfersPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredTransfers.length === 0 ? (
+                  {pagedTransfers.length === 0 ? (
                     <tr>
                       <td
                         colSpan={8}
@@ -588,10 +570,10 @@ export function TransfersPage() {
                       </td>
                     </tr>
                   ) : (
-                    visibleTransfers.map((ticket, index) => (
+                    pagedTransfers.map((ticket, index) => (
                       <tr key={ticket.ticketId} style={{ borderBottom: "1px solid #f1f5f9" }}>
                         <td style={{ padding: "12px 16px", fontWeight: 500 }}>
-                          {(safeTransferPage - 1) * transferPageSize + index + 1}
+                          {(safeListPage - 1) * listPageSize + index + 1}
                         </td>
                         <td style={{ padding: "12px 16px" }}>{ticket.transferDate}</td>
                         <td style={{ padding: "12px 16px", fontWeight: 600, color: "#2563eb" }}>
@@ -634,227 +616,219 @@ export function TransfersPage() {
                 </tbody>
               </table>
             </div>
-            <CompactPagination
-              page={safeTransferPage}
-              pageSize={transferPageSize}
+
+            <TransferListPagination
+              page={safeListPage}
+              pageSize={listPageSize}
               total={filteredTransfers.length}
-              itemLabel="phiếu"
-              onPageChange={setTransferPage}
-              onPageSizeChange={(nextPageSize) => {
-                setTransferPageSize(nextPageSize);
-                setTransferPage(1);
+              onPageChange={setListPage}
+              onPageSizeChange={(sz) => {
+                setListPageSize(sz);
+                setListPage(1);
               }}
             />
           </div>
         </section>
       )}
 
-      {/* Ticket Details Modal */}
+      {/* Ticket Details Modal matching AssetDetailPanel styling */}
       {selectedTicket && (
-        <div
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: "rgba(15, 23, 42, 0.6)",
-            zIndex: 9999,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: "20px",
-          }}
-        >
+        <div className="modal-backdrop">
           <div
-            style={{
-              background: "#fff",
-              borderRadius: "12px",
-              width: "100%",
-              maxWidth: "900px",
-              maxHeight: "90vh",
-              display: "flex",
-              flexDirection: "column",
-              boxShadow:
-                "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
-            }}
+            className="crud-modal asset-detail-modal"
+            style={{ width: "900px", maxWidth: "90vw" }}
           >
-            <div
-              style={{
-                padding: "20px 24px",
-                borderBottom: "1px solid #e2e8f0",
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-              }}
-            >
-              <h2 style={{ margin: 0, fontSize: "18px", fontWeight: 600, color: "#0f172a" }}>
-                Chi tiết phiếu: <span style={{ color: "#2563eb" }}>{selectedTicket.ticketId}</span>
-              </h2>
-              <button
-                type="button"
-                onClick={() => setSelectedTicket(null)}
-                style={{
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  color: "#64748b",
-                  padding: "4px",
-                }}
-              >
-                <FiX size={24} />
+            <div className="modal-head">
+              <div className="modal-title-group">
+                <span className="modal-title-icon edit">
+                  <FiEye />
+                </span>
+                <h2>Chi tiết phiếu bàn giao</h2>
+              </div>
+              <button type="button" className="modal-close" onClick={() => setSelectedTicket(null)}>
+                <FiX />
               </button>
             </div>
 
-            <div style={{ padding: "24px", overflowY: "auto", flex: 1 }}>
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr 1fr",
-                  gap: "16px",
-                  marginBottom: "24px",
-                  background: "#f8fafc",
-                  padding: "16px",
-                  borderRadius: "8px",
-                }}
-              >
+            <div className="asset-detail-body">
+              <div className="asset-detail-hero">
                 <div>
-                  <span style={{ color: "#64748b", fontSize: "13px" }}>Ngày quyết định:</span>{" "}
-                  <strong style={{ color: "#0f172a" }}>{selectedTicket.transferDate}</strong>
+                  <span>Số quyết định</span>
+                  <strong style={{ color: "#2563eb", fontWeight: 700, fontSize: "14px" }}>
+                    {selectedTicket.ticketId}
+                  </strong>
                 </div>
                 <div>
-                  <span style={{ color: "#64748b", fontSize: "13px" }}>Phân loại:</span>{" "}
-                  <strong style={{ color: "#0f172a" }}>{selectedTicket.transferType}</strong>
-                </div>
-                <div>
-                  <span style={{ color: "#64748b", fontSize: "13px" }}>Ngày thực hiện:</span>{" "}
-                  <strong style={{ color: "#0f172a" }}>{selectedTicket.transferDate}</strong>
-                </div>
-                <div>
-                  <span style={{ color: "#64748b", fontSize: "13px" }}>Trạng thái:</span>{" "}
-                  <strong style={{ color: "#0f172a" }}>{selectedTicket.status}</strong>
-                </div>
-                <div style={{ gridColumn: "span 2" }}>
-                  <span style={{ color: "#64748b", fontSize: "13px" }}>Lý do:</span>{" "}
-                  <strong style={{ color: "#0f172a" }}>{selectedTicket.reason || "--"}</strong>
+                  <span>Trạng thái</span>
+                  <strong
+                    style={{
+                      color: selectedTicket.status === "Đã phê duyệt" ? "#166534" : "#92400e",
+                      fontWeight: 700,
+                      fontSize: "14px",
+                    }}
+                  >
+                    {selectedTicket.status}
+                  </strong>
                 </div>
               </div>
 
-              <h3
-                style={{
-                  fontSize: "15px",
-                  fontWeight: 600,
-                  marginBottom: "12px",
-                  color: "#0f172a",
-                }}
-              >
-                Danh sách tài sản luân chuyển
-              </h3>
-              <div
-                className="table-wrap"
-                style={{
-                  border: "1px solid var(--qlvt-border, #e2e8f0)",
-                  borderRadius: "8px",
-                  overflow: "hidden",
-                }}
-              >
-                <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left" }}>
-                  <thead style={{ background: "#f1f5f9", borderBottom: "1px solid #e2e8f0" }}>
-                    <tr>
-                      <th
-                        style={{
-                          padding: "10px 16px",
-                          color: "#475569",
-                          fontSize: "13px",
-                          fontWeight: 600,
-                        }}
-                      >
-                        STT
-                      </th>
-                      <th
-                        style={{
-                          padding: "10px 16px",
-                          color: "#475569",
-                          fontSize: "13px",
-                          fontWeight: 600,
-                        }}
-                      >
-                        Tài sản
-                      </th>
-                      <th
-                        style={{
-                          padding: "10px 16px",
-                          color: "#475569",
-                          fontSize: "13px",
-                          fontWeight: 600,
-                        }}
-                      >
-                        Thông tin luân chuyển
-                      </th>
-                      <th
-                        style={{
-                          padding: "10px 16px",
-                          color: "#475569",
-                          fontSize: "13px",
-                          fontWeight: 600,
-                        }}
-                      >
-                        Ghi chú
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {selectedTicket.assets.map((assetTransfer, idx) => {
-                      const fullAsset = assets.find((a) => a.id === assetTransfer.assetId);
-                      return (
-                        <tr key={assetTransfer.id} style={{ borderBottom: "1px solid #f1f5f9" }}>
-                          <td style={{ padding: "12px 16px", fontWeight: 500 }}>{idx + 1}</td>
-                          <td style={{ padding: "12px 16px" }}>
-                            <div style={{ fontWeight: 600, color: "#2563eb", marginBottom: "4px" }}>
-                              {assetTransfer.assetCode || fullAsset?.assetCode || "--"}
-                            </div>
-                            <div style={{ fontSize: "13px", color: "#64748b" }}>
-                              {assetTransfer.assetName || fullAsset?.name || "--"}
-                            </div>
-                          </td>
-                          <td style={{ padding: "12px 16px" }}>
-                            <div
-                              style={{ fontSize: "13px", color: "#64748b", marginBottom: "4px" }}
-                            >
-                              Từ:{" "}
-                              {selectedTicket.first.fromEmployeeId
-                                ? empLabel(selectedTicket.first.fromEmployeeId)
-                                : fullAsset
-                                  ? getAssetLocation(fullAsset)
-                                  : "Chưa xác định"}
-                            </div>
-                            <div style={{ fontSize: "13px", color: "#0f172a" }}>
-                              Đến:{" "}
-                              {selectedTicket.first.toEmployeeId
-                                ? empLabel(selectedTicket.first.toEmployeeId)
-                                : "Chưa phân công"}
-                            </div>
-                          </td>
-                          <td style={{ padding: "12px 16px", color: "#64748b" }}>
-                            {assetTransfer.receiverNote || selectedTicket.reason || "--"}
-                          </td>
+              <div className="asset-detail-grid">
+                <section className="asset-detail-section">
+                  <h3>Thông tin chung</h3>
+                  <div className="asset-detail-fields">
+                    <label>
+                      <span>Ngày quyết định</span>
+                      <input value={selectedTicket.transferDate} disabled />
+                    </label>
+                    <label>
+                      <span>Ngày thực hiện</span>
+                      <input value={selectedTicket.transferDate} disabled />
+                    </label>
+                    <label>
+                      <span>Phân loại</span>
+                      <input value={selectedTicket.transferType} disabled />
+                    </label>
+                    <label className="asset-detail-wide-field">
+                      <span>Lý do</span>
+                      <textarea
+                        value={selectedTicket.reason || "--"}
+                        disabled
+                        rows={3}
+                        style={{ resize: "none" }}
+                      />
+                    </label>
+                  </div>
+                </section>
+
+                <section className="asset-detail-section asset-detail-section-wide">
+                  <h3>Danh sách tài sản luân chuyển</h3>
+                  <div
+                    className="table-wrap"
+                    style={{
+                      border: "1px solid var(--qlvt-border, #e2e8f0)",
+                      borderRadius: "8px",
+                      overflow: "hidden",
+                      marginTop: "12px",
+                    }}
+                  >
+                    <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left" }}>
+                      <thead style={{ background: "#f1f5f9", borderBottom: "1px solid #e2e8f0" }}>
+                        <tr>
+                          <th
+                            style={{
+                              padding: "10px 16px",
+                              color: "#475569",
+                              fontSize: "13px",
+                              fontWeight: 600,
+                            }}
+                          >
+                            STT
+                          </th>
+                          <th
+                            style={{
+                              padding: "10px 16px",
+                              color: "#475569",
+                              fontSize: "13px",
+                              fontWeight: 600,
+                            }}
+                          >
+                            Tài sản
+                          </th>
+                          <th
+                            style={{
+                              padding: "10px 16px",
+                              color: "#475569",
+                              fontSize: "13px",
+                              fontWeight: 600,
+                            }}
+                          >
+                            Thông tin luân chuyển
+                          </th>
+                          <th
+                            style={{
+                              padding: "10px 16px",
+                              color: "#475569",
+                              fontSize: "13px",
+                              fontWeight: 600,
+                            }}
+                          >
+                            Ghi chú
+                          </th>
                         </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+                      </thead>
+                      <tbody>
+                        {selectedTicket.assets.map((assetTransfer, idx) => {
+                          const fullAsset = assets.find((a) => a.id === assetTransfer.assetId);
+                          return (
+                            <tr
+                              key={assetTransfer.id}
+                              style={{ borderBottom: "1px solid #f1f5f9" }}
+                            >
+                              <td style={{ padding: "12px 16px", fontWeight: 500 }}>{idx + 1}</td>
+                              <td style={{ padding: "12px 16px" }}>
+                                <div
+                                  style={{ fontWeight: 600, color: "#2563eb", marginBottom: "4px" }}
+                                >
+                                  {assetTransfer.assetCode}
+                                </div>
+                                <div style={{ fontSize: "13px", color: "#64748b" }}>
+                                  {assetTransfer.assetName}
+                                </div>
+                              </td>
+                              <td style={{ padding: "12px 16px" }}>
+                                <div
+                                  style={{
+                                    fontSize: "13px",
+                                    color: "#64748b",
+                                    marginBottom: "4px",
+                                  }}
+                                >
+                                  Từ:{" "}
+                                  {assetTransfer.fromEmployeeId
+                                    ? empLabel(assetTransfer.fromEmployeeId)
+                                    : fullAsset
+                                      ? getAssetLocation(fullAsset)
+                                      : "Chưa xác định"}
+                                </div>
+                                <div style={{ fontSize: "13px", color: "#0f172a" }}>
+                                  Đến:{" "}
+                                  {assetTransfer.toEmployeeId
+                                    ? empLabel(assetTransfer.toEmployeeId)
+                                    : (assetTransfer as any).toSiteId
+                                      ? "Chi nhánh/Phòng ban mới"
+                                      : "Chưa phân công"}
+                                </div>
+                              </td>
+                              <td style={{ padding: "12px 16px", color: "#64748b" }}>
+                                {assetTransfer.receiverNote || "--"}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </section>
+
+                <section className="asset-detail-section asset-detail-section-wide">
+                  <h3>Tệp đính kèm</h3>
+                  <div
+                    style={{
+                      padding: "16px",
+                      background: "#f8fafc",
+                      borderRadius: "8px",
+                      border: "1px dashed #cbd5e1",
+                    }}
+                  >
+                    <span style={{ fontSize: "13px", color: "#94a3b8" }}>
+                      Không có tệp đính kèm nào được lưu (Backend cần hỗ trợ lưu file).
+                    </span>
+                  </div>
+                </section>
               </div>
             </div>
 
-            <div
-              style={{
-                padding: "16px 24px",
-                borderTop: "1px solid #e2e8f0",
-                display: "flex",
-                justifyContent: "flex-end",
-                background: "#f8fafc",
-              }}
-            >
+            <div className="modal-actions asset-detail-actions">
               <button type="button" className="secondary" onClick={() => setSelectedTicket(null)}>
                 Đóng
               </button>
@@ -864,15 +838,17 @@ export function TransfersPage() {
       )}
 
       {view === "create" && (
-        <section className="panel">
+        <section className="panel transfer-create-form">
           <div
-            className="panel-body transfer-create-form"
+            className="panel-body"
             style={{ padding: "24px", display: "flex", flexDirection: "column", gap: "24px" }}
           >
             {/* Top Row: Thông tin chung & Xét duyệt */}
-            <div style={{ display: "flex", gap: "24px", alignItems: "stretch", flexWrap: "wrap" }}>
+            <div
+              style={{ display: "flex", gap: "24px", alignItems: "flex-start", flexWrap: "wrap" }}
+            >
               {/* Thông tin chung */}
-              <div style={{ flex: 2, minWidth: "400px", display: "flex", flexDirection: "column" }}>
+              <div style={{ flex: 2, minWidth: "400px" }}>
                 <h3
                   style={{
                     margin: "0 0 16px",
@@ -945,8 +921,12 @@ export function TransfersPage() {
                     <span style={formLabelStyle}>Chi nhánh</span>
                     <SearchableSelect
                       value={toSiteId}
-                      onChange={setToSiteId}
-                      disabled={transferType === "Thu hồi"}
+                      disabled={lockSite}
+                      onChange={(value) => {
+                        setToSiteId(value);
+                        setToDepartmentId("");
+                        setToEmployeeId("");
+                      }}
                     >
                       <option value="">Chọn chi nhánh</option>
                       {workSites.map((s) => (
@@ -961,8 +941,11 @@ export function TransfersPage() {
                     <span style={formLabelStyle}>Phòng ban nhận</span>
                     <SearchableSelect
                       value={toDepartmentId}
-                      onChange={setToDepartmentId}
-                      disabled={transferType === "Thu hồi" || availableDepartments.length === 0}
+                      disabled={!toSiteId || lockDepartment}
+                      onChange={(value) => {
+                        setToDepartmentId(value);
+                        setToEmployeeId("");
+                      }}
                     >
                       <option value="">Chọn phòng ban</option>
                       {availableDepartments.map((d) => (
@@ -978,7 +961,7 @@ export function TransfersPage() {
                     <SearchableSelect
                       value={toEmployeeId}
                       onChange={setToEmployeeId}
-                      disabled={transferType === "Thu hồi" || availableEmployees.length === 0}
+                      disabled={!toDepartmentId || lockEmployee}
                     >
                       <option value="">Chọn nhân viên</option>
                       {availableEmployees.map((e) => (
@@ -992,7 +975,7 @@ export function TransfersPage() {
               </div>
 
               {/* Xét duyệt & Tệp đính kèm */}
-              <div style={{ flex: 1, minWidth: "280px", display: "flex", flexDirection: "column" }}>
+              <div style={{ flex: 1, minWidth: "280px" }}>
                 <h3
                   style={{
                     margin: "0 0 16px",
@@ -1005,143 +988,177 @@ export function TransfersPage() {
                 >
                   Xét duyệt & Tệp đính kèm
                 </h3>
-                <div style={{ display: "flex", flex: 1, flexDirection: "column", gap: "20px" }}>
-                  <label style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                    <span style={formLabelStyle}>Trạng thái xét duyệt</span>
-                    <input
-                      style={{ ...formInputStyle, background: "#f8fafc", color: "#64748b" }}
-                      disabled
-                      value="Chờ trình duyệt"
-                    />
-                  </label>
-
-                  <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                  {/* Chỉ định người xét duyệt */}
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "8px",
+                      background: requireApproval ? "#f1f5f9" : "transparent",
+                      padding: requireApproval ? "12px" : "0",
+                      borderRadius: "8px",
+                      transition: "all 0.2s",
+                    }}
+                  >
                     <label
                       style={{
                         display: "flex",
                         alignItems: "center",
                         gap: "8px",
-                        fontSize: "13px",
-                        color: "#334155",
+                        cursor: "pointer",
+                        width: "fit-content",
                       }}
                     >
                       <input
                         type="checkbox"
-                        checked={requireAssignedApprovers}
-                        onChange={(event) => {
-                          setRequireAssignedApprovers(event.target.checked);
-                          if (!event.target.checked) {
-                            setApproverSelector("");
-                            setApproverEmployeeIds([]);
-                          }
+                        checked={requireApproval}
+                        onChange={(e) => {
+                          setRequireApproval(e.target.checked);
+                          if (!e.target.checked) setApprovedByUsers([]);
+                        }}
+                        style={{
+                          width: "16px",
+                          height: "16px",
+                          cursor: "pointer",
+                          accentColor: "#2563eb",
                         }}
                       />
-                      Chỉ định người xét duyệt
+                      <span style={{ fontSize: "14px", fontWeight: 500, color: "#334155" }}>
+                        Chỉ định người xét duyệt
+                      </span>
                     </label>
-                    <span style={formLabelStyle}>Người xét duyệt</span>
-                    <SearchableSelect
-                      value={approverSelector}
-                      disabled={!requireAssignedApprovers}
-                      onChange={(value) => {
-                        const employeeId = Number(value);
-                        if (value && !approverEmployeeIdSet.has(employeeId)) {
-                          setApproverEmployeeIds((prev) => [...prev, employeeId]);
-                        }
-                        setApproverSelector("");
-                      }}
-                    >
-                      <option value="">Chọn người xét duyệt</option>
-                      {availableApprovers.map((e) => (
-                        <option key={e.id} value={String(e.id)}>
-                          {employeeName(e)}
-                        </option>
-                      ))}
-                    </SearchableSelect>
-                    {approverEmployeeIds.length > 0 && (
-                      <div
-                        style={{
-                          display: "flex",
-                          flexDirection: "column",
-                          gap: "4px",
-                          maxHeight: "84px",
-                          overflowY: "auto",
-                        }}
-                      >
-                        {approverEmployeeIds.map((employeeId) => (
-                          <div
-                            key={employeeId}
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "space-between",
-                              gap: "8px",
-                              fontSize: "13px",
-                              color: "#334155",
-                            }}
-                          >
-                            <span>{empLabel(employeeId)}</span>
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setApproverEmployeeIds((prev) =>
-                                  prev.filter((id) => id !== employeeId),
-                                )
-                              }
-                              style={{
-                                background: "none",
-                                border: "none",
-                                color: "#ef4444",
-                                cursor: "pointer",
-                                padding: 0,
-                                textDecoration: "underline",
-                                fontSize: "12px",
-                                fontWeight: 600,
-                              }}
-                            >
-                              Xóa
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
 
-                  <div
-                    style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: "10px",
-                      marginTop: "4px",
-                      minHeight: 0,
-                    }}
-                  >
-                    <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                      <span style={formLabelStyle}>Tài liệu đính kèm</span>
-                      <button
-                        type="button"
-                        className="transfer-attachment-link"
-                        onClick={() => fileInputRef.current?.click()}
-                      >
-                        Thêm tệp đính kèm
-                      </button>
-                    </div>
-                    <input
-                      type="file"
-                      multiple
-                      ref={fileInputRef}
-                      style={{ display: "none" }}
-                      onChange={handleFileChange}
-                    />
-
-                    {/* File list preview */}
-                    {selectedFiles.length > 0 && (
+                    {requireApproval && (
                       <div
                         style={{
                           display: "flex",
                           flexDirection: "column",
                           gap: "8px",
                           marginTop: "4px",
-                          maxHeight: "122px",
+                        }}
+                      >
+                        <div style={{ fontFamily: "inherit" }}>
+                          <SearchableSelect
+                            className="transfer-asset-select"
+                            value=""
+                            onChange={(val) => {
+                              if (val && !approvedByUsers.includes(val)) {
+                                setApprovedByUsers((prev) => [...prev, val]);
+                              }
+                            }}
+                          >
+                            <option value="">Thêm người duyệt...</option>
+                            {employees.map((e) => (
+                              <option key={e.id} value={String(e.id)}>
+                                {employeeName(e)}
+                              </option>
+                            ))}
+                          </SearchableSelect>
+                        </div>
+
+                        {/* Selected Reviewers List with internal scroll */}
+                        {approvedByUsers.length > 0 && (
+                          <div
+                            style={{
+                              display: "flex",
+                              flexDirection: "column",
+                              gap: "6px",
+                              maxHeight: "150px",
+                              overflowY: "auto",
+                              paddingRight: "4px",
+                            }}
+                          >
+                            {approvedByUsers.map((empIdStr) => {
+                              const emp = employees.find((e) => String(e.id) === empIdStr);
+                              return (
+                                <div
+                                  key={empIdStr}
+                                  style={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "space-between",
+                                    background: "#fff",
+                                    padding: "6px 10px",
+                                    borderRadius: "6px",
+                                    border: "1px solid #e2e8f0",
+                                    fontSize: "13px",
+                                  }}
+                                >
+                                  <span style={{ color: "#0f172a" }}>
+                                    {emp ? employeeName(emp) : empIdStr}
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={() => removeApprover(empIdStr)}
+                                    style={{
+                                      background: "none",
+                                      border: "none",
+                                      color: "#ef4444",
+                                      cursor: "pointer",
+                                      textDecoration: "underline",
+                                      padding: 0,
+                                    }}
+                                  >
+                                    Xóa
+                                  </button>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Tệp đính kèm */}
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "10px",
+                      background: selectedFiles.length > 0 ? "#f1f5f9" : "transparent",
+                      padding: selectedFiles.length > 0 ? "12px" : "0",
+                      borderRadius: "8px",
+                      transition: "all 0.2s",
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                      <span style={{ fontSize: "14px", fontWeight: 500, color: "#334155" }}>
+                        Tài liệu đính kèm
+                      </span>
+                      <input
+                        type="file"
+                        multiple
+                        ref={fileInputRef}
+                        style={{ display: "none" }}
+                        onChange={handleFileChange}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        style={{
+                          background: "none",
+                          border: "none",
+                          color: "#2563eb",
+                          textDecoration: "underline",
+                          fontSize: "13px",
+                          cursor: "pointer",
+                          padding: 0,
+                        }}
+                      >
+                        Thêm tệp đính kèm
+                      </button>
+                    </div>
+
+                    {/* File list preview with internal scroll */}
+                    {selectedFiles.length > 0 && (
+                      <div
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: "6px",
+                          maxHeight: "150px",
                           overflowY: "auto",
                           paddingRight: "4px",
                         }}
@@ -1155,8 +1172,10 @@ export function TransfersPage() {
                                 display: "flex",
                                 alignItems: "center",
                                 justifyContent: "space-between",
-                                gap: "10px",
-                                padding: "2px 0",
+                                background: "#fff",
+                                padding: "6px 10px",
+                                borderRadius: "6px",
+                                border: "1px solid #e2e8f0",
                               }}
                             >
                               <a
@@ -1183,10 +1202,9 @@ export function TransfersPage() {
                                   border: "none",
                                   color: "#ef4444",
                                   cursor: "pointer",
-                                  padding: "2px",
                                   textDecoration: "underline",
-                                  fontSize: "12px",
-                                  fontWeight: 600,
+                                  padding: 0,
+                                  fontSize: "13px",
                                 }}
                               >
                                 Xóa
@@ -1217,22 +1235,21 @@ export function TransfersPage() {
                   Danh sách tài sản bàn giao/thu hồi
                 </h3>
                 <div style={{ width: "320px", display: "flex", gap: "8px" }}>
-                  <div style={{ flex: 1 }}>
+                  <div style={{ flex: 1, fontFamily: "inherit" }}>
                     <SearchableSelect
                       className="transfer-asset-select"
                       value={assetSelector}
+                      placeholder="Chọn tài sản để thêm"
                       onChange={(val) => {
-                        const assetId = Number(val);
-                        if (val && availableAssetIdSet.has(assetId)) {
-                          setSelectedAssetIds((prev) => [...prev, assetId]);
+                        if (val && !selectedAssetIds.includes(Number(val))) {
+                          setSelectedAssetIds((prev) => [...prev, Number(val)]);
                         }
                         setAssetSelector("");
                       }}
                     >
-                      <option value="">Chọn tài sản để thêm</option>
                       {availableAssets.map((a) => (
                         <option key={a.id} value={String(a.id)}>
-                          {a.assetCode} - {a.name}
+                          {a.assetCode} {a.name}
                         </option>
                       ))}
                     </SearchableSelect>
@@ -1245,8 +1262,8 @@ export function TransfersPage() {
                 style={{
                   border: "1px solid var(--qlvt-border, #e2e8f0)",
                   borderRadius: "8px",
-                  height: "360px",
-                  overflow: "auto",
+                  overflowY: "auto",
+                  maxHeight: "400px",
                 }}
               >
                 <table style={{ width: "100%", textAlign: "left", borderCollapse: "collapse" }}>
@@ -1333,12 +1350,20 @@ export function TransfersPage() {
                         </td>
                       </tr>
                     ) : (
-                      visibleSelectedAssetIds.map((id, index) => {
+                      pagedAssetIds.map((id, index) => {
                         const asset = assets.find((a) => a.id === id);
+
+                        const siteName = toSiteId
+                          ? workSites.find((s) => s.id === Number(toSiteId))?.name
+                          : "";
+                        const deptName = toDepartmentId
+                          ? departments.find((d) => d.id === Number(toDepartmentId))?.name
+                          : "";
+                        const eName = toEmployeeId ? empLabel(Number(toEmployeeId)) : "";
                         return (
                           <tr key={id} style={{ borderBottom: "1px solid #f1f5f9" }}>
                             <td style={{ padding: "12px 16px", fontWeight: 500 }}>
-                              {(safeSelectedAssetPage - 1) * selectedAssetPageSize + index + 1}
+                              {(safeAssetPage - 1) * assetPageSize + index + 1}
                             </td>
                             <td style={{ padding: "12px 16px" }}>
                               <div
@@ -1362,20 +1387,19 @@ export function TransfersPage() {
                               </div>
                             </td>
                             <td style={{ padding: "12px 16px" }}>
-                              <div
-                                style={{ fontSize: "13px", color: "#0f172a", marginBottom: "4px" }}
-                              >
-                                {toSiteId
-                                  ? workSites.find((s) => s.id === Number(toSiteId))?.name
-                                  : ""}
-                                {toDepartmentId
-                                  ? ` - ${departments.find((d) => d.id === Number(toDepartmentId))?.name}`
-                                  : ""}
-                                {toEmployeeId ? ` - ${empLabel(Number(toEmployeeId))}` : ""}
-                                {!toSiteId &&
-                                  !toDepartmentId &&
-                                  !toEmployeeId &&
-                                  "Chưa chọn vị trí nhận"}
+                              <div style={{ display: "grid", gap: "3px", fontSize: "13px" }}>
+                                <div>
+                                  <span style={{ color: "#64748b" }}>Chi nhánh:</span>{" "}
+                                  <strong>{siteName || "Chưa chọn"}</strong>
+                                </div>
+                                <div>
+                                  <span style={{ color: "#64748b" }}>Phòng ban:</span>{" "}
+                                  <strong>{deptName || "Chưa chọn"}</strong>
+                                </div>
+                                <div>
+                                  <span style={{ color: "#64748b" }}>Nhân viên:</span>{" "}
+                                  <strong>{eName || "Chưa chọn"}</strong>
+                                </div>
                               </div>
                               <div style={{ fontSize: "13px", color: "#2563eb" }}>
                                 Trạng thái dự kiến:{" "}
@@ -1422,17 +1446,19 @@ export function TransfersPage() {
                   </tbody>
                 </table>
               </div>
-              <CompactPagination
-                page={safeSelectedAssetPage}
-                pageSize={selectedAssetPageSize}
-                total={selectedAssetIds.length}
-                itemLabel="tài sản"
-                onPageChange={setSelectedAssetPage}
-                onPageSizeChange={(nextPageSize) => {
-                  setSelectedAssetPageSize(nextPageSize);
-                  setSelectedAssetPage(1);
-                }}
-              />
+              {selectedAssetIds.length > 0 && (
+                <TransferListPagination
+                  page={safeAssetPage}
+                  pageSize={assetPageSize}
+                  total={selectedAssetIds.length}
+                  itemLabel="tài sản"
+                  onPageChange={setAssetPage}
+                  onPageSizeChange={(size) => {
+                    setAssetPageSize(size);
+                    setAssetPage(1);
+                  }}
+                />
+              )}
             </div>
 
             {/* Footer Actions Inline with Panel */}

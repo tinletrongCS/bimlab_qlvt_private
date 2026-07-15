@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.stream.Collectors;
 
 /**
  * Returns static messages to callers and logs raw exception text server-side
@@ -29,14 +30,27 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    ResponseEntity<Map<String, String>> validation(MethodArgumentNotValidException e) {
-        return ResponseEntity.badRequest().body(Map.of("message", "Dữ liệu không hợp lệ"));
+    ResponseEntity<Map<String, Object>> validation(MethodArgumentNotValidException e) {
+        Map<String, String> fields = e.getBindingResult().getFieldErrors().stream()
+                .collect(Collectors.toMap(
+                        error -> error.getField(),
+                        error -> error.getDefaultMessage() == null ? "Không hợp lệ" : error.getDefaultMessage(),
+                        (first, ignored) -> first
+                ));
+        e.getBindingResult().getGlobalErrors().forEach(error ->
+                fields.put(error.getObjectName(), error.getDefaultMessage() == null ? "Không hợp lệ" : error.getDefaultMessage())
+        );
+        String message = fields.entrySet().stream()
+                .findFirst()
+                .map(entry -> entry.getKey() + ": " + entry.getValue())
+                .orElse("Dữ liệu không hợp lệ");
+        return ResponseEntity.badRequest().body(Map.of("message", message, "fields", fields));
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
     ResponseEntity<Map<String, String>> badRequest(IllegalArgumentException e) {
         log.info("400 bad request: {}", e.getMessage());
-        return ResponseEntity.badRequest().body(Map.of("message", "Yêu cầu không hợp lệ"));
+        return ResponseEntity.badRequest().body(Map.of("message", safeBadRequestMessage(e.getMessage())));
     }
 
     @ExceptionHandler(IllegalStateException.class)
@@ -59,5 +73,12 @@ public class GlobalExceptionHandler {
         log.info("409 data integrity: {}", e.getMessage());
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(Map.of("message", "Dữ liệu vi phạm ràng buộc (trùng mã hoặc khóa khác)"));
+    }
+
+    private String safeBadRequestMessage(String message) {
+        if (message != null && message.matches("^[A-Za-z][A-Za-z0-9_.-]*: .+")) {
+            return message;
+        }
+        return "Yêu cầu không hợp lệ";
     }
 }

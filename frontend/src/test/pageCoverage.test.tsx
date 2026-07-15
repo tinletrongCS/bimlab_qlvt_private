@@ -261,6 +261,9 @@ vi.mock("../services/api", () => ({
   deleteMaintenanceRecord: vi.fn().mockResolvedValue(undefined),
   loadWarrantyExpiring: vi.fn().mockResolvedValue([]),
   createTransfer: vi.fn().mockResolvedValue({}),
+  uploadTransferDocument: vi.fn().mockResolvedValue({ fileKey: "transfer-documents/test.pdf" }),
+  approveTransfer: vi.fn().mockResolvedValue({}),
+  rejectTransfer: vi.fn().mockResolvedValue({}),
   deleteTransfer: vi.fn().mockResolvedValue(undefined),
 }));
 
@@ -362,10 +365,22 @@ describe("QLVT pages", () => {
 
     await user.click(screen.getByRole("button", { name: "Tạo phiếu" }));
     expect(await screen.findByText("Danh sách tài sản bàn giao/thu hồi")).toBeVisible();
+    expect(screen.getByDisplayValue("Chọn phòng ban")).toBeDisabled();
+    expect(screen.getByDisplayValue("Chọn nhân viên")).toBeDisabled();
+    chooseSearchableOption(screen.getByDisplayValue("Chọn chi nhánh"), /Văn phòng/);
+    await waitFor(() => expect(screen.getByDisplayValue("Chọn phòng ban")).toBeEnabled());
+    chooseSearchableOption(screen.getByDisplayValue("Chọn phòng ban"), /^BIM$/);
 
     await user.click(screen.getByLabelText("Chỉ định người xét duyệt"));
-    chooseSearchableOption(screen.getByDisplayValue("Chọn người xét duyệt"), "Nguyễn Văn A");
-    chooseSearchableOption(screen.getByDisplayValue("Chọn tài sản để thêm"), /TS-001/);
+    chooseSearchableOption(screen.getByDisplayValue("Thêm người duyệt..."), /Nguyễn Văn A/);
+    const assetSelector = screen.getByPlaceholderText("Chọn tài sản để thêm");
+    expect(assetSelector).toHaveValue("");
+    chooseSearchableOption(assetSelector, /TS-001/);
+    await waitFor(() => {
+      expect(screen.getByDisplayValue("Văn phòng")).toBeDisabled();
+      expect(screen.getByDisplayValue("BIM")).toBeDisabled();
+      expect(screen.getByDisplayValue("Nguyễn Văn A")).toBeDisabled();
+    });
     await user.click(screen.getByRole("button", { name: "Gửi" }));
 
     await waitFor(() =>

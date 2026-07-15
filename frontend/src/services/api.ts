@@ -29,6 +29,7 @@ import type {
   DepreciationSnapshot,
   DisposeAssetPayload,
   EmployeeLite,
+  FileUploadResponse,
   MaintenanceRecord,
   MaintenanceRecordPayload,
   Permission,
@@ -337,6 +338,15 @@ export async function loadTransfers(): Promise<AssetTransfer[]> {
 
 export async function createTransfer(payload: AssetTransferPayload): Promise<AssetTransfer> {
   const response = await api.post<AssetTransfer>("/asset/transfer", payload);
+  return response.data;
+}
+
+export async function uploadTransferDocument(file: File): Promise<FileUploadResponse> {
+  const formData = new FormData();
+  formData.append("file", file);
+  const response = await api.post<FileUploadResponse>("/asset/transfer/upload", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
   return response.data;
 }
 

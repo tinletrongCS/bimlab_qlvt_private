@@ -168,6 +168,7 @@ function CrudFormInner({
         depreciationMethod: empty(form.depreciationMethod) || "NONE",
         usefulLifeYears: num(form.usefulLifeYears),
         notes: empty(form.notes),
+        categoryId: num(form.categoryId),
       });
     }
     if (modal.type === "subscription") {
@@ -419,9 +420,10 @@ function CrudFormInner({
             <AssetCategoryTreeSelect
               label="Danh mục tài sản"
               value={form.category}
-              onChange={(name, code) => {
+              onChange={(name, code, id) => {
                 setField("category", name);
                 if (code) setField("categoryCode", code);
+                if (id) setField("categoryId", String(id));
               }}
               categoryCode={form.categoryCode}
               onCodeChange={(code) => setField("categoryCode", code)}
@@ -858,6 +860,8 @@ function initialForm(modal: NonNullable<ModalState>): Record<string, string> {
       status: modal.item?.status || "IN_STOCK",
       depreciationMethod: modal.item?.depreciationMethod || "NONE",
       usefulLifeYears: val(modal.item?.usefulLifeYears),
+      categoryId: val(modal.item?.assetCategory?.id),
+      categoryCode: modal.item?.assetCategory?.code || "",
       notes: "",
     };
   if (modal.type === "subscription")

@@ -69,11 +69,11 @@ describe("AssetCategoryTreeSelect", () => {
     expect(screen.getByText("Laptop")).toBeVisible();
 
     fireEvent.click(screen.getByText("Laptop"));
-    expect(onChange).toHaveBeenCalledWith("Laptop", "LAP");
+    expect(onChange).toHaveBeenCalledWith("Laptop", "LAP", 2);
     expect(onCodeChange).toHaveBeenCalledWith("LAP");
 
     fireEvent.click(screen.getByText("Phòng họp"));
-    expect(onChange).toHaveBeenCalledWith("Phòng họp", "ROOM");
+    expect(onChange).toHaveBeenCalledWith("Phòng họp", "ROOM", 3);
   });
 
   it("collapses an expanded branch via the expander button", async () => {

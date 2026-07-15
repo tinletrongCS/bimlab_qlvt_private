@@ -160,6 +160,7 @@ describe("asset api client", () => {
       client.loadWarrantyExpiring(7),
       client.loadTransfers(),
       client.createTransfer(payload),
+      client.uploadTransferDocument(new File(["transfer"], "handover.pdf")),
       client.deleteTransfer(1),
       client.loadAssetBookings(),
       client.loadAssetBookings({ assetId: 1, status: "CONFIRMED" }),
@@ -180,6 +181,9 @@ describe("asset api client", () => {
     expect(mocks.api.post).toHaveBeenCalledWith("/asset/bookings/1/check-in");
     expect(mocks.api.get).toHaveBeenCalledWith("/asset/transfer");
     expect(mocks.api.post).toHaveBeenCalledWith("/asset/transfer", payload);
+    expect(mocks.api.post).toHaveBeenCalledWith("/asset/transfer/upload", expect.any(FormData), {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
     expect(mocks.api.post).toHaveBeenCalledWith("/asset/transfer/1/cancel", {
       reason: "Hủy phiếu từ giao diện",
     });

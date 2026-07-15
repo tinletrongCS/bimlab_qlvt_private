@@ -7,6 +7,7 @@ import com.bimlab.asset.dto.response.AssetTransferHeaderResponse;
 import com.bimlab.asset.security.AssetAccessService;
 import com.bimlab.asset.service.AssetService;
 import com.bimlab.asset.service.AssetTransferService;
+import com.bimlab.asset.storage.MinioService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -36,6 +37,7 @@ class AssetTransferControllerWebMvcTest {
     @MockBean AssetTransferService assetTransferService;
     @MockBean AssetService assetService;
     @MockBean AssetAccessService assetAccessService;
+    @MockBean MinioService minioService;
 
     private AssetTransferHeaderResponse sample() {
         return new AssetTransferHeaderResponse(
@@ -56,6 +58,11 @@ class AssetTransferControllerWebMvcTest {
                 null,
                 "Cấp phát",
                 null,
+                "admin",
+                1L,
+                null,
+                List.of(),
+                List.of(),
                 List.of()
         );
     }

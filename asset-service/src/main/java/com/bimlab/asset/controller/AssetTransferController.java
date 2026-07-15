@@ -2,15 +2,19 @@ package com.bimlab.asset.controller;
 
 import com.bimlab.asset.dto.request.AssetTransferDecisionRequest;
 import com.bimlab.asset.dto.request.AssetTransferHeaderRequest;
+import com.bimlab.asset.dto.response.FileUploadResponse;
 import com.bimlab.asset.dto.response.AssetTransferHeaderResponse;
 import com.bimlab.asset.service.AssetTransferService;
+import com.bimlab.asset.storage.MinioService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -19,6 +23,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class AssetTransferController {
     private final AssetTransferService service;
+    private final MinioService minioService;
 
     @GetMapping
     @PreAuthorize("hasAnyAuthority('asset_transfers_view','asset_transfers_manage','asset_transfers_approve','asset_manage')")
@@ -42,6 +47,13 @@ public class AssetTransferController {
     @PreAuthorize("hasAnyAuthority('asset_transfers_manage','asset_manage')")
     public AssetTransferHeaderResponse createPendingApproval(@Valid @RequestBody AssetTransferHeaderRequest req) {
         return service.createTransferPendingApproval(req);
+    }
+
+    @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasAnyAuthority('asset_transfers_manage','asset_manage')")
+    public FileUploadResponse uploadDocument(@RequestParam("file") MultipartFile file) {
+        String key = minioService.upload(file, "transfer-documents");
+        return new FileUploadResponse(key, minioService.getPresignedUrl(key));
     }
 
     @PostMapping("/{id}/approve")

@@ -7,9 +7,12 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.bimlab.asset.model.*;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -17,15 +20,16 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.bimlab.asset.dto.request.AssetTransferDecisionRequest;
 import com.bimlab.asset.dto.request.AssetTransferHeaderRequest;
-import com.bimlab.asset.dto.request.AssetTransferRequest;
 import com.bimlab.asset.dto.response.AssetTransferHeaderResponse;
 import com.bimlab.asset.model.status.AssetStatus;
 import com.bimlab.asset.repository.AssetDocumentRepository;
 import com.bimlab.asset.repository.AssetItemRepository;
 import com.bimlab.asset.repository.AssetTransferConfirmationRepository;
+import com.bimlab.asset.repository.AssetTransferDocumentRepository;
 import com.bimlab.asset.repository.AssetTransferHeaderRepository;
 import com.bimlab.asset.repository.AssetTransferRepository;
 import com.bimlab.asset.security.AssetAccessService;
+import com.bimlab.asset.security.Permission;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -34,6 +38,7 @@ public class AssetTransferService {
     private final AssetTransferRepository assetTransfers;
     private final AssetTransferHeaderRepository assetTransferRepo;
     private final AssetTransferConfirmationRepository assetTransferConfirmations;
+    private final AssetTransferDocumentRepository assetTransferDocuments;
     private final AssetItemRepository assets;
     private final AssetService assetService;
     private final AssetDocumentRepository assetDocuments;
@@ -72,14 +77,30 @@ public class AssetTransferService {
         List<AssetTransfer> lines = headerIds.isEmpty()
                 ? List.of()
                 : assetTransfers.findByTransferHeaderIdInOrderByTransferHeaderIdAscLineNoAscIdAsc(headerIds);
+        List<AssetTransferConfirmation> confirmations = headerIds.isEmpty()
+                ? List.of()
+                : assetTransferConfirmations.findByTransferHeaderIdInOrderByTransferHeaderIdAscIdAsc(headerIds);
+        List<AssetTransferDocument> documents = headerIds.isEmpty()
+                ? List.of()
+                : assetTransferDocuments.findByTransferHeaderIdInOrderByTransferHeaderIdAscIdAsc(headerIds);
         Map<Long, List<AssetTransfer>> linesByHeaderId = lines.stream()
                 .collect(java.util.stream.Collectors.groupingBy(
                         line -> line.getTransferHeader().getId()
                 ));
+        Map<Long, List<AssetTransferConfirmation>> confirmationsByHeaderId = confirmations.stream()
+                .collect(java.util.stream.Collectors.groupingBy(
+                        confirmation -> confirmation.getTransferHeader().getId()
+                ));
+        Map<Long, List<AssetTransferDocument>> documentsByHeaderId = documents.stream()
+                .collect(java.util.stream.Collectors.groupingBy(
+                        document -> document.getTransferHeader().getId()
+                ));
         return headers.stream()
                 .map(header -> toResponse(
                         header,
-                        linesByHeaderId.getOrDefault(header.getId(), List.of())
+                        linesByHeaderId.getOrDefault(header.getId(), List.of()),
+                        confirmationsByHeaderId.getOrDefault(header.getId(), List.of()),
+                        documentsByHeaderId.getOrDefault(header.getId(), List.of())
                 ))
                 .toList();
     }
@@ -158,6 +179,7 @@ public class AssetTransferService {
         Check xem phiếu này có bắt buộc cần người để phê duyệt ngoài admin hay không
         nếu không thì admin sẽ là người duyệt
         */
+        List<AssetTransferConfirmation> savedConfirmations = List.of();
         if (req.approverEmployeeIds() != null && !req.approverEmployeeIds().isEmpty()) {
             List<AssetTransferConfirmation> confirmations = req.approverEmployeeIds().stream()
                     .filter(java.util.Objects::nonNull)
@@ -169,7 +191,27 @@ public class AssetTransferService {
                             .status("PENDING")
                             .build())
                     .toList();
-            assetTransferConfirmations.saveAll(confirmations);
+            savedConfirmations = assetTransferConfirmations.saveAll(confirmations);
+        }
+
+        List<AssetTransferDocument> savedDocuments = List.of();
+        if (req.documents() != null && !req.documents().isEmpty()) {
+            List<AssetTransferDocument> documents = req.documents().stream()
+                    .filter(document -> !isBlank(document.fileName()))
+                    .map(document -> AssetTransferDocument.builder()
+                            .transferHeader(savedHeader)
+                            .documentType("ATTACHMENT")
+                            .documentStatus("ACTIVE")
+                            .fileName(document.fileName().trim())
+                            .objectKey(isBlank(document.objectKey())
+                                    ? "transfer-documents/" + savedHeader.getId() + "/" + UUID.randomUUID() + "_" + document.fileName().trim()
+                                    : document.objectKey().trim())
+                            .contentType(document.contentType())
+                            .sizeBytes(document.sizeBytes())
+                            .uploadedBy(requestedByUsername)
+                            .build())
+                    .toList();
+            savedDocuments = assetTransferDocuments.saveAll(documents);
         }
 
         AtomicInteger lineNo = new AtomicInteger(1);
@@ -226,71 +268,151 @@ public class AssetTransferService {
                 null
         ));
 
-        return toResponse(savedHeader, savedLines);
+        return toResponse(savedHeader, savedLines, savedConfirmations, savedDocuments);
     }
 
     @Transactional
     public AssetTransferHeaderResponse approveTransferHeader(Long id, AssetTransferDecisionRequest req) {
-        // TODO PRACTICE TRANSFER 3:
-        // Người có quyền asset_transfers_approve duyệt phiếu.
-        //
-        // Yêu cầu:
-        // - Tìm asset_transfer_headers theo id.
-        // - Chỉ cho approve khi status = PENDING_APPROVAL.
-        // - Backend/controller phải kiểm tra quyền asset_transfers_approve.
-        // - Đổi header status: PENDING_APPROVAL -> APPROVED.
-        // - Set approvedBy từ user hiện tại, không lấy từ client.
-        // - Với từng dòng asset_transfers:
-        //   + lineStatus = APPROVED.
-        //   + Tìm AssetItem tương ứng.
-        //   + Snapshot beforeData trước khi cập nhật.
-        //   + Cập nhật asset.assets theo bên nhận: employee, department, site, project, status.
-        //   + Snapshot afterData sau khi cập nhật.
-        //   + Ghi audit log entity_type = ASSET, action = TRANSFER_APPROVED.
-        // - Ghi audit log phiếu entity_type = ASSET_TRANSFER_HEADER, action = TRANSFER_APPROVED.
-        // - Toàn bộ chạy trong 1 transaction.
-        // - Return AssetTransferHeaderResponse.
-        throw new UnsupportedOperationException("TODO: approve transfer header");
+        AssetTransferHeader header = assetTransferRepo.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy phiếu bàn giao"));
+        ensurePendingApproval(header);
+        List<AssetTransferConfirmation> confirmations =
+                assetTransferConfirmations.findByTransferHeaderIdOrderByIdAsc(header.getId());
+        ensureCurrentUserCanDecide(confirmations);
+
+        String username = access.getCurrentUsername();
+        Map<String, Object> beforeHeader = transferHeaderSnapshot(header);
+        header.setStatus("APPROVED");
+        header.setApprovedBy(username);
+        AssetTransferHeader savedHeader = assetTransferRepo.save(header);
+
+        LocalDateTime now = LocalDateTime.now();
+        confirmations.forEach(confirmation -> {
+            confirmation.setStatus("APPROVED");
+            confirmation.setConfirmedAt(now);
+            confirmation.setNote(req == null ? null : req.reason());
+        });
+        List<AssetTransferConfirmation> savedConfirmations = assetTransferConfirmations.saveAll(confirmations);
+
+        List<AssetTransfer> lines = assetTransfers.findByTransferHeaderIdOrderByLineNoAscIdAsc(header.getId());
+        lines.forEach(line -> {
+            AssetItem asset = line.getAsset();
+            Map<String, Object> beforeAsset = assetSnapshot(asset);
+            line.setLineStatus("APPROVED");
+            line.setApprovedBy(username);
+            applyApprovedTransfer(line, asset);
+            assets.save(asset);
+            auditLogService.log(
+                    "ASSET_TRANSFER",
+                    AuditLogService.ENTITY_ASSET,
+                    asset.getId(),
+                    asset.getAssetCode(),
+                    "TRANSFER_APPROVED",
+                    "Duyệt bàn giao tài sản trong phiếu " + savedHeader.getTransferCode(),
+                    beforeAsset,
+                    assetSnapshot(asset),
+                    changedFields(beforeAsset, assetSnapshot(asset))
+            );
+        });
+        List<AssetTransfer> savedLines = assetTransfers.saveAll(lines);
+
+        auditLogService.log(
+                "ASSET_TRANSFER",
+                AuditLogService.ENTITY_ASSET_TRANSFER_HEADER,
+                savedHeader.getId(),
+                savedHeader.getTransferCode(),
+                "TRANSFER_APPROVED",
+                "Duyệt phiếu bàn giao " + savedHeader.getTransferCode(),
+                beforeHeader,
+                transferHeaderSnapshot(savedHeader),
+                changedFields(beforeHeader, transferHeaderSnapshot(savedHeader))
+        );
+        return toResponse(savedHeader, savedLines, savedConfirmations,
+                assetTransferDocuments.findByTransferHeaderIdOrderByIdAsc(savedHeader.getId()));
     }
 
     @Transactional
     public AssetTransferHeaderResponse rejectTransferHeader(Long id, AssetTransferDecisionRequest req) {
-        // TODO PRACTICE TRANSFER 4:
-        // Người có quyền asset_transfers_approve từ chối phiếu.
-        //
-        // Yêu cầu:
-        // - Tìm asset_transfer_headers theo id.
-        // - Chỉ cho reject khi status = PENDING_APPROVAL.
-        // - Validate req.reason() không rỗng.
-        // - Đổi header status: PENDING_APPROVAL -> REJECTED.
-        // - Đổi từng lineStatus = REJECTED.
-        // - Không cập nhật asset.assets.
-        // - Ghi audit log phiếu: TRANSFER_REJECTED, có lý do từ chối.
-        // - Có thể ghi audit log từng tài sản nếu muốn hiện lịch sử bị từ chối.
-        // - Return AssetTransferHeaderResponse.
-        throw new UnsupportedOperationException("TODO: reject transfer header");
+        if (req == null || isBlank(req.reason())) {
+            throw new IllegalArgumentException("Vui lòng nhập lý do từ chối");
+        }
+        AssetTransferHeader header = assetTransferRepo.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy phiếu bàn giao"));
+        ensurePendingApproval(header);
+        List<AssetTransferConfirmation> confirmations =
+                assetTransferConfirmations.findByTransferHeaderIdOrderByIdAsc(header.getId());
+        ensureCurrentUserCanDecide(confirmations);
+
+        Map<String, Object> beforeHeader = transferHeaderSnapshot(header);
+        header.setStatus("REJECTED");
+        header.setNote(appendDecisionNote(header.getNote(), "Từ chối: " + req.reason()));
+        AssetTransferHeader savedHeader = assetTransferRepo.save(header);
+
+        LocalDateTime now = LocalDateTime.now();
+        confirmations.forEach(confirmation -> {
+            confirmation.setStatus("REJECTED");
+            confirmation.setConfirmedAt(now);
+            confirmation.setNote(req.reason());
+        });
+        List<AssetTransferConfirmation> savedConfirmations = assetTransferConfirmations.saveAll(confirmations);
+
+        List<AssetTransfer> lines = assetTransfers.findByTransferHeaderIdOrderByLineNoAscIdAsc(header.getId());
+        lines.forEach(line -> line.setLineStatus("REJECTED"));
+        List<AssetTransfer> savedLines = assetTransfers.saveAll(lines);
+
+        auditLogService.log(
+                "ASSET_TRANSFER",
+                AuditLogService.ENTITY_ASSET_TRANSFER_HEADER,
+                savedHeader.getId(),
+                savedHeader.getTransferCode(),
+                "TRANSFER_REJECTED",
+                "Từ chối phiếu bàn giao " + savedHeader.getTransferCode() + ": " + req.reason(),
+                beforeHeader,
+                transferHeaderSnapshot(savedHeader),
+                changedFields(beforeHeader, transferHeaderSnapshot(savedHeader))
+        );
+        return toResponse(savedHeader, savedLines, savedConfirmations,
+                assetTransferDocuments.findByTransferHeaderIdOrderByIdAsc(savedHeader.getId()));
     }
 
     @Transactional
     public AssetTransferHeaderResponse cancelTransferHeader(Long id, AssetTransferDecisionRequest req) {
-        // TODO PRACTICE TRANSFER 5:
-        // Hủy phiếu bàn giao.
-        //
-        // Yêu cầu:
-        // - Tìm asset_transfer_headers theo id.
-        // - Chỉ cho cancel khi status = PENDING_APPROVAL.
-        // - Validate req.reason() không rỗng.
-        // - Check quyền: chỉ cho cancel nếu current user có asset_transfers_manage
-        //   và currentEmployeeId == transferHeader.requestedEmployeeId.
-        // - Controller chỉ nên hiện nút Hủy cho người đã tạo phiếu đang PENDING_APPROVAL.
-        // - Nếu sau này cần admin override thì check thêm asset_manage/admin riêng, không mở mặc định.
-        // - Đổi header status = CANCELLED.
-        // - Set cancelReason, cancelledBy, cancelledAt.
-        // - Đổi từng lineStatus = CANCELLED.
-        // - Không cập nhật asset.assets.
-        // - Ghi audit log phiếu: TRANSFER_CANCELLED.
-        // - Return AssetTransferHeaderResponse.
-        throw new UnsupportedOperationException("TODO: cancel transfer header");
+        if (req == null || isBlank(req.reason())) {
+            throw new IllegalArgumentException("Vui lòng nhập lý do hủy phiếu");
+        }
+        AssetTransferHeader header = assetTransferRepo.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy phiếu bàn giao"));
+        ensurePendingApproval(header);
+        boolean isOwner = java.util.Objects.equals(access.getCurrentEmployeeId(), header.getRequestedEmployeeId());
+        if (!isOwner && !access.hasAnyPermission(Permission.ASSET_MANAGE)) {
+            throw new AccessDeniedException("Chỉ người tạo phiếu hoặc asset_manage được hủy phiếu");
+        }
+
+        Map<String, Object> beforeHeader = transferHeaderSnapshot(header);
+        header.setStatus("CANCELLED");
+        header.setCancelledBy(access.getCurrentUsername());
+        header.setCancelledAt(LocalDateTime.now());
+        header.setCancelReason(req.reason());
+        AssetTransferHeader savedHeader = assetTransferRepo.save(header);
+
+        List<AssetTransfer> lines = assetTransfers.findByTransferHeaderIdOrderByLineNoAscIdAsc(header.getId());
+        lines.forEach(line -> line.setLineStatus("CANCELLED"));
+        List<AssetTransfer> savedLines = assetTransfers.saveAll(lines);
+
+        auditLogService.log(
+                "ASSET_TRANSFER",
+                AuditLogService.ENTITY_ASSET_TRANSFER_HEADER,
+                savedHeader.getId(),
+                savedHeader.getTransferCode(),
+                "TRANSFER_CANCELLED",
+                "Hủy phiếu bàn giao " + savedHeader.getTransferCode() + ": " + req.reason(),
+                beforeHeader,
+                transferHeaderSnapshot(savedHeader),
+                changedFields(beforeHeader, transferHeaderSnapshot(savedHeader))
+        );
+        return toResponse(savedHeader, savedLines,
+                assetTransferConfirmations.findByTransferHeaderIdOrderByIdAsc(savedHeader.getId()),
+                assetTransferDocuments.findByTransferHeaderIdOrderByIdAsc(savedHeader.getId()));
     }
 
     @Transactional
@@ -349,10 +471,52 @@ public class AssetTransferService {
         if ("REVOKE".equals(transferType)) {
             return AssetStatus.IN_STOCK.name();
         }
-        if (toEmployeeId != null) {
+        if ("ASSIGN".equals(transferType) || toEmployeeId != null) {
             return AssetStatus.ASSIGNED.name();
         }
         return null;
+    }
+
+    private void ensurePendingApproval(AssetTransferHeader header) {
+        if (!"PENDING_APPROVAL".equals(header.getStatus())) {
+            throw new IllegalStateException("Chỉ xử lý được phiếu đang chờ duyệt");
+        }
+    }
+
+    private void ensureCurrentUserCanDecide(List<AssetTransferConfirmation> confirmations) {
+        if (confirmations == null || confirmations.isEmpty() || access.hasAnyPermission(Permission.ASSET_MANAGE)) {
+            return;
+        }
+        Long currentEmployeeId = access.getCurrentEmployeeId();
+        boolean assignedApprover = currentEmployeeId != null && confirmations.stream()
+                .anyMatch(item -> java.util.Objects.equals(item.getConfirmerEmployeeId(), currentEmployeeId));
+        if (!assignedApprover) {
+            throw new AccessDeniedException("Bạn không nằm trong danh sách người được xét duyệt phiếu này");
+        }
+    }
+
+    private void applyApprovedTransfer(AssetTransfer line, AssetItem asset) {
+        if ("REVOKE".equals(line.getTransferType())) {
+            asset.setAssignedEmployeeId(null);
+            asset.setDepartmentId(null);
+            asset.setProjectId(null);
+            asset.setStatus(AssetStatus.IN_STOCK);
+            return;
+        }
+        asset.setAssignedEmployeeId(line.getToEmployeeId());
+        asset.setDepartmentId(line.getToDepartmentId());
+        asset.setSiteId(line.getToSiteId());
+        asset.setProjectId(line.getToProjectId());
+        if (!isBlank(line.getStatusAfter())) {
+            asset.setStatus(AssetStatus.valueOf(line.getStatusAfter()));
+        }
+    }
+
+    private String appendDecisionNote(String currentNote, String decisionNote) {
+        if (isBlank(currentNote)) {
+            return decisionNote;
+        }
+        return currentNote + "\n" + decisionNote;
     }
 
     private boolean isBlank(String value) {
@@ -431,10 +595,31 @@ public class AssetTransferService {
         List<AssetTransfer> lines = transferHeader.getId() == null
                 ? List.of()
                 : assetTransfers.findByTransferHeaderIdOrderByLineNoAscIdAsc(transferHeader.getId());
-        return toResponse(transferHeader, lines);
+        List<AssetTransferConfirmation> confirmations = transferHeader.getId() == null
+                ? List.of()
+                : assetTransferConfirmations.findByTransferHeaderIdOrderByIdAsc(transferHeader.getId());
+        List<AssetTransferDocument> documents = transferHeader.getId() == null
+                ? List.of()
+                : assetTransferDocuments.findByTransferHeaderIdOrderByIdAsc(transferHeader.getId());
+        return toResponse(transferHeader, lines, confirmations, documents);
     }
 
     private AssetTransferHeaderResponse toResponse(AssetTransferHeader transferHeader, List<AssetTransfer> lines) {
+        List<AssetTransferConfirmation> confirmations = transferHeader.getId() == null
+                ? List.of()
+                : assetTransferConfirmations.findByTransferHeaderIdOrderByIdAsc(transferHeader.getId());
+        List<AssetTransferDocument> documents = transferHeader.getId() == null
+                ? List.of()
+                : assetTransferDocuments.findByTransferHeaderIdOrderByIdAsc(transferHeader.getId());
+        return toResponse(transferHeader, lines, confirmations, documents);
+    }
+
+    private AssetTransferHeaderResponse toResponse(
+            AssetTransferHeader transferHeader,
+            List<AssetTransfer> lines,
+            List<AssetTransferConfirmation> confirmations,
+            List<AssetTransferDocument> documents
+    ) {
         return new AssetTransferHeaderResponse(
                 transferHeader.getId(),
                 transferHeader.getTransferCode(),
@@ -453,7 +638,37 @@ public class AssetTransferService {
                 transferHeader.getPlannedHandoverAt(),
                 transferHeader.getReason(),
                 transferHeader.getNote(),
+                transferHeader.getRequestedBy(),
+                transferHeader.getRequestedEmployeeId(),
+                transferHeader.getApprovedBy(),
+                confirmations.stream().map(this::toConfirmationResponse).toList(),
+                documents.stream().map(this::toDocumentResponse).toList(),
                 lines.stream().map(this::toLineResponse).toList()
+        );
+    }
+
+    private AssetTransferHeaderResponse.Confirmation toConfirmationResponse(AssetTransferConfirmation confirmation) {
+        return new AssetTransferHeaderResponse.Confirmation(
+                confirmation.getId(),
+                confirmation.getConfirmerEmployeeId(),
+                confirmation.getConfirmerUsername(),
+                confirmation.getConfirmerName(),
+                confirmation.getConfirmationRole(),
+                confirmation.getStatus(),
+                confirmation.getConfirmedAt(),
+                confirmation.getNote()
+        );
+    }
+
+    private AssetTransferHeaderResponse.Document toDocumentResponse(AssetTransferDocument document) {
+        return new AssetTransferHeaderResponse.Document(
+                document.getId(),
+                document.getDocumentType(),
+                document.getDocumentStatus(),
+                document.getFileName(),
+                document.getObjectKey(),
+                document.getContentType(),
+                document.getSizeBytes()
         );
     }
 
@@ -465,6 +680,14 @@ public class AssetTransferService {
                 asset == null ? null : asset.getAssetCode(),
                 asset == null ? null : asset.getName(),
                 transfer.getLineStatus(),
+                transfer.getFromEmployeeId(),
+                transfer.getToEmployeeId(),
+                transfer.getFromDepartmentId(),
+                transfer.getToDepartmentId(),
+                transfer.getFromSiteId(),
+                transfer.getToSiteId(),
+                transfer.getFromProjectId(),
+                transfer.getToProjectId(),
                 transfer.getStatusBefore(),
                 transfer.getStatusAfter(),
                 transfer.getConditionBefore(),

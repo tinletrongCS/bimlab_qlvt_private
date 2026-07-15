@@ -23,8 +23,16 @@ public record AssetTransferHeaderRequest(
         String note,
         // chưa danh sách id của các người dùng được phép xét duyệt
         List<Long> approverEmployeeIds,
+        List<Document> documents,
         List<Line> lines
 ) {
+    public record Document(
+            String fileName,
+            String objectKey,
+            String contentType,
+            Long sizeBytes
+    ) {}
+
     public record Line(
             Long assetId,
             String conditionBefore,

@@ -9,4 +9,6 @@ import com.bimlab.asset.model.AssetTransferConfirmation;
 public interface AssetTransferConfirmationRepository
         extends JpaRepository<AssetTransferConfirmation, Long> {
     List<AssetTransferConfirmation> findByTransferHeaderIdOrderByIdAsc(Long transferHeaderId);
+
+    List<AssetTransferConfirmation> findByTransferHeaderIdInOrderByTransferHeaderIdAscIdAsc(List<Long> transferHeaderIds);
 }

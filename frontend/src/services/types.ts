@@ -472,7 +472,37 @@ export interface AssetTransfer {
   reason?: string;
   note?: string;
   approvedBy?: string;
+  requestedBy?: string;
+  requestedEmployeeId?: number;
+  confirmations?: AssetTransferConfirmation[];
+  documents?: AssetTransferDocument[];
   lines?: AssetTransferLine[];
+}
+
+export interface AssetTransferConfirmation {
+  id: number;
+  confirmerEmployeeId?: number;
+  confirmerUsername?: string;
+  confirmerName?: string;
+  confirmationRole?: string;
+  status?: string;
+  confirmedAt?: string;
+  note?: string;
+}
+
+export interface AssetTransferDocument {
+  id?: number;
+  documentType?: string;
+  documentStatus?: string;
+  fileName: string;
+  objectKey?: string;
+  contentType?: string;
+  sizeBytes?: number;
+}
+
+export interface FileUploadResponse {
+  fileKey: string;
+  downloadUrl?: string;
 }
 
 export interface AssetTransferLine {
@@ -481,6 +511,14 @@ export interface AssetTransferLine {
   assetCode?: string;
   assetName?: string;
   lineStatus?: string;
+  fromEmployeeId?: number;
+  toEmployeeId?: number;
+  fromDepartmentId?: number;
+  toDepartmentId?: number;
+  fromSiteId?: number;
+  toSiteId?: number;
+  fromProjectId?: number;
+  toProjectId?: number;
   statusBefore?: string;
   statusAfter?: string;
   conditionBefore?: string;
@@ -505,6 +543,12 @@ export interface AssetTransferPayload {
   reason?: string;
   note?: string;
   approverEmployeeIds?: number[];
+  documents?: Array<{
+    fileName: string;
+    objectKey?: string;
+    contentType?: string;
+    sizeBytes?: number;
+  }>;
   lines: Array<{
     assetId: number;
     conditionBefore?: string;
