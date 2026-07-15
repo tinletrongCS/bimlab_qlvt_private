@@ -21,6 +21,8 @@ public record AssetTransferHeaderRequest(
         LocalDateTime plannedHandoverAt,
         String reason,
         String note,
+        // chưa danh sách id của các người dùng được phép xét duyệt
+        List<Long> approverEmployeeIds,
         List<Line> lines
 ) {
     public record Line(

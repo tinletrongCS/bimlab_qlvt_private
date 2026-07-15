@@ -40,7 +40,7 @@ public class AssetTransferHeader {
 
     @Column(length = 30, nullable = false)
     @Builder.Default
-    private String status = "DRAFT";
+    private String status = "PENDING_APPROVAL";
 
     @Column(name = "requested_by", length = 200)
     private String requestedBy;
@@ -108,7 +108,8 @@ public class AssetTransferHeader {
         createdAt = now;
         updatedAt = now;
         if (status == null) {
-            status = "DRAFT";
+            // khi mới gửi phiếu bàn giao đi thì sẽ sang trạng thài Chờ duyệt
+            status = "PENDING_APPROVAL";
         }
     }
 

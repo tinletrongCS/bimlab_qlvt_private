@@ -504,6 +504,7 @@ export interface AssetTransferPayload {
   plannedHandoverAt?: string;
   reason?: string;
   note?: string;
+  approverEmployeeIds?: number[];
   lines: Array<{
     assetId: number;
     conditionBefore?: string;

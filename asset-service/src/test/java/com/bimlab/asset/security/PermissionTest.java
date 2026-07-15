@@ -36,12 +36,14 @@ class PermissionTest {
         assertEquals("purchase_request_approve", Permission.PURCHASE_REQUEST_APPROVE.code());
         assertEquals("contract_manage", Permission.CONTRACT_MANAGE.code());
         assertEquals("maintenance_manage", Permission.MAINTENANCE_MANAGE.code());
+        assertEquals("log_definition_view", Permission.LOG_DEFINITION_VIEW.code());
+        assertEquals("log_definition_manage", Permission.LOG_DEFINITION_MANAGE.code());
     }
 
     @Test
     void allValuesCovered_noStrayEnumEntries() {
         // Lock total count so adding a value without updating tests fails loudly.
-        assertEquals(17, Permission.values().length);
+        assertEquals(19, Permission.values().length);
     }
 
     @Test

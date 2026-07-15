@@ -13,6 +13,8 @@ public interface AssetTransferRepository extends JpaRepository<AssetTransfer, Lo
 
     List<AssetTransfer> findByTransferHeaderIdInOrderByTransferHeaderIdAscLineNoAscIdAsc(List<Long> transferHeaderIds);
 
+    List<AssetTransfer> findByAsset_IdInAndTransferHeader_Status(List<Long> assetIds, String status);
+
     default List<AssetTransfer> findAllSortedByDateDesc() {
         return findAll(Sort.by(Sort.Direction.DESC, "transferDate", "id"));
     }

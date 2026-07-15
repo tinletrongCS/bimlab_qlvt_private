@@ -6,42 +6,45 @@ import com.bimlab.asset.dto.response.AssetTransferHeaderResponse;
 import com.bimlab.asset.service.AssetTransferService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/asset")
+@RequestMapping("/api/asset/transfer")
 @RequiredArgsConstructor
 public class AssetTransferController {
     private final AssetTransferService service;
 
-    @GetMapping("/transfer")
+    @GetMapping
     @PreAuthorize("hasAnyAuthority('asset_transfers_view','asset_transfers_manage','asset_transfers_approve','asset_manage')")
     public List<AssetTransferHeaderResponse> listHeaders() {
         return service.listTransferHeaders();
     }
 
-    @GetMapping("/transfer/{id}")
+    @GetMapping("/paged")
+    @PreAuthorize("hasAnyAuthority('asset_transfers_view','asset_transfers_manage','asset_transfers_approve','asset_manage')")
+    public Page<AssetTransferHeaderResponse> listPaged(@PageableDefault(size = 20) Pageable pageable) {
+        return service.listTransferHeadersPaged(pageable);
+    }
+
+    @GetMapping("/{id}")
     @PreAuthorize("hasAnyAuthority('asset_transfers_view','asset_transfers_manage','asset_transfers_approve','asset_manage')")
     public AssetTransferHeaderResponse getHeader(@PathVariable Long id) {
         return service.getTransferHeader(id);
     }
 
-    @PostMapping("/transfer")
+    @PostMapping
     @PreAuthorize("hasAnyAuthority('asset_transfers_manage','asset_manage')")
-    public AssetTransferHeaderResponse createDraft(@Valid @RequestBody AssetTransferHeaderRequest req) {
-        return service.createTransferDraft(req);
+    public AssetTransferHeaderResponse createPendingApproval(@Valid @RequestBody AssetTransferHeaderRequest req) {
+        return service.createTransferPendingApproval(req);
     }
 
-    @PostMapping("/transfer/{id}/submit")
-    @PreAuthorize("hasAnyAuthority('asset_transfers_manage','asset_manage')")
-    public AssetTransferHeaderResponse submit(@PathVariable Long id) {
-        return service.submitTransferHeader(id);
-    }
-
-    @PostMapping("/transfer/{id}/approve")
+    @PostMapping("/{id}/approve")
     @PreAuthorize("hasAnyAuthority('asset_transfers_approve','asset_manage')")
     public AssetTransferHeaderResponse approve(
             @PathVariable Long id,
@@ -50,7 +53,7 @@ public class AssetTransferController {
         return service.approveTransferHeader(id, req);
     }
 
-    @PostMapping("/transfer/{id}/reject")
+    @PostMapping("/{id}/reject")
     @PreAuthorize("hasAnyAuthority('asset_transfers_approve','asset_manage')")
     public AssetTransferHeaderResponse reject(
             @PathVariable Long id,
@@ -59,7 +62,7 @@ public class AssetTransferController {
         return service.rejectTransferHeader(id, req);
     }
 
-    @PostMapping("/transfer/{id}/cancel")
+    @PostMapping("/{id}/cancel")
     @PreAuthorize("hasAnyAuthority('asset_transfers_manage','asset_manage')")
     public AssetTransferHeaderResponse cancel(
             @PathVariable Long id,

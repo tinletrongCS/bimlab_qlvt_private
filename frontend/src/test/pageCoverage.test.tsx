@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import App from "../App";
 import * as api from "../services/api";
+import { chooseSearchableOption } from "./searchableSelect";
 
 const categoryExcelMocks = vi.hoisted(() => ({
   download: vi.fn().mockResolvedValue(undefined),
@@ -355,6 +356,28 @@ describe("QLVT pages", () => {
     );
   });
 
+  it("creates a transfer request with approvers", async () => {
+    const user = userEvent.setup();
+    await renderRoute("/transfers", "Bàn giao dự án");
+
+    await user.click(screen.getByRole("button", { name: "Tạo phiếu" }));
+    expect(await screen.findByText("Danh sách tài sản bàn giao/thu hồi")).toBeVisible();
+
+    await user.click(screen.getByLabelText("Chỉ định người xét duyệt"));
+    chooseSearchableOption(screen.getByDisplayValue("Chọn người xét duyệt"), "Nguyễn Văn A");
+    chooseSearchableOption(screen.getByDisplayValue("Chọn tài sản để thêm"), /TS-001/);
+    await user.click(screen.getByRole("button", { name: "Gửi" }));
+
+    await waitFor(() =>
+      expect(api.createTransfer).toHaveBeenCalledWith(
+        expect.objectContaining({
+          approverEmployeeIds: [1],
+          lines: [{ assetId: 1 }],
+        }),
+      ),
+    );
+  });
+
   it("manages category hierarchy and completes an import", async () => {
     const user = userEvent.setup();
     vi.mocked(api.validateAssetCategoryImport).mockResolvedValueOnce({
@@ -416,10 +439,10 @@ describe("QLVT pages", () => {
     await user.click(screen.getAllByTitle("Xóa")[0]);
     await waitFor(() => expect(api.deleteAssetCategory).toHaveBeenCalled());
 
-    await user.click(screen.getByRole("button", { name: /Tải danh mục/i }));
+    await user.click(screen.getByRole("button", { name: /In danh mục/i }));
     await waitFor(() => expect(categoryExcelMocks.download).toHaveBeenCalled());
 
-    await user.click(screen.getByRole("button", { name: /Import danh mục/i }));
+    await user.click(screen.getByRole("button", { name: /Nhập danh mục/i }));
     const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
     await user.upload(fileInput, new File(["xlsx"], "categories.xlsx"));
     await waitFor(() => expect(categoryExcelMocks.parse).toHaveBeenCalled());

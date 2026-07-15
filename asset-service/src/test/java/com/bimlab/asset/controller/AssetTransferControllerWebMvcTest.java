@@ -81,7 +81,7 @@ class AssetTransferControllerWebMvcTest {
     @Test
     @WithMockUser(authorities = {"asset_transfers_manage"})
     void create_returnsTransferHeader() throws Exception {
-        when(assetTransferService.createTransferDraft(any())).thenReturn(sample());
+        when(assetTransferService.createTransferPendingApproval(any())).thenReturn(sample());
 
         mockMvc.perform(post("/api/asset/transfer")
                         .contentType(MediaType.APPLICATION_JSON)

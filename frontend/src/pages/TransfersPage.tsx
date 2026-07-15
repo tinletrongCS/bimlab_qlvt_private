@@ -123,7 +123,9 @@ export function TransfersPage() {
   const [toDepartmentId, setToDepartmentId] = useState("");
   const [toSiteId, setToSiteId] = useState("");
   const [reason, setReason] = useState("");
-  const [approvedBy, setApprovedBy] = useState(""); // Nguoi duyet
+  const [requireAssignedApprovers, setRequireAssignedApprovers] = useState(false);
+  const [approverSelector, setApproverSelector] = useState("");
+  const [approverEmployeeIds, setApproverEmployeeIds] = useState<number[]>([]);
   const [selectedAssetIds, setSelectedAssetIds] = useState<number[]>([]);
   const [assetSelector, setAssetSelector] = useState("");
 
@@ -145,12 +147,17 @@ export function TransfersPage() {
   const canManage = hasPermission(["asset_transfers_manage", "asset_manage"]);
   const canApprove = hasPermission(["asset_transfers_approve", "asset_manage"]);
   const empLabel = (id?: number) => (id ? employeeName(employees.find((e) => e.id === id)) : "--");
+  const approverEmployeeIdSet = useMemo(() => new Set(approverEmployeeIds), [approverEmployeeIds]);
+  const availableApprovers = useMemo(
+    () => employees.filter((employee) => !approverEmployeeIdSet.has(employee.id)),
+    [employees, approverEmployeeIdSet],
+  );
   const statusLabel = (status?: string) => {
     if (status === "APPROVED") return "Đã phê duyệt";
     if (status === "REJECTED") return "Từ chối";
     if (status === "CANCELLED") return "Đã hủy";
     if (status === "PENDING_APPROVAL") return "Chờ duyệt";
-    return "Nháp";
+    return status || "Chưa xác định";
   };
 
   const availableDepartments = departments;
@@ -235,7 +242,7 @@ export function TransfersPage() {
   const availableAssets = useMemo(() => {
     const pendingAssetIds = new Set<number>();
     transfers.forEach((transfer) => {
-      if (transfer.status === "DRAFT" || transfer.status === "PENDING_APPROVAL") {
+      if (transfer.status === "PENDING_APPROVAL") {
         transfer.lines?.forEach((line) => {
           pendingAssetIds.add(line.assetId);
         });
@@ -251,6 +258,9 @@ export function TransfersPage() {
 
   const handleSubmit = async () => {
     if (selectedAssetIds.length === 0) return toast.error("Vui lòng chọn ít nhất 1 tài sản");
+    if (requireAssignedApprovers && approverEmployeeIds.length === 0) {
+      return toast.error("Vui lòng chọn người xét duyệt");
+    }
     setIsSubmitting(true);
     try {
       await createTransfer({
@@ -262,7 +272,7 @@ export function TransfersPage() {
         transferDate,
         plannedHandoverAt: `${decisionDate}T09:00:00`,
         reason,
-        note: approvedBy ? `Người duyệt dự kiến: ${empLabel(Number(approvedBy))}` : undefined,
+        approverEmployeeIds: requireAssignedApprovers ? approverEmployeeIds : undefined,
         lines: selectedAssetIds.map((assetId) => ({ assetId })),
       });
       toast.success("Tạo phiếu bàn giao thành công!");
@@ -275,7 +285,9 @@ export function TransfersPage() {
       setToDepartmentId("");
       setToSiteId("");
       setSelectedFiles([]);
-      setApprovedBy("");
+      setRequireAssignedApprovers(false);
+      setApproverSelector("");
+      setApproverEmployeeIds([]);
     } catch (err) {
       console.error(err);
       toast.error("Có lỗi xảy ra khi gửi phiếu.");
@@ -1003,17 +1015,96 @@ export function TransfersPage() {
                     />
                   </label>
 
-                  <label style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                    <span style={formLabelStyle}>Người duyệt</span>
-                    <SearchableSelect value={approvedBy} onChange={setApprovedBy}>
-                      <option value="">Chọn người duyệt</option>
-                      {employees.map((e) => (
+                  <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                    <label
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
+                        fontSize: "13px",
+                        color: "#334155",
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={requireAssignedApprovers}
+                        onChange={(event) => {
+                          setRequireAssignedApprovers(event.target.checked);
+                          if (!event.target.checked) {
+                            setApproverSelector("");
+                            setApproverEmployeeIds([]);
+                          }
+                        }}
+                      />
+                      Chỉ định người xét duyệt
+                    </label>
+                    <span style={formLabelStyle}>Người xét duyệt</span>
+                    <SearchableSelect
+                      value={approverSelector}
+                      disabled={!requireAssignedApprovers}
+                      onChange={(value) => {
+                        const employeeId = Number(value);
+                        if (value && !approverEmployeeIdSet.has(employeeId)) {
+                          setApproverEmployeeIds((prev) => [...prev, employeeId]);
+                        }
+                        setApproverSelector("");
+                      }}
+                    >
+                      <option value="">Chọn người xét duyệt</option>
+                      {availableApprovers.map((e) => (
                         <option key={e.id} value={String(e.id)}>
                           {employeeName(e)}
                         </option>
                       ))}
                     </SearchableSelect>
-                  </label>
+                    {approverEmployeeIds.length > 0 && (
+                      <div
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: "4px",
+                          maxHeight: "84px",
+                          overflowY: "auto",
+                        }}
+                      >
+                        {approverEmployeeIds.map((employeeId) => (
+                          <div
+                            key={employeeId}
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "space-between",
+                              gap: "8px",
+                              fontSize: "13px",
+                              color: "#334155",
+                            }}
+                          >
+                            <span>{empLabel(employeeId)}</span>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setApproverEmployeeIds((prev) =>
+                                  prev.filter((id) => id !== employeeId),
+                                )
+                              }
+                              style={{
+                                background: "none",
+                                border: "none",
+                                color: "#ef4444",
+                                cursor: "pointer",
+                                padding: 0,
+                                textDecoration: "underline",
+                                fontSize: "12px",
+                                fontWeight: 600,
+                              }}
+                            >
+                              Xóa
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
 
                   <div
                     style={{
