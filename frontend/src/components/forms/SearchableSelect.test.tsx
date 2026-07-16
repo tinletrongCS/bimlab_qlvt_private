@@ -61,6 +61,15 @@ describe("SearchableSelect", () => {
     expect(onChange).toHaveBeenCalledWith("b");
   });
 
+  it("joins composite option labels without commas", () => {
+    render(
+      <SearchableSelect value="1" onChange={vi.fn()}>
+        <option value="1">TS-001 {" - "} Laptop Dell</option>
+      </SearchableSelect>,
+    );
+    expect(screen.getByRole("combobox")).toHaveValue("TS-001 - Laptop Dell");
+  });
+
   it("toggles closed on a second wrapper press and on outside clicks", () => {
     const { container } = render(
       <SearchableSelect value="" onChange={vi.fn()} options={options} />,

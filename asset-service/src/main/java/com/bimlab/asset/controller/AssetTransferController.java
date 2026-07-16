@@ -25,6 +25,7 @@ public class AssetTransferController {
     private final AssetTransferService service;
     private final MinioService minioService;
 
+
     @GetMapping
     @PreAuthorize("hasAnyAuthority('asset_transfers_view','asset_transfers_manage','asset_transfers_approve','asset_manage')")
     public List<AssetTransferHeaderResponse> listHeaders() {
@@ -57,7 +58,7 @@ public class AssetTransferController {
     }
 
     @PostMapping("/{id}/approve")
-    @PreAuthorize("hasAnyAuthority('asset_transfers_approve','asset_manage')")
+    @PreAuthorize("hasAnyAuthority('asset_transfers_view','asset_transfers_approve','asset_manage')")
     public AssetTransferHeaderResponse approve(
             @PathVariable Long id,
             @Valid @RequestBody(required = false) AssetTransferDecisionRequest req
@@ -66,7 +67,7 @@ public class AssetTransferController {
     }
 
     @PostMapping("/{id}/reject")
-    @PreAuthorize("hasAnyAuthority('asset_transfers_approve','asset_manage')")
+    @PreAuthorize("hasAnyAuthority('asset_transfers_view','asset_transfers_approve','asset_manage')")
     public AssetTransferHeaderResponse reject(
             @PathVariable Long id,
             @Valid @RequestBody AssetTransferDecisionRequest req
@@ -75,7 +76,7 @@ public class AssetTransferController {
     }
 
     @PostMapping("/{id}/cancel")
-    @PreAuthorize("hasAnyAuthority('asset_transfers_manage','asset_manage')")
+    @PreAuthorize("hasAnyAuthority('asset_transfers_view','asset_transfers_manage','asset_manage')")
     public AssetTransferHeaderResponse cancel(
             @PathVariable Long id,
             @Valid @RequestBody AssetTransferDecisionRequest req

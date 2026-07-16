@@ -30,6 +30,7 @@ import com.bimlab.asset.repository.AssetTransferHeaderRepository;
 import com.bimlab.asset.repository.AssetTransferRepository;
 import com.bimlab.asset.security.AssetAccessService;
 import com.bimlab.asset.security.Permission;
+import com.bimlab.asset.storage.MinioService;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -44,6 +45,7 @@ public class AssetTransferService {
     private final AssetDocumentRepository assetDocuments;
     private final AuditLogService auditLogService;
     private final AssetAccessService access;
+    private final MinioService minioService;
     @Transactional(readOnly = true)
     public List<AssetTransfer> listTransfers() {
         return assetTransfers.findAllSortedByDateDesc();
@@ -384,8 +386,8 @@ public class AssetTransferService {
                 .orElseThrow(() -> new NoSuchElementException("Không tìm thấy phiếu bàn giao"));
         ensurePendingApproval(header);
         boolean isOwner = java.util.Objects.equals(access.getCurrentEmployeeId(), header.getRequestedEmployeeId());
-        if (!isOwner && !access.hasAnyPermission(Permission.ASSET_MANAGE)) {
-            throw new AccessDeniedException("Chỉ người tạo phiếu hoặc asset_manage được hủy phiếu");
+        if (!isOwner && !access.hasAnyPermission(Permission.ASSET_TRANSFERS_MANAGE, Permission.ASSET_MANAGE)) {
+            throw new AccessDeniedException("Chỉ người tạo phiếu hoặc người quản lý bàn giao được hủy phiếu");
         }
 
         Map<String, Object> beforeHeader = transferHeaderSnapshot(header);
@@ -484,7 +486,7 @@ public class AssetTransferService {
     }
 
     private void ensureCurrentUserCanDecide(List<AssetTransferConfirmation> confirmations) {
-        if (confirmations == null || confirmations.isEmpty() || access.hasAnyPermission(Permission.ASSET_MANAGE)) {
+        if (access.hasAnyPermission(Permission.ASSET_TRANSFERS_APPROVE, Permission.ASSET_MANAGE)) {
             return;
         }
         Long currentEmployeeId = access.getCurrentEmployeeId();
@@ -641,6 +643,9 @@ public class AssetTransferService {
                 transferHeader.getRequestedBy(),
                 transferHeader.getRequestedEmployeeId(),
                 transferHeader.getApprovedBy(),
+                transferHeader.getCancelledBy(),
+                transferHeader.getCancelledAt(),
+                transferHeader.getCancelReason(),
                 confirmations.stream().map(this::toConfirmationResponse).toList(),
                 documents.stream().map(this::toDocumentResponse).toList(),
                 lines.stream().map(this::toLineResponse).toList()
@@ -667,6 +672,7 @@ public class AssetTransferService {
                 document.getDocumentStatus(),
                 document.getFileName(),
                 document.getObjectKey(),
+                minioService.getPresignedUrl(document.getObjectKey()),
                 document.getContentType(),
                 document.getSizeBytes()
         );

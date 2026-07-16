@@ -13138,6 +13138,14 @@ body,
   background-color: #ffffff !important;
   padding-right: 28px !important;
 }
+.searchable-select-container.is-disabled .searchable-select-input-wrapper,
+.searchable-select-container.is-disabled .searchable-select-input {
+  cursor: not-allowed !important;
+}
+
+.searchable-select-container.is-disabled {
+  opacity: 0.62;
+}
 .searchable-select-icon {
   position: absolute;
   right: 8px;
@@ -13475,6 +13483,189 @@ button {
   font-weight: 600;
   padding: 0;
   text-decoration: underline;
+}
+
+/* Transfer form, detail modal and approval workspace. */
+.transfer-form-block,
+.transfer-pending-card,
+.transfer-detail-block {
+  border-radius: 2px !important;
+}
+
+.transfer-ticket-detail {
+  display: grid;
+  gap: 10px;
+  max-height: 72vh;
+  overflow: auto;
+  padding: 12px;
+}
+
+.transfer-detail-block {
+  background: #f8fafc;
+  padding: 10px;
+}
+
+.transfer-detail-block h3,
+.transfer-pending-heading h2 {
+  margin: 0 0 8px;
+  color: #0f172a;
+  font-size: 14px;
+}
+
+.transfer-detail-fields {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px 12px;
+}
+
+.transfer-detail-fields > div {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.transfer-detail-fields span,
+.transfer-detail-people,
+.transfer-detail-documents {
+  color: #64748b;
+  font-size: 12px;
+}
+
+.transfer-detail-fields strong {
+  color: #0f172a;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.transfer-detail-wide {
+  grid-column: span 2;
+}
+
+.transfer-detail-people,
+.transfer-detail-documents {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+}
+
+.transfer-detail-documents a {
+  color: #2563eb;
+  text-decoration: underline;
+}
+
+.transfer-detail-table-wrap {
+  max-height: 280px;
+  overflow: auto;
+}
+
+.transfer-detail-table {
+  width: 100%;
+  min-width: 860px;
+  table-layout: fixed;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.transfer-detail-table th,
+.transfer-detail-table td {
+  border-bottom: 1px solid #e2e8f0;
+  padding: 7px 9px;
+  vertical-align: top;
+  font-size: 12px;
+}
+
+.transfer-detail-table th:first-child {
+  width: 48px;
+}
+
+.transfer-detail-table th:nth-child(2) {
+  width: 170px;
+}
+
+.transfer-detail-table th:last-child {
+  width: 140px;
+}
+
+.transfer-detail-table td > span,
+.transfer-detail-table td > strong {
+  display: block;
+  margin-bottom: 2px;
+}
+
+.transfer-pending-panel {
+  margin-top: 10px;
+}
+
+.transfer-pending-panel > .panel-body {
+  padding: 14px;
+}
+
+.transfer-pending-heading,
+.transfer-pending-actions,
+.transfer-pending-actions > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.transfer-pending-heading p {
+  margin: 0;
+  color: #64748b;
+  font-size: 12px;
+}
+
+.transfer-pending-filters {
+  display: grid !important;
+  grid-template-columns: 180px 180px minmax(240px, 1fr);
+  gap: 8px !important;
+  margin: 10px 0 !important;
+}
+
+.transfer-pending-list {
+  display: grid;
+  gap: 10px;
+}
+
+.transfer-pending-card {
+  border: 1px solid #dbe3ec;
+  background: #fff;
+}
+
+.transfer-pending-card .transfer-ticket-detail {
+  max-height: none;
+}
+
+.transfer-pending-actions {
+  border-top: 1px solid #e2e8f0;
+  padding: 8px 12px;
+}
+
+.transfer-pending-actions textarea {
+  width: min(520px, 60%);
+  min-height: 42px;
+  resize: vertical;
+}
+
+@media (max-width: 900px) {
+  .transfer-detail-fields,
+  .transfer-pending-filters {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  .transfer-pending-search,
+  .transfer-detail-wide {
+    grid-column: 1 / -1;
+  }
+
+  .transfer-pending-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .transfer-pending-actions textarea {
+    width: 100%;
+  }
 }
 
 /* Ensure green background for download buttons */

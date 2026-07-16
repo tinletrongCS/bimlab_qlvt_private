@@ -474,6 +474,9 @@ export interface AssetTransfer {
   approvedBy?: string;
   requestedBy?: string;
   requestedEmployeeId?: number;
+  cancelledBy?: string;
+  cancelledAt?: string;
+  cancelReason?: string;
   confirmations?: AssetTransferConfirmation[];
   documents?: AssetTransferDocument[];
   lines?: AssetTransferLine[];
@@ -496,6 +499,7 @@ export interface AssetTransferDocument {
   documentStatus?: string;
   fileName: string;
   objectKey?: string;
+  downloadUrl?: string;
   contentType?: string;
   sizeBytes?: number;
 }

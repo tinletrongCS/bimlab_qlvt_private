@@ -61,6 +61,9 @@ class AssetTransferControllerWebMvcTest {
                 "admin",
                 1L,
                 null,
+                null,
+                null,
+                null,
                 List.of(),
                 List.of(),
                 List.of()

@@ -3,10 +3,16 @@ import toast from "react-hot-toast";
 import { FiEye, FiPlus, FiTrash2, FiX } from "react-icons/fi";
 import { SearchableSelect } from "../components/forms/SearchableSelect";
 import { OverflowActions } from "../components/OverflowActions";
-import { useActions } from "../contexts/ActionsContext";
 import { useAppData } from "../contexts/AppDataContext";
 import { useAuth } from "../contexts/AuthContext";
-import { createTransfer, uploadTransferDocument } from "../services/api";
+import { readError } from "../lib/format";
+import {
+  approveTransfer,
+  cancelTransfer,
+  createTransfer,
+  rejectTransfer,
+  uploadTransferDocument,
+} from "../services/api";
 import type { AssetTransfer, EmployeeLite } from "../services/types";
 
 function employeeName(employee?: EmployeeLite): string {
@@ -21,6 +27,20 @@ interface TransferGroup {
   status: string;
   assets: NonNullable<AssetTransfer["lines"]>;
   first: AssetTransfer;
+}
+
+function transferStatusLabel(status?: string): string {
+  if (status === "APPROVED") return "Đã phê duyệt";
+  if (status === "REJECTED") return "Đã từ chối";
+  if (status === "CANCELLED") return "Đã hủy";
+  if (status === "PENDING_APPROVAL") return "Chờ duyệt";
+  return status || "Chưa xác định";
+}
+
+function transferTypeLabel(type?: string): string {
+  if (type === "ASSIGN") return "Bàn giao";
+  if (type === "REVOKE") return "Thu hồi";
+  return type || "--";
 }
 
 function TransferListPagination({
@@ -89,12 +109,19 @@ function TransferListPagination({
 }
 
 export function TransfersPage() {
-  const { hasPermission } = useAuth();
-  const { transfers, employees, departments, workSites, assets, ensureTransfers, ensureAssets } =
-    useAppData();
-  const { deleteResource } = useActions();
+  const { user, hasPermission } = useAuth();
+  const {
+    transfers,
+    employees,
+    departments,
+    workSites,
+    assets,
+    ensureTransfers,
+    ensureAssets,
+    refresh,
+  } = useAppData();
 
-  const [view, setView] = useState<"list" | "create" | "pending">("list");
+  const [view, setView] = useState<"list" | "create">("list");
   const [selectedTicket, setSelectedTicket] = useState<TransferGroup | null>(null);
 
   // Filters for list view
@@ -102,6 +129,13 @@ export function TransfersPage() {
   const [filterStatus, setFilterStatus] = useState("");
   const [filterDate, setFilterDate] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [pendingType, setPendingType] = useState("");
+  const [pendingDate, setPendingDate] = useState("");
+  const [pendingSearch, setPendingSearch] = useState("");
+  const [pendingPage, setPendingPage] = useState(1);
+  const [pendingPageSize, setPendingPageSize] = useState(5);
+  const [decisionReasons, setDecisionReasons] = useState<Record<number, string>>({});
+  const [processingTransferId, setProcessingTransferId] = useState<number | null>(null);
 
   const [listPage, setListPage] = useState(1);
   const [listPageSize, setListPageSize] = useState(20);
@@ -134,7 +168,8 @@ export function TransfersPage() {
     }
   }, [ensureTransfers, ensureAssets, view]);
 
-  const canManage = hasPermission("asset_manage");
+  const canManage = hasPermission(["asset_transfers_manage", "asset_manage"]);
+  const canApprove = hasPermission(["asset_transfers_approve", "asset_manage"]);
   const empLabel = (id?: number) => (id ? employeeName(employees.find((e) => e.id === id)) : "--");
   const selectedAsset =
     selectedAssetIds.length === 1
@@ -143,6 +178,7 @@ export function TransfersPage() {
   const lockSite = selectedAsset?.siteId != null;
   const lockDepartment = selectedAsset?.departmentId != null;
   const lockEmployee = selectedAsset?.assignedEmployeeId != null;
+  const isRevoke = transferType === "Thu hồi";
 
   const availableDepartments = useMemo(() => {
     if (lockDepartment && selectedAsset?.departmentId)
@@ -160,13 +196,19 @@ export function TransfersPage() {
   }, [toDepartmentId, employees, departments, lockEmployee, selectedAsset?.assignedEmployeeId]);
 
   useEffect(() => {
+    if (isRevoke) {
+      setToSiteId("");
+      setToDepartmentId("");
+      setToEmployeeId("");
+      return;
+    }
     if (!selectedAsset) return;
     setToSiteId(selectedAsset.siteId ? String(selectedAsset.siteId) : "");
     setToDepartmentId(selectedAsset.departmentId ? String(selectedAsset.departmentId) : "");
     setToEmployeeId(
       selectedAsset.assignedEmployeeId ? String(selectedAsset.assignedEmployeeId) : "",
     );
-  }, [selectedAsset]);
+  }, [selectedAsset, isRevoke]);
 
   useEffect(() => setAssetPage(1), [selectedAssetIds]);
 
@@ -184,14 +226,14 @@ export function TransfersPage() {
     setSelectedFiles([]);
   };
 
-  const handleTabChange = (newView: "list" | "create" | "pending") => {
+  const handleTabChange = (newView: "list" | "create") => {
     setView(newView);
     setSelectedTicket(null);
     if (newView === "create") {
       resetForm();
       void ensureAssets(false, true);
     } else {
-      void ensureTransfers();
+      void refresh();
       setListPage(1);
     }
   };
@@ -200,9 +242,9 @@ export function TransfersPage() {
     return transfers.map((first) => ({
       ticketId: first.transferCode || `PBG-${first.id.toString().padStart(4, "0")}`,
       transferDate: first.transferDate,
-      transferType: first.transferType,
+      transferType: transferTypeLabel(first.transferType),
       reason: first.reason ?? "",
-      status: first.approvedBy ? "Đã phê duyệt" : "Chờ duyệt",
+      status: transferStatusLabel(first.status),
       assets: first.lines ?? [],
       first,
     }));
@@ -210,7 +252,6 @@ export function TransfersPage() {
 
   const filteredTransfers = useMemo(() => {
     return groupedTransfers.filter((t) => {
-      if (view === "pending" && t.status !== "Chờ duyệt") return false;
       if (filterType && t.transferType !== filterType) return false;
       if (filterStatus && t.status !== filterStatus) return false;
       if (filterDate && t.transferDate !== filterDate) return false;
@@ -218,7 +259,47 @@ export function TransfersPage() {
         return false;
       return true;
     });
-  }, [groupedTransfers, filterType, filterStatus, filterDate, searchQuery, view]);
+  }, [groupedTransfers, filterType, filterStatus, filterDate, searchQuery]);
+
+  const pendingTransfers = useMemo(
+    () =>
+      groupedTransfers.filter((ticket) => {
+        if (ticket.first.status !== "PENDING_APPROVAL") return false;
+        const assignedToMe = ticket.first.confirmations?.some(
+          (confirmation) => confirmation.confirmerEmployeeId === user?.id,
+        );
+        if (!canApprove && !assignedToMe) return false;
+        if (pendingType && ticket.transferType !== pendingType) return false;
+        if (pendingDate && ticket.transferDate !== pendingDate) return false;
+        if (
+          pendingSearch &&
+          !`${ticket.ticketId} ${ticket.first.title || ""} ${ticket.reason}`
+            .toLowerCase()
+            .includes(pendingSearch.toLowerCase())
+        )
+          return false;
+        return true;
+      }),
+    [groupedTransfers, user?.id, canApprove, pendingType, pendingDate, pendingSearch],
+  );
+
+  const hasAssignedPending = groupedTransfers.some(
+    (ticket) =>
+      ticket.first.status === "PENDING_APPROVAL" &&
+      ticket.first.confirmations?.some(
+        (confirmation) => confirmation.confirmerEmployeeId === user?.id,
+      ),
+  );
+  const safePendingPage = Math.min(
+    pendingPage,
+    Math.max(1, Math.ceil(pendingTransfers.length / pendingPageSize)),
+  );
+  const pagedPendingTransfers = pendingTransfers.slice(
+    (safePendingPage - 1) * pendingPageSize,
+    safePendingPage * pendingPageSize,
+  );
+
+  useEffect(() => setPendingPage(1), [pendingType, pendingDate, pendingSearch]);
 
   // Pagination processing
   const pageCount = Math.max(1, Math.ceil(filteredTransfers.length / listPageSize));
@@ -240,7 +321,8 @@ export function TransfersPage() {
   const availableAssets = useMemo(() => {
     const pendingAssetIds = new Set<number>();
     transfers.forEach((t) => {
-      if (!t.approvedBy) t.lines?.forEach((line) => void pendingAssetIds.add(line.assetId));
+      if (t.status === "PENDING_APPROVAL")
+        t.lines?.forEach((line) => void pendingAssetIds.add(line.assetId));
     });
     return assets.filter((a) => !selectedAssetIds.includes(a.id) && !pendingAssetIds.has(a.id));
   }, [assets, selectedAssetIds, transfers]);
@@ -274,7 +356,7 @@ export function TransfersPage() {
         lines: selectedAssetIds.map((assetId) => ({ assetId })),
       });
       toast.success("Tạo phiếu bàn giao thành công!");
-      void ensureTransfers();
+      await refresh();
 
       resetForm();
     } catch (err) {
@@ -361,6 +443,222 @@ export function TransfersPage() {
     setApprovedByUsers((prev) => prev.filter((x) => x !== empIdStr));
   };
 
+  const canCancelTicket = (ticket: TransferGroup) =>
+    ticket.first.status === "PENDING_APPROVAL" &&
+    (canManage || ticket.first.requestedEmployeeId === user?.id);
+
+  const handleDecision = async (ticket: TransferGroup, action: "approve" | "reject" | "cancel") => {
+    const reason = decisionReasons[ticket.first.id]?.trim() || "";
+    if (action !== "approve" && !reason) {
+      toast.error(action === "reject" ? "Vui lòng nhập lý do từ chối" : "Vui lòng nhập lý do hủy");
+      return;
+    }
+    if (action === "approve" && !window.confirm(`Phê duyệt phiếu ${ticket.ticketId}?`)) return;
+    setProcessingTransferId(ticket.first.id);
+    try {
+      if (action === "approve") await approveTransfer(ticket.first.id, reason || undefined);
+      if (action === "reject") await rejectTransfer(ticket.first.id, reason);
+      if (action === "cancel") await cancelTransfer(ticket.first.id, reason);
+      toast.success(
+        action === "approve"
+          ? "Đã phê duyệt phiếu"
+          : action === "reject"
+            ? "Đã từ chối phiếu"
+            : "Đã hủy phiếu",
+      );
+      setDecisionReasons((current) => {
+        const next = { ...current };
+        delete next[ticket.first.id];
+        return next;
+      });
+      setSelectedTicket(null);
+      await refresh();
+    } catch (error) {
+      toast.error(readError(error));
+    } finally {
+      setProcessingTransferId(null);
+    }
+  };
+
+  const renderTicketDetails = (ticket: TransferGroup) => {
+    const transfer = ticket.first;
+    const siteName = (id?: number) => workSites.find((site) => site.id === id)?.name || "Chưa có";
+    const departmentName = (id?: number) =>
+      departments.find((department) => department.id === id)?.name || "Chưa có";
+    const statusColor =
+      transfer.status === "APPROVED"
+        ? "#166534"
+        : transfer.status === "REJECTED" || transfer.status === "CANCELLED"
+          ? "#991b1b"
+          : "#92400e";
+
+    return (
+      <div className="transfer-ticket-detail">
+        <div className="asset-detail-hero">
+          <div>
+            <span>Mã phiếu</span>
+            <strong>{ticket.ticketId}</strong>
+          </div>
+          <div>
+            <span>Trạng thái</span>
+            <strong style={{ color: statusColor }}>{ticket.status}</strong>
+          </div>
+        </div>
+
+        <section className="transfer-detail-block">
+          <h3>Thông tin chung</h3>
+          <div className="transfer-detail-fields">
+            <div>
+              <span>Tiêu đề</span>
+              <strong>{transfer.title || "--"}</strong>
+            </div>
+            <div>
+              <span>Phân loại</span>
+              <strong>{transfer.transferType}</strong>
+            </div>
+            <div>
+              <span>Ngày quyết định</span>
+              <strong>{transfer.transferDate || "--"}</strong>
+            </div>
+            <div>
+              <span>Thời gian dự kiến</span>
+              <strong>{transfer.plannedHandoverAt?.replace("T", " ").slice(0, 16) || "--"}</strong>
+            </div>
+            <div>
+              <span>Người tạo phiếu</span>
+              <strong>{transfer.requestedBy || "--"}</strong>
+            </div>
+            <div>
+              <span>Người nhận</span>
+              <strong>{empLabel(transfer.toEmployeeId)}</strong>
+            </div>
+            <div>
+              <span>Chi nhánh nhận</span>
+              <strong>{siteName(transfer.toSiteId)}</strong>
+            </div>
+            <div>
+              <span>Phòng ban nhận</span>
+              <strong>{departmentName(transfer.toDepartmentId)}</strong>
+            </div>
+            <div className="transfer-detail-wide">
+              <span>Lý do</span>
+              <strong>{transfer.reason || "--"}</strong>
+            </div>
+            {transfer.note && (
+              <div className="transfer-detail-wide">
+                <span>Ghi chú xử lý</span>
+                <strong>{transfer.note}</strong>
+              </div>
+            )}
+            {transfer.cancelReason && (
+              <div className="transfer-detail-wide">
+                <span>Lý do hủy</span>
+                <strong>{transfer.cancelReason}</strong>
+              </div>
+            )}
+          </div>
+        </section>
+
+        <section className="transfer-detail-block">
+          <h3>Người xét duyệt</h3>
+          <div className="transfer-detail-people">
+            {transfer.confirmations?.length ? (
+              transfer.confirmations.map((confirmation) => (
+                <span key={confirmation.id}>
+                  {confirmation.confirmerName || empLabel(confirmation.confirmerEmployeeId)}
+                  {confirmation.status ? ` · ${confirmation.status}` : ""}
+                </span>
+              ))
+            ) : (
+              <span>Không chỉ định, người có quyền duyệt sẽ xử lý</span>
+            )}
+          </div>
+        </section>
+
+        <section className="transfer-detail-block">
+          <h3>Danh sách tài sản luân chuyển</h3>
+          <div className="table-wrap transfer-detail-table-wrap">
+            <table className="transfer-detail-table">
+              <thead>
+                <tr>
+                  <th>STT</th>
+                  <th>Tài sản</th>
+                  <th>Từ</th>
+                  <th>Đến</th>
+                  <th>Ghi chú</th>
+                </tr>
+              </thead>
+              <tbody>
+                {ticket.assets.map((line, index) => {
+                  const asset = assets.find((item) => item.id === line.assetId);
+                  const fromSiteId = line.fromSiteId ?? asset?.siteId;
+                  const fromDepartmentId = line.fromDepartmentId ?? asset?.departmentId;
+                  const fromEmployeeId = line.fromEmployeeId ?? asset?.assignedEmployeeId;
+                  return (
+                    <tr key={line.id ?? line.assetId}>
+                      <td>{index + 1}</td>
+                      <td>
+                        <strong>{line.assetCode || asset?.assetCode || `#${line.assetId}`}</strong>
+                        <span>{line.assetName || asset?.name || "--"}</span>
+                      </td>
+                      <td>
+                        <span>Chi nhánh: {siteName(fromSiteId)}</span>
+                        <span>Phòng ban: {departmentName(fromDepartmentId)}</span>
+                        <span>Nhân viên: {empLabel(fromEmployeeId)}</span>
+                      </td>
+                      <td>
+                        {transfer.transferType === "REVOKE" ||
+                        transfer.transferType === "Thu hồi" ? (
+                          <span>Thu hồi về kho, gỡ toàn bộ thông tin gán</span>
+                        ) : (
+                          <>
+                            <span>Chi nhánh: {siteName(line.toSiteId ?? transfer.toSiteId)}</span>
+                            <span>
+                              Phòng ban:{" "}
+                              {departmentName(line.toDepartmentId ?? transfer.toDepartmentId)}
+                            </span>
+                            <span>
+                              Nhân viên: {empLabel(line.toEmployeeId ?? transfer.toEmployeeId)}
+                            </span>
+                          </>
+                        )}
+                      </td>
+                      <td>{line.receiverNote || "--"}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section className="transfer-detail-block">
+          <h3>Tệp đính kèm</h3>
+          <div className="transfer-detail-documents">
+            {transfer.documents?.length ? (
+              transfer.documents.map((document) =>
+                document.downloadUrl ? (
+                  <a
+                    key={document.id ?? document.fileName}
+                    href={document.downloadUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    {document.fileName}
+                  </a>
+                ) : (
+                  <span key={document.id ?? document.fileName}>{document.fileName}</span>
+                ),
+              )
+            ) : (
+              <span>Không có tệp đính kèm</span>
+            )}
+          </div>
+        </section>
+      </div>
+    );
+  };
+
   return (
     <div>
       {/* Header and Tabs */}
@@ -390,13 +688,6 @@ export function TransfersPage() {
           >
             Tạo phiếu
           </button>
-          <button
-            type="button"
-            className={view === "pending" ? "active" : ""}
-            onClick={() => handleTabChange("pending")}
-          >
-            Phiếu chờ duyệt
-          </button>
         </div>
 
         {view !== "create" && canManage && (
@@ -411,7 +702,7 @@ export function TransfersPage() {
         )}
       </div>
 
-      {(view === "list" || view === "pending") && (
+      {view === "list" && (
         <section className="panel">
           <div className="panel-body" style={{ padding: "24px" }}>
             {/* Filters */}
@@ -439,6 +730,8 @@ export function TransfersPage() {
                   <option value="">Tất cả trạng thái</option>
                   <option value="Đã phê duyệt">Đã phê duyệt</option>
                   <option value="Chờ duyệt">Chờ duyệt</option>
+                  <option value="Đã từ chối">Đã từ chối</option>
+                  <option value="Đã hủy">Đã hủy</option>
                 </SearchableSelect>
               </div>
               <div
@@ -589,8 +882,13 @@ export function TransfersPage() {
                               borderRadius: "12px",
                               fontSize: "12px",
                               fontWeight: 500,
-                              background: ticket.status === "Đã phê duyệt" ? "#dcfce7" : "#fef3c7",
-                              color: ticket.status === "Đã phê duyệt" ? "#166534" : "#92400e",
+                              background: "transparent",
+                              color:
+                                ticket.status === "Đã phê duyệt"
+                                  ? "#166534"
+                                  : ticket.status === "Đã từ chối" || ticket.status === "Đã hủy"
+                                    ? "#991b1b"
+                                    : "#92400e",
                             }}
                           >
                             {ticket.status}
@@ -631,12 +929,127 @@ export function TransfersPage() {
         </section>
       )}
 
+      {view === "list" && (canApprove || hasAssignedPending) && (
+        <section className="panel transfer-pending-panel">
+          <div className="panel-body">
+            <div className="transfer-pending-heading">
+              <div>
+                <h2>Phiếu cần xét duyệt</h2>
+                <p>Các phiếu đang chờ bạn phê duyệt hoặc từ chối.</p>
+              </div>
+              <strong>{pendingTransfers.length} phiếu</strong>
+            </div>
+            <div className="category-filters transfer-pending-filters">
+              <div className="category-filter">
+                <SearchableSelect value={pendingType} onChange={setPendingType}>
+                  <option value="">Tất cả phân loại</option>
+                  <option value="Bàn giao">Bàn giao</option>
+                  <option value="Thu hồi">Thu hồi</option>
+                </SearchableSelect>
+              </div>
+              <div className="category-filter">
+                <input
+                  type="date"
+                  aria-label="Ngày phiếu chờ duyệt"
+                  value={pendingDate}
+                  onChange={(event) => setPendingDate(event.target.value)}
+                  style={formInputStyle}
+                />
+              </div>
+              <div className="category-filter transfer-pending-search">
+                <input
+                  type="search"
+                  value={pendingSearch}
+                  onChange={(event) => setPendingSearch(event.target.value)}
+                  placeholder="Tìm mã phiếu, tiêu đề hoặc lý do..."
+                  style={formInputStyle}
+                />
+              </div>
+            </div>
+            <div className="transfer-pending-list">
+              {pagedPendingTransfers.length ? (
+                pagedPendingTransfers.map((ticket) => {
+                  const assignedToMe = ticket.first.confirmations?.some(
+                    (confirmation) => confirmation.confirmerEmployeeId === user?.id,
+                  );
+                  const canDecide = canApprove || assignedToMe;
+                  const processing = processingTransferId === ticket.first.id;
+                  return (
+                    <article className="transfer-pending-card" key={ticket.first.id}>
+                      {renderTicketDetails(ticket)}
+                      <div className="transfer-pending-actions">
+                        <textarea
+                          aria-label={`Lý do xử lý ${ticket.ticketId}`}
+                          value={decisionReasons[ticket.first.id] || ""}
+                          onChange={(event) =>
+                            setDecisionReasons((current) => ({
+                              ...current,
+                              [ticket.first.id]: event.target.value,
+                            }))
+                          }
+                          placeholder="Nhập lý do khi từ chối hoặc hủy phiếu..."
+                          rows={2}
+                        />
+                        <div>
+                          {canCancelTicket(ticket) && (
+                            <button
+                              type="button"
+                              className="secondary danger"
+                              disabled={processing}
+                              onClick={() => void handleDecision(ticket, "cancel")}
+                            >
+                              Hủy phiếu
+                            </button>
+                          )}
+                          {canDecide && (
+                            <>
+                              <button
+                                type="button"
+                                className="secondary danger"
+                                disabled={processing}
+                                onClick={() => void handleDecision(ticket, "reject")}
+                              >
+                                Từ chối
+                              </button>
+                              <button
+                                type="button"
+                                className="primary-action"
+                                disabled={processing}
+                                onClick={() => void handleDecision(ticket, "approve")}
+                              >
+                                Phê duyệt
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </article>
+                  );
+                })
+              ) : (
+                <div className="empty-state">Không có phiếu nào đang chờ bạn xét duyệt.</div>
+              )}
+            </div>
+            <TransferListPagination
+              page={safePendingPage}
+              pageSize={pendingPageSize}
+              total={pendingTransfers.length}
+              onPageChange={setPendingPage}
+              onPageSizeChange={(size) => {
+                setPendingPageSize(size);
+                setPendingPage(1);
+              }}
+            />
+          </div>
+        </section>
+      )}
+
       {/* Ticket Details Modal matching AssetDetailPanel styling */}
       {selectedTicket && (
         <div className="modal-backdrop">
           <div
             className="crud-modal asset-detail-modal"
-            style={{ width: "900px", maxWidth: "90vw" }}
+            style={{ width: "1100px", maxWidth: "94vw" }}
           >
             <div className="modal-head">
               <div className="modal-title-group">
@@ -650,183 +1063,7 @@ export function TransfersPage() {
               </button>
             </div>
 
-            <div className="asset-detail-body">
-              <div className="asset-detail-hero">
-                <div>
-                  <span>Số quyết định</span>
-                  <strong style={{ color: "#2563eb", fontWeight: 700, fontSize: "14px" }}>
-                    {selectedTicket.ticketId}
-                  </strong>
-                </div>
-                <div>
-                  <span>Trạng thái</span>
-                  <strong
-                    style={{
-                      color: selectedTicket.status === "Đã phê duyệt" ? "#166534" : "#92400e",
-                      fontWeight: 700,
-                      fontSize: "14px",
-                    }}
-                  >
-                    {selectedTicket.status}
-                  </strong>
-                </div>
-              </div>
-
-              <div className="asset-detail-grid">
-                <section className="asset-detail-section">
-                  <h3>Thông tin chung</h3>
-                  <div className="asset-detail-fields">
-                    <label>
-                      <span>Ngày quyết định</span>
-                      <input value={selectedTicket.transferDate} disabled />
-                    </label>
-                    <label>
-                      <span>Ngày thực hiện</span>
-                      <input value={selectedTicket.transferDate} disabled />
-                    </label>
-                    <label>
-                      <span>Phân loại</span>
-                      <input value={selectedTicket.transferType} disabled />
-                    </label>
-                    <label className="asset-detail-wide-field">
-                      <span>Lý do</span>
-                      <textarea
-                        value={selectedTicket.reason || "--"}
-                        disabled
-                        rows={3}
-                        style={{ resize: "none" }}
-                      />
-                    </label>
-                  </div>
-                </section>
-
-                <section className="asset-detail-section asset-detail-section-wide">
-                  <h3>Danh sách tài sản luân chuyển</h3>
-                  <div
-                    className="table-wrap"
-                    style={{
-                      border: "1px solid var(--qlvt-border, #e2e8f0)",
-                      borderRadius: "8px",
-                      overflow: "hidden",
-                      marginTop: "12px",
-                    }}
-                  >
-                    <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left" }}>
-                      <thead style={{ background: "#f1f5f9", borderBottom: "1px solid #e2e8f0" }}>
-                        <tr>
-                          <th
-                            style={{
-                              padding: "10px 16px",
-                              color: "#475569",
-                              fontSize: "13px",
-                              fontWeight: 600,
-                            }}
-                          >
-                            STT
-                          </th>
-                          <th
-                            style={{
-                              padding: "10px 16px",
-                              color: "#475569",
-                              fontSize: "13px",
-                              fontWeight: 600,
-                            }}
-                          >
-                            Tài sản
-                          </th>
-                          <th
-                            style={{
-                              padding: "10px 16px",
-                              color: "#475569",
-                              fontSize: "13px",
-                              fontWeight: 600,
-                            }}
-                          >
-                            Thông tin luân chuyển
-                          </th>
-                          <th
-                            style={{
-                              padding: "10px 16px",
-                              color: "#475569",
-                              fontSize: "13px",
-                              fontWeight: 600,
-                            }}
-                          >
-                            Ghi chú
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {selectedTicket.assets.map((assetTransfer, idx) => {
-                          const fullAsset = assets.find((a) => a.id === assetTransfer.assetId);
-                          return (
-                            <tr
-                              key={assetTransfer.id}
-                              style={{ borderBottom: "1px solid #f1f5f9" }}
-                            >
-                              <td style={{ padding: "12px 16px", fontWeight: 500 }}>{idx + 1}</td>
-                              <td style={{ padding: "12px 16px" }}>
-                                <div
-                                  style={{ fontWeight: 600, color: "#2563eb", marginBottom: "4px" }}
-                                >
-                                  {assetTransfer.assetCode}
-                                </div>
-                                <div style={{ fontSize: "13px", color: "#64748b" }}>
-                                  {assetTransfer.assetName}
-                                </div>
-                              </td>
-                              <td style={{ padding: "12px 16px" }}>
-                                <div
-                                  style={{
-                                    fontSize: "13px",
-                                    color: "#64748b",
-                                    marginBottom: "4px",
-                                  }}
-                                >
-                                  Từ:{" "}
-                                  {assetTransfer.fromEmployeeId
-                                    ? empLabel(assetTransfer.fromEmployeeId)
-                                    : fullAsset
-                                      ? getAssetLocation(fullAsset)
-                                      : "Chưa xác định"}
-                                </div>
-                                <div style={{ fontSize: "13px", color: "#0f172a" }}>
-                                  Đến:{" "}
-                                  {assetTransfer.toEmployeeId
-                                    ? empLabel(assetTransfer.toEmployeeId)
-                                    : (assetTransfer as any).toSiteId
-                                      ? "Chi nhánh/Phòng ban mới"
-                                      : "Chưa phân công"}
-                                </div>
-                              </td>
-                              <td style={{ padding: "12px 16px", color: "#64748b" }}>
-                                {assetTransfer.receiverNote || "--"}
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-                </section>
-
-                <section className="asset-detail-section asset-detail-section-wide">
-                  <h3>Tệp đính kèm</h3>
-                  <div
-                    style={{
-                      padding: "16px",
-                      background: "#f8fafc",
-                      borderRadius: "8px",
-                      border: "1px dashed #cbd5e1",
-                    }}
-                  >
-                    <span style={{ fontSize: "13px", color: "#94a3b8" }}>
-                      Không có tệp đính kèm nào được lưu (Backend cần hỗ trợ lưu file).
-                    </span>
-                  </div>
-                </section>
-              </div>
-            </div>
+            {renderTicketDetails(selectedTicket)}
 
             <div className="modal-actions asset-detail-actions">
               <button type="button" className="secondary" onClick={() => setSelectedTicket(null)}>
@@ -848,10 +1085,13 @@ export function TransfersPage() {
               style={{ display: "flex", gap: "24px", alignItems: "flex-start", flexWrap: "wrap" }}
             >
               {/* Thông tin chung */}
-              <div style={{ flex: 2, minWidth: "400px" }}>
+              <div
+                className="transfer-form-block"
+                style={{ flex: 2, minWidth: "400px", background: "#f1f5f9", padding: "12px" }}
+              >
                 <h3
                   style={{
-                    margin: "0 0 16px",
+                    margin: "0 0 10px",
                     fontSize: "16px",
                     fontWeight: 600,
                     color: "#0f172a",
@@ -861,7 +1101,7 @@ export function TransfersPage() {
                 >
                   Thông tin chung
                 </h3>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
                   <label style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
                     <span style={formLabelStyle}>
                       Ngày quyết định <span style={{ color: "red" }}>*</span>
@@ -921,7 +1161,7 @@ export function TransfersPage() {
                     <span style={formLabelStyle}>Chi nhánh</span>
                     <SearchableSelect
                       value={toSiteId}
-                      disabled={lockSite}
+                      disabled={isRevoke || lockSite}
                       onChange={(value) => {
                         setToSiteId(value);
                         setToDepartmentId("");
@@ -941,7 +1181,7 @@ export function TransfersPage() {
                     <span style={formLabelStyle}>Phòng ban nhận</span>
                     <SearchableSelect
                       value={toDepartmentId}
-                      disabled={!toSiteId || lockDepartment}
+                      disabled={isRevoke || !toSiteId || lockDepartment}
                       onChange={(value) => {
                         setToDepartmentId(value);
                         setToEmployeeId("");
@@ -961,7 +1201,7 @@ export function TransfersPage() {
                     <SearchableSelect
                       value={toEmployeeId}
                       onChange={setToEmployeeId}
-                      disabled={!toDepartmentId || lockEmployee}
+                      disabled={isRevoke || !toDepartmentId || lockEmployee}
                     >
                       <option value="">Chọn nhân viên</option>
                       {availableEmployees.map((e) => (
@@ -975,10 +1215,13 @@ export function TransfersPage() {
               </div>
 
               {/* Xét duyệt & Tệp đính kèm */}
-              <div style={{ flex: 1, minWidth: "280px" }}>
+              <div
+                className="transfer-form-block"
+                style={{ flex: 1, minWidth: "280px", background: "#f1f5f9", padding: "12px" }}
+              >
                 <h3
                   style={{
-                    margin: "0 0 16px",
+                    margin: "0 0 10px",
                     fontSize: "16px",
                     fontWeight: 600,
                     color: "#0f172a",
@@ -988,17 +1231,16 @@ export function TransfersPage() {
                 >
                   Xét duyệt & Tệp đính kèm
                 </h3>
-                <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                   {/* Chỉ định người xét duyệt */}
                   <div
                     style={{
                       display: "flex",
                       flexDirection: "column",
-                      gap: "8px",
-                      background: requireApproval ? "#f1f5f9" : "transparent",
-                      padding: requireApproval ? "12px" : "0",
-                      borderRadius: "8px",
-                      transition: "all 0.2s",
+                      gap: "5px",
+                      background: "#f8fafc",
+                      padding: "8px",
+                      borderRadius: "4px",
                     }}
                   >
                     <label
@@ -1009,6 +1251,7 @@ export function TransfersPage() {
                         cursor: "pointer",
                         width: "fit-content",
                       }}
+                      title="Chọn nhân sự phê duyệt phiếu này. Nếu không chỉ định, người có quyền duyệt phiếu sẽ xử lý."
                     >
                       <input
                         type="checkbox"
@@ -1034,8 +1277,7 @@ export function TransfersPage() {
                         style={{
                           display: "flex",
                           flexDirection: "column",
-                          gap: "8px",
-                          marginTop: "4px",
+                          gap: "5px",
                         }}
                       >
                         <div style={{ fontFamily: "inherit" }}>
@@ -1051,7 +1293,9 @@ export function TransfersPage() {
                             <option value="">Thêm người duyệt...</option>
                             {employees.map((e) => (
                               <option key={e.id} value={String(e.id)}>
+                                {approvedByUsers.includes(String(e.id)) ? "✓ " : ""}
                                 {employeeName(e)}
+                                {approvedByUsers.includes(String(e.id)) ? " (đã chọn)" : ""}
                               </option>
                             ))}
                           </SearchableSelect>
@@ -1063,7 +1307,7 @@ export function TransfersPage() {
                             style={{
                               display: "flex",
                               flexDirection: "column",
-                              gap: "6px",
+                              gap: "3px",
                               maxHeight: "150px",
                               overflowY: "auto",
                               paddingRight: "4px",
@@ -1079,8 +1323,8 @@ export function TransfersPage() {
                                     alignItems: "center",
                                     justifyContent: "space-between",
                                     background: "#fff",
-                                    padding: "6px 10px",
-                                    borderRadius: "6px",
+                                    padding: "3px 8px",
+                                    borderRadius: "2px",
                                     border: "1px solid #e2e8f0",
                                     fontSize: "13px",
                                   }}
@@ -1116,12 +1360,12 @@ export function TransfersPage() {
                     style={{
                       display: "flex",
                       flexDirection: "column",
-                      gap: "10px",
-                      background: selectedFiles.length > 0 ? "#f1f5f9" : "transparent",
-                      padding: selectedFiles.length > 0 ? "12px" : "0",
-                      borderRadius: "8px",
-                      transition: "all 0.2s",
+                      gap: "5px",
+                      background: "#f8fafc",
+                      padding: "8px",
+                      borderRadius: "4px",
                     }}
+                    title="Đính kèm hồ sơ liên quan. Hỗ trợ PDF, DOC/DOCX, XLS/XLSX và các định dạng ảnh thông dụng."
                   >
                     <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
                       <span style={{ fontSize: "14px", fontWeight: 500, color: "#334155" }}>
@@ -1157,7 +1401,7 @@ export function TransfersPage() {
                         style={{
                           display: "flex",
                           flexDirection: "column",
-                          gap: "6px",
+                          gap: "3px",
                           maxHeight: "150px",
                           overflowY: "auto",
                           paddingRight: "4px",
@@ -1173,8 +1417,8 @@ export function TransfersPage() {
                                 alignItems: "center",
                                 justifyContent: "space-between",
                                 background: "#fff",
-                                padding: "6px 10px",
-                                borderRadius: "6px",
+                                padding: "3px 8px",
+                                borderRadius: "2px",
                                 border: "1px solid #e2e8f0",
                               }}
                             >
@@ -1249,7 +1493,7 @@ export function TransfersPage() {
                     >
                       {availableAssets.map((a) => (
                         <option key={a.id} value={String(a.id)}>
-                          {a.assetCode} {a.name}
+                          {a.assetCode} · {a.name}
                         </option>
                       ))}
                     </SearchableSelect>
@@ -1262,11 +1506,19 @@ export function TransfersPage() {
                 style={{
                   border: "1px solid var(--qlvt-border, #e2e8f0)",
                   borderRadius: "8px",
-                  overflowY: "auto",
+                  overflow: "auto",
                   maxHeight: "400px",
                 }}
               >
-                <table style={{ width: "100%", textAlign: "left", borderCollapse: "collapse" }}>
+                <table
+                  style={{
+                    width: "100%",
+                    minWidth: "920px",
+                    tableLayout: "fixed",
+                    textAlign: "left",
+                    borderCollapse: "collapse",
+                  }}
+                >
                   <thead style={{ background: "#f8fafc", position: "sticky", top: 0, zIndex: 1 }}>
                     <tr>
                       <th
@@ -1276,6 +1528,7 @@ export function TransfersPage() {
                           fontSize: "13px",
                           fontWeight: 600,
                           borderBottom: "1px solid #e2e8f0",
+                          width: "54px",
                         }}
                       >
                         STT
@@ -1287,6 +1540,7 @@ export function TransfersPage() {
                           fontSize: "13px",
                           fontWeight: 600,
                           borderBottom: "1px solid #e2e8f0",
+                          width: "180px",
                         }}
                       >
                         Tài sản
@@ -1298,6 +1552,7 @@ export function TransfersPage() {
                           fontSize: "13px",
                           fontWeight: 600,
                           borderBottom: "1px solid #e2e8f0",
+                          width: "230px",
                         }}
                       >
                         Hiện trạng (Vị trí/TT)
@@ -1309,6 +1564,7 @@ export function TransfersPage() {
                           fontSize: "13px",
                           fontWeight: 600,
                           borderBottom: "1px solid #e2e8f0",
+                          width: "250px",
                         }}
                       >
                         Thông tin điều chuyển
@@ -1333,6 +1589,7 @@ export function TransfersPage() {
                           fontWeight: 600,
                           borderBottom: "1px solid #e2e8f0",
                           textAlign: "center",
+                          width: "56px",
                         }}
                       >
                         Xóa

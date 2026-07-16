@@ -7,8 +7,10 @@ const app = vi.hoisted(() => ({
   refresh: vi.fn().mockResolvedValue(undefined),
   setError: vi.fn(),
 }));
+const toastError = vi.hoisted(() => vi.fn());
 
 vi.mock("./AppDataContext", () => ({ useAppData: () => app }));
+vi.mock("react-hot-toast", () => ({ default: { error: toastError } }));
 vi.mock("../services/api", () => ({
   createVendor: vi.fn(),
   updateVendor: vi.fn(),
@@ -146,8 +148,8 @@ describe("ActionsProvider", () => {
     );
 
     await act(async () => actions.approveRequest(1, "APPROVED"));
-    expect(app.setError).toHaveBeenLastCalledWith("Denied");
+    expect(toastError).toHaveBeenLastCalledWith("Denied");
     await act(async () => actions.approveRequest(1, "APPROVED"));
-    expect(app.setError).toHaveBeenLastCalledWith("Không thể xử lý yêu cầu");
+    expect(toastError).toHaveBeenLastCalledWith("Không thể xử lý yêu cầu");
   });
 });

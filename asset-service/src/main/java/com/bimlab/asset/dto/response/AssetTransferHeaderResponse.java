@@ -26,6 +26,9 @@ public record AssetTransferHeaderResponse(
         String requestedBy,
         Long requestedEmployeeId,
         String approvedBy,
+        String cancelledBy,
+        LocalDateTime cancelledAt,
+        String cancelReason,
         List<Confirmation> confirmations,
         List<Document> documents,
         List<Line> lines
@@ -47,6 +50,7 @@ public record AssetTransferHeaderResponse(
             String documentStatus,
             String fileName,
             String objectKey,
+            String downloadUrl,
             String contentType,
             Long sizeBytes
     ) {}

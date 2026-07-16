@@ -360,8 +360,13 @@ export async function rejectTransfer(id: number, reason: string): Promise<AssetT
   return response.data;
 }
 
+export async function cancelTransfer(id: number, reason: string): Promise<AssetTransfer> {
+  const response = await api.post<AssetTransfer>(`/asset/transfer/${id}/cancel`, { reason });
+  return response.data;
+}
+
 export async function deleteTransfer(id: number): Promise<void> {
-  await api.post(`/asset/transfer/${id}/cancel`, { reason: "Hủy phiếu từ giao diện" });
+  await cancelTransfer(id, "Hủy phiếu từ giao diện");
 }
 
 export async function loadAssetBookings(params?: {

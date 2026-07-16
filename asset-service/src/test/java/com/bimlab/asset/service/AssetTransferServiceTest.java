@@ -13,6 +13,7 @@ import com.bimlab.asset.repository.AssetTransferDocumentRepository;
 import com.bimlab.asset.repository.AssetTransferHeaderRepository;
 import com.bimlab.asset.repository.AssetTransferRepository;
 import com.bimlab.asset.security.AssetAccessService;
+import com.bimlab.asset.storage.MinioService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -44,6 +45,7 @@ class AssetTransferServiceTest {
     @Mock AssetDocumentRepository assetDocuments;
     @Mock AuditLogService auditLogService;
     @Mock AssetAccessService access;
+    @Mock MinioService minioService;
 
     @InjectMocks AssetTransferService service;
 

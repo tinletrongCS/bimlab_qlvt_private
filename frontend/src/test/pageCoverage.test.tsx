@@ -188,12 +188,48 @@ vi.mock("../services/api", () => ({
   loadTransfers: vi.fn().mockResolvedValue([
     {
       id: 1,
-      asset,
+      transferCode: "PBG-0001",
+      title: "Bàn giao laptop dự án",
       transferType: "ASSIGN",
+      status: "PENDING_APPROVAL",
       toEmployeeId: 1,
+      toDepartmentId: 1,
+      toSiteId: 1,
       transferDate: "2026-07-20",
+      plannedHandoverAt: "2026-07-20T09:00:00",
       reason: "Bàn giao dự án",
-      performedBy: "Admin BIMLab",
+      requestedBy: "admin",
+      requestedEmployeeId: 1,
+      confirmations: [
+        {
+          id: 1,
+          confirmerEmployeeId: 1,
+          confirmerName: "Nguyễn Văn A",
+          status: "PENDING",
+        },
+      ],
+      documents: [
+        {
+          id: 1,
+          fileName: "bien-ban-ban-giao.pdf",
+          downloadUrl: "https://files.test/bien-ban-ban-giao.pdf",
+        },
+      ],
+      lines: [
+        {
+          id: 1,
+          assetId: 1,
+          assetCode: "TS-001",
+          assetName: "Laptop Dell Precision",
+          fromEmployeeId: 1,
+          fromDepartmentId: 1,
+          fromSiteId: 1,
+          toEmployeeId: 1,
+          toDepartmentId: 1,
+          toSiteId: 1,
+          lineStatus: "PENDING",
+        },
+      ],
     },
   ]),
   loadEmployees: vi.fn().mockResolvedValue([employee]),
@@ -264,6 +300,7 @@ vi.mock("../services/api", () => ({
   uploadTransferDocument: vi.fn().mockResolvedValue({ fileKey: "transfer-documents/test.pdf" }),
   approveTransfer: vi.fn().mockResolvedValue({}),
   rejectTransfer: vi.fn().mockResolvedValue({}),
+  cancelTransfer: vi.fn().mockResolvedValue({}),
   deleteTransfer: vi.fn().mockResolvedValue(undefined),
 }));
 
@@ -361,7 +398,8 @@ describe("QLVT pages", () => {
 
   it("creates a transfer request with approvers", async () => {
     const user = userEvent.setup();
-    await renderRoute("/transfers", "Bàn giao dự án");
+    vi.mocked(api.loadTransfers).mockResolvedValueOnce([]);
+    await renderRoute("/transfers", "Danh sách phiếu");
 
     await user.click(screen.getByRole("button", { name: "Tạo phiếu" }));
     expect(await screen.findByText("Danh sách tài sản bàn giao/thu hồi")).toBeVisible();
@@ -391,6 +429,44 @@ describe("QLVT pages", () => {
         }),
       ),
     );
+  });
+
+  it("filters and decides assigned pending transfers", async () => {
+    const user = userEvent.setup();
+    await renderRoute("/transfers", "Bàn giao dự án");
+
+    const pendingPanel = screen.getByText("Phiếu cần xét duyệt").closest("section");
+    expect(pendingPanel).not.toBeNull();
+    const pending = within(pendingPanel as HTMLElement);
+    expect(pending.getByText("Bàn giao laptop dự án")).toBeVisible();
+    expect(pending.getByRole("link", { name: "bien-ban-ban-giao.pdf" })).toHaveAttribute(
+      "href",
+      "https://files.test/bien-ban-ban-giao.pdf",
+    );
+
+    const pendingTypeSelect = pending.getByPlaceholderText("Tất cả phân loại");
+    chooseSearchableOption(pendingTypeSelect, "Thu hồi");
+    expect(pending.getByText("Không có phiếu nào đang chờ bạn xét duyệt.")).toBeVisible();
+    chooseSearchableOption(pendingTypeSelect, "Bàn giao");
+
+    const search = pending.getByPlaceholderText("Tìm mã phiếu, tiêu đề hoặc lý do...");
+    await user.type(search, "không tồn tại");
+    expect(pending.getByText("Không có phiếu nào đang chờ bạn xét duyệt.")).toBeVisible();
+    await user.clear(search);
+    await user.type(search, "PBG-0001");
+
+    const reason = pending.getByLabelText("Lý do xử lý PBG-0001");
+    await user.click(pending.getByRole("button", { name: "Phê duyệt" }));
+    await waitFor(() => expect(api.approveTransfer).toHaveBeenCalledWith(1, undefined));
+
+    await user.type(reason, "Thiếu hồ sơ");
+    await user.click(pending.getByRole("button", { name: "Từ chối" }));
+    await waitFor(() => expect(api.rejectTransfer).toHaveBeenCalledWith(1, "Thiếu hồ sơ"));
+
+    await user.clear(reason);
+    await user.type(reason, "Người tạo hủy phiếu");
+    await user.click(pending.getByRole("button", { name: "Hủy phiếu" }));
+    await waitFor(() => expect(api.cancelTransfer).toHaveBeenCalledWith(1, "Người tạo hủy phiếu"));
   });
 
   it("manages category hierarchy and completes an import", async () => {
