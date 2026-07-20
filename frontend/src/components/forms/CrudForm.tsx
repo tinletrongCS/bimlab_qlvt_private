@@ -168,6 +168,7 @@ function CrudFormInner({
         depreciationMethod: empty(form.depreciationMethod) || "NONE",
         usefulLifeYears: num(form.usefulLifeYears),
         notes: empty(form.notes),
+        categoryId: num(form.categoryId),
       });
     }
     if (modal.type === "subscription") {
@@ -231,7 +232,7 @@ function CrudFormInner({
     }
     if (modal.type === "transfer") {
       void onSubmit({
-        assetId: Number(form.assetId),
+        title: `${form.transferType} tài sản`,
         transferType: form.transferType,
         fromEmployeeId: num(form.fromEmployeeId),
         toEmployeeId: num(form.toEmployeeId),
@@ -240,10 +241,10 @@ function CrudFormInner({
         fromSiteId: num(form.fromSiteId),
         toSiteId: num(form.toSiteId),
         transferDate: form.transferDate,
+        plannedHandoverAt: `${form.transferDate}T09:00:00`,
         reason: empty(form.reason),
-        performedBy: empty(form.performedBy),
-        handoverDocumentUrl: empty(form.handoverDocumentUrl),
-        applyToAsset: form.applyToAsset === "true",
+        note: empty(form.performedBy),
+        lines: [{ assetId: Number(form.assetId) }],
       });
     }
   }
@@ -419,9 +420,10 @@ function CrudFormInner({
             <AssetCategoryTreeSelect
               label="Danh mục tài sản"
               value={form.category}
-              onChange={(name, code) => {
+              onChange={(name, code, id) => {
                 setField("category", name);
                 if (code) setField("categoryCode", code);
+                if (id) setField("categoryId", String(id));
               }}
               categoryCode={form.categoryCode}
               onCodeChange={(code) => setField("categoryCode", code)}
@@ -822,20 +824,6 @@ function CrudFormInner({
             value={form.performedBy}
             onChange={(value) => setField("performedBy", value)}
           />
-          <Field
-            label="URL biên bản bàn giao"
-            value={form.handoverDocumentUrl}
-            onChange={(value) => setField("handoverDocumentUrl", value)}
-          />
-          <Select
-            label="Cập nhật tài sản?"
-            value={form.applyToAsset}
-            onChange={(value) => setField("applyToAsset", value)}
-            options={[
-              ["true", "Có -- đồng bộ người dùng/phòng ban lên tài sản"],
-              ["false", "Không -- chỉ ghi nhận lịch sử"],
-            ]}
-          />
         </>
       )}
     </CrudModal>
@@ -872,6 +860,8 @@ function initialForm(modal: NonNullable<ModalState>): Record<string, string> {
       status: modal.item?.status || "IN_STOCK",
       depreciationMethod: modal.item?.depreciationMethod || "NONE",
       usefulLifeYears: val(modal.item?.usefulLifeYears),
+      categoryId: val(modal.item?.assetCategory?.id),
+      categoryCode: modal.item?.assetCategory?.code || "",
       notes: "",
     };
   if (modal.type === "subscription")
@@ -941,8 +931,6 @@ function initialForm(modal: NonNullable<ModalState>): Record<string, string> {
     transferDate: new Date().toISOString().slice(0, 10),
     reason: "",
     performedBy: "",
-    handoverDocumentUrl: "",
-    applyToAsset: "true",
   };
 }
 

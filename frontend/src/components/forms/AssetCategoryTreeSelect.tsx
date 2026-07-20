@@ -5,7 +5,7 @@ import type { AssetCategoryTree } from "../../services/types";
 
 interface AssetCategoryTreeSelectProps {
   value: string;
-  onChange: (value: string, code?: string) => void;
+  onChange: (value: string, code?: string, id?: number) => void;
   label?: string;
   required?: boolean;
   categoryCode?: string;
@@ -46,7 +46,7 @@ export function AssetCategoryTreeSelect({
   const handleSelect = (node: AssetCategoryTree) => {
     if (!node.children || node.children.length === 0) {
       // Leaf node - fill both name and code
-      onChange(node.name, node.code);
+      onChange(node.name, node.code, node.id);
       if (onCodeChange) onCodeChange(node.code);
     } else {
       // Parent — toggle expand

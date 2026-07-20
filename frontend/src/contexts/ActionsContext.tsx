@@ -1,4 +1,5 @@
 import { createContext, type ReactNode, useCallback, useContext, useMemo, useState } from "react";
+import toast from "react-hot-toast";
 import {
   createAsset,
   createContract,
@@ -128,7 +129,7 @@ export function ActionsProvider({ children }: { children: ReactNode }) {
         setModal(null);
         await refresh();
       } catch (err) {
-        setError(readError(err));
+        toast.error(readError(err));
       } finally {
         setSubmitting(false);
       }
@@ -151,7 +152,7 @@ export function ActionsProvider({ children }: { children: ReactNode }) {
         else if (type === "transfers") await deleteTransfer(id);
         await refresh();
       } catch (err) {
-        setError(readError(err));
+        toast.error(readError(err));
       } finally {
         setSubmitting(false);
       }
@@ -167,7 +168,7 @@ export function ActionsProvider({ children }: { children: ReactNode }) {
         await updatePurchaseRequestStatus(id, status);
         await refresh();
       } catch (err) {
-        setError(readError(err));
+        toast.error(readError(err));
       } finally {
         setSubmitting(false);
       }
@@ -194,7 +195,7 @@ export function ActionsProvider({ children }: { children: ReactNode }) {
         });
         await refresh();
       } catch (err) {
-        setError(readError(err));
+        toast.error(readError(err));
       } finally {
         setSubmitting(false);
       }
@@ -228,7 +229,7 @@ export function ActionsProvider({ children }: { children: ReactNode }) {
         });
         await refresh();
       } catch (err) {
-        setError(readError(err));
+        toast.error(readError(err));
       } finally {
         setSubmitting(false);
       }
@@ -272,8 +273,14 @@ export function useActions(): ActionsContextValue {
 
 function readError(error: unknown): string {
   if (typeof error === "object" && error && "response" in error) {
-    const response = (error as { response?: { data?: { message?: string } } }).response;
-    return response?.data?.message || "Không thể xử lý yêu cầu";
+    const response = (
+      error as { response?: { data?: { message?: string; fields?: Record<string, string> } } }
+    ).response;
+    const message = response?.data?.message;
+    if (message) return message;
+    const fields = response?.data?.fields;
+    const firstField = fields ? Object.entries(fields)[0] : undefined;
+    if (firstField) return `${firstField[0]}: ${firstField[1]}`;
   }
   return "Không thể xử lý yêu cầu";
 }

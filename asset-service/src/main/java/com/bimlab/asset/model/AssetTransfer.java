@@ -3,6 +3,7 @@ package com.bimlab.asset.model;
 import jakarta.persistence.*;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.*;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -19,6 +20,11 @@ import java.time.LocalDateTime;
 public class AssetTransfer {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "transfer_header_id")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    private AssetTransferHeader transferHeader;
 
     @ManyToOne(fetch = FetchType.EAGER, optional = false)
     @JoinColumn(name = "asset_id", nullable = false)
@@ -78,11 +84,33 @@ public class AssetTransfer {
     @Column(name = "approved_by", length = 200)
     private String approvedBy;
 
+    @Column(name = "line_no")
+    private Integer lineNo;
+
+    @Column(name = "line_status", length = 30, nullable = false)
+    @Builder.Default
+    private String lineStatus = "COMPLETED";
+
+    @Column(name = "status_before", length = 30)
+    private String statusBefore;
+
+    @Column(name = "status_after", length = 30)
+    private String statusAfter;
+
+    @Column(name = "book_value_at_transfer", precision = 18, scale = 2)
+    private BigDecimal bookValueAtTransfer;
+
+    @Column(name = "receiver_note", length = 1000)
+    private String receiverNote;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
     @PrePersist
     void prePersist() {
         createdAt = LocalDateTime.now();
+        if (lineStatus == null) {
+            lineStatus = "COMPLETED";
+        }
     }
 }

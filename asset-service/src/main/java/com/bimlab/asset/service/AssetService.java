@@ -78,6 +78,12 @@ public class AssetService {
     public AssetItem createAsset(AssetRequest req) {
         AssetItem item = new AssetItem();
         applyAsset(item, req);
+        if (isBlank(req.assetCode())) {
+            if (item.getAssetCategory() == null) {
+                throw new IllegalArgumentException("categoryId: Phải chọn danh mục tài sản để hệ thống tự sinh mã");
+            }
+            item.setAssetCode(nextAssetCode(item.getAssetCategory()));
+        }
         return assets.save(item);
     }
 
@@ -173,6 +179,9 @@ public class AssetService {
 
     @Transactional
     public AssetItem updateAsset(Long id, AssetRequest req) {
+        if (isBlank(req.assetCode())) {
+            throw new IllegalArgumentException("assetCode: Mã tài sản không được để trống");
+        }
         AssetItem item = getAssetById(id);
         applyAsset(item, req);
         return assets.save(item);

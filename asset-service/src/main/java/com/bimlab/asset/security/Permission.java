@@ -26,7 +26,7 @@ public enum Permission {
     BÀN GIAO TÀI SẢN
     asset_transfers_view: chỉ xem được phiếu bàn giao
     asset_transfers_manage: được quyền thêm/sửa/xóa phiếu bàn giao
-    asset_transfers_approve: được quyền duyệt phiếu bàn giao
+    asset_transfers_approve: được quyền duyệt hoặc từ chối phiếu bàn giao
     */
     ASSET_TRANSFERS_VIEW("asset_transfers_view"),
     ASSET_TRANSFERS_MANAGE("asset_transfers_manage"),

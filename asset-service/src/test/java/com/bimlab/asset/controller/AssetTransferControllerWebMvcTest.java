@@ -3,19 +3,17 @@ package com.bimlab.asset.controller;
 import com.bimlab.asset.config.TestSecurityConfig;
 import com.bimlab.asset.mapper.AssetMapper;
 import com.bimlab.asset.mapper.AssetTransferMapper;
-import com.bimlab.asset.model.AssetItem;
-import com.bimlab.asset.model.AssetTransfer;
-import com.bimlab.asset.model.status.AssetStatus;
+import com.bimlab.asset.dto.response.AssetTransferHeaderResponse;
 import com.bimlab.asset.security.AssetAccessService;
 import com.bimlab.asset.service.AssetService;
 import com.bimlab.asset.service.AssetTransferService;
+import com.bimlab.asset.storage.MinioService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
@@ -39,53 +37,75 @@ class AssetTransferControllerWebMvcTest {
     @MockBean AssetTransferService assetTransferService;
     @MockBean AssetService assetService;
     @MockBean AssetAccessService assetAccessService;
+    @MockBean MinioService minioService;
 
-    private AssetTransfer sample() {
-        AssetItem asset = AssetItem.builder().id(1L).assetCode("LAP-1").name("Laptop").category("IT").status(AssetStatus.ASSIGNED).build();
-        return AssetTransfer.builder()
-                .id(1L)
-                .asset(asset)
-                .transferType("ASSIGN")
-                .transferDate(LocalDate.now())
-                .build();
+    private AssetTransferHeaderResponse sample() {
+        return new AssetTransferHeaderResponse(
+                1L,
+                "PBG-0001",
+                "Cấp phát tài sản",
+                "ASSIGN",
+                "DRAFT",
+                null,
+                42L,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                LocalDate.now(),
+                null,
+                "Cấp phát",
+                null,
+                "admin",
+                1L,
+                null,
+                null,
+                null,
+                null,
+                List.of(),
+                List.of(),
+                List.of()
+        );
     }
 
     @Test
     @WithMockUser(authorities = {"asset_transfers_view"})
-    void list_returnsTransfers() throws Exception {
-        when(assetTransferService.listTransfers()).thenReturn(List.of(sample()));
-        mockMvc.perform(get("/api/asset/transfers"))
+    void list_returnsTransferHeaders() throws Exception {
+        when(assetTransferService.listTransferHeaders()).thenReturn(List.of(sample()));
+        mockMvc.perform(get("/api/asset/transfer"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].transferType").value("ASSIGN"));
     }
 
     @Test
     @WithMockUser(authorities = {"asset_transfers_view"})
-    void listPaged_returnsPage() throws Exception {
-        when(assetTransferService.listTransfersPaged(any())).thenReturn(new PageImpl<>(List.of(sample())));
-        mockMvc.perform(get("/api/asset/transfers/paged"))
+    void get_returnsTransferHeader() throws Exception {
+        when(assetTransferService.getTransferHeader(1L)).thenReturn(sample());
+        mockMvc.perform(get("/api/asset/transfer/1"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content[0].transferType").value("ASSIGN"));
+                .andExpect(jsonPath("$.transferCode").value("PBG-0001"));
     }
 
     @Test
     @WithMockUser(authorities = {"asset_transfers_manage"})
-    void create_returnsMappedTransfer() throws Exception {
-        when(assetTransferService.createTransfer(any())).thenReturn(sample());
+    void create_returnsTransferHeader() throws Exception {
+        when(assetTransferService.createTransferPendingApproval(any())).thenReturn(sample());
 
-        mockMvc.perform(post("/api/asset/transfers")
+        mockMvc.perform(post("/api/asset/transfer")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
-                                  "assetId": 1,
+                                  "title": "Cấp phát tài sản",
                                   "transferType": "ASSIGN",
                                   "toEmployeeId": 42,
                                   "transferDate": "2026-06-18",
-                                  "applyToAsset": true
+                                  "plannedHandoverAt": "2026-06-18T09:00:00",
+                                  "lines": [{"assetId": 1}]
                                 }
                                 """))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.transferType").value("ASSIGN"))
-                .andExpect(jsonPath("$.asset.assetCode").value("LAP-1"));
+                .andExpect(jsonPath("$.transferType").value("ASSIGN"));
     }
 }

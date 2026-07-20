@@ -97,6 +97,34 @@ class AssetServiceTest {
     }
 
     @Test
+    void createAsset_generatesCodeWhenManualCreateLeavesCodeBlank() {
+        AssetCodeSequence sequence = new AssetCodeSequence(10L);
+        sequence.setCurrentNumber(2L);
+        when(assetCategories.findById(10L)).thenReturn(Optional.of(laptopCategory));
+        when(assetCodeSequences.findWithLockByCategoryId(10L)).thenReturn(Optional.of(sequence));
+        when(assets.existsByAssetCode("LAP-00003")).thenReturn(false);
+        when(assetCodeSequences.save(sequence)).thenReturn(sequence);
+        when(assets.save(any(AssetItem.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        AssetRequest req = new AssetRequest(
+                "", "Laptop X", "Laptop", null, "PURCHASE",
+                null, null, null, null, null,
+                null, null,
+                null, null, "IN_STOCK",
+                "NONE", null, null,
+                null, 10L, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null,
+                null, null, null, null
+        );
+
+        AssetItem saved = service.createAsset(req);
+
+        assertEquals("LAP-00003", saved.getAssetCode());
+        assertEquals(laptopCategory, saved.getAssetCategory());
+        assertEquals(3L, sequence.getCurrentNumber());
+    }
+
+    @Test
     void createAsset_acceptsNullVendor() {
         when(assets.save(any(AssetItem.class))).thenAnswer(inv -> inv.getArgument(0));
 

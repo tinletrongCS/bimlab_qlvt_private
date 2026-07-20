@@ -6,7 +6,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 public record AssetRequest(
-        @NotBlank String assetCode,
+        String assetCode,
         @NotBlank String name,
         String category,
         String serialNumber,

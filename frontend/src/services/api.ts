@@ -29,6 +29,7 @@ import type {
   DepreciationSnapshot,
   DisposeAssetPayload,
   EmployeeLite,
+  FileUploadResponse,
   MaintenanceRecord,
   MaintenanceRecordPayload,
   Permission,
@@ -331,17 +332,41 @@ export async function loadWarrantyExpiring(days: number = 30): Promise<AssetItem
 }
 
 export async function loadTransfers(): Promise<AssetTransfer[]> {
-  const response = await api.get<AssetTransfer[]>("/asset/transfers");
+  const response = await api.get<AssetTransfer[]>("/asset/transfer");
   return response.data;
 }
 
 export async function createTransfer(payload: AssetTransferPayload): Promise<AssetTransfer> {
-  const response = await api.post<AssetTransfer>("/asset/transfers", payload);
+  const response = await api.post<AssetTransfer>("/asset/transfer", payload);
+  return response.data;
+}
+
+export async function uploadTransferDocument(file: File): Promise<FileUploadResponse> {
+  const formData = new FormData();
+  formData.append("file", file);
+  const response = await api.post<FileUploadResponse>("/asset/transfer/upload", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return response.data;
+}
+
+export async function approveTransfer(id: number, reason?: string): Promise<AssetTransfer> {
+  const response = await api.post<AssetTransfer>(`/asset/transfer/${id}/approve`, { reason });
+  return response.data;
+}
+
+export async function rejectTransfer(id: number, reason: string): Promise<AssetTransfer> {
+  const response = await api.post<AssetTransfer>(`/asset/transfer/${id}/reject`, { reason });
+  return response.data;
+}
+
+export async function cancelTransfer(id: number, reason: string): Promise<AssetTransfer> {
+  const response = await api.post<AssetTransfer>(`/asset/transfer/${id}/cancel`, { reason });
   return response.data;
 }
 
 export async function deleteTransfer(id: number): Promise<void> {
-  await api.delete(`/asset/transfers/${id}`);
+  await cancelTransfer(id, "Hủy phiếu từ giao diện");
 }
 
 export async function loadAssetBookings(params?: {

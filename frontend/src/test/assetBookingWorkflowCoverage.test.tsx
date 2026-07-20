@@ -601,7 +601,7 @@ describe("QLVT asset and booking workflow coverage", () => {
     await user.click(screen.getByRole("button", { name: /Tải mẫu Excel/i }));
     await waitFor(() => expect(URL.createObjectURL).toHaveBeenCalled());
 
-    await user.click(screen.getByRole("button", { name: /Tải lên file Excel/i }));
+    await user.click(screen.getByRole("button", { name: /Nhập tài sản/i }));
     const input = document.querySelector('input[type="file"]') as HTMLInputElement;
     await user.upload(input, new File([bytes], "assets.xlsx"));
     expect(await screen.findByText("Máy trạm BIM")).toBeVisible();

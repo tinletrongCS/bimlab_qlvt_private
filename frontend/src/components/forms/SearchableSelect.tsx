@@ -17,6 +17,19 @@ interface SearchableSelectProps {
   style?: React.CSSProperties;
 }
 
+function rawOptionText(node: ReactNode): string {
+  if (node == null || typeof node === "boolean") return "";
+  if (typeof node === "string" || typeof node === "number") return String(node);
+  if (Array.isArray(node)) return node.map(rawOptionText).join("");
+  if (React.isValidElement<{ children?: ReactNode }>(node))
+    return rawOptionText(node.props.children);
+  return "";
+}
+
+function optionText(node: ReactNode): string {
+  return rawOptionText(node).replace(/\s+/g, " ").trim();
+}
+
 export function SearchableSelect({
   value,
   onChange,
@@ -39,14 +52,14 @@ export function SearchableSelect({
       if (React.isValidElement(child) && child.type === "option") {
         mergedOptions.push({
           value: String((child as any).props.value || ""),
-          label: String((child as any).props.children || ""),
+          label: optionText((child as any).props.children),
         });
       } else if (React.isValidElement(child) && child.type === React.Fragment) {
         React.Children.forEach((child as any).props.children, (fragChild: unknown) => {
           if (React.isValidElement(fragChild) && fragChild.type === "option") {
             mergedOptions.push({
               value: String((fragChild as any).props.value || ""),
-              label: String((fragChild as any).props.children || ""),
+              label: optionText((fragChild as any).props.children),
             });
           }
         });
@@ -84,7 +97,11 @@ export function SearchableSelect({
   };
 
   return (
-    <div className={`searchable-select-container ${className}`} ref={containerRef} style={style}>
+    <div
+      className={`searchable-select-container${disabled ? " is-disabled" : ""} ${className}`}
+      ref={containerRef}
+      style={style}
+    >
       <div
         className="searchable-select-input-wrapper"
         onMouseDown={(e) => {

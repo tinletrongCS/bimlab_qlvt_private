@@ -13,7 +13,10 @@ export type Permission =
   | "maintenance_manage"
   | "asset_finance_manage"
   | "asset_finance_view"
-  | "asset_report_view";
+  | "asset_report_view"
+  | "asset_transfers_view"
+  | "asset_transfers_manage"
+  | "asset_transfers_approve";
 
 export interface AuthUser {
   id?: number;
@@ -452,23 +455,84 @@ export interface MaintenanceRecordPayload {
 
 export interface AssetTransfer {
   id: number;
-  asset: AssetItem;
+  transferCode?: string;
+  title?: string;
   transferType: string;
+  status: string;
   fromEmployeeId?: number;
   toEmployeeId?: number;
   fromDepartmentId?: number;
   toDepartmentId?: number;
   fromSiteId?: number;
   toSiteId?: number;
+  fromProjectId?: number;
+  toProjectId?: number;
   transferDate: string;
+  plannedHandoverAt?: string;
   reason?: string;
-  performedBy?: string;
-  handoverDocumentUrl?: string;
-  createdAt?: string;
+  note?: string;
+  approvedBy?: string;
+  requestedBy?: string;
+  requestedEmployeeId?: number;
+  cancelledBy?: string;
+  cancelledAt?: string;
+  cancelReason?: string;
+  confirmations?: AssetTransferConfirmation[];
+  documents?: AssetTransferDocument[];
+  lines?: AssetTransferLine[];
+}
+
+export interface AssetTransferConfirmation {
+  id: number;
+  confirmerEmployeeId?: number;
+  confirmerUsername?: string;
+  confirmerName?: string;
+  confirmationRole?: string;
+  status?: string;
+  confirmedAt?: string;
+  note?: string;
+}
+
+export interface AssetTransferDocument {
+  id?: number;
+  documentType?: string;
+  documentStatus?: string;
+  fileName: string;
+  objectKey?: string;
+  downloadUrl?: string;
+  contentType?: string;
+  sizeBytes?: number;
+}
+
+export interface FileUploadResponse {
+  fileKey: string;
+  downloadUrl?: string;
+}
+
+export interface AssetTransferLine {
+  id?: number;
+  assetId: number;
+  assetCode?: string;
+  assetName?: string;
+  lineStatus?: string;
+  fromEmployeeId?: number;
+  toEmployeeId?: number;
+  fromDepartmentId?: number;
+  toDepartmentId?: number;
+  fromSiteId?: number;
+  toSiteId?: number;
+  fromProjectId?: number;
+  toProjectId?: number;
+  statusBefore?: string;
+  statusAfter?: string;
+  conditionBefore?: string;
+  bookValueAtTransfer?: number;
+  receiverNote?: string;
 }
 
 export interface AssetTransferPayload {
-  assetId: number;
+  transferCode?: string;
+  title?: string;
   transferType: string;
   fromEmployeeId?: number | null;
   toEmployeeId?: number | null;
@@ -476,11 +540,25 @@ export interface AssetTransferPayload {
   toDepartmentId?: number | null;
   fromSiteId?: number | null;
   toSiteId?: number | null;
+  fromProjectId?: number | null;
+  toProjectId?: number | null;
   transferDate: string;
+  plannedHandoverAt?: string;
   reason?: string;
-  performedBy?: string;
-  handoverDocumentUrl?: string;
-  applyToAsset?: boolean;
+  note?: string;
+  approverEmployeeIds?: number[];
+  documents?: Array<{
+    fileName: string;
+    objectKey?: string;
+    contentType?: string;
+    sizeBytes?: number;
+  }>;
+  lines: Array<{
+    assetId: number;
+    conditionBefore?: string;
+    bookValueAtTransfer?: number;
+    receiverNote?: string;
+  }>;
 }
 
 export type AssetBookingStatus =
