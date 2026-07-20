@@ -37,7 +37,13 @@ public enum Permission {
     PURCHASE_REQUEST_CREATE("purchase_request_create"),
     PURCHASE_REQUEST_APPROVE("purchase_request_approve"),
     CONTRACT_MANAGE("contract_manage"),
-    MAINTENANCE_MANAGE("maintenance_manage");
+    MAINTENANCE_MANAGE("maintenance_manage"),
+
+    /*
+    DANH MỤC CÁC LOẠI LOG
+     */
+    LOG_DEFINITION_VIEW("log_definition_view"),
+    LOG_DEFINITION_MANAGE("log_definition_manage");
 
     private final String code;
 
@@ -48,41 +54,18 @@ public enum Permission {
     public String code() {
         return code;
     }
-
-    /**
-     * Convert a permission set to the authority-string array that
-     * {@link org.springframework.security.core.GrantedAuthority#getAuthority()}
-     * matches against. Order is undefined.
-     */
     public static String[] codesOf(Set<Permission> permissions) {
         return permissions.stream().map(Permission::code).toArray(String[]::new);
     }
 
-    /**
-     * Canonical admin-permission groupings. Each constant matches the
-     * wave-1 controller arrays. Asymmetry is intentional:
-     * <ul>
-     *   <li>{@link #MAINT_ADMIN} excludes {@code asset_finance_manage}
-     *       — maintenance is not a finance scope.</li>
-     *   <li>{@link #PR_ADMIN} excludes {@code asset_view_team}
-     *       — PR detail visibility is approver+all-view only.</li>
-     * </ul>
-     * Changing these sets is a behaviour change, not a refactor.
-     */
     public static final class Sets {
         private Sets() {}
 
         public static final Set<Permission> ASSET_ADMIN = Set.of(
                 ASSET_VIEW_TEAM, ASSET_VIEW_ALL, ASSET_MANAGE, ASSET_FINANCE_MANAGE);
 
-        /**
-         * Ai được thấy dữ liệu tài chính của tài sản (nguyên giá, khấu hao,
-         * giá trị sổ sách...). {@code asset_manage} nằm trong set vì người
-         * quản lý tài sản nhập/sửa các trường tiền tệ khi tạo và cập nhật.
-         */
         public static final Set<Permission> FINANCE_VIEWERS = Set.of(
                 ASSET_FINANCE_VIEW, ASSET_FINANCE_MANAGE, ASSET_MANAGE);
-        
         
         public static final Set<Permission> TRANSFER_VIEWERS = Set.of(
                 ASSET_TRANSFERS_VIEW, ASSET_TRANSFERS_MANAGE, ASSET_TRANSFERS_APPROVE,
@@ -106,5 +89,11 @@ public enum Permission {
 
         public static final Set<Permission> SUBSCRIPTION_ADMIN = Set.of(
                 SUBSCRIPTION_MANAGE, ASSET_MANAGE, ASSET_VIEW_ALL);
+
+        public static final Set<Permission> LOG_DEFINITION_VIEWERS = Set.of(
+                LOG_DEFINITION_VIEW);
+
+        public static final Set<Permission> LOG_DEFINITION_ADMIN = Set.of(
+                LOG_DEFINITION_VIEW, LOG_DEFINITION_MANAGE);
     }
 }

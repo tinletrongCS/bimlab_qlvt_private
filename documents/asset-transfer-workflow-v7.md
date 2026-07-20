@@ -10,7 +10,7 @@ Migration `V7__expand_asset_transfer_workflow.sql` mở rộng nghiệp vụ bà
 
 - Là phiếu bàn giao/header.
 - Một phiếu có thể gồm nhiều tài sản.
-- Quản lý trạng thái phiếu: `DRAFT`, `PENDING_CONFIRM`, `PENDING_APPROVAL`, `APPROVED`, `COMPLETED`, `REJECTED`, `CANCELLED`.
+- Quản lý trạng thái phiếu chính: `DRAFT`, `PENDING_APPROVAL`, `APPROVED`, `REJECTED`, `CANCELLED`.
 - Lưu thông tin nơi giao/nhận ở các cấp: nhân sự, phòng ban, chi nhánh/site, dự án.
 
 `asset.asset_transfer_documents`
@@ -108,7 +108,7 @@ DB không ép schema JSONB bằng constraint để audit linh hoạt cho nghiệ
 | Entity type | Ý nghĩa | Entity id | Khi dùng |
 | --- | --- | --- | --- |
 | `ASSET` | Một tài sản cụ thể | `asset.assets.id` | Xem lịch sử của từng tài sản: tạo, sửa, bàn giao, thu hồi, thanh lý, bảo trì |
-| `ASSET_TRANSFER_HEADER` | Một phiếu bàn giao | `asset.asset_transfer_headers.id` | Xem vòng đời phiếu: tạo, gửi xác nhận, duyệt, hủy, hoàn tất |
+| `ASSET_TRANSFER_HEADER` | Một phiếu bàn giao | `asset.asset_transfer_headers.id` | Xem vòng đời phiếu: tạo, gửi duyệt, duyệt, từ chối, hủy |
 | `ASSET_TRANSFER` | Một dòng tài sản trong phiếu hoặc bản ghi transfer legacy | `asset.asset_transfers.id` | Truy vết dòng bàn giao riêng lẻ, tương thích code cũ |
 | `ASSET_CATEGORY` | Một danh mục tài sản | `asset.asset_categories.id` | Thêm/sửa/xóa/import danh mục |
 | `ASSET_BOOKING` | Một phiên đặt phòng/tài sản | `asset.asset_booking_sessions.id` | Tạo, xác nhận, check-in, check-out, hủy booking |
@@ -126,7 +126,7 @@ Mỗi tài sản bị bàn giao nên có log riêng:
 - `entity_type = ASSET`
 - `entity_id = assets.id`
 - `entity_code = assets.asset_code`
-- `action = TRANSFER_CREATED`, `TRANSFER_APPLIED`, `TRANSFER_COMPLETED`, `TRANSFER_CANCELLED`, ...
+- `action = TRANSFER_CREATED`, `TRANSFER_SUBMITTED`, `TRANSFER_APPROVED`, `TRANSFER_REJECTED`, `TRANSFER_CANCELLED`, ...
 
 Cách xem lịch sử một tài sản:
 
@@ -159,105 +159,105 @@ Nên ghi thêm log cho phiếu để xem lịch sử xử lý:
 - `entity_id = asset_transfer_headers.id`
 - `entity_code = asset_transfer_headers.transfer_code`
 
-Log theo phiếu giúp trả lời: ai tạo phiếu, ai gửi xác nhận, ai duyệt, ai hủy, lý do gì.
+Log theo phiếu giúp trả lời: ai tạo phiếu, ai gửi duyệt, ai duyệt/từ chối, ai hủy, lý do gì.
 
-## Luồng bàn giao hoàn chỉnh
+## Luồng bàn giao tài sản
 
-### 1. Tạo phiếu nháp
+Chọn chức năng `Tài sản` > `Bàn giao`.
 
-Người dùng chọn một hoặc nhiều tài sản từ danh sách tài sản.
+Trạng thái chính:
 
-Backend tạo:
+```text
+DRAFT -> PENDING_APPROVAL -> APPROVED / REJECTED
+```
+*NHÁP -> CHỜ XÉT DUYỆT -> ĐÃ DUYỆT/TỪ CHỐI*
 
-- Một dòng `asset_transfer_headers` với `status = DRAFT`.
-- Nhiều dòng `asset_transfers`, mỗi dòng ứng với một tài sản.
+```text
+DRAFT hoặc PENDING_APPROVAL -> CANCELLED
+```
+*NHÁP -> CHỜ XÉT DUYỆT -> HỦY PHIẾU (trước khi được duyệt/từ chối)*
 
-Ở bước này chưa cập nhật bảng `asset.assets`.
 
-Audit nên ghi:
+### 1. Tạo phiếu bàn giao tài sản
 
-- 1 log cho phiếu: `TRANSFER_DRAFT_CREATED`.
-- 1 log cho mỗi tài sản: `TRANSFER_LINE_ADDED`, `entity_type = ASSET`.
+Người dùng bấm **Tạo phiếu bàn giao**. Phiếu mới có trạng thái `DRAFT`.
 
-### 2. Gửi xác nhận
+Form tạo phiếu gồm các nhóm thông tin:
 
-Người tạo bấm "Gửi xác nhận".
+- **Thông tin chung**: mã phiếu, tiêu đề, loại bàn giao, lý do bàn giao, thời gian bàn giao dự kiến, ghi chú.
+- **Bên bàn giao**: chi nhánh/site, phòng ban, nhân sự hoặc đơn vị đang quản lý tài sản.
+- **Bên tiếp nhận**: chi nhánh/site, phòng ban, nhân sự hoặc đơn vị nhận tài sản.
+- **Danh sách tài sản**: chọn một hoặc nhiều tài sản cần bàn giao.
+- **Tình trạng trước bàn giao**: trạng thái hiện tại, tình trạng thực tế, vị trí hiện tại, giá trị còn lại nếu cần quản lý tài chính.
+- **Thành phần liên quan**: người chịu trách nhiệm bàn giao, người nhận bàn giao, người tạo phiếu, người duyệt nếu cần hiển thị trước.
+- **Tệp đính kèm**: biên bản, hình ảnh, file kiểm kê, tài liệu liên quan.
+
+Backend khi lưu nháp:
+
+- Tạo một dòng `asset_transfer_headers` với `status = DRAFT`.
+- Tạo các dòng `asset_transfers` tương ứng từng tài sản, liên kết bằng `transfer_header_id`.
+- Snapshot dữ liệu quan trọng của từng tài sản vào dòng chi tiết:
+  - `status_before`
+  - `condition_before`
+  - `book_value_at_transfer`
+  - thông tin vị trí/người giữ hiện tại nếu backend DTO có hỗ trợ.
+- Chưa cập nhật dữ liệu thật trong `asset.assets`.
+
+Audit:
+
+- Log phiếu: `TRANSFER_DRAFT_CREATED`, `entity_type = ASSET_TRANSFER_HEADER`.
+- Có thể log từng tài sản: `TRANSFER_LINE_ADDED`, `entity_type = ASSET`.
+
+### 2. Gửi phiếu duyệt
+
+Khi nhập đủ thông tin bắt buộc, người tạo bấm **Gửi phiếu**.
 
 Backend:
 
-- Đổi phiếu: `DRAFT -> PENDING_CONFIRM`.
-- Tạo các dòng `asset_transfer_confirmations` cần thiết.
-
-Ví dụ bàn giao nhân sự:
-
-- `HANDOVER`: người đang giữ tài sản.
-- `RECEIVER`: người nhận tài sản.
-- `MANAGER`: quản lý nếu quy trình yêu cầu.
+- Validate phiếu có ít nhất một tài sản.
+- Validate các thông tin bắt buộc: bên giao, bên nhận, lý do, thời gian bàn giao dự kiến.
+- Đổi phiếu: `DRAFT -> PENDING_APPROVAL`.
+- Khóa chỉnh sửa các trường nghiệp vụ chính, trừ ghi chú hoặc tệp đính kèm nếu hệ thống cho phép.
+- Không cập nhật `asset.assets`.
 
 Audit:
 
 - Log phiếu: `TRANSFER_SUBMITTED`.
 
-### 3. Xác nhận phiếu
+### 3. Duyệt hoặc từ chối phiếu
 
-Người có quyền/vai trò phù hợp xác nhận.
+Người có quyền `asset_transfers_approve` vào chi tiết phiếu đang `PENDING_APPROVAL` và chọn **Duyệt** hoặc **Từ chối**.
 
-Không làm kiểu voting. Backend chỉ cần kiểm tra:
+Nếu duyệt:
 
-- User hiện tại là người được gán trong dòng confirmation, hoặc
-- User có permission quản trị bàn giao, ví dụ `asset_manage`, `asset_assign`, hoặc permission transfer riêng sau này.
-
-Nếu đồng ý:
-
-- `asset_transfer_confirmations.status = APPROVED`.
-
-Nếu từ chối:
-
-- `asset_transfer_confirmations.status = REJECTED`.
-- Phiếu có thể chuyển `REJECTED`.
-
-Audit:
-
-- Log phiếu: `TRANSFER_CONFIRM_APPROVED` hoặc `TRANSFER_CONFIRM_REJECTED`.
-- Nếu từ chối, ghi lý do vào `changed_fields` hoặc `after_data`.
-
-### 4. Duyệt phiếu
-
-Nếu quy trình cần cấp duyệt riêng, người có quyền duyệt bấm "Duyệt".
-
-Backend:
-
-- Kiểm tra các confirmation bắt buộc đã `APPROVED`.
-- Đổi phiếu: `PENDING_CONFIRM -> APPROVED`.
-
-Audit:
-
-- Log phiếu: `TRANSFER_APPROVED`.
-
-Nếu không cần bước duyệt riêng, có thể bỏ qua `APPROVED` và chuyển thẳng sang `COMPLETED` khi đủ xác nhận.
-
-### 5. Hoàn tất bàn giao
-
-Người có quyền bấm "Hoàn tất".
-
-Backend trong một transaction:
-
-- Đổi phiếu: `APPROVED -> COMPLETED`.
-- Đổi từng dòng `asset_transfers.line_status = COMPLETED`.
+- Đổi phiếu: `PENDING_APPROVAL -> APPROVED`.
+- Đổi từng dòng `asset_transfers.line_status = APPROVED`.
 - Cập nhật từng tài sản trong `asset.assets`:
   - `assigned_employee_id`
   - `department_id`
   - `site_id`
   - `project_id`
   - `status`
-- Ghi snapshot trước/sau vào `before_data`, `after_data`, `changed_fields` của audit log.
+- Ghi snapshot trước/sau vào `before_data`, `after_data`, `changed_fields`.
 
-Audit:
+Audit khi duyệt:
 
-- 1 log phiếu: `TRANSFER_COMPLETED`.
-- 1 log riêng cho mỗi tài sản: `TRANSFER_COMPLETED`, `entity_type = ASSET`.
+- 1 log phiếu: `TRANSFER_APPROVED`, `entity_type = ASSET_TRANSFER_HEADER`.
+- 1 log riêng cho mỗi tài sản: `TRANSFER_APPROVED`, `entity_type = ASSET`.
 
-### 6. Biên bản và file đính kèm
+Nếu từ chối:
+
+- Đổi phiếu: `PENDING_APPROVAL -> REJECTED`.
+- Đổi từng dòng `asset_transfers.line_status = REJECTED`.
+- Bắt buộc nhập lý do từ chối.
+- Không cập nhật `asset.assets`.
+
+Audit khi từ chối:
+
+- Log phiếu: `TRANSFER_REJECTED`.
+- Có thể log từng tài sản `TRANSFER_REJECTED` nếu muốn lịch sử tài sản thể hiện việc từng được đưa vào phiếu bị từ chối.
+
+### 4. Biên bản và file đính kèm
 
 File biên bản, file scan chữ ký, hình ảnh bàn giao được upload lên MinIO.
 
@@ -272,9 +272,9 @@ Audit:
 
 - Log phiếu: `TRANSFER_DOCUMENT_ADDED`.
 
-### 7. Hủy phiếu
+### 5. Hủy phiếu
 
-Chỉ cho hủy khi phiếu chưa `COMPLETED`.
+Chỉ cho hủy khi phiếu đang `DRAFT` hoặc `PENDING_APPROVAL`.
 
 Backend:
 
@@ -289,26 +289,22 @@ Audit:
 
 ## Trạng thái đề xuất
 
-Luồng ngắn:
-
 ```text
-DRAFT -> PENDING_CONFIRM -> COMPLETED
+DRAFT -> PENDING_APPROVAL -> APPROVED
+DRAFT -> PENDING_APPROVAL -> REJECTED
+DRAFT -> CANCELLED
+PENDING_APPROVAL -> CANCELLED
 ```
 
-Luồng đầy đủ:
+Ý nghĩa:
 
-```text
-DRAFT -> PENDING_CONFIRM -> APPROVED -> COMPLETED
-```
+- `DRAFT`: phiếu mới tạo, còn chỉnh sửa được.
+- `PENDING_APPROVAL`: phiếu đã gửi duyệt, chờ người có quyền xử lý.
+- `APPROVED`: phiếu đã duyệt, tài sản đã được cập nhật.
+- `REJECTED`: phiếu bị từ chối, tài sản không đổi.
+- `CANCELLED`: phiếu bị hủy trước khi duyệt xong.
 
-Nhánh lỗi:
-
-```text
-PENDING_CONFIRM -> REJECTED
-DRAFT/PENDING_CONFIRM/APPROVED -> CANCELLED
-```
-
-## API nên có
+## API endpoints
 
 Tối thiểu cho luồng phiếu:
 
@@ -316,9 +312,8 @@ Tối thiểu cho luồng phiếu:
 - `GET /api/asset/transfer-headers`
 - `GET /api/asset/transfer-headers/{id}`
 - `POST /api/asset/transfer-headers/{id}/submit`
-- `POST /api/asset/transfer-headers/{id}/confirm`
 - `POST /api/asset/transfer-headers/{id}/approve`
-- `POST /api/asset/transfer-headers/{id}/complete`
+- `POST /api/asset/transfer-headers/{id}/reject`
 - `POST /api/asset/transfer-headers/{id}/cancel`
 - `POST /api/asset/transfer-headers/{id}/documents`
 
@@ -329,7 +324,7 @@ API audit đã có:
 
 ## Nguyên tắc implement backend
 
-- Client không được tự truyền `actor_username`, `approved_by`, `completed_by` tùy ý.
+- Client không được tự truyền các field hệ thống như `actor_username`, `approved_by`, `cancelled_by` tùy ý.
 - Backend lấy actor từ JWT/principal.
 - Cập nhật phiếu, dòng tài sản, bảng `assets`, và audit log trong cùng transaction.
 - Khi xem lịch sử tài sản, lọc `audit_logs` theo `entity_type = 'ASSET'` và `entity_id = assetId`.

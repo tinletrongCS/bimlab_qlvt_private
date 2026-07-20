@@ -1,9 +1,15 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { SearchableSelect } from "./SearchableSelect";
 
 function openDropdown(container: HTMLElement) {
   fireEvent.mouseDown(container.querySelector(".searchable-select-input-wrapper") as HTMLElement);
+}
+
+function getDropdown(container: HTMLElement) {
+  const dropdown = container.querySelector(".searchable-select-dropdown");
+  expect(dropdown).not.toBeNull();
+  return within(dropdown as HTMLElement);
 }
 
 describe("SearchableSelect", () => {
@@ -22,12 +28,13 @@ describe("SearchableSelect", () => {
     expect(input).toHaveValue("Laptop Dell");
 
     openDropdown(container);
-    expect(screen.getByText("Màn hình LG")).toBeVisible();
-    expect(screen.getByText("Laptop Dell")).toHaveClass("selected");
+    const dropdown = getDropdown(container);
+    expect(dropdown.getByText("Màn hình LG")).toBeVisible();
+    expect(dropdown.getByText("Laptop Dell")).toHaveClass("selected");
 
-    fireEvent.mouseDown(screen.getByText("Màn hình LG"));
+    fireEvent.mouseDown(dropdown.getByText("Màn hình LG"));
     expect(onChange).toHaveBeenCalledWith("2");
-    expect(screen.queryByText("Màn hình LG")).not.toBeInTheDocument();
+    expect(container.querySelector(".searchable-select-dropdown")).not.toBeInTheDocument();
   });
 
   it("filters options by search text and reports when nothing matches", () => {
@@ -36,13 +43,14 @@ describe("SearchableSelect", () => {
     );
     openDropdown(container);
     const input = screen.getByRole("combobox");
+    const dropdown = getDropdown(container);
 
     fireEvent.change(input, { target: { value: "màn" } });
-    expect(screen.getByText("Màn hình LG")).toBeVisible();
-    expect(screen.queryByText("Laptop Dell")).not.toBeInTheDocument();
+    expect(dropdown.getByText("Màn hình LG")).toBeVisible();
+    expect(dropdown.queryByText("Laptop Dell")).not.toBeInTheDocument();
 
     fireEvent.change(input, { target: { value: "zzz" } });
-    expect(screen.getByText("Không tìm thấy")).toBeVisible();
+    expect(dropdown.getByText("Không tìm thấy")).toBeVisible();
   });
 
   it("collects options from children including fragments", () => {
@@ -57,7 +65,7 @@ describe("SearchableSelect", () => {
       </SearchableSelect>,
     );
     openDropdown(container);
-    fireEvent.mouseDown(screen.getByText("Beta"));
+    fireEvent.mouseDown(getDropdown(container).getByText("Beta"));
     expect(onChange).toHaveBeenCalledWith("b");
   });
 
@@ -66,30 +74,32 @@ describe("SearchableSelect", () => {
       <SearchableSelect value="" onChange={vi.fn()} options={options} />,
     );
     openDropdown(container);
-    expect(screen.getByText("Laptop Dell")).toBeVisible();
+    expect(getDropdown(container).getByText("Laptop Dell")).toBeVisible();
     openDropdown(container);
-    expect(screen.queryByText("Laptop Dell")).not.toBeInTheDocument();
+    expect(container.querySelector(".searchable-select-dropdown")).not.toBeInTheDocument();
 
     openDropdown(container);
     fireEvent.mouseDown(document.body);
-    expect(screen.queryByText("Laptop Dell")).not.toBeInTheDocument();
+    expect(container.querySelector(".searchable-select-dropdown")).not.toBeInTheDocument();
   });
 
   it("opens and closes from presses on the input itself", () => {
-    render(<SearchableSelect value="" onChange={vi.fn()} options={options} />);
+    const { container } = render(
+      <SearchableSelect value="" onChange={vi.fn()} options={options} />,
+    );
     const input = screen.getByRole("combobox");
 
     fireEvent.mouseDown(input);
-    expect(screen.getByText("Laptop Dell")).toBeVisible();
+    expect(getDropdown(container).getByText("Laptop Dell")).toBeVisible();
 
     fireEvent.change(input, { target: { value: "lap" } });
     fireEvent.mouseDown(input);
-    expect(screen.getByText("Laptop Dell")).toBeVisible();
+    expect(getDropdown(container).getByText("Laptop Dell")).toBeVisible();
 
     fireEvent.change(input, { target: { value: "" } });
     input.focus();
     fireEvent.mouseDown(input);
-    expect(screen.queryByText("Laptop Dell")).not.toBeInTheDocument();
+    expect(container.querySelector(".searchable-select-dropdown")).not.toBeInTheDocument();
   });
 
   it("stays closed when disabled and falls back to the placeholder", () => {
@@ -104,6 +114,6 @@ describe("SearchableSelect", () => {
     );
     expect(screen.getByRole("combobox")).toHaveAttribute("placeholder", "Chọn thiết bị");
     openDropdown(container);
-    expect(screen.queryByText("Laptop Dell")).not.toBeInTheDocument();
+    expect(container.querySelector(".searchable-select-dropdown")).not.toBeInTheDocument();
   });
 });
