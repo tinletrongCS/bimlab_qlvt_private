@@ -10,6 +10,7 @@ import {
   type UserManagerSettings,
   WebStorageStateStore,
 } from "oidc-client-ts";
+import { installPkceDigestFallback } from "./oidcCrypto";
 
 let accessToken: string | null = null;
 
@@ -53,6 +54,7 @@ function buildSettings(): UserManagerSettings {
 let manager: UserManager | null = null;
 function userManager(): UserManager {
   if (!manager) {
+    installPkceDigestFallback();
     manager = new UserManager(buildSettings());
     // Silent-renew thành công → cập nhật token in-memory (api.ts đọc qua getAccessToken).
     manager.events.addUserLoaded((user) => {

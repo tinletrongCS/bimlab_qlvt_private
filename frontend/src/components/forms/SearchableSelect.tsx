@@ -152,7 +152,7 @@ export function SearchableSelect({
       >
         {mergedOptions.map((option) => (
           <option key={option.value} value={option.value}>
-            {option.value}
+            {option.label}
           </option>
         ))}
       </select>

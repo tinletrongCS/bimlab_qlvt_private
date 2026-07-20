@@ -1,13 +1,12 @@
 package com.bimlab.asset.security;
 
-import org.junit.jupiter.api.Test;
-
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.Test;
 
 /**
  * Locks the canonical authority-string for every {@link Permission} value and
