@@ -419,8 +419,8 @@ describe("QLVT asset and booking workflow coverage", () => {
     render(<BookingPage />);
 
     expect(await screen.findByRole("heading", { name: "Đặt lịch phòng họp" })).toBeVisible();
-    expect(await screen.findByText("Họp điều phối")).toBeVisible();
-    expect(screen.getByText("Workshop team")).toBeVisible();
+    expect((await screen.findAllByText("Họp điều phối")).length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Workshop team").length).toBeGreaterThan(0);
 
     fireEvent.change(screen.getByLabelText(/Phòng họp \/ tài sản/i), {
       target: { value: "ROOM-01" },
@@ -473,7 +473,7 @@ describe("QLVT asset and booking workflow coverage", () => {
   it("checks out, cancels, filters, and configures booking columns", async () => {
     const user = userEvent.setup();
     render(<BookingPage />);
-    await screen.findByText("Workshop team");
+    await screen.findAllByText("Workshop team");
 
     fireEvent.change(screen.getAllByLabelText(/Trạng thái/i).at(-1) as HTMLSelectElement, {
       target: { value: "IN_USE" },

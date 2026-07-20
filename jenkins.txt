@@ -1,237 +1,1204 @@
-12:53:18  + set -eu
-12:53:18  + mkdir -p reports
-12:53:18  + id -u
-12:53:18  + id -g
-12:53:18  + docker run --rm --user 0:0 --volumes-from 74b5695ab0fa -w /var/jenkins_home/workspace/bimlab_qlvt_test/frontend -e CI=true -e WORKSPACE=/var/jenkins_home/workspace/bimlab_qlvt_test -e RUN_SECURITY_AUDIT=false -e HOME=/tmp -e NPM_CONFIG_CACHE=/tmp/npm -e PNPM_HOME=/tmp/pnpm -e PNPM_STORE_DIR=/tmp/pnpm-store node:22-alpine sh -lc 
-12:53:18                  set -eu
-12:53:18                  export PATH="$PNPM_HOME/bin:$PATH"
-12:53:18                  if grep -Eq "lockfileVersion: .*6\.0" pnpm-lock.yaml; then PNPM_VERSION=8.15.9; else PNPM_VERSION=10.33.2; fi
-12:53:18                  mkdir -p "$PNPM_STORE_DIR"
-12:53:18                  npm install -g "pnpm@$PNPM_VERSION" --prefix "$PNPM_HOME"
-12:53:18                  pnpm config set store-dir "$PNPM_STORE_DIR"
-12:53:18                  rm -rf node_modules
-12:53:18                  pnpm install --frozen-lockfile
-12:53:18                  rm -rf .pnpm-store
-12:53:18                  pnpm lint
-12:53:18                  pnpm test -- --reporter=default --reporter=junit --outputFile=reports/vitest-junit.xml
-12:53:18                  pnpm build
-12:53:18                  if [ "${RUN_SECURITY_AUDIT:-false}" = "true" ]; then pnpm audit --audit-level high; fi
-12:53:18                
-12:53:19  
-12:53:19  added 1 package in 1s
-12:53:19  
-12:53:19  1 package is looking for funding
-12:53:19    run `npm fund` for details
-12:53:20  Lockfile is up to date, resolution step is skipped
-12:53:20  Progress: resolved 1, reused 0, downloaded 0, added 0
-12:53:20  Packages: +284
-12:53:20  ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-12:53:21  Progress: resolved 284, reused 0, downloaded 88, added 88
-12:53:22  Progress: resolved 284, reused 0, downloaded 163, added 162
-12:53:23  Progress: resolved 284, reused 0, downloaded 222, added 222
-12:53:24  Progress: resolved 284, reused 0, downloaded 266, added 266
-12:53:25  Progress: resolved 284, reused 0, downloaded 280, added 280
-12:53:26  Progress: resolved 284, reused 0, downloaded 282, added 282
-12:53:28  Progress: resolved 284, reused 0, downloaded 283, added 282
-12:53:29  Progress: resolved 284, reused 0, downloaded 283, added 283
-12:53:30  Progress: resolved 284, reused 0, downloaded 284, added 283
-12:53:30  Progress: resolved 284, reused 0, downloaded 284, added 284, done
-12:53:30  
-12:53:30  dependencies:
-12:53:30  + @vitejs/plugin-react 6.0.2
-12:53:30  + animejs 4.4.1
-12:53:30  + axios 1.16.1
-12:53:30  + exceljs 4.4.0
-12:53:30  + oidc-client-ts 3.5.0
-12:53:30  + react 19.2.6
-12:53:30  + react-dom 19.2.6
-12:53:30  + react-hot-toast 2.6.0
-12:53:30  + react-icons 5.6.0
-12:53:30  + react-router-dom 7.15.1
-12:53:30  + recharts 2.15.4
-12:53:30  + vite 8.0.13
-12:53:30  + xlsx 0.18.5
-12:53:30  
-12:53:30  devDependencies:
-12:53:30  + @biomejs/biome 2.4.16
-12:53:30  + @testing-library/jest-dom 6.9.1
-12:53:30  + @testing-library/react 16.3.2
-12:53:30  + @testing-library/user-event 14.6.1
-12:53:30  + @types/react 19.2.14
-12:53:30  + @types/react-dom 19.2.3
-12:53:30  + jsdom 29.1.1
-12:53:30  + typescript 6.0.3
-12:53:30  + vitest 4.1.7
-12:53:30  
-12:53:30  Done in 10.4s using pnpm v10.33.2
-12:53:31  
-12:53:31  > bimlab-asset-frontend@1.0.0 lint /var/jenkins_home/workspace/bimlab_qlvt_test/frontend
-12:53:31  > biome check .
-12:53:31  
-12:53:31  src/styles/app.css format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-12:53:31  
-12:53:31    × Formatter would have printed the following content:
-12:53:31    
-12:53:31      12603 12603 │   /* --- KEYFRAMES CHO CHUYỂN ĐỘNG NHANH & LIÊN TỤC --- */
-12:53:31      12604 12604 │   @keyframes pan-grid {
-12:53:31      12605       │ - ··0%·{·background-position:·0·0,·0·0,·0·0,·0·0;·}
-12:53:31      12606       │ - ··100%·{·background-position:·40px·40px,·-40px·40px,·40px·40px,·40px·40px;·}
-12:53:31            12605 │ + ··0%·{
-12:53:31            12606 │ + ····background-position:
-12:53:31            12607 │ + ······0·0,
-12:53:31            12608 │ + ······0·0,
-12:53:31            12609 │ + ······0·0,
-12:53:31            12610 │ + ······0·0;
-12:53:31            12611 │ + ··}
-12:53:31            12612 │ + ··100%·{
-12:53:31            12613 │ + ····background-position:
-12:53:31            12614 │ + ······40px·40px,
-12:53:31            12615 │ + ······-40px·40px,
-12:53:31            12616 │ + ······40px·40px,
-12:53:31            12617 │ + ······40px·40px;
-12:53:31            12618 │ + ··}
-12:53:31      12607 12619 │   }
-12:53:31      12608 12620 │   
-12:53:31      12609 12621 │   @keyframes pan-stripes {
-12:53:31      12610       │ - ··0%·{·background-position:·0·0;·}
-12:53:31      12611       │ - ··100%·{·background-position:·-100px·0;·}
-12:53:31            12622 │ + ··0%·{
-12:53:31            12623 │ + ····background-position:·0·0;
-12:53:31            12624 │ + ··}
-12:53:31            12625 │ + ··100%·{
-12:53:31            12626 │ + ····background-position:·-100px·0;
-12:53:31            12627 │ + ··}
-12:53:31      12612 12628 │   }
-12:53:31      12613 12629 │   
-12:53:31      12614 12630 │   @keyframes float-pattern {
-12:53:31      12615       │ - ··0%·{·transform:·translateY(0px)·rotate(0deg);·}
-12:53:31      12616       │ - ··50%·{·transform:·translateY(-12px)·rotate(2deg);·}
-12:53:31      12617       │ - ··100%·{·transform:·translateY(0px)·rotate(0deg);·}
-12:53:31            12631 │ + ··0%·{
-12:53:31            12632 │ + ····transform:·translateY(0px)·rotate(0deg);
-12:53:31            12633 │ + ··}
-12:53:31            12634 │ + ··50%·{
-12:53:31            12635 │ + ····transform:·translateY(-12px)·rotate(2deg);
-12:53:31            12636 │ + ··}
-12:53:31            12637 │ + ··100%·{
-12:53:31            12638 │ + ····transform:·translateY(0px)·rotate(0deg);
-12:53:31            12639 │ + ··}
-12:53:31      12618 12640 │   }
-12:53:31      12619 12641 │   
-12:53:31      12620 12642 │   @keyframes pulse-wave {
-12:53:31      12621       │ - ··0%·{·transform:·scale(1);·opacity:·0.2;·}
-12:53:31      12622       │ - ··50%·{·transform:·scale(1.15);·opacity:·0.5;·}
-12:53:31      12623       │ - ··100%·{·transform:·scale(1);·opacity:·0.2;·}
-12:53:31            12643 │ + ··0%·{
-12:53:31            12644 │ + ····transform:·scale(1);
-12:53:31            12645 │ + ····opacity:·0.2;
-12:53:31            12646 │ + ··}
-12:53:31            12647 │ + ··50%·{
-12:53:31            12648 │ + ····transform:·scale(1.15);
-12:53:31            12649 │ + ····opacity:·0.5;
-12:53:31            12650 │ + ··}
-12:53:31            12651 │ + ··100%·{
-12:53:31            12652 │ + ····transform:·scale(1);
-12:53:31            12653 │ + ····opacity:·0.2;
-12:53:31            12654 │ + ··}
-12:53:31      12624 12655 │   }
-12:53:31      12625 12656 │   
-12:53:31      ··········· │ 
-12:53:31      12628 12659 │   /* Di chuyển background phải là bội số của background-size (100px và 20px) để loop hoàn hảo */
-12:53:31      12629 12660 │   @keyframes blueprint-scroll {
-12:53:31      12630       │ - ··0%·{·background-position:·0px·0px,·0px·0px,·0px·0px,·0px·0px;·}
-12:53:31      12631       │ - ··100%·{·background-position:·100px·100px,·100px·100px,·100px·100px,·100px·100px;·}
-12:53:31            12661 │ + ··0%·{
-12:53:31            12662 │ + ····background-position:
-12:53:31            12663 │ + ······0px·0px,
-12:53:31            12664 │ + ······0px·0px,
-12:53:31            12665 │ + ······0px·0px,
-12:53:31            12666 │ + ······0px·0px;
-12:53:31            12667 │ + ··}
-12:53:31            12668 │ + ··100%·{
-12:53:31            12669 │ + ····background-position:
-12:53:31            12670 │ + ······100px·100px,
-12:53:31            12671 │ + ······100px·100px,
-12:53:31            12672 │ + ······100px·100px,
-12:53:31            12673 │ + ······100px·100px;
-12:53:31            12674 │ + ··}
-12:53:31      12632 12675 │   }
-12:53:31      12633 12676 │   
-12:53:31      12634 12677 │   /* Cuộn ngang mượt mà cho các vạch sọc góc 45 độ (cạnh huyền của 100 là ~141.42) */
-12:53:31      12635 12678 │   @keyframes stripe-scroll {
-12:53:31      12636       │ - ··0%·{·background-position:·0px·0px;·}
-12:53:31      12637       │ - ··100%·{·background-position:·141.42px·0px;·}·
-12:53:31            12679 │ + ··0%·{
-12:53:31            12680 │ + ····background-position:·0px·0px;
-12:53:31            12681 │ + ··}
-12:53:31            12682 │ + ··100%·{
-12:53:31            12683 │ + ····background-position:·141.42px·0px;
-12:53:31            12684 │ + ··}
-12:53:31      12638 12685 │   }
-12:53:31      12639 12686 │   
-12:53:31      12640 12687 │   @keyframes float-smooth {
-12:53:31      12641       │ - ··0%·{·transform:·translateY(0px)·rotate(0deg);·}
-12:53:31      12642       │ - ··50%·{·transform:·translateY(-12px)·rotate(1.5deg);·}
-12:53:31      12643       │ - ··100%·{·transform:·translateY(0px)·rotate(0deg);·}
-12:53:31            12688 │ + ··0%·{
-12:53:31            12689 │ + ····transform:·translateY(0px)·rotate(0deg);
-12:53:31            12690 │ + ··}
-12:53:31            12691 │ + ··50%·{
-12:53:31            12692 │ + ····transform:·translateY(-12px)·rotate(1.5deg);
-12:53:31            12693 │ + ··}
-12:53:31            12694 │ + ··100%·{
-12:53:31            12695 │ + ····transform:·translateY(0px)·rotate(0deg);
-12:53:31            12696 │ + ··}
-12:53:31      12644 12697 │   }
-12:53:31      12645 12698 │   
-12:53:31      12646 12699 │   @keyframes radar-spin {
-12:53:31      12647       │ - ··0%·{·transform:·rotate(0deg);·}
-12:53:31      12648       │ - ··100%·{·transform:·rotate(360deg);·}
-12:53:31            12700 │ + ··0%·{
-12:53:31            12701 │ + ····transform:·rotate(0deg);
-12:53:31            12702 │ + ··}
-12:53:31            12703 │ + ··100%·{
-12:53:31            12704 │ + ····transform:·rotate(360deg);
-12:53:31            12705 │ + ··}
-12:53:31      12649 12706 │   }
-12:53:31      12650 12707 │   
-12:53:31      12651 12708 │   @keyframes pulse-ring-smooth {
-12:53:31      12652       │ - ··0%·{·transform:·scale(0.9);·opacity:·0.3;·}
-12:53:31      12653       │ - ··50%·{·transform:·scale(1.1);·opacity:·0.6;·}
-12:53:31      12654       │ - ··100%·{·transform:·scale(0.9);·opacity:·0.3;·}
-12:53:31            12709 │ + ··0%·{
-12:53:31            12710 │ + ····transform:·scale(0.9);
-12:53:31            12711 │ + ····opacity:·0.3;
-12:53:31            12712 │ + ··}
-12:53:31            12713 │ + ··50%·{
-12:53:31            12714 │ + ····transform:·scale(1.1);
-12:53:31            12715 │ + ····opacity:·0.6;
-12:53:31            12716 │ + ··}
-12:53:31            12717 │ + ··100%·{
-12:53:31            12718 │ + ····transform:·scale(0.9);
-12:53:31            12719 │ + ····opacity:·0.3;
-12:53:31            12720 │ + ··}
-12:53:31      12655 12721 │   }
-12:53:31      12656 12722 │   
-12:53:31      ··········· │ 
-12:53:31      12663 12729 │     overflow: hidden;
-12:53:31      12664 12730 │     /* Nền gradient xanh dương đậm chất bản vẽ kỹ thuật */
-12:53:31      12665       │ - ··background:·linear-gradient(125deg,·rgba(162,·214,·240,·0.96),·rgba(210,·238,·250,·0.98)·58%,·#c9e6f7)·!important;
-12:53:31            12731 │ + ··background:·linear-gradient(
-12:53:31            12732 │ + ····125deg,
-12:53:31            12733 │ + ····rgba(162,·214,·240,·0.96),
-12:53:31            12734 │ + ····rgba(210,·238,·250,·0.98)·58%,
-12:53:31            12735 │ + ····#c9e6f7
-12:53:31            12736 │ + ··)·!important;
-12:53:31      12666 12737 │   }
-12:53:31    103 more lines truncated
-12:53:31    
-12:53:31  
-12:53:31  Checked 50 files in 956ms. No fixes applied.
-12:53:31  Found 1 error.
-12:53:32  check ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-12:53:32  
-12:53:32    × Some errors were emitted while running checks.
-12:53:32    
-12:53:32  
-12:53:32   ELIFECYCLE  Command failed with exit code 1.
+09:25:20  + set -eu
+09:25:20  + mkdir -p reports
+09:25:20  + id -u
+09:25:20  + id -g
+09:25:20  + docker run --rm --user 0:0 --volumes-from 74b5695ab0fa -w /var/jenkins_home/workspace/bimlab_qlvt_test/frontend -e CI=true -e WORKSPACE=/var/jenkins_home/workspace/bimlab_qlvt_test -e RUN_SECURITY_AUDIT=false -e HOME=/tmp -e NPM_CONFIG_CACHE=/tmp/npm -e PNPM_HOME=/tmp/pnpm -e PNPM_STORE_DIR=/tmp/pnpm-store node:22-alpine sh -lc 
+09:25:20                  set -eu
+09:25:20                  export PATH="$PNPM_HOME/bin:$PATH"
+09:25:20                  if grep -Eq "lockfileVersion: .*6\.0" pnpm-lock.yaml; then PNPM_VERSION=8.15.9; else PNPM_VERSION=10.33.2; fi
+09:25:20                  mkdir -p "$PNPM_STORE_DIR"
+09:25:20                  npm install -g "pnpm@$PNPM_VERSION" --prefix "$PNPM_HOME"
+09:25:20                  pnpm config set store-dir "$PNPM_STORE_DIR"
+09:25:20                  rm -rf node_modules
+09:25:20                  pnpm install --frozen-lockfile
+09:25:20                  rm -rf .pnpm-store
+09:25:20                  pnpm lint
+09:25:20                  pnpm test:coverage -- --reporter=default --reporter=junit --outputFile=reports/vitest-junit.xml
+09:25:20                  pnpm build
+09:25:20                  if [ "${RUN_SECURITY_AUDIT:-false}" = "true" ]; then pnpm audit --audit-level high; fi
+09:25:20                
+09:25:22  
+09:25:22  added 1 package in 2s
+09:25:22  
+09:25:22  1 package is looking for funding
+09:25:22    run `npm fund` for details
+09:25:23  Lockfile is up to date, resolution step is skipped
+09:25:23  Progress: resolved 1, reused 0, downloaded 0, added 0
+09:25:23  Packages: +303
+09:25:23  ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+09:25:24  Progress: resolved 303, reused 0, downloaded 34, added 34
+09:25:25  Progress: resolved 303, reused 0, downloaded 102, added 102
+09:25:26  Progress: resolved 303, reused 0, downloaded 149, added 144
+09:25:27  Progress: resolved 303, reused 0, downloaded 196, added 196
+09:25:28  Progress: resolved 303, reused 0, downloaded 232, added 232
+09:25:30  Progress: resolved 303, reused 0, downloaded 264, added 264
+09:25:30   WARN  Tarball download average speed 26 KiB/s (size 32 KiB) is below 50 KiB/s: https://registry.npmjs.org/es-module-lexer/-/es-module-lexer-2.1.0.tgz (GET)
+09:25:30  Progress: resolved 303, reused 0, downloaded 284, added 284
+09:25:31  Progress: resolved 303, reused 0, downloaded 300, added 300
+09:25:32  Progress: resolved 303, reused 0, downloaded 302, added 301
+09:25:33  Progress: resolved 303, reused 0, downloaded 302, added 302
+09:25:35  Progress: resolved 303, reused 0, downloaded 303, added 302
+09:25:35  Progress: resolved 303, reused 0, downloaded 303, added 303, done
+09:25:35  
+09:25:35  dependencies:
+09:25:35  + @vitejs/plugin-react 6.0.2
+09:25:35  + animejs 4.4.1
+09:25:35  + axios 1.16.1
+09:25:35  + exceljs 4.4.0
+09:25:35  + oidc-client-ts 3.5.0
+09:25:35  + react 19.2.6
+09:25:35  + react-dom 19.2.6
+09:25:35  + react-hot-toast 2.6.0
+09:25:35  + react-icons 5.6.0
+09:25:35  + react-router-dom 7.15.1
+09:25:35  + recharts 2.15.4
+09:25:35  + vite 8.0.13
+09:25:35  + xlsx 0.18.5
+09:25:35  
+09:25:35  devDependencies:
+09:25:35  + @biomejs/biome 2.4.16
+09:25:35  + @testing-library/jest-dom 6.9.1
+09:25:35  + @testing-library/react 16.3.2
+09:25:35  + @testing-library/user-event 14.6.1
+09:25:35  + @types/react 19.2.14
+09:25:35  + @types/react-dom 19.2.3
+09:25:35  + @vitest/coverage-v8 4.1.7
+09:25:35  + jsdom 29.1.1
+09:25:35  + typescript 6.0.3
+09:25:35  + vitest 4.1.7
+09:25:35  
+09:25:35  Done in 11.7s using pnpm v10.33.2
+09:25:35  
+09:25:35  > bimlab-asset-frontend@1.0.0 lint /var/jenkins_home/workspace/bimlab_qlvt_test/frontend
+09:25:35  > biome check .
+09:25:35  
+09:25:37  Checked 72 files in 1556ms. No fixes applied.
+09:25:37  
+09:25:37  > bimlab-asset-frontend@1.0.0 test:coverage /var/jenkins_home/workspace/bimlab_qlvt_test/frontend
+09:25:37  > vitest run --coverage -- --reporter=default --reporter=junit --outputFile=reports/vitest-junit.xml
+09:25:37  
+09:25:37  
+09:25:37  [1m[30m[46m RUN [49m[39m[22m [36mv4.1.7 [39m[90m/var/jenkins_home/workspace/bimlab_qlvt_test/frontend[39m
+09:25:37        [2mCoverage enabled with [22m[33mv8[39m
+09:25:37  
+09:25:39   [32m✓[39m src/services/api.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 32[2mms[22m[39m
+09:25:41   [32m✓[39m src/contexts/ActionsContext.test.tsx [2m([22m[2m5 tests[22m[2m)[22m[32m 94[2mms[22m[39m
+09:25:42   [32m✓[39m src/components/forms/SearchableSelect.test.tsx [2m([22m[2m7 tests[22m[2m)[22m[32m 246[2mms[22m[39m
+09:25:43   [32m✓[39m src/components/forms/CrudForm.test.tsx [2m([22m[2m15 tests[22m[2m)[22m[33m 343[2mms[22m[39m
+09:25:44   [31m❯[39m src/test/pageCoverage.test.tsx [2m([22m[2m16 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[33m 4376[2mms[22m[39m
+09:25:44       [32m✓[39m renders /dashboard[32m 130[2mms[22m[39m
+09:25:44       [32m✓[39m renders /vendors[32m 63[2mms[22m[39m
+09:25:44       [32m✓[39m renders /subscriptions[32m 41[2mms[22m[39m
+09:25:44       [32m✓[39m renders /requests[32m 91[2mms[22m[39m
+09:25:44       [32m✓[39m renders /contracts[32m 45[2mms[22m[39m
+09:25:44       [32m✓[39m renders /maintenance[32m 55[2mms[22m[39m
+09:25:44       [32m✓[39m renders /transfers[32m 131[2mms[22m[39m
+09:25:44       [32m✓[39m renders /asset-categories[32m 100[2mms[22m[39m
+09:25:44       [32m✓[39m renders /help[32m 60[2mms[22m[39m
+09:25:44       [32m✓[39m lists upcoming bookings on the dashboard[32m 205[2mms[22m[39m
+09:25:44       [33m[2m✓[22m[39m creates and deletes a vendor from the vendors route [33m 730[2mms[22m[39m
+09:25:44       [32m✓[39m approves a purchase request from the requests route[32m 102[2mms[22m[39m
+09:25:44       [33m[2m✓[22m[39m updates a contract from the contracts route [33m 302[2mms[22m[39m
+09:25:44  [31m     [31m×[31m creates a transfer request with approvers[39m[32m 134[2mms[22m[39m
+09:25:44       [33m[2m✓[22m[39m filters and decides assigned pending transfers [33m 610[2mms[22m[39m
+09:25:44       [33m[2m✓[22m[39m manages category hierarchy and completes an import [33m 1575[2mms[22m[39m
+09:25:45   [31m❯[39m src/test/assetBookingWorkflowCoverage.test.tsx [2m([22m[2m7 tests[22m[2m | [22m[31m2 failed[39m[2m)[22m[33m 5518[2mms[22m[39m
+09:25:45       [33m[2m✓[22m[39m renders asset filters, column config, detail edit, and bulk status update [33m 1328[2mms[22m[39m
+09:25:45       [32m✓[39m deletes selected assets from the selection workspace[32m 166[2mms[22m[39m
+09:25:45       [32m✓[39m reports bulk update and delete failures[32m 275[2mms[22m[39m
+09:25:45       [33m[2m✓[22m[39m opens asset QR and resets active filters [33m 314[2mms[22m[39m
+09:25:45  [31m     [31m×[31m renders booking form, calendar, detail modal, and check-in action[39m[33m 1088[2mms[22m[39m
+09:25:45  [31m     [31m×[31m checks out, cancels, filters, and configures booking columns[39m[33m 1055[2mms[22m[39m
+09:25:45       [33m[2m✓[22m[39m parses, validates, imports, and exports an asset workbook [33m 1289[2mms[22m[39m
+09:25:45   [32m✓[39m src/lib/categoryExcel.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 140[2mms[22m[39m
+09:25:45   [32m✓[39m src/contexts/AuthContext.test.tsx [2m([22m[2m5 tests[22m[2m)[22m[32m 183[2mms[22m[39m
+09:25:46   [32m✓[39m src/components/forms/AssetCategoryTreeSelect.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[33m 329[2mms[22m[39m
+09:25:46   [32m✓[39m src/test/miscCoverage.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[33m 636[2mms[22m[39m
+09:25:46       [33m[2m✓[22m[39m searches and navigates help tree [33m 368[2mms[22m[39m
+09:25:47   [32m✓[39m src/layout/AppShell.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[33m 490[2mms[22m[39m
+09:25:47       [33m[2m✓[22m[39m searches, collapses, opens mobile menu, refreshes, and logs out [33m 442[2mms[22m[39m
+09:25:47   [32m✓[39m src/components/forms/FormFields.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[32m 237[2mms[22m[39m
+09:25:47   [32m✓[39m src/auth/oidc.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 24[2mms[22m[39m
+09:25:48   [32m✓[39m src/pages/LoginPage.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[32m 190[2mms[22m[39m
+09:25:48   [32m✓[39m src/lib/format.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 5[2mms[22m[39m
+09:25:48   [32m✓[39m src/components/DataTable.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[33m 327[2mms[22m[39m
+09:25:48       [33m[2m✓[22m[39m paginates with the size selector and navigation buttons [33m 311[2mms[22m[39m
+09:25:49   [32m✓[39m src/auth/oidcCrypto.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 4[2mms[22m[39m
+09:25:49   [32m✓[39m src/test/smoke.test.tsx [2m([22m[2m1 test[22m[2m)[22m[32m 95[2mms[22m[39m
+09:25:50  
+09:25:50  [31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 3 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+09:25:50  
+09:25:50  [41m[1m FAIL [22m[49m src/test/assetBookingWorkflowCoverage.test.tsx[2m > [22mQLVT asset and booking workflow coverage[2m > [22mrenders booking form, calendar, detail modal, and check-in action
+09:25:50  [31m[1mTestingLibraryElementError[22m[39m: Found multiple elements with the text: Họp điều phối
+09:25:50  
+09:25:50  Here are the matching elements:
+09:25:50  
+09:25:50  Ignored nodes: comments, script, style
+09:25:50  [36m<strong>[39m
+09:25:50    [0mHọp điều phối[0m
+09:25:50  [36m</strong>[39m
+09:25:50  
+09:25:50  Ignored nodes: comments, script, style
+09:25:50  [36m<strong>[39m
+09:25:50    [0mHọp điều phối[0m
+09:25:50  [36m</strong>[39m
+09:25:50  
+09:25:50  (If this is intentional, then use the `*AllBy*` variant of the query (like `queryAllByText`, `getAllByText`, or `findAllByText`)).
+09:25:50  
+09:25:50  Ignored nodes: comments, script, style
+09:25:50  [36m<body>[39m
+09:25:50    [36m<div>[39m
+09:25:50      [36m<section[39m
+09:25:50        [33mclass[39m=[32m"booking-page page-grid"[39m
+09:25:50      [36m>[39m
+09:25:50        [36m<div[39m
+09:25:50          [33mclass[39m=[32m"booking-hero panel"[39m
+09:25:50        [36m>[39m
+09:25:50          [36m<div>[39m
+09:25:50            [36m<h2>[39m
+09:25:50              [0mĐặt lịch phòng họp[0m
+09:25:50            [36m</h2>[39m
+09:25:50          [36m</div>[39m
+09:25:50          [36m<div[39m
+09:25:50            [33mclass[39m=[32m"booking-hero-metrics"[39m
+09:25:50          [36m>[39m
+09:25:50            [36m<div>[39m
+09:25:50              [36m<span>[39m
+09:25:50                [0mTổng phiên[0m
+09:25:50              [36m</span>[39m
+09:25:50              [36m<strong>[39m
+09:25:50                [0m2[0m
+09:25:50              [36m</strong>[39m
+09:25:50            [36m</div>[39m
+09:25:50            [36m<div>[39m
+09:25:50              [36m<span>[39m
+09:25:50                [0mĐã xác nhận[0m
+09:25:50              [36m</span>[39m
+09:25:50              [36m<strong>[39m
+09:25:50                [0m1[0m
+09:25:50              [36m</strong>[39m
+09:25:50            [36m</div>[39m
+09:25:50            [36m<div>[39m
+09:25:50              [36m<span>[39m
+09:25:50                [0mĐang dùng[0m
+09:25:50              [36m</span>[39m
+09:25:50              [36m<strong>[39m
+09:25:50                [0m1[0m
+09:25:50              [36m</strong>[39m
+09:25:50            [36m</div>[39m
+09:25:50            [36m<div>[39m
+09:25:50              [36m<span>[39m
+09:25:50                [0mHoàn tất[0m
+09:25:50              [36m</span>[39m
+09:25:50              [36m<strong>[39m
+09:25:50                [0m0[0m
+09:25:50              [36m</strong>[39m
+09:25:50            [36m</div>[39m
+09:25:50          [36m</div>[39m
+09:25:50        [36m</div>[39m
+09:25:50        [36m<div[39m
+09:25:50          [33mclass[39m=[32m"booking-layout"[39m
+09:25:50        [36m>[39m
+09:25:50          [36m<section[39m
+09:25:50            [33mclass[39m=[32m"panel booking-form-panel"[39m
+09:25:50          [36m>[39m
+09:25:50            [36m<div[39m
+09:25:50              [33mclass[39m=[32m"panel-title"[39m
+09:25:50            [36m>[39m
+09:25:50              [36m<div>[39m
+09:25:50                [36m<h2>[39m
+09:25:50                  [0mTạo lịch đặt phòng họp[0m
+09:25:50                [36m</h2>[39m
+09:25:50              [36m</div>[39m
+09:25:50            [36m</div>[39m
+09:25:50            [36m<div[39m
+09:25:50              [33mclass[39m=[32m"booking-form-grid"[39m
+09:25:50            [36m>[39m
+09:25:50              [36m<label>[39m
+09:25:50                [0mPhòng họp / tài sản[0m
+09:25:50                [36m<select>[39m
+09:25:50                  [36m<option[39m
+09:25:50                    [33mvalue[39m=[32m""[39m
+09:25:50                  [36m>[39m
+09:25:50                    [0mChọn mã phòng họp[0m
+09:25:50                  [36m</option>[39m
+09:25:50                  [36m<option[39m
+09:25:50                    [33mvalue[39m=[32m"ROOM-01"[39m
+09:25:50                  [36m>[39m
+09:25:50                    [0mROOM-01[0m
+09:25:50                    [0m · [0m
+09:25:50                    [0mPhòng họp Apollo[0m
+09:25:50                  [36m</option>[39m
+09:25:50                  [36m<option[39m
+09:25:50                    [33mvalue[39m=[32m"TS-001"[39m
+09:25:50                  [36m>[39m
+09:25:50                    [0mTS-001[0m
+09:25:50                    [0m · [0m
+09:25:50                    [0mLaptop Dell Precision[0m
+09:25:50                  [36m</option>[39m
+09:25:50                [36m</select>[39m
+09:25:50              [36m</label>[39m
+09:25:50              [36m<label>[39m
+09:25:50                [0mTiêu đề[0m
+09:25:50                [36m<input[39m
+09:25:50                  [33mplaceholder[39m=[32m"Họp thiết kế, demo nội bộ..."[39m
+09:25:50                  [33mvalue[39m=[32m""[39m
+09:25:50                [36m/>[39m
+09:25:50              [36m</label>[39m
+09:25:50              [36m<label>[39m
+09:25:50                [0mBắt đầu[0m
+09:25:50                [36m<input[39m
+09:25:50                  [33mtype[39m=[32m"datetime-local"[39m
+09:25:50                  [33mvalue[39m=[32m""[39m
+09:25:50                [36m/>[39m
+09:25:50              [36m</label>[39m
+09:25:50              [36m<label>[39m
+09:25:50                [0mKết thúc[0m
+09:25:50                [36m<input[39m
+09:25:50                  [33mtype[39m=[32m"datetime-local"[39m
+09:25:50                  [33mvalue[39m=[32m""[39m
+09:25:50                [36m/>[39m
+09:25:50              [36m</label>[39m
+09:25:50              [36m<label>[39m
+09:25:50                [0mNgười phụ trách[0m
+09:25:50                [36m<input[39m
+09:25:50                  [33mdisabled[39m=[32m""[39m
+09:25:50                  [33mreadonly[39m=[32m""[39m
+09:25:50                  [33mtitle[39m=[32m"Hệ thống tự ghi nhận người đặt theo tài khoản đăng nhập"[39m
+09:25:50                  [33mvalue[39m=[32m"admin"[39m
+09:25:50                [36m/>[39m
+09:25:50              [36m</label>[39m
+09:25:50              [36m<label>[39m
+09:25:50                [0mPhòng ban[0m
+09:25:50                [36m<input[39m
+09:25:50                  [33minputmode[39m=[32m"numeric"[39m
+09:25:50                  [33mplaceholder[39m=[32m"ID phòng ban"[39m
+09:25:50                  [33mvalue[39m=[32m""[39m
+09:25:50                [36m/>[39m
+09:25:50              [36m</label>[39m
+09:25:50              [36m<label>[39m
+09:25:50                [0mMục đích[0m
+09:25:50                [36m<textarea[39m
+09:25:50                  [33mplaceholder[39m=[32m"Nội dung, nhóm tham gia, yêu cầu chuẩn bị..."[39m
+09:25:50                  [33mrows[39m=[32m"3"[39m
+09:25:50                [36m/>[39m
+09:25:50              [36m</label>[39m
+09:25:50              [36m<label>[39m
+09:25:50                [0mGhi chú[0m
+09:25:50                [36m<textarea[39m
+09:25:50                  [33mplaceholder[39m=[32m"Thiết bị cần chuẩn bị, setup phòng..."[39m
+09:25:50                  [33mrows[39m=[32m"3"[39m
+09:25:50                [36m/>[39m
+09:25:50              [36m</label>[39m
+09:25:50            [36m</div>[39m
+09:25:50            [36m<div[39m
+09:25:50              [33mclass[39m=[32m"booking-option-row"[39m
+09:25:50            [36m>[39m
+09:25:50              [36m<label[39m
+09:25:50                [33mclass[39m=[32m"booking-checkbox"[39m
+09:25:50              [36m>[39m
+09:25:50                [36m<input[39m
+09:25:50                  [33mchecked[39m=[32m""[39m
+09:25:50                  [33mtype[39m=[32m"checkbox"[39m
+09:25:50                [36m/>[39m
+09:25:50                [0mTự động trả phòng khi hết giờ[0m
+09:25:50              [36m</label>[39m
+09:25:50            [36m</div>[39m
+09:25:50            [36m<div[39m
+09:25:50              [33mclass[39m=[32m"booking-form-actions"[39m
+09:25:50            [36m>[39m
+09:25:50              [36m<button[39m
+09:25:50                [33mclass[39m=[32m"secondary"[39m
+09:25:50                [33mtype[39m=[32m"button"[39m
+09:25:50              [36m>[39m
+09:25:50                [36m<svg[39m
+09:25:50                  [33mfill[39m=[32m"none"[39m
+09:25:50                  [33mheight[39m=[32m"1em"[39m
+09:25:50                  [33mstroke[39m=[32m"currentColor"[39m
+09:25:50                  [33mstroke-linecap[39m=[32m"round"[39m
+09:25:50                  [33mstroke-linejoin[39m=[32m"round"[39m
+09:25:50                  [33mstroke-width[39m=[32m"2"[39m
+09:25:50                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+09:25:50                  [33mwidth[39m=[32m"1em"[39m
+09:25:50                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+09:25:50                [36m>[39m
+09:25:50                  [36m<circle[39m
+09:25:50                    [33mcx[39m=[32m"11"[39m
+09:25:50                    [33mcy[39m=[32m"11"[39m
+09:25:50                    [33mr[39m=[32m"8"[39m
+09:25:50                  [36m/>[39m
+09:25:50                  [36m<line[39m
+09:25:50                    [33mx1[39m=[32m"21"[39m
+09:25:50                    [33mx2[39m=[32m"16.65"[39m
+09:25:50                    [33my1[39m=[32m"21"[39m
+09:25:50                    [33my2[39m=[32m"16.65"[39m
+09:25:50                  [36m/>[39m
+09:25:50                [36m</svg>[39m
+09:25:50                [0m Kiểm tra lịch[0m
+09:25:50              [36m</button>[39m
+09:25:50              [36m<button[39m
+09:25:50                [33mtype[39m=[32m"button"[39m
+09:25:50              [36m>[39m
+09:25:50                [36m<svg[39m
+09:25:50  ...
+09:25:50  
+09:25:50  Ignored nodes: comments, script, style
+09:25:50  [36m<body>[39m
+09:25:50    [36m<div>[39m
+09:25:50      [36m<section[39m
+09:25:50        [33mclass[39m=[32m"booking-page page-grid"[39m
+09:25:50      [36m>[39m
+09:25:50        [36m<div[39m
+09:25:50          [33mclass[39m=[32m"booking-hero panel"[39m
+09:25:50        [36m>[39m
+09:25:50          [36m<div>[39m
+09:25:50            [36m<h2>[39m
+09:25:50              [0mĐặt lịch phòng họp[0m
+09:25:50            [36m</h2>[39m
+09:25:50          [36m</div>[39m
+09:25:50          [36m<div[39m
+09:25:50            [33mclass[39m=[32m"booking-hero-metrics"[39m
+09:25:50          [36m>[39m
+09:25:50            [36m<div>[39m
+09:25:50              [36m<span>[39m
+09:25:50                [0mTổng phiên[0m
+09:25:50              [36m</span>[39m
+09:25:50              [36m<strong>[39m
+09:25:50                [0m2[0m
+09:25:50              [36m</strong>[39m
+09:25:50            [36m</div>[39m
+09:25:50            [36m<div>[39m
+09:25:50              [36m<span>[39m
+09:25:50                [0mĐã xác nhận[0m
+09:25:50              [36m</span>[39m
+09:25:50              [36m<strong>[39m
+09:25:50                [0m1[0m
+09:25:50              [36m</strong>[39m
+09:25:50            [36m</div>[39m
+09:25:50            [36m<div>[39m
+09:25:50              [36m<span>[39m
+09:25:50                [0mĐang dùng[0m
+09:25:50              [36m</span>[39m
+09:25:50              [36m<strong>[39m
+09:25:50                [0m1[0m
+09:25:50              [36m</strong>[39m
+09:25:50            [36m</div>[39m
+09:25:50            [36m<div>[39m
+09:25:50              [36m<span>[39m
+09:25:50                [0mHoàn tất[0m
+09:25:50              [36m</span>[39m
+09:25:50              [36m<strong>[39m
+09:25:50                [0m0[0m
+09:25:50              [36m</strong>[39m
+09:25:50            [36m</div>[39m
+09:25:50          [36m</div>[39m
+09:25:50        [36m</div>[39m
+09:25:50        [36m<div[39m
+09:25:50          [33mclass[39m=[32m"booking-layout"[39m
+09:25:50        [36m>[39m
+09:25:50          [36m<section[39m
+09:25:50            [33mclass[39m=[32m"panel booking-form-panel"[39m
+09:25:50          [36m>[39m
+09:25:50            [36m<div[39m
+09:25:50              [33mclass[39m=[32m"panel-title"[39m
+09:25:50            [36m>[39m
+09:25:50              [36m<div>[39m
+09:25:50                [36m<h2>[39m
+09:25:50                  [0mTạo lịch đặt phòng họp[0m
+09:25:50                [36m</h2>[39m
+09:25:50              [36m</div>[39m
+09:25:50            [36m</div>[39m
+09:25:50            [36m<div[39m
+09:25:50              [33mclass[39m=[32m"booking-form-grid"[39m
+09:25:50            [36m>[39m
+09:25:50              [36m<label>[39m
+09:25:50                [0mPhòng họp / tài sản[0m
+09:25:50                [36m<select>[39m
+09:25:50                  [36m<option[39m
+09:25:50                    [33mvalue[39m=[32m""[39m
+09:25:50                  [36m>[39m
+09:25:50                    [0mChọn mã phòng họp[0m
+09:25:50                  [36m</option>[39m
+09:25:50                  [36m<option[39m
+09:25:50                    [33mvalue[39m=[32m"ROOM-01"[39m
+09:25:50                  [36m>[39m
+09:25:50                    [0mROOM-01[0m
+09:25:50                    [0m · [0m
+09:25:50                    [0mPhòng họp Apollo[0m
+09:25:50                  [36m</option>[39m
+09:25:50                  [36m<option[39m
+09:25:50                    [33mvalue[39m=[32m"TS-001"[39m
+09:25:50                  [36m>[39m
+09:25:50                    [0mTS-001[0m
+09:25:50                    [0m · [0m
+09:25:50                    [0mLaptop Dell Precision[0m
+09:25:50                  [36m</option>[39m
+09:25:50                [36m</select>[39m
+09:25:50              [36m</label>[39m
+09:25:50              [36m<label>[39m
+09:25:50                [0mTiêu đề[0m
+09:25:50                [36m<input[39m
+09:25:50                  [33mplaceholder[39m=[32m"Họp thiết kế, demo nội bộ..."[39m
+09:25:50                  [33mvalue[39m=[32m""[39m
+09:25:50                [36m/>[39m
+09:25:50              [36m</label>[39m
+09:25:50              [36m<label>[39m
+09:25:50                [0mBắt đầu[0m
+09:25:50                [36m<input[39m
+09:25:50                  [33mtype[39m=[32m"datetime-local"[39m
+09:25:50                  [33mvalue[39m=[32m""[39m
+09:25:50                [36m/>[39m
+09:25:50              [36m</label>[39m
+09:25:50              [36m<label>[39m
+09:25:50                [0mKết thúc[0m
+09:25:50                [36m<input[39m
+09:25:50                  [33mtype[39m=[32m"datetime-local"[39m
+09:25:50                  [33mvalue[39m=[32m""[39m
+09:25:50                [36m/>[39m
+09:25:50              [36m</label>[39m
+09:25:50              [36m<label>[39m
+09:25:50                [0mNgười phụ trách[0m
+09:25:50                [36m<input[39m
+09:25:50                  [33mdisabled[39m=[32m""[39m
+09:25:50                  [33mreadonly[39m=[32m""[39m
+09:25:50                  [33mtitle[39m=[32m"Hệ thống tự ghi nhận người đặt theo tài khoản đăng nhập"[39m
+09:25:50                  [33mvalue[39m=[32m"admin"[39m
+09:25:50                [36m/>[39m
+09:25:50              [36m</label>[39m
+09:25:50              [36m<label>[39m
+09:25:50                [0mPhòng ban[0m
+09:25:50                [36m<input[39m
+09:25:50                  [33minputmode[39m=[32m"numeric"[39m
+09:25:50                  [33mplaceholder[39m=[32m"ID phòng ban"[39m
+09:25:50                  [33mvalue[39m=[32m""[39m
+09:25:50                [36m/>[39m
+09:25:50              [36m</label>[39m
+09:25:50              [36m<label>[39m
+09:25:50                [0mMục đích[0m
+09:25:50                [36m<textarea[39m
+09:25:50                  [33mplaceholder[39m=[32m"Nội dung, nhóm tham gia, yêu cầu chuẩn bị..."[39m
+09:25:50                  [33mrows[39m=[32m"3"[39m
+09:25:50                [36m/>[39m
+09:25:50              [36m</label>[39m
+09:25:50              [36m<label>[39m
+09:25:50                [0mGhi chú[0m
+09:25:50                [36m<textarea[39m
+09:25:50                  [33mplaceholder[39m=[32m"Thiết bị cần chuẩn bị, setup phòng..."[39m
+09:25:50                  [33mrows[39m=[32m"3"[39m
+09:25:50                [36m/>[39m
+09:25:50              [36m</label>[39m
+09:25:50            [36m</div>[39m
+09:25:50            [36m<div[39m
+09:25:50              [33mclass[39m=[32m"booking-option-row"[39m
+09:25:50            [36m>[39m
+09:25:50              [36m<label[39m
+09:25:50                [33mclass[39m=[32m"booking-checkbox"[39m
+09:25:50              [36m>[39m
+09:25:50                [36m<input[39m
+09:25:50                  [33mchecked[39m=[32m""[39m
+09:25:50                  [33mtype[39m=[32m"checkbox"[39m
+09:25:50                [36m/>[39m
+09:25:50                [0mTự động trả phòng khi hết giờ[0m
+09:25:50              [36m</label>[39m
+09:25:50            [36m</div>[39m
+09:25:50            [36m<div[39m
+09:25:50              [33mclass[39m=[32m"booking-form-actions"[39m
+09:25:50            [36m>[39m
+09:25:50              [36m<button[39m
+09:25:50                [33mclass[39m=[32m"secondary"[39m
+09:25:50                [33mtype[39m=[32m"button"[39m
+09:25:50              [36m>[39m
+09:25:50                [36m<svg[39m
+09:25:50                  [33mfill[39m=[32m"none"[39m
+09:25:50                  [33mheight[39m=[32m"1em"[39m
+09:25:50                  [33mstroke[39m=[32m"currentColor"[39m
+09:25:50                  [33mstroke-linecap[39m=[32m"round"[39m
+09:25:50                  [33mstroke-linejoin[39m=[32m"round"[39m
+09:25:50                  [33mstroke-width[39m=[32m"2"[39m
+09:25:50                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+09:25:50                  [33mwidth[39m=[32m"1em"[39m
+09:25:50                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+09:25:50                [36m>[39m
+09:25:50                  [36m<circle[39m
+09:25:50                    [33mcx[39m=[32m"11"[39m
+09:25:50                    [33mcy[39m=[32m"11"[39m
+09:25:50                    [33mr[39m=[32m"8"[39m
+09:25:50                  [36m/>[39m
+09:25:50                  [36m<line[39m
+09:25:50                    [33mx1[39m=[32m"21"[39m
+09:25:50                    [33mx2[39m=[32m"16.65"[39m
+09:25:50                    [33my1[39m=[32m"21"[39m
+09:25:50                    [33my2[39m=[32m"16.65"[39m
+09:25:50                  [36m/>[39m
+09:25:50                [36m</svg>[39m
+09:25:50                [0m Kiểm tra lịch[0m
+09:25:50              [36m</button>[39m
+09:25:50              [36m<button[39m
+09:25:50                [33mtype[39m=[32m"button"[39m
+09:25:50              [36m>[39m
+09:25:50                [36m<svg[39m
+09:25:50  ...
+09:25:50  [90m [2m❯[22m waitForWrapper node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/wait-for.js:[2m163:27[22m[39m
+09:25:50  [90m [2m❯[22m node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/query-helpers.js:[2m86:33[22m[39m
+09:25:50  [36m [2m❯[22m src/test/assetBookingWorkflowCoverage.test.tsx:[2m422:25[22m[39m
+09:25:50      [90m420|[39m
+09:25:50      [90m421|[39m     expect(await screen.findByRole("heading", { name: "Đặt lịch phòng …
+09:25:50      [90m422|[39m     [34mexpect[39m([35mawait[39m screen[33m.[39m[34mfindByText[39m([32m"Họp điều phối"[39m))[33m.[39m[34mtoBeVisible[39m()[33m;[39m
+09:25:50      [90m   |[39m                         [31m^[39m
+09:25:50      [90m423|[39m     [34mexpect[39m(screen[33m.[39m[34mgetByText[39m([32m"Workshop team"[39m))[33m.[39m[34mtoBeVisible[39m()[33m;[39m
+09:25:50      [90m424|[39m
+09:25:50  
+09:25:50  [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯[22m[39m
+09:25:50  
+09:25:50  [41m[1m FAIL [22m[49m src/test/assetBookingWorkflowCoverage.test.tsx[2m > [22mQLVT asset and booking workflow coverage[2m > [22mchecks out, cancels, filters, and configures booking columns
+09:25:50  [31m[1mTestingLibraryElementError[22m[39m: Found multiple elements with the text: Workshop team
+09:25:50  
+09:25:50  Here are the matching elements:
+09:25:50  
+09:25:50  Ignored nodes: comments, script, style
+09:25:50  [36m<strong>[39m
+09:25:50    [0mWorkshop team[0m
+09:25:50  [36m</strong>[39m
+09:25:50  
+09:25:50  Ignored nodes: comments, script, style
+09:25:50  [36m<strong>[39m
+09:25:50    [0mWorkshop team[0m
+09:25:50  [36m</strong>[39m
+09:25:50  
+09:25:50  (If this is intentional, then use the `*AllBy*` variant of the query (like `queryAllByText`, `getAllByText`, or `findAllByText`)).
+09:25:50  
+09:25:50  Ignored nodes: comments, script, style
+09:25:50  [36m<body>[39m
+09:25:50    [36m<div>[39m
+09:25:50      [36m<section[39m
+09:25:50        [33mclass[39m=[32m"booking-page page-grid"[39m
+09:25:50      [36m>[39m
+09:25:50        [36m<div[39m
+09:25:50          [33mclass[39m=[32m"booking-hero panel"[39m
+09:25:50        [36m>[39m
+09:25:50          [36m<div>[39m
+09:25:50            [36m<h2>[39m
+09:25:50              [0mĐặt lịch phòng họp[0m
+09:25:50            [36m</h2>[39m
+09:25:50          [36m</div>[39m
+09:25:50          [36m<div[39m
+09:25:50            [33mclass[39m=[32m"booking-hero-metrics"[39m
+09:25:50          [36m>[39m
+09:25:50            [36m<div>[39m
+09:25:50              [36m<span>[39m
+09:25:50                [0mTổng phiên[0m
+09:25:50              [36m</span>[39m
+09:25:50              [36m<strong>[39m
+09:25:50                [0m2[0m
+09:25:50              [36m</strong>[39m
+09:25:50            [36m</div>[39m
+09:25:50            [36m<div>[39m
+09:25:50              [36m<span>[39m
+09:25:50                [0mĐã xác nhận[0m
+09:25:50              [36m</span>[39m
+09:25:50              [36m<strong>[39m
+09:25:50                [0m1[0m
+09:25:50              [36m</strong>[39m
+09:25:50            [36m</div>[39m
+09:25:50            [36m<div>[39m
+09:25:50              [36m<span>[39m
+09:25:50                [0mĐang dùng[0m
+09:25:50              [36m</span>[39m
+09:25:50              [36m<strong>[39m
+09:25:50                [0m1[0m
+09:25:50              [36m</strong>[39m
+09:25:50            [36m</div>[39m
+09:25:50            [36m<div>[39m
+09:25:50              [36m<span>[39m
+09:25:50                [0mHoàn tất[0m
+09:25:50              [36m</span>[39m
+09:25:50              [36m<strong>[39m
+09:25:50                [0m0[0m
+09:25:50              [36m</strong>[39m
+09:25:50            [36m</div>[39m
+09:25:50          [36m</div>[39m
+09:25:50        [36m</div>[39m
+09:25:50        [36m<div[39m
+09:25:50          [33mclass[39m=[32m"booking-layout"[39m
+09:25:50        [36m>[39m
+09:25:50          [36m<section[39m
+09:25:50            [33mclass[39m=[32m"panel booking-form-panel"[39m
+09:25:50          [36m>[39m
+09:25:50            [36m<div[39m
+09:25:50              [33mclass[39m=[32m"panel-title"[39m
+09:25:50            [36m>[39m
+09:25:50              [36m<div>[39m
+09:25:50                [36m<h2>[39m
+09:25:50                  [0mTạo lịch đặt phòng họp[0m
+09:25:50                [36m</h2>[39m
+09:25:50              [36m</div>[39m
+09:25:50            [36m</div>[39m
+09:25:50            [36m<div[39m
+09:25:50              [33mclass[39m=[32m"booking-form-grid"[39m
+09:25:50            [36m>[39m
+09:25:50              [36m<label>[39m
+09:25:50                [0mPhòng họp / tài sản[0m
+09:25:50                [36m<select>[39m
+09:25:50                  [36m<option[39m
+09:25:50                    [33mvalue[39m=[32m""[39m
+09:25:50                  [36m>[39m
+09:25:50                    [0mChọn mã phòng họp[0m
+09:25:50                  [36m</option>[39m
+09:25:50                  [36m<option[39m
+09:25:50                    [33mvalue[39m=[32m"ROOM-01"[39m
+09:25:50                  [36m>[39m
+09:25:50                    [0mROOM-01[0m
+09:25:50                    [0m · [0m
+09:25:50                    [0mPhòng họp Apollo[0m
+09:25:50                  [36m</option>[39m
+09:25:50                  [36m<option[39m
+09:25:50                    [33mvalue[39m=[32m"TS-001"[39m
+09:25:50                  [36m>[39m
+09:25:50                    [0mTS-001[0m
+09:25:50                    [0m · [0m
+09:25:50                    [0mLaptop Dell Precision[0m
+09:25:50                  [36m</option>[39m
+09:25:50                [36m</select>[39m
+09:25:50              [36m</label>[39m
+09:25:50              [36m<label>[39m
+09:25:50                [0mTiêu đề[0m
+09:25:50                [36m<input[39m
+09:25:50                  [33mplaceholder[39m=[32m"Họp thiết kế, demo nội bộ..."[39m
+09:25:50                  [33mvalue[39m=[32m""[39m
+09:25:50                [36m/>[39m
+09:25:50              [36m</label>[39m
+09:25:50              [36m<label>[39m
+09:25:50                [0mBắt đầu[0m
+09:25:50                [36m<input[39m
+09:25:50                  [33mtype[39m=[32m"datetime-local"[39m
+09:25:50                  [33mvalue[39m=[32m""[39m
+09:25:50                [36m/>[39m
+09:25:50              [36m</label>[39m
+09:25:50              [36m<label>[39m
+09:25:50                [0mKết thúc[0m
+09:25:50                [36m<input[39m
+09:25:50                  [33mtype[39m=[32m"datetime-local"[39m
+09:25:50                  [33mvalue[39m=[32m""[39m
+09:25:50                [36m/>[39m
+09:25:50              [36m</label>[39m
+09:25:50              [36m<label>[39m
+09:25:50                [0mNgười phụ trách[0m
+09:25:50                [36m<input[39m
+09:25:50                  [33mdisabled[39m=[32m""[39m
+09:25:50                  [33mreadonly[39m=[32m""[39m
+09:25:50                  [33mtitle[39m=[32m"Hệ thống tự ghi nhận người đặt theo tài khoản đăng nhập"[39m
+09:25:50                  [33mvalue[39m=[32m"admin"[39m
+09:25:50                [36m/>[39m
+09:25:50              [36m</label>[39m
+09:25:50              [36m<label>[39m
+09:25:50                [0mPhòng ban[0m
+09:25:50                [36m<input[39m
+09:25:50                  [33minputmode[39m=[32m"numeric"[39m
+09:25:50                  [33mplaceholder[39m=[32m"ID phòng ban"[39m
+09:25:50                  [33mvalue[39m=[32m""[39m
+09:25:50                [36m/>[39m
+09:25:50              [36m</label>[39m
+09:25:50              [36m<label>[39m
+09:25:50                [0mMục đích[0m
+09:25:50                [36m<textarea[39m
+09:25:50                  [33mplaceholder[39m=[32m"Nội dung, nhóm tham gia, yêu cầu chuẩn bị..."[39m
+09:25:50                  [33mrows[39m=[32m"3"[39m
+09:25:50                [36m/>[39m
+09:25:50              [36m</label>[39m
+09:25:50              [36m<label>[39m
+09:25:50                [0mGhi chú[0m
+09:25:50                [36m<textarea[39m
+09:25:50                  [33mplaceholder[39m=[32m"Thiết bị cần chuẩn bị, setup phòng..."[39m
+09:25:50                  [33mrows[39m=[32m"3"[39m
+09:25:50                [36m/>[39m
+09:25:50              [36m</label>[39m
+09:25:50            [36m</div>[39m
+09:25:50            [36m<div[39m
+09:25:50              [33mclass[39m=[32m"booking-option-row"[39m
+09:25:50            [36m>[39m
+09:25:50              [36m<label[39m
+09:25:50                [33mclass[39m=[32m"booking-checkbox"[39m
+09:25:50              [36m>[39m
+09:25:50                [36m<input[39m
+09:25:50                  [33mchecked[39m=[32m""[39m
+09:25:50                  [33mtype[39m=[32m"checkbox"[39m
+09:25:50                [36m/>[39m
+09:25:50                [0mTự động trả phòng khi hết giờ[0m
+09:25:50              [36m</label>[39m
+09:25:50            [36m</div>[39m
+09:25:50            [36m<div[39m
+09:25:50              [33mclass[39m=[32m"booking-form-actions"[39m
+09:25:50            [36m>[39m
+09:25:50              [36m<button[39m
+09:25:50                [33mclass[39m=[32m"secondary"[39m
+09:25:50                [33mtype[39m=[32m"button"[39m
+09:25:50              [36m>[39m
+09:25:50                [36m<svg[39m
+09:25:50                  [33mfill[39m=[32m"none"[39m
+09:25:50                  [33mheight[39m=[32m"1em"[39m
+09:25:50                  [33mstroke[39m=[32m"currentColor"[39m
+09:25:50                  [33mstroke-linecap[39m=[32m"round"[39m
+09:25:50                  [33mstroke-linejoin[39m=[32m"round"[39m
+09:25:50                  [33mstroke-width[39m=[32m"2"[39m
+09:25:50                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+09:25:50                  [33mwidth[39m=[32m"1em"[39m
+09:25:50                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+09:25:50                [36m>[39m
+09:25:50                  [36m<circle[39m
+09:25:50                    [33mcx[39m=[32m"11"[39m
+09:25:50                    [33mcy[39m=[32m"11"[39m
+09:25:50                    [33mr[39m=[32m"8"[39m
+09:25:50                  [36m/>[39m
+09:25:50                  [36m<line[39m
+09:25:50                    [33mx1[39m=[32m"21"[39m
+09:25:50                    [33mx2[39m=[32m"16.65"[39m
+09:25:50                    [33my1[39m=[32m"21"[39m
+09:25:50                    [33my2[39m=[32m"16.65"[39m
+09:25:50                  [36m/>[39m
+09:25:50                [36m</svg>[39m
+09:25:50                [0m Kiểm tra lịch[0m
+09:25:50              [36m</button>[39m
+09:25:50              [36m<button[39m
+09:25:50                [33mtype[39m=[32m"button"[39m
+09:25:50              [36m>[39m
+09:25:50                [36m<svg[39m
+09:25:50  ...
+09:25:50  
+09:25:50  Ignored nodes: comments, script, style
+09:25:50  [36m<body>[39m
+09:25:50    [36m<div>[39m
+09:25:50      [36m<section[39m
+09:25:50        [33mclass[39m=[32m"booking-page page-grid"[39m
+09:25:50      [36m>[39m
+09:25:50        [36m<div[39m
+09:25:50          [33mclass[39m=[32m"booking-hero panel"[39m
+09:25:50        [36m>[39m
+09:25:50          [36m<div>[39m
+09:25:50            [36m<h2>[39m
+09:25:50              [0mĐặt lịch phòng họp[0m
+09:25:50            [36m</h2>[39m
+09:25:50          [36m</div>[39m
+09:25:50          [36m<div[39m
+09:25:50            [33mclass[39m=[32m"booking-hero-metrics"[39m
+09:25:50          [36m>[39m
+09:25:50            [36m<div>[39m
+09:25:50              [36m<span>[39m
+09:25:50                [0mTổng phiên[0m
+09:25:50              [36m</span>[39m
+09:25:50              [36m<strong>[39m
+09:25:50                [0m2[0m
+09:25:50              [36m</strong>[39m
+09:25:50            [36m</div>[39m
+09:25:50            [36m<div>[39m
+09:25:50              [36m<span>[39m
+09:25:50                [0mĐã xác nhận[0m
+09:25:50              [36m</span>[39m
+09:25:50              [36m<strong>[39m
+09:25:50                [0m1[0m
+09:25:50              [36m</strong>[39m
+09:25:50            [36m</div>[39m
+09:25:50            [36m<div>[39m
+09:25:50              [36m<span>[39m
+09:25:50                [0mĐang dùng[0m
+09:25:50              [36m</span>[39m
+09:25:50              [36m<strong>[39m
+09:25:50                [0m1[0m
+09:25:50              [36m</strong>[39m
+09:25:50            [36m</div>[39m
+09:25:50            [36m<div>[39m
+09:25:50              [36m<span>[39m
+09:25:50                [0mHoàn tất[0m
+09:25:50              [36m</span>[39m
+09:25:50              [36m<strong>[39m
+09:25:50                [0m0[0m
+09:25:50              [36m</strong>[39m
+09:25:50            [36m</div>[39m
+09:25:50          [36m</div>[39m
+09:25:50        [36m</div>[39m
+09:25:50        [36m<div[39m
+09:25:50          [33mclass[39m=[32m"booking-layout"[39m
+09:25:50        [36m>[39m
+09:25:50          [36m<section[39m
+09:25:50            [33mclass[39m=[32m"panel booking-form-panel"[39m
+09:25:50          [36m>[39m
+09:25:50            [36m<div[39m
+09:25:50              [33mclass[39m=[32m"panel-title"[39m
+09:25:50            [36m>[39m
+09:25:50              [36m<div>[39m
+09:25:50                [36m<h2>[39m
+09:25:50                  [0mTạo lịch đặt phòng họp[0m
+09:25:50                [36m</h2>[39m
+09:25:50              [36m</div>[39m
+09:25:50            [36m</div>[39m
+09:25:50            [36m<div[39m
+09:25:50              [33mclass[39m=[32m"booking-form-grid"[39m
+09:25:50            [36m>[39m
+09:25:50              [36m<label>[39m
+09:25:50                [0mPhòng họp / tài sản[0m
+09:25:50                [36m<select>[39m
+09:25:50                  [36m<option[39m
+09:25:50                    [33mvalue[39m=[32m""[39m
+09:25:50                  [36m>[39m
+09:25:50                    [0mChọn mã phòng họp[0m
+09:25:50                  [36m</option>[39m
+09:25:50                  [36m<option[39m
+09:25:50                    [33mvalue[39m=[32m"ROOM-01"[39m
+09:25:50                  [36m>[39m
+09:25:50                    [0mROOM-01[0m
+09:25:50                    [0m · [0m
+09:25:50                    [0mPhòng họp Apollo[0m
+09:25:50                  [36m</option>[39m
+09:25:50                  [36m<option[39m
+09:25:50                    [33mvalue[39m=[32m"TS-001"[39m
+09:25:50                  [36m>[39m
+09:25:50                    [0mTS-001[0m
+09:25:50                    [0m · [0m
+09:25:50                    [0mLaptop Dell Precision[0m
+09:25:50                  [36m</option>[39m
+09:25:50                [36m</select>[39m
+09:25:50              [36m</label>[39m
+09:25:50              [36m<label>[39m
+09:25:50                [0mTiêu đề[0m
+09:25:50                [36m<input[39m
+09:25:50                  [33mplaceholder[39m=[32m"Họp thiết kế, demo nội bộ..."[39m
+09:25:50                  [33mvalue[39m=[32m""[39m
+09:25:50                [36m/>[39m
+09:25:50              [36m</label>[39m
+09:25:50              [36m<label>[39m
+09:25:50                [0mBắt đầu[0m
+09:25:50                [36m<input[39m
+09:25:50                  [33mtype[39m=[32m"datetime-local"[39m
+09:25:50                  [33mvalue[39m=[32m""[39m
+09:25:50                [36m/>[39m
+09:25:50              [36m</label>[39m
+09:25:50              [36m<label>[39m
+09:25:50                [0mKết thúc[0m
+09:25:50                [36m<input[39m
+09:25:50                  [33mtype[39m=[32m"datetime-local"[39m
+09:25:50                  [33mvalue[39m=[32m""[39m
+09:25:50                [36m/>[39m
+09:25:50              [36m</label>[39m
+09:25:50              [36m<label>[39m
+09:25:50                [0mNgười phụ trách[0m
+09:25:50                [36m<input[39m
+09:25:50                  [33mdisabled[39m=[32m""[39m
+09:25:50                  [33mreadonly[39m=[32m""[39m
+09:25:50                  [33mtitle[39m=[32m"Hệ thống tự ghi nhận người đặt theo tài khoản đăng nhập"[39m
+09:25:50                  [33mvalue[39m=[32m"admin"[39m
+09:25:50                [36m/>[39m
+09:25:50              [36m</label>[39m
+09:25:50              [36m<label>[39m
+09:25:50                [0mPhòng ban[0m
+09:25:50                [36m<input[39m
+09:25:50                  [33minputmode[39m=[32m"numeric"[39m
+09:25:50                  [33mplaceholder[39m=[32m"ID phòng ban"[39m
+09:25:50                  [33mvalue[39m=[32m""[39m
+09:25:50                [36m/>[39m
+09:25:50              [36m</label>[39m
+09:25:50              [36m<label>[39m
+09:25:50                [0mMục đích[0m
+09:25:50                [36m<textarea[39m
+09:25:50                  [33mplaceholder[39m=[32m"Nội dung, nhóm tham gia, yêu cầu chuẩn bị..."[39m
+09:25:50                  [33mrows[39m=[32m"3"[39m
+09:25:50                [36m/>[39m
+09:25:50              [36m</label>[39m
+09:25:50              [36m<label>[39m
+09:25:50                [0mGhi chú[0m
+09:25:50                [36m<textarea[39m
+09:25:50                  [33mplaceholder[39m=[32m"Thiết bị cần chuẩn bị, setup phòng..."[39m
+09:25:50                  [33mrows[39m=[32m"3"[39m
+09:25:50                [36m/>[39m
+09:25:50              [36m</label>[39m
+09:25:50            [36m</div>[39m
+09:25:50            [36m<div[39m
+09:25:50              [33mclass[39m=[32m"booking-option-row"[39m
+09:25:50            [36m>[39m
+09:25:50              [36m<label[39m
+09:25:50                [33mclass[39m=[32m"booking-checkbox"[39m
+09:25:50              [36m>[39m
+09:25:50                [36m<input[39m
+09:25:50                  [33mchecked[39m=[32m""[39m
+09:25:50                  [33mtype[39m=[32m"checkbox"[39m
+09:25:50                [36m/>[39m
+09:25:50                [0mTự động trả phòng khi hết giờ[0m
+09:25:50              [36m</label>[39m
+09:25:50            [36m</div>[39m
+09:25:50            [36m<div[39m
+09:25:50              [33mclass[39m=[32m"booking-form-actions"[39m
+09:25:50            [36m>[39m
+09:25:50              [36m<button[39m
+09:25:50                [33mclass[39m=[32m"secondary"[39m
+09:25:50                [33mtype[39m=[32m"button"[39m
+09:25:50              [36m>[39m
+09:25:50                [36m<svg[39m
+09:25:50                  [33mfill[39m=[32m"none"[39m
+09:25:50                  [33mheight[39m=[32m"1em"[39m
+09:25:50                  [33mstroke[39m=[32m"currentColor"[39m
+09:25:50                  [33mstroke-linecap[39m=[32m"round"[39m
+09:25:50                  [33mstroke-linejoin[39m=[32m"round"[39m
+09:25:50                  [33mstroke-width[39m=[32m"2"[39m
+09:25:50                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+09:25:50                  [33mwidth[39m=[32m"1em"[39m
+09:25:50                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+09:25:50                [36m>[39m
+09:25:50                  [36m<circle[39m
+09:25:50                    [33mcx[39m=[32m"11"[39m
+09:25:50                    [33mcy[39m=[32m"11"[39m
+09:25:50                    [33mr[39m=[32m"8"[39m
+09:25:50                  [36m/>[39m
+09:25:50                  [36m<line[39m
+09:25:50                    [33mx1[39m=[32m"21"[39m
+09:25:50                    [33mx2[39m=[32m"16.65"[39m
+09:25:50                    [33my1[39m=[32m"21"[39m
+09:25:50                    [33my2[39m=[32m"16.65"[39m
+09:25:50                  [36m/>[39m
+09:25:50                [36m</svg>[39m
+09:25:50                [0m Kiểm tra lịch[0m
+09:25:50              [36m</button>[39m
+09:25:50              [36m<button[39m
+09:25:50                [33mtype[39m=[32m"button"[39m
+09:25:50              [36m>[39m
+09:25:50                [36m<svg[39m
+09:25:50  ...
+09:25:50  [90m [2m❯[22m waitForWrapper node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/wait-for.js:[2m163:27[22m[39m
+09:25:50  [90m [2m❯[22m node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/query-helpers.js:[2m86:33[22m[39m
+09:25:50  [36m [2m❯[22m src/test/assetBookingWorkflowCoverage.test.tsx:[2m476:18[22m[39m
+09:25:50      [90m474|[39m     [35mconst[39m user [33m=[39m userEvent[33m.[39m[34msetup[39m()[33m;[39m
+09:25:50      [90m475|[39m     [34mrender[39m([33m<[39m[33mBookingPage[39m [33m/[39m[33m>[39m)[33m;[39m
+09:25:50      [90m476|[39m     [35mawait[39m screen[33m.[39m[34mfindByText[39m([32m"Workshop team"[39m)[33m;[39m
+09:25:50      [90m   |[39m                  [31m^[39m
+09:25:50      [90m477|[39m
+09:25:50      [90m478|[39m     fireEvent.change(screen.getAllByLabelText(/Trạng thái/i).at(-1) as…
+09:25:50  
+09:25:50  [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯[22m[39m
+09:25:50  
+09:25:50  [41m[1m FAIL [22m[49m src/test/pageCoverage.test.tsx[2m > [22mQLVT pages[2m > [22mcreates a transfer request with approvers
+09:25:50  [31m[1mTestingLibraryElementError[22m[39m: Found multiple elements with the display value: Chọn phòng ban.
+09:25:50  
+09:25:50  Here are the matching elements:
+09:25:50  
+09:25:50  Ignored nodes: comments, script, style
+09:25:50  [36m<input[39m
+09:25:50    [33maria-autocomplete[39m=[32m"list"[39m
+09:25:50    [33maria-expanded[39m=[32m"false"[39m
+09:25:50    [33mclass[39m=[32m"searchable-select-input"[39m
+09:25:50    [33mdisabled[39m=[32m""[39m
+09:25:50    [33mplaceholder[39m=[32m"Chọn phòng ban"[39m
+09:25:50    [33mrole[39m=[32m"combobox"[39m
+09:25:50    [33mtype[39m=[32m"text"[39m
+09:25:50    [33mvalue[39m=[32m"Chọn phòng ban"[39m
+09:25:50  [36m/>[39m
+09:25:50  
+09:25:50  Ignored nodes: comments, script, style
+09:25:50  [36m<select[39m
+09:25:50    [33maria-hidden[39m=[32m"true"[39m
+09:25:50    [33mclass[39m=[32m"searchable-select-native"[39m
+09:25:50    [33mdisabled[39m=[32m""[39m
+09:25:50    [33mtabindex[39m=[32m"-1"[39m
+09:25:50  [36m>[39m
+09:25:50    [36m<option[39m
+09:25:50      [33mvalue[39m=[32m""[39m
+09:25:50    [36m>[39m
+09:25:50      [0mChọn phòng ban[0m
+09:25:50    [36m</option>[39m
+09:25:50  [36m</select>[39m
+09:25:50  
+09:25:50  (If this is intentional, then use the `*AllBy*` variant of the query (like `queryAllByText`, `getAllByText`, or `findAllByText`)).
+09:25:50  
+09:25:50  Ignored nodes: comments, script, style
+09:25:50  [36m<body>[39m
+09:25:50    [36m<div>[39m
+09:25:50      [36m<main[39m
+09:25:50        [33mclass[39m=[32m"app-shell "[39m
+09:25:50      [36m>[39m
+09:25:50        [36m<aside[39m
+09:25:50          [33mclass[39m=[32m"sidebar  "[39m
+09:25:50        [36m>[39m
+09:25:50          [36m<button[39m
+09:25:50            [33mclass[39m=[32m"brand"[39m
+09:25:50            [33mtype[39m=[32m"button"[39m
+09:25:50          [36m>[39m
+09:25:50            [36m<img[39m
+09:25:50              [33malt[39m=[32m"BIMLab"[39m
+09:25:50              [33msrc[39m=[32m"/full_dark.png"[39m
+09:25:50            [36m/>[39m
+09:25:50            [36m<p>[39m
+09:25:50              [0mQuản lý tài sản[0m
+09:25:50            [36m</p>[39m
+09:25:50          [36m</button>[39m
+09:25:50          [36m<div[39m
+09:25:50            [33mclass[39m=[32m"sidebar-search"[39m
+09:25:50          [36m>[39m
+09:25:50            [36m<svg[39m
+09:25:50              [33mfill[39m=[32m"none"[39m
+09:25:50              [33mheight[39m=[32m"1em"[39m
+09:25:50              [33mstroke[39m=[32m"currentColor"[39m
+09:25:50              [33mstroke-linecap[39m=[32m"round"[39m
+09:25:50              [33mstroke-linejoin[39m=[32m"round"[39m
+09:25:50              [33mstroke-width[39m=[32m"2"[39m
+09:25:50              [33mviewBox[39m=[32m"0 0 24 24"[39m
+09:25:50              [33mwidth[39m=[32m"1em"[39m
+09:25:50              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+09:25:50            [36m>[39m
+09:25:50              [36m<circle[39m
+09:25:50                [33mcx[39m=[32m"11"[39m
+09:25:50                [33mcy[39m=[32m"11"[39m
+09:25:50                [33mr[39m=[32m"8"[39m
+09:25:50              [36m/>[39m
+09:25:50              [36m<line[39m
+09:25:50                [33mx1[39m=[32m"21"[39m
+09:25:50                [33mx2[39m=[32m"16.65"[39m
+09:25:50                [33my1[39m=[32m"21"[39m
+09:25:50                [33my2[39m=[32m"16.65"[39m
+09:25:50              [36m/>[39m
+09:25:50            [36m</svg>[39m
+09:25:50            [36m<input[39m
+09:25:50              [33maria-label[39m=[32m"Tìm menu chính"[39m
+09:25:50              [33mplaceholder[39m=[32m"Tìm menu..."[39m
+09:25:50              [33mtype[39m=[32m"text"[39m
+09:25:50              [33mvalue[39m=[32m""[39m
+09:25:50            [36m/>[39m
+09:25:50          [36m</div>[39m
+09:25:50          [36m<nav>[39m
+09:25:50            [36m<a[39m
+09:25:50              [33mclass[39m=[32m""[39m
+09:25:50              [33mdata-discover[39m=[32m"true"[39m
+09:25:50              [33mhref[39m=[32m"/dashboard"[39m
+09:25:50            [36m>[39m
+09:25:50              [36m<svg[39m
+09:25:50                [33mfill[39m=[32m"none"[39m
+09:25:50                [33mheight[39m=[32m"1em"[39m
+09:25:50                [33mstroke[39m=[32m"currentColor"[39m
+09:25:50                [33mstroke-linecap[39m=[32m"round"[39m
+09:25:50                [33mstroke-linejoin[39m=[32m"round"[39m
+09:25:50                [33mstroke-width[39m=[32m"2"[39m
+09:25:50                [33mviewBox[39m=[32m"0 0 24 24"[39m
+09:25:50                [33mwidth[39m=[32m"1em"[39m
+09:25:50                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+09:25:50              [36m>[39m
+09:25:50                [36m<line[39m
+09:25:50                  [33mx1[39m=[32m"18"[39m
+09:25:50                  [33mx2[39m=[32m"18"[39m
+09:25:50                  [33my1[39m=[32m"20"[39m
+09:25:50                  [33my2[39m=[32m"10"[39m
+09:25:50                [36m/>[39m
+09:25:50                [36m<line[39m
+09:25:50                  [33mx1[39m=[32m"12"[39m
+09:25:50                  [33mx2[39m=[32m"12"[39m
+09:25:50                  [33my1[39m=[32m"20"[39m
+09:25:50                  [33my2[39m=[32m"4"[39m
+09:25:50                [36m/>[39m
+09:25:50                [36m<line[39m
+09:25:50                  [33mx1[39m=[32m"6"[39m
+09:25:50                  [33mx2[39m=[32m"6"[39m
+09:25:50                  [33my1[39m=[32m"20"[39m
+09:25:50                  [33my2[39m=[32m"14"[39m
+09:25:50                [36m/>[39m
+09:25:50              [36m</svg>[39m
+09:25:50              [36m<span>[39m
+09:25:50                [0mTổng quan[0m
+09:25:50              [36m</span>[39m
+09:25:50            [36m</a>[39m
+09:25:50            [36m<div[39m
+09:25:50              [33mclass[39m=[32m"sidebar-group"[39m
+09:25:50            [36m>[39m
+09:25:50              [36m<button[39m
+09:25:50                [33mclass[39m=[32m"sidebar-group-button active"[39m
+09:25:50                [33mtype[39m=[32m"button"[39m
+09:25:50              [36m>[39m
+09:25:50                [36m<svg[39m
+09:25:50                  [33mfill[39m=[32m"none"[39m
+09:25:50                  [33mheight[39m=[32m"1em"[39m
+09:25:50                  [33mstroke[39m=[32m"currentColor"[39m
+09:25:50                  [33mstroke-linecap[39m=[32m"round"[39m
+09:25:50                  [33mstroke-linejoin[39m=[32m"round"[39m
+09:25:50                  [33mstroke-width[39m=[32m"2"[39m
+09:25:50                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+09:25:50                  [33mwidth[39m=[32m"1em"[39m
+09:25:50                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+09:25:50                [36m>[39m
+09:25:50                  [36m<path[39m
+09:25:50                    [33md[39m=[32m"M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"[39m
+09:25:50                  [36m/>[39m
+09:25:50                  [36m<polyline[39m
+09:25:50                    [33mpoints[39m=[32m"3.27 6.96 12 12.01 20.73 6.96"[39m
+09:25:50                  [36m/>[39m
+09:25:50                  [36m<line[39m
+09:25:50                    [33mx1[39m=[32m"12"[39m
+09:25:50                    [33mx2[39m=[32m"12"[39m
+09:25:50                    [33my1[39m=[32m"22.08"[39m
+09:25:50                    [33my2[39m=[32m"12"[39m
+09:25:50                  [36m/>[39m
+09:25:50                [36m</svg>[39m
+09:25:50                [36m<span>[39m
+09:25:50                  [0mTài sản[0m
+09:25:50                [36m</span>[39m
+09:25:50                [36m<svg[39m
+09:25:50                  [33mfill[39m=[32m"none"[39m
+09:25:50                  [33mheight[39m=[32m"1em"[39m
+09:25:50                  [33mstroke[39m=[32m"currentColor"[39m
+09:25:50                  [33mstroke-linecap[39m=[32m"round"[39m
+09:25:50                  [33mstroke-linejoin[39m=[32m"round"[39m
+09:25:50                  [33mstroke-width[39m=[32m"2"[39m
+09:25:50                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+09:25:50                  [33mwidth[39m=[32m"1em"[39m
+09:25:50                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+09:25:50                [36m>[39m
+09:25:50                  [36m<polyline[39m
+09:25:50                    [33mpoints[39m=[32m"6 9 12 15 18 9"[39m
+09:25:50                  [36m/>[39m
+09:25:50                [36m</svg>[39m
+09:25:50              [36m</button>[39m
+09:25:50              [36m<div[39m
+09:25:50                [33mclass[39m=[32m"sidebar-submenu"[39m
+09:25:50              [36m>[39m
+09:25:50                [36m<a[39m
+09:25:50                  [33mclass[39m=[32m""[39m
+09:25:50                  [33mdata-discover[39m=[32m"true"[39m
+09:25:50                  [33mhref[39m=[32m"/assets"[39m
+09:25:50                [36m>[39m
+09:25:50                  [36m<span>[39m
+09:25:50                    [0mDanh sách[0m
+09:25:50                  [36m</span>[39m
+09:25:50                [36m</a>[39m
+09:25:50                [36m<a[39m
+09:25:50                  [33mclass[39m=[32m""[39m
+09:25:50                  [33mdata-discover[39m=[32m"true"[39m
+09:25:50                  [33mhref[39m=[32m"/asset-categories"[39m
+09:25:50                [36m>[39m
+09:25:50                  [36m<span>[39m
+09:25:50                    [0mDanh mục[0m
+09:25:50                  [36m</span>[39m
+09:25:50                [36m</a>[39m
+09:25:50                [36m<a[39m
+09:25:50                  [33maria-current[39m=[32m"page"[39m
+09:25:50                  [33mclass[39m=[32m"active"[39m
+09:25:50                  [33mdata-discover[39m=[32m"true"[39m
+09:25:50                  [33mhref[39m=[32m"/transfers"[39m
+09:25:50                [36m>[39m
+09:25:50                  [36m<span>[39m
+09:25:50                    [0mBàn giao[0m
+09:25:50                  [36m</span>[39m
+09:25:50            ...
+09:25:50  [90m [2m❯[22m Object.getElementError node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/config.js:[2m37:19[22m[39m
+09:25:50  [90m [2m❯[22m getElementError node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/query-helpers.js:[2m20:35[22m[39m
+09:25:50  [90m [2m❯[22m getMultipleElementsFoundError node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/query-helpers.js:[2m23:10[22m[39m
+09:25:50  [90m [2m❯[22m node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/query-helpers.js:[2m55:13[22m[39m
+09:25:50  [90m [2m❯[22m node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/query-helpers.js:[2m95:19[22m[39m
+09:25:50  [36m [2m❯[22m src/test/pageCoverage.test.tsx:[2m406:19[22m[39m
+09:25:50      [90m404|[39m     await user.click(screen.getByRole("button", { name: "Tạo phiếu" })…
+09:25:50      [90m405|[39m     expect(await screen.findByText("Danh sách tài sản bàn giao/thu hồi…
+09:25:50      [90m406|[39m     [34mexpect[39m(screen[33m.[39m[34mgetByDisplayValue[39m([32m"Chọn phòng ban"[39m))[33m.[39m[34mtoBeDisabled[39m()[33m;[39m
+09:25:50      [90m   |[39m                   [31m^[39m
+09:25:50      [90m407|[39m     [34mexpect[39m(screen[33m.[39m[34mgetByDisplayValue[39m([32m"Chọn nhân viên"[39m))[33m.[39m[34mtoBeDisabled[39m()[33m;[39m
+09:25:50      [90m408|[39m     chooseSearchableOption(screen.getByDisplayValue("Chọn chi nhánh"),…
+09:25:50  
+09:25:50  [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯[22m[39m
+09:25:50  
+09:25:50  
+09:25:50  [2m Test Files [22m [1m[31m2 failed[39m[22m[2m | [22m[1m[32m16 passed[39m[22m[90m (18)[39m
+09:25:50  [2m      Tests [22m [1m[31m3 failed[39m[22m[2m | [22m[1m[32m89 passed[39m[22m[90m (92)[39m
+09:25:50  [2m   Start at [22m 02:25:37
+09:25:50  [2m   Duration [22m 12.07s[2m (transform 1.06s, setup 3.41s, import 2.10s, tests 13.27s, environment 11.59s)[22m
+09:25:50  
+09:25:50   ELIFECYCLE  Command failed with exit code 1.
