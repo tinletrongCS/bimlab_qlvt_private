@@ -403,21 +403,24 @@ describe("QLVT pages", () => {
 
     await user.click(screen.getByRole("button", { name: "Tạo phiếu" }));
     expect(await screen.findByText("Danh sách tài sản bàn giao/thu hồi")).toBeVisible();
-    expect(screen.getByDisplayValue("Chọn phòng ban")).toBeDisabled();
-    expect(screen.getByDisplayValue("Chọn nhân viên")).toBeDisabled();
-    chooseSearchableOption(screen.getByDisplayValue("Chọn chi nhánh"), /Văn phòng/);
-    await waitFor(() => expect(screen.getByDisplayValue("Chọn phòng ban")).toBeEnabled());
-    chooseSearchableOption(screen.getByDisplayValue("Chọn phòng ban"), /^BIM$/);
+    const siteSelect = screen.getByRole("combobox", { name: "Chi nhánh" });
+    const departmentSelect = screen.getByRole("combobox", { name: "Phòng ban nhận" });
+    const employeeSelect = screen.getByRole("combobox", { name: "Nhân viên nhận" });
+    expect(departmentSelect).toBeDisabled();
+    expect(employeeSelect).toBeDisabled();
+    chooseSearchableOption(siteSelect, /Văn phòng/);
+    await waitFor(() => expect(departmentSelect).toBeEnabled());
+    chooseSearchableOption(departmentSelect, /^BIM$/);
 
     await user.click(screen.getByLabelText("Chỉ định người xét duyệt"));
-    chooseSearchableOption(screen.getByDisplayValue("Thêm người duyệt..."), /Nguyễn Văn A/);
+    chooseSearchableOption(screen.getByPlaceholderText("Thêm người duyệt..."), /Nguyễn Văn A/);
     const assetSelector = screen.getByPlaceholderText("Chọn tài sản để thêm");
     expect(assetSelector).toHaveValue("");
     chooseSearchableOption(assetSelector, /TS-001/);
     await waitFor(() => {
-      expect(screen.getByDisplayValue("Văn phòng")).toBeDisabled();
-      expect(screen.getByDisplayValue("BIM")).toBeDisabled();
-      expect(screen.getByDisplayValue("Nguyễn Văn A")).toBeDisabled();
+      expect(siteSelect).toBeDisabled();
+      expect(departmentSelect).toBeDisabled();
+      expect(employeeSelect).toBeDisabled();
     });
     await user.click(screen.getByRole("button", { name: "Gửi" }));
 
