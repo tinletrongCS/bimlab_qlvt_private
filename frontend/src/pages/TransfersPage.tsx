@@ -15,8 +15,15 @@ import {
 } from "../services/api";
 import type { AssetTransfer, EmployeeLite } from "../services/types";
 
+const DEFAULT_SITE_VALUE = "BIMLAB";
+
 function employeeName(employee?: EmployeeLite): string {
   return employee?.fullName || employee?.name || (employee ? `Nhân viên #${employee.id}` : "--");
+}
+
+function approverName(employee?: EmployeeLite): string {
+  const role = employee?.positionName || employee?.departmentName;
+  return role ? `${employeeName(employee)} · ${role}` : employeeName(employee);
 }
 
 interface TransferGroup {
@@ -35,6 +42,53 @@ function transferStatusLabel(status?: string): string {
   if (status === "CANCELLED") return "Đã hủy";
   if (status === "PENDING_APPROVAL") return "Chờ duyệt";
   return status || "Chưa xác định";
+}
+
+function transferStatusBadgeClass(status?: string): string {
+  return `badge transfer-status-badge badge-${(status || "pending").toLowerCase()}`;
+}
+
+function highlightTransferText(value: string, query: string) {
+  const normalizedQuery = query.trim().toLowerCase();
+  if (!normalizedQuery) return value;
+  const index = value.toLowerCase().indexOf(normalizedQuery);
+  if (index < 0) return value;
+  return (
+    <>
+      {value.slice(0, index)}
+      <mark className="search-match">{value.slice(index, index + normalizedQuery.length)}</mark>
+      {value.slice(index + normalizedQuery.length)}
+    </>
+  );
+}
+
+function formatTransferDate(value?: string): string {
+  return value ? new Date(`${value}T00:00:00`).toLocaleDateString("vi-VN") : "--";
+}
+
+function formatTransferDateTime(value?: string): string {
+  return value
+    ? new Date(value).toLocaleString("vi-VN", {
+        hour12: false,
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+      })
+    : "--";
+}
+
+function localDateValue(date: Date): string {
+  const pad = (value: number) => String(value).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
+
+function minimumTransferDate(): string {
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  return localDateValue(tomorrow);
 }
 
 function transferTypeLabel(type?: string): string {
@@ -144,11 +198,10 @@ export function TransfersPage() {
 
   // Create form state
   const [transferType, setTransferType] = useState("Bàn giao");
-  const [transferDate, setTransferDate] = useState(new Date().toISOString().split("T")[0]);
-  const [decisionDate, setDecisionDate] = useState(new Date().toISOString().split("T")[0]);
+  const [transferDate, setTransferDate] = useState(minimumTransferDate);
   const [toEmployeeId, setToEmployeeId] = useState("");
   const [toDepartmentId, setToDepartmentId] = useState("");
-  const [toSiteId, setToSiteId] = useState("");
+  const [toSiteId, setToSiteId] = useState(DEFAULT_SITE_VALUE);
   const [reason, setReason] = useState("");
 
   const [requireApproval, setRequireApproval] = useState(false);
@@ -192,7 +245,11 @@ export function TransfersPage() {
     if (!toDepartmentId) return [];
     const dept = departments.find((d) => d.id === Number(toDepartmentId));
     if (!dept) return employees;
-    return employees.filter((e) => e.departmentName === dept.name);
+    return employees.filter(
+      (employee) =>
+        employee.departmentId === dept.id ||
+        (employee.departmentId == null && employee.departmentName === dept.name),
+    );
   }, [toDepartmentId, employees, departments, lockEmployee, selectedAsset?.assignedEmployeeId]);
 
   useEffect(() => {
@@ -202,8 +259,11 @@ export function TransfersPage() {
       setToEmployeeId("");
       return;
     }
-    if (!selectedAsset) return;
-    setToSiteId(selectedAsset.siteId ? String(selectedAsset.siteId) : "");
+    if (!selectedAsset) {
+      setToSiteId((current) => current || DEFAULT_SITE_VALUE);
+      return;
+    }
+    setToSiteId(selectedAsset.siteId ? String(selectedAsset.siteId) : DEFAULT_SITE_VALUE);
     setToDepartmentId(selectedAsset.departmentId ? String(selectedAsset.departmentId) : "");
     setToEmployeeId(
       selectedAsset.assignedEmployeeId ? String(selectedAsset.assignedEmployeeId) : "",
@@ -214,11 +274,10 @@ export function TransfersPage() {
 
   const resetForm = () => {
     setTransferType("Bàn giao");
-    setTransferDate(new Date().toISOString().split("T")[0]);
-    setDecisionDate(new Date().toISOString().split("T")[0]);
+    setTransferDate(minimumTransferDate());
     setToEmployeeId("");
     setToDepartmentId("");
-    setToSiteId("");
+    setToSiteId(DEFAULT_SITE_VALUE);
     setReason("");
     setRequireApproval(false);
     setApprovedByUsers([]);
@@ -324,11 +383,13 @@ export function TransfersPage() {
       if (t.status === "PENDING_APPROVAL")
         t.lines?.forEach((line) => void pendingAssetIds.add(line.assetId));
     });
-    return assets.filter((a) => !selectedAssetIds.includes(a.id) && !pendingAssetIds.has(a.id));
-  }, [assets, selectedAssetIds, transfers]);
+    return assets.filter((asset) => !pendingAssetIds.has(asset.id));
+  }, [assets, transfers]);
 
   const handleSubmit = async () => {
     if (selectedAssetIds.length === 0) return toast.error("Vui lòng chọn ít nhất 1 tài sản");
+    if (!transferDate || transferDate <= localDateValue(new Date()))
+      return toast.error("Ngày thực hiện phải sau ngày tạo phiếu");
     setIsSubmitting(true);
     try {
       const documents = await Promise.all(
@@ -347,9 +408,8 @@ export function TransfersPage() {
         transferType,
         toEmployeeId: toEmployeeId ? Number(toEmployeeId) : undefined,
         toDepartmentId: toDepartmentId ? Number(toDepartmentId) : undefined,
-        toSiteId: toSiteId ? Number(toSiteId) : undefined,
+        toSiteId: toSiteId && toSiteId !== DEFAULT_SITE_VALUE ? Number(toSiteId) : undefined,
         transferDate,
-        plannedHandoverAt: `${decisionDate}T09:00:00`,
         reason,
         approverEmployeeIds: requireApproval ? approvedByUsers.map(Number) : undefined,
         documents,
@@ -361,29 +421,30 @@ export function TransfersPage() {
       resetForm();
     } catch (err) {
       console.error(err);
-      toast.error("Có lỗi xảy ra khi gửi phiếu.");
+      toast.error(readError(err));
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const formLabelStyle = {
-    fontSize: "14px",
+    fontSize: "12px",
     fontWeight: 500,
     color: "#334155",
     display: "flex",
     gap: "4px",
+    fontFamily: "Inter, Arial, sans-serif",
   };
   const formInputStyle = {
     padding: "8px 12px",
     borderRadius: "8px",
     border: "1px solid var(--qlvt-border, #e2e8f0)",
-    fontSize: "14px",
+    fontSize: "12px",
     outline: "none",
     width: "100%",
     minHeight: "38px",
     background: "#fff",
-    fontFamily: "inherit",
+    fontFamily: "Inter, Arial, sans-serif",
   };
 
   const getAssetLocation = (asset: any) => {
@@ -482,16 +543,10 @@ export function TransfersPage() {
 
   const renderTicketDetails = (ticket: TransferGroup) => {
     const transfer = ticket.first;
-    const siteName = (id?: number) => workSites.find((site) => site.id === id)?.name || "Chưa có";
+    const siteName = (id?: number) =>
+      id ? workSites.find((site) => site.id === id)?.name || "Chưa có" : "BIMLAB";
     const departmentName = (id?: number) =>
       departments.find((department) => department.id === id)?.name || "Chưa có";
-    const statusColor =
-      transfer.status === "APPROVED"
-        ? "#166534"
-        : transfer.status === "REJECTED" || transfer.status === "CANCELLED"
-          ? "#991b1b"
-          : "#92400e";
-
     return (
       <div className="transfer-ticket-detail">
         <div className="asset-detail-hero">
@@ -501,7 +556,7 @@ export function TransfersPage() {
           </div>
           <div>
             <span>Trạng thái</span>
-            <strong style={{ color: statusColor }}>{ticket.status}</strong>
+            <strong className={transferStatusBadgeClass(transfer.status)}>{ticket.status}</strong>
           </div>
         </div>
 
@@ -517,12 +572,12 @@ export function TransfersPage() {
               <strong>{transfer.transferType}</strong>
             </div>
             <div>
-              <span>Ngày quyết định</span>
-              <strong>{transfer.transferDate || "--"}</strong>
+              <span>Ngày tạo đơn</span>
+              <strong>{formatTransferDateTime(transfer.createdAt)}</strong>
             </div>
             <div>
-              <span>Thời gian dự kiến</span>
-              <strong>{transfer.plannedHandoverAt?.replace("T", " ").slice(0, 16) || "--"}</strong>
+              <span>Ngày thực hiện</span>
+              <strong>{formatTransferDate(transfer.transferDate)}</strong>
             </div>
             <div>
               <span>Người tạo phiếu</span>
@@ -689,22 +744,14 @@ export function TransfersPage() {
             Tạo phiếu
           </button>
         </div>
-
-        {view !== "create" && canManage && (
-          <button
-            type="button"
-            className="primary-action btn-download-green"
-            onClick={() => handleTabChange("create")}
-            style={{ display: "flex", alignItems: "center", gap: "6px" }}
-          >
-            <FiPlus /> Thêm mới
-          </button>
-        )}
       </div>
 
       {view === "list" && (
         <section className="panel">
           <div className="panel-body" style={{ padding: "24px" }}>
+            <div className="transfer-list-heading">
+              <h2>Danh sách phiếu bàn giao</h2>
+            </div>
             {/* Filters */}
             <div
               className="category-filters"
@@ -787,7 +834,7 @@ export function TransfersPage() {
                         fontWeight: 600,
                       }}
                     >
-                      Ngày quyết định
+                      Ngày tạo đơn
                     </th>
                     <th
                       style={{
@@ -797,7 +844,7 @@ export function TransfersPage() {
                         fontWeight: 600,
                       }}
                     >
-                      Số quyết định
+                      Mã phiếu
                     </th>
                     <th
                       style={{
@@ -868,7 +915,9 @@ export function TransfersPage() {
                         <td style={{ padding: "12px 16px", fontWeight: 500 }}>
                           {(safeListPage - 1) * listPageSize + index + 1}
                         </td>
-                        <td style={{ padding: "12px 16px" }}>{ticket.transferDate}</td>
+                        <td style={{ padding: "12px 16px" }}>
+                          {formatTransferDateTime(ticket.first.createdAt)}
+                        </td>
                         <td style={{ padding: "12px 16px", fontWeight: 600, color: "#2563eb" }}>
                           {ticket.ticketId}
                         </td>
@@ -876,21 +925,7 @@ export function TransfersPage() {
                         <td style={{ padding: "12px 16px" }}>{ticket.reason || "--"}</td>
                         <td style={{ padding: "12px 16px" }}>{ticket.transferDate}</td>
                         <td style={{ padding: "12px 16px" }}>
-                          <span
-                            style={{
-                              padding: "4px 10px",
-                              borderRadius: "12px",
-                              fontSize: "12px",
-                              fontWeight: 500,
-                              background: "transparent",
-                              color:
-                                ticket.status === "Đã phê duyệt"
-                                  ? "#166534"
-                                  : ticket.status === "Đã từ chối" || ticket.status === "Đã hủy"
-                                    ? "#991b1b"
-                                    : "#92400e",
-                            }}
-                          >
+                          <span className={transferStatusBadgeClass(ticket.first.status)}>
                             {ticket.status}
                           </span>
                         </td>
@@ -915,16 +950,27 @@ export function TransfersPage() {
               </table>
             </div>
 
-            <TransferListPagination
-              page={safeListPage}
-              pageSize={listPageSize}
-              total={filteredTransfers.length}
-              onPageChange={setListPage}
-              onPageSizeChange={(sz) => {
-                setListPageSize(sz);
-                setListPage(1);
-              }}
-            />
+            <div className="transfer-list-footer">
+              <TransferListPagination
+                page={safeListPage}
+                pageSize={listPageSize}
+                total={filteredTransfers.length}
+                onPageChange={setListPage}
+                onPageSizeChange={(sz) => {
+                  setListPageSize(sz);
+                  setListPage(1);
+                }}
+              />
+              {canManage && (
+                <button
+                  type="button"
+                  className="primary-action transfer-list-add-button"
+                  onClick={() => handleTabChange("create")}
+                >
+                  <FiPlus /> Thêm mới
+                </button>
+              )}
+            </div>
           </div>
         </section>
       )}
@@ -935,7 +981,6 @@ export function TransfersPage() {
             <div className="transfer-pending-heading">
               <div>
                 <h2>Phiếu cần xét duyệt</h2>
-                <p>Các phiếu đang chờ bạn phê duyệt hoặc từ chối.</p>
               </div>
               <strong>{pendingTransfers.length} phiếu</strong>
             </div>
@@ -974,9 +1019,42 @@ export function TransfersPage() {
                   );
                   const canDecide = canApprove || assignedToMe;
                   const processing = processingTransferId === ticket.first.id;
+                  const title = ticket.first.title || "";
+                  const normalizedSearch = pendingSearch.trim().toLowerCase();
+                  const summaryText =
+                    normalizedSearch &&
+                    !title.toLowerCase().includes(normalizedSearch) &&
+                    ticket.reason.toLowerCase().includes(normalizedSearch)
+                      ? ticket.reason
+                      : title || ticket.reason || "--";
                   return (
                     <article className="transfer-pending-card" key={ticket.first.id}>
-                      {renderTicketDetails(ticket)}
+                      <div className="transfer-pending-summary">
+                        <div className="transfer-pending-identity">
+                          <strong>{highlightTransferText(ticket.ticketId, pendingSearch)}</strong>
+                          <span>{highlightTransferText(summaryText, pendingSearch)}</span>
+                        </div>
+                        <div className="transfer-pending-meta">
+                          <span>
+                            <small>Phân loại</small>
+                            <strong>{ticket.transferType}</strong>
+                          </span>
+                          <span>
+                            <small>Ngày thực hiện</small>
+                            <strong>{formatTransferDate(ticket.transferDate)}</strong>
+                          </span>
+                        </div>
+                        <span className={transferStatusBadgeClass(ticket.first.status)}>
+                          {ticket.status}
+                        </span>
+                        <button
+                          type="button"
+                          className="transfer-pending-detail-button"
+                          onClick={() => setSelectedTicket(ticket)}
+                        >
+                          <FiEye /> Xem chi tiết
+                        </button>
+                      </div>
                       <div className="transfer-pending-actions">
                         <textarea
                           aria-label={`Lý do xử lý ${ticket.ticketId}`}
@@ -988,7 +1066,7 @@ export function TransfersPage() {
                             }))
                           }
                           placeholder="Nhập lý do khi từ chối hoặc hủy phiếu..."
-                          rows={2}
+                          rows={1}
                         />
                         <div>
                           {canCancelTicket(ticket) && (
@@ -1005,7 +1083,7 @@ export function TransfersPage() {
                             <>
                               <button
                                 type="button"
-                                className="secondary danger"
+                                className="secondary danger transfer-reject-button"
                                 disabled={processing}
                                 onClick={() => void handleDecision(ticket, "reject")}
                               >
@@ -1082,6 +1160,7 @@ export function TransfersPage() {
           >
             {/* Top Row: Thông tin chung & Xét duyệt */}
             <div
+              className="transfer-form-top-grid"
               style={{ display: "flex", gap: "24px", alignItems: "flex-start", flexWrap: "wrap" }}
             >
               {/* Thông tin chung */}
@@ -1103,13 +1182,11 @@ export function TransfersPage() {
                 </h3>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
                   <label style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                    <span style={formLabelStyle}>
-                      Ngày quyết định <span style={{ color: "red" }}>*</span>
-                    </span>
+                    <span style={formLabelStyle}>Ngày tạo đơn</span>
                     <input
-                      type="date"
-                      value={decisionDate}
-                      onChange={(e) => setDecisionDate(e.target.value)}
+                      type="text"
+                      value="Tự động ghi khi gửi phiếu thành công"
+                      readOnly
                       style={formInputStyle}
                     />
                   </label>
@@ -1121,6 +1198,7 @@ export function TransfersPage() {
                     <input
                       type="date"
                       value={transferDate}
+                      min={minimumTransferDate()}
                       onChange={(e) => setTransferDate(e.target.value)}
                       style={formInputStyle}
                     />
@@ -1168,7 +1246,7 @@ export function TransfersPage() {
                         setToEmployeeId("");
                       }}
                     >
-                      <option value="">Chọn chi nhánh</option>
+                      <option value={DEFAULT_SITE_VALUE}>BIMLAB</option>
                       {workSites.map((s) => (
                         <option key={s.id} value={String(s.id)}>
                           {s.name}
@@ -1294,8 +1372,7 @@ export function TransfersPage() {
                             {employees.map((e) => (
                               <option key={e.id} value={String(e.id)}>
                                 {approvedByUsers.includes(String(e.id)) ? "✓ " : ""}
-                                {employeeName(e)}
-                                {approvedByUsers.includes(String(e.id)) ? " (đã chọn)" : ""}
+                                {approverName(e)}
                               </option>
                             ))}
                           </SearchableSelect>
@@ -1330,7 +1407,7 @@ export function TransfersPage() {
                                   }}
                                 >
                                   <span style={{ color: "#0f172a" }}>
-                                    {emp ? employeeName(emp) : empIdStr}
+                                    {emp ? approverName(emp) : empIdStr}
                                   </span>
                                   <button
                                     type="button"
@@ -1493,6 +1570,7 @@ export function TransfersPage() {
                     >
                       {availableAssets.map((a) => (
                         <option key={a.id} value={String(a.id)}>
+                          {selectedAssetIds.includes(a.id) ? "✓ " : ""}
                           {a.assetCode} · {a.name}
                         </option>
                       ))}
@@ -1511,6 +1589,7 @@ export function TransfersPage() {
                 }}
               >
                 <table
+                  className="transfer-create-assets-table"
                   style={{
                     width: "100%",
                     minWidth: "920px",
@@ -1610,9 +1689,12 @@ export function TransfersPage() {
                       pagedAssetIds.map((id, index) => {
                         const asset = assets.find((a) => a.id === id);
 
-                        const siteName = toSiteId
-                          ? workSites.find((s) => s.id === Number(toSiteId))?.name
-                          : "";
+                        const siteName =
+                          toSiteId === DEFAULT_SITE_VALUE
+                            ? "BIMLAB"
+                            : toSiteId
+                              ? workSites.find((s) => s.id === Number(toSiteId))?.name
+                              : "";
                         const deptName = toDepartmentId
                           ? departments.find((d) => d.id === Number(toDepartmentId))?.name
                           : "";
@@ -1731,12 +1813,12 @@ export function TransfersPage() {
             >
               <button
                 type="button"
-                className="asset-add-button btn-download-green"
+                className="asset-add-button transfer-submit-button"
                 onClick={() => void handleSubmit()}
                 disabled={isSubmitting || selectedAssetIds.length === 0}
                 style={{ padding: "10px 24px" }}
               >
-                Gửi
+                Gửi phiếu bàn giao
               </button>
             </div>
           </div>

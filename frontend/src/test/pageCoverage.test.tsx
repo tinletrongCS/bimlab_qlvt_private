@@ -93,7 +93,9 @@ const { asset, categories, categoryTree, employee, permissions, vendor } = vi.ho
     id: 1,
     fullName: "Nguyễn Văn A",
     employeeCode: "E001",
+    departmentId: 1,
     departmentName: "BIM",
+    positionName: "HR",
   };
 
   return { asset, categories, categoryTree, employee, permissions, vendor };
@@ -197,6 +199,7 @@ vi.mock("../services/api", () => ({
       toSiteId: 1,
       transferDate: "2026-07-20",
       plannedHandoverAt: "2026-07-20T09:00:00",
+      createdAt: "2026-07-18T14:25:30",
       reason: "Bàn giao dự án",
       requestedBy: "admin",
       requestedEmployeeId: 1,
@@ -406,23 +409,27 @@ describe("QLVT pages", () => {
     const siteSelect = screen.getByRole("combobox", { name: "Chi nhánh" });
     const departmentSelect = screen.getByRole("combobox", { name: "Phòng ban nhận" });
     const employeeSelect = screen.getByRole("combobox", { name: "Nhân viên nhận" });
-    expect(departmentSelect).toBeDisabled();
+    expect(siteSelect).toHaveValue("BIMLAB");
+    expect(departmentSelect).toBeEnabled();
     expect(employeeSelect).toBeDisabled();
     chooseSearchableOption(siteSelect, /Văn phòng/);
-    await waitFor(() => expect(departmentSelect).toBeEnabled());
     chooseSearchableOption(departmentSelect, /^BIM$/);
 
     await user.click(screen.getByLabelText("Chỉ định người xét duyệt"));
     chooseSearchableOption(screen.getByPlaceholderText("Thêm người duyệt..."), /Nguyễn Văn A/);
+    expect(screen.getByText("Nguyễn Văn A · HR")).toBeVisible();
     const assetSelector = screen.getByPlaceholderText("Chọn tài sản để thêm");
     expect(assetSelector).toHaveValue("");
     chooseSearchableOption(assetSelector, /TS-001/);
+    expect(
+      assetSelector.closest(".searchable-select-container")?.querySelector('option[value="1"]'),
+    ).toHaveTextContent(/✓ TS-001 .* \(đã chọn\)/);
     await waitFor(() => {
       expect(siteSelect).toBeDisabled();
       expect(departmentSelect).toBeDisabled();
       expect(employeeSelect).toBeDisabled();
     });
-    await user.click(screen.getByRole("button", { name: "Gửi" }));
+    await user.click(screen.getByRole("button", { name: "Gửi phiếu bàn giao" }));
 
     await waitFor(() =>
       expect(api.createTransfer).toHaveBeenCalledWith(
@@ -442,10 +449,12 @@ describe("QLVT pages", () => {
     expect(pendingPanel).not.toBeNull();
     const pending = within(pendingPanel as HTMLElement);
     expect(pending.getByText("Bàn giao laptop dự án")).toBeVisible();
-    expect(pending.getByRole("link", { name: "bien-ban-ban-giao.pdf" })).toHaveAttribute(
+    await user.click(pending.getByRole("button", { name: "Xem chi tiết" }));
+    expect(screen.getByRole("link", { name: "bien-ban-ban-giao.pdf" })).toHaveAttribute(
       "href",
       "https://files.test/bien-ban-ban-giao.pdf",
     );
+    await user.click(screen.getByRole("button", { name: "Đóng" }));
 
     const pendingTypeSelect = pending.getByPlaceholderText("Tất cả phân loại");
     chooseSearchableOption(pendingTypeSelect, "Thu hồi");
@@ -457,6 +466,7 @@ describe("QLVT pages", () => {
     expect(pending.getByText("Không có phiếu nào đang chờ bạn xét duyệt.")).toBeVisible();
     await user.clear(search);
     await user.type(search, "PBG-0001");
+    expect(pending.getByText("PBG-0001")).toHaveClass("search-match");
 
     const reason = pending.getByLabelText("Lý do xử lý PBG-0001");
     await user.click(pending.getByRole("button", { name: "Phê duyệt" }));

@@ -406,7 +406,9 @@ export interface EmployeeLite {
   fullName?: string;
   name?: string;
   employeeCode?: string;
+  departmentId?: number;
   departmentName?: string;
+  positionName?: string;
 }
 
 export interface DepartmentLite {
@@ -469,6 +471,7 @@ export interface AssetTransfer {
   toProjectId?: number;
   transferDate: string;
   plannedHandoverAt?: string;
+  createdAt?: string;
   reason?: string;
   note?: string;
   approvedBy?: string;

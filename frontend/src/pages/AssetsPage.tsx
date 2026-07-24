@@ -1017,7 +1017,7 @@ export function AssetsPage() {
   }, [assetColumnOrder, visibleAssetColumns]);
 
   const canManage = hasPermission("asset_manage");
-  const employeeName = (id?: number) =>
+  const employeeName = (id?: number | null) =>
     id ? employeeLabel(employees.find((employee) => employee.id === id)) : "Chưa gán người dùng";
   const departmentName = (id?: number) =>
     id ? departments.find((department) => department.id === id)?.name || `Phòng ban #${id}` : "--";
@@ -2689,10 +2689,7 @@ export function AssetsPage() {
                       <span>Nhân sự đang giữ</span>
                       <input
                         type="text"
-                        value={
-                          employees.find((e) => e.id === assetDraft.assignedEmployeeId)?.name ||
-                          "--"
-                        }
+                        value={employeeName(assetDraft.assignedEmployeeId)}
                         disabled
                       />
                     </label>
