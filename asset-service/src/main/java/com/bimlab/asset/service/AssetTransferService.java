@@ -152,7 +152,10 @@ public class AssetTransferService {
         }
 
         String transferType = normalizeTransferType(req.transferType());
-        LocalDate transferDate = req.transferDate() == null ? LocalDate.now() : req.transferDate();
+        if (req.transferDate() == null || !req.transferDate().isAfter(LocalDate.now())) {
+            throw new IllegalArgumentException("Ngày thực hiện phải sau ngày tạo phiếu");
+        }
+        LocalDate transferDate = req.transferDate();
         String requestedByUsername = access.getCurrentUsername();
         Long requestedEmployeeId = access.getCurrentEmployeeId();
 
@@ -302,7 +305,7 @@ public class AssetTransferService {
             Map<String, Object> beforeAsset = assetSnapshot(asset);
             line.setLineStatus("APPROVED");
             line.setApprovedBy(username);
-            applyApprovedTransfer(line, asset);
+            applyApprovedTransfer(line, asset, header.getTransferDate());
             assets.save(asset);
             auditLogService.log(
                     "ASSET_TRANSFER",
@@ -497,7 +500,7 @@ public class AssetTransferService {
         }
     }
 
-    private void applyApprovedTransfer(AssetTransfer line, AssetItem asset) {
+    private void applyApprovedTransfer(AssetTransfer line, AssetItem asset, LocalDate transferDate) {
         if ("REVOKE".equals(line.getTransferType())) {
             asset.setAssignedEmployeeId(null);
             asset.setDepartmentId(null);
@@ -509,6 +512,9 @@ public class AssetTransferService {
         asset.setDepartmentId(line.getToDepartmentId());
         asset.setSiteId(line.getToSiteId());
         asset.setProjectId(line.getToProjectId());
+        if (transferDate != null) {
+            asset.setUseDate(transferDate);
+        }
         if (!isBlank(line.getStatusAfter())) {
             asset.setStatus(AssetStatus.valueOf(line.getStatusAfter()));
         }
@@ -531,6 +537,7 @@ public class AssetTransferService {
         data.put("departmentId", asset.getDepartmentId());
         data.put("siteId", asset.getSiteId());
         data.put("projectId", asset.getProjectId());
+        data.put("useDate", asset.getUseDate());
         data.put("status", asset.getStatus() == null ? null : asset.getStatus().name());
         return data;
     }
@@ -638,6 +645,7 @@ public class AssetTransferService {
                 transferHeader.getToProjectId(),
                 transferHeader.getTransferDate(),
                 transferHeader.getPlannedHandoverAt(),
+                transferHeader.getCreatedAt(),
                 transferHeader.getReason(),
                 transferHeader.getNote(),
                 transferHeader.getRequestedBy(),

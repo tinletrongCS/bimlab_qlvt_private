@@ -21,6 +21,7 @@ public record AssetTransferHeaderResponse(
         Long toProjectId,
         LocalDate transferDate,
         LocalDateTime plannedHandoverAt,
+        LocalDateTime createdAt,
         String reason,
         String note,
         String requestedBy,

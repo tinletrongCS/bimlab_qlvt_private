@@ -56,6 +56,7 @@ class AssetTransferControllerWebMvcTest {
                 null,
                 LocalDate.now(),
                 null,
+                null,
                 "Cấp phát",
                 null,
                 "admin",

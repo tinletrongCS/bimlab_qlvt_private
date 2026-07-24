@@ -1,9 +1,12 @@
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
 
 :root {
-  font-family:
+  --qlvt-font-family:
     "Inter", "Noto Sans", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
     sans-serif;
+  --qlvt-font-size: 13px;
+  --qlvt-font-weight: 500;
+  font-family: var(--qlvt-font-family);
   color: #0f172a;
   background: #f8fafc;
   font-synthesis: none;
@@ -24,6 +27,10 @@ body,
 }
 
 body {
+  font-family: var(--qlvt-font-family);
+  font-size: var(--qlvt-font-size);
+  font-weight: var(--qlvt-font-weight);
+  line-height: 1.4;
   margin: 0;
 }
 
@@ -32,6 +39,7 @@ input,
 select,
 textarea {
   font: inherit;
+  font-family: var(--qlvt-font-family);
 }
 
 button {
@@ -13506,10 +13514,16 @@ button {
 }
 
 .transfer-detail-block h3,
+.transfer-list-heading h2,
 .transfer-pending-heading h2 {
   margin: 0 0 8px;
   color: #0f172a;
   font-size: 14px;
+}
+
+.transfer-list-heading {
+  border-bottom: 1px solid #e2e8f0;
+  margin-bottom: 10px;
 }
 
 .transfer-detail-fields {
@@ -13529,6 +13543,13 @@ button {
 .transfer-detail-documents {
   color: #64748b;
   font-size: 12px;
+}
+
+.transfer-detail-people span {
+  color: #0f172a;
+  font-family: Inter, Arial, sans-serif;
+  font-size: 13px;
+  font-weight: 500;
 }
 
 .transfer-detail-fields strong {
@@ -13574,6 +13595,18 @@ button {
   font-size: 12px;
 }
 
+.transfer-detail-table th {
+  color: #0f172a;
+  font-weight: 700;
+}
+
+.transfer-detail-table td {
+  color: #0f172a;
+  font-family: Inter, Arial, sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+}
+
 .transfer-detail-table th:first-child {
   width: 48px;
 }
@@ -13617,7 +13650,7 @@ button {
 
 .transfer-pending-filters {
   display: grid !important;
-  grid-template-columns: 180px 180px minmax(240px, 1fr);
+  grid-template-columns: 124px 160px minmax(360px, 1fr);
   gap: 8px !important;
   margin: 10px 0 !important;
 }
@@ -13632,8 +13665,77 @@ button {
   background: #fff;
 }
 
-.transfer-pending-card .transfer-ticket-detail {
-  max-height: none;
+.transfer-pending-summary {
+  align-items: center;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(180px, 1fr) minmax(220px, auto) auto auto;
+  min-height: 48px;
+  padding: 7px 10px;
+}
+
+.transfer-pending-identity {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+
+.transfer-pending-identity strong {
+  color: #2563eb;
+  font-size: 12px;
+}
+
+.transfer-pending-identity span {
+  color: #334155;
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.transfer-pending-meta {
+  align-items: center;
+  display: flex;
+  gap: 18px;
+}
+
+.transfer-pending-meta > span {
+  display: grid;
+  gap: 1px;
+}
+
+.transfer-pending-meta small {
+  color: #64748b;
+  font-family: Inter, Arial, sans-serif;
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.transfer-pending-meta strong {
+  color: #334155;
+  font-family: Inter, Arial, sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.transfer-pending-detail-button {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  color: #2563eb;
+  cursor: pointer;
+  display: inline-flex;
+  font-weight: 600;
+  gap: 4px;
+  padding: 4px;
+  text-decoration: underline;
+  white-space: nowrap;
+}
+
+#root .transfer-pending-detail-button:hover {
+  background: #eff6ff !important;
+  color: #2563eb !important;
+  transform: none !important;
 }
 
 .transfer-pending-actions {
@@ -13642,9 +13744,130 @@ button {
 }
 
 .transfer-pending-actions textarea {
-  width: min(520px, 60%);
-  min-height: 42px;
+  background: #f8fafc;
+  box-sizing: border-box;
+  line-height: 20px;
+  min-height: 36px;
+  padding: 7px 10px;
   resize: vertical;
+  width: min(520px, 60%);
+}
+
+.transfer-pending-actions textarea,
+.transfer-pending-actions button,
+.transfer-pending-detail-button {
+  font-family: Inter, Arial, sans-serif !important;
+  font-size: 12px !important;
+}
+
+.transfer-list-footer {
+  align-items: center;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  padding-right: 0;
+}
+
+.transfer-list-footer .table-pagination {
+  border-top: 0;
+  flex: 1;
+}
+
+#root .transfer-list-add-button {
+  align-items: center;
+  background: #16a34a !important;
+  border: 0 !important;
+  display: inline-flex;
+  font-family: Inter, Arial, sans-serif !important;
+  font-size: 12px !important;
+  gap: 5px;
+  min-height: 34px;
+  margin-left: 8px;
+}
+
+#root .transfer-list-add-button:hover {
+  background: #15803d !important;
+}
+
+#root .transfer-reject-button {
+  background: #dc2626 !important;
+  border: 0 !important;
+  color: #fff !important;
+}
+
+#root .transfer-reject-button:hover {
+  background: #b91c1c !important;
+}
+
+#root .transfer-status-badge {
+  border: 0 !important;
+  border-radius: 2px !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  line-height: 1.2 !important;
+  padding: 4px 7px !important;
+  width: fit-content !important;
+}
+
+#root .asset-detail-hero .transfer-status-badge {
+  display: inline-flex !important;
+  justify-self: start !important;
+}
+
+#root .transfer-status-badge.badge-approved {
+  background: #dcfce7 !important;
+  color: #166534 !important;
+}
+
+#root .transfer-status-badge.badge-pending_approval,
+#root .transfer-status-badge.badge-pending {
+  background: #fef3c7 !important;
+  color: #92400e !important;
+}
+
+#root .transfer-status-badge.badge-rejected,
+#root .transfer-status-badge.badge-cancelled {
+  background: #fee2e2 !important;
+  color: #991b1b !important;
+}
+
+.transfer-form-top-grid {
+  align-items: stretch !important;
+  gap: 12px !important;
+}
+
+.transfer-form-top-grid > .transfer-form-block {
+  align-self: stretch;
+}
+
+#root .transfer-create-form > .panel-body {
+  gap: 12px !important;
+}
+
+.transfer-create-assets-table th {
+  color: #0f172a !important;
+  font-family: Inter, Arial, sans-serif !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+}
+
+.transfer-create-assets-table td,
+.transfer-create-assets-table td input {
+  color: #0f172a;
+  font-family: Inter, Arial, sans-serif !important;
+  font-size: 13px !important;
+  font-weight: 500;
+}
+
+#root .transfer-submit-button {
+  background: #16a34a !important;
+  border: 0 !important;
+  color: #fff !important;
+  font-family: Inter, Arial, sans-serif !important;
+  font-size: 12px !important;
+}
+
+#root .transfer-submit-button:hover:not(:disabled) {
+  background: #15803d !important;
 }
 
 @media (max-width: 900px) {
@@ -13666,6 +13889,30 @@ button {
   .transfer-pending-actions textarea {
     width: 100%;
   }
+
+  .transfer-pending-summary {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .transfer-pending-meta {
+    display: none;
+  }
+
+  .transfer-list-footer {
+    align-items: stretch;
+    flex-direction: column;
+    padding: 0 12px 10px;
+  }
+}
+
+/* Keep the primary navigation flush with the sidebar and viewport edge. */
+#root .content {
+  padding: 0 10px 12px !important;
+}
+
+#root .section-tabs {
+  margin-left: -10px !important;
+  margin-right: -10px !important;
 }
 
 /* Ensure green background for download buttons */
@@ -13870,17 +14117,66 @@ button {
   z-index: 4000;
 }
 
-/* Approval cards remain detailed but use an internal viewport instead of growing indefinitely. */
-#root .transfer-pending-card .transfer-ticket-detail {
-  gap: 6px;
-  max-height: 520px;
-  padding: 8px;
+/* Global typography: selected approver text is the baseline for application content. */
+#root .app-shell,
+#root table,
+#root button,
+#root input,
+#root select,
+#root textarea,
+#root option {
+  font-family: var(--qlvt-font-family) !important;
+  letter-spacing: 0 !important;
 }
 
-#root .transfer-pending-card .transfer-detail-block {
-  padding: 7px 8px;
+#root .app-shell table tbody td {
+  font-family: var(--qlvt-font-family) !important;
+  font-size: var(--qlvt-font-size) !important;
+  font-weight: var(--qlvt-font-weight) !important;
+  line-height: 1.35 !important;
 }
 
-#root .transfer-pending-card .transfer-detail-block h3 {
-  margin-bottom: 5px;
+#root .asset-table td,
+#root .asset-table td.asset-table-sticky-left,
+#root .asset-table td.asset-table-sticky-right,
+#root .asset-table td.asset-table-sticky-select,
+#root .asset-table td.asset-table-sticky-asset,
+#root .asset-table td.asset-table-sticky-category,
+#root .asset-table td.asset-table-actions-col {
+  color: #0f172a;
+  font-family: var(--qlvt-font-family) !important;
+  font-size: var(--qlvt-font-size) !important;
+  font-weight: var(--qlvt-font-weight) !important;
+  line-height: 1.35 !important;
+}
+
+#root .asset-table td strong {
+  font-weight: 600 !important;
+}
+
+#root .transfer-create-form .transfer-asset-select .searchable-select-input,
+#root .transfer-create-form .transfer-asset-select .searchable-select-option,
+#root .transfer-create-form .transfer-asset-select .searchable-select-empty {
+  font-family: var(--qlvt-font-family) !important;
+  font-size: var(--qlvt-font-size) !important;
+  font-weight: var(--qlvt-font-weight) !important;
+}
+
+@media (min-width: 901px) {
+  #root .transfer-pending-filters {
+    grid-template-columns: 110px 150px minmax(0, 1fr) !important;
+  }
+
+  #root .transfer-pending-filters > .category-filter:first-child {
+    min-width: 0 !important;
+    width: 110px !important;
+  }
+
+  #root .transfer-pending-filters .searchable-select-container,
+  #root .transfer-pending-filters .searchable-select-input-wrapper,
+  #root .transfer-pending-filters .searchable-select-input,
+  #root .transfer-pending-search {
+    min-width: 0 !important;
+    width: 100% !important;
+  }
 }

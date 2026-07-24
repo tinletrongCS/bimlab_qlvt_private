@@ -130,6 +130,23 @@ class AssetTransferServiceTest {
     }
 
     @Test
+    void createTransferPendingApproval_rejectsNonFutureTransferDate() {
+        AssetTransferHeaderRequest baseRequest = request("PBG-4", 1L);
+        AssetTransferHeaderRequest req = new AssetTransferHeaderRequest(
+                baseRequest.transferCode(), baseRequest.title(), baseRequest.transferType(),
+                baseRequest.fromEmployeeId(), baseRequest.toEmployeeId(),
+                baseRequest.fromDepartmentId(), baseRequest.toDepartmentId(),
+                baseRequest.fromSiteId(), baseRequest.toSiteId(),
+                baseRequest.fromProjectId(), baseRequest.toProjectId(),
+                LocalDate.now(), baseRequest.plannedHandoverAt(),
+                baseRequest.reason(), baseRequest.note(), baseRequest.approverEmployeeIds(),
+                baseRequest.documents(), baseRequest.lines()
+        );
+
+        assertThrows(IllegalArgumentException.class, () -> service.createTransferPendingApproval(req));
+    }
+
+    @Test
     void approveTransferHeader_updatesAssignedAndRevokedAssets() {
         AssetTransferHeader header = pendingHeader();
         AssetTransferConfirmation confirmation = AssetTransferConfirmation.builder()
@@ -194,6 +211,7 @@ class AssetTransferServiceTest {
         assertEquals(8L, assignedAsset.getDepartmentId());
         assertEquals(9L, assignedAsset.getSiteId());
         assertEquals(10L, assignedAsset.getProjectId());
+        assertEquals(header.getTransferDate(), assignedAsset.getUseDate());
         assertEquals(AssetStatus.ASSIGNED, assignedAsset.getStatus());
         assertEquals(null, revokedAsset.getAssignedEmployeeId());
         assertEquals(null, revokedAsset.getDepartmentId());
@@ -334,7 +352,7 @@ class AssetTransferServiceTest {
                 null,
                 null,
                 null,
-                LocalDate.of(2026, 5, 19),
+                LocalDate.now().plusDays(1),
                 null,
                 "Cấp phát",
                 null,
