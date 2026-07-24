@@ -93,7 +93,9 @@ const { asset, categories, categoryTree, employee, permissions, vendor } = vi.ho
     id: 1,
     fullName: "Nguyễn Văn A",
     employeeCode: "E001",
+    departmentId: 1,
     departmentName: "BIM",
+    positionName: "HR",
   };
 
   return { asset, categories, categoryTree, employee, permissions, vendor };
@@ -406,14 +408,15 @@ describe("QLVT pages", () => {
     const siteSelect = screen.getByRole("combobox", { name: "Chi nhánh" });
     const departmentSelect = screen.getByRole("combobox", { name: "Phòng ban nhận" });
     const employeeSelect = screen.getByRole("combobox", { name: "Nhân viên nhận" });
-    expect(departmentSelect).toBeDisabled();
+    expect(siteSelect).toHaveValue("BIMLAB");
+    expect(departmentSelect).toBeEnabled();
     expect(employeeSelect).toBeDisabled();
     chooseSearchableOption(siteSelect, /Văn phòng/);
-    await waitFor(() => expect(departmentSelect).toBeEnabled());
     chooseSearchableOption(departmentSelect, /^BIM$/);
 
     await user.click(screen.getByLabelText("Chỉ định người xét duyệt"));
     chooseSearchableOption(screen.getByPlaceholderText("Thêm người duyệt..."), /Nguyễn Văn A/);
+    expect(screen.getByText("Nguyễn Văn A · HR")).toBeVisible();
     const assetSelector = screen.getByPlaceholderText("Chọn tài sản để thêm");
     expect(assetSelector).toHaveValue("");
     chooseSearchableOption(assetSelector, /TS-001/);

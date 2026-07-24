@@ -13844,3 +13844,43 @@ button {
 #root .category-child-slot {
   padding-inline: 4px !important;
 }
+
+/* Transfer form: keep deep native controls and searchable selects on the app font. */
+#root .transfer-create-form,
+#root .transfer-create-form input,
+#root .transfer-create-form textarea,
+#root .transfer-create-form button,
+#root .transfer-create-form .searchable-select-option,
+#root .transfer-create-form .searchable-select-empty {
+  font-family: Inter, Arial, sans-serif !important;
+  font-size: 12px;
+}
+
+/* Bulk action dropdown must escape the selected-assets workspace. */
+#root .asset-selection-workspace {
+  overflow: visible;
+}
+
+#root .asset-bulk-action-select {
+  position: relative;
+  z-index: 30;
+}
+
+#root .asset-bulk-action-select .searchable-select-dropdown {
+  z-index: 4000;
+}
+
+/* Approval cards remain detailed but use an internal viewport instead of growing indefinitely. */
+#root .transfer-pending-card .transfer-ticket-detail {
+  gap: 6px;
+  max-height: 520px;
+  padding: 8px;
+}
+
+#root .transfer-pending-card .transfer-detail-block {
+  padding: 7px 8px;
+}
+
+#root .transfer-pending-card .transfer-detail-block h3 {
+  margin-bottom: 5px;
+}

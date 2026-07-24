@@ -15,8 +15,15 @@ import {
 } from "../services/api";
 import type { AssetTransfer, EmployeeLite } from "../services/types";
 
+const DEFAULT_SITE_VALUE = "BIMLAB";
+
 function employeeName(employee?: EmployeeLite): string {
   return employee?.fullName || employee?.name || (employee ? `Nhân viên #${employee.id}` : "--");
+}
+
+function approverName(employee?: EmployeeLite): string {
+  const role = employee?.positionName || employee?.departmentName;
+  return role ? `${employeeName(employee)} · ${role}` : employeeName(employee);
 }
 
 interface TransferGroup {
@@ -148,7 +155,7 @@ export function TransfersPage() {
   const [decisionDate, setDecisionDate] = useState(new Date().toISOString().split("T")[0]);
   const [toEmployeeId, setToEmployeeId] = useState("");
   const [toDepartmentId, setToDepartmentId] = useState("");
-  const [toSiteId, setToSiteId] = useState("");
+  const [toSiteId, setToSiteId] = useState(DEFAULT_SITE_VALUE);
   const [reason, setReason] = useState("");
 
   const [requireApproval, setRequireApproval] = useState(false);
@@ -192,7 +199,11 @@ export function TransfersPage() {
     if (!toDepartmentId) return [];
     const dept = departments.find((d) => d.id === Number(toDepartmentId));
     if (!dept) return employees;
-    return employees.filter((e) => e.departmentName === dept.name);
+    return employees.filter(
+      (employee) =>
+        employee.departmentId === dept.id ||
+        (employee.departmentId == null && employee.departmentName === dept.name),
+    );
   }, [toDepartmentId, employees, departments, lockEmployee, selectedAsset?.assignedEmployeeId]);
 
   useEffect(() => {
@@ -202,8 +213,11 @@ export function TransfersPage() {
       setToEmployeeId("");
       return;
     }
-    if (!selectedAsset) return;
-    setToSiteId(selectedAsset.siteId ? String(selectedAsset.siteId) : "");
+    if (!selectedAsset) {
+      setToSiteId((current) => current || DEFAULT_SITE_VALUE);
+      return;
+    }
+    setToSiteId(selectedAsset.siteId ? String(selectedAsset.siteId) : DEFAULT_SITE_VALUE);
     setToDepartmentId(selectedAsset.departmentId ? String(selectedAsset.departmentId) : "");
     setToEmployeeId(
       selectedAsset.assignedEmployeeId ? String(selectedAsset.assignedEmployeeId) : "",
@@ -218,7 +232,7 @@ export function TransfersPage() {
     setDecisionDate(new Date().toISOString().split("T")[0]);
     setToEmployeeId("");
     setToDepartmentId("");
-    setToSiteId("");
+    setToSiteId(DEFAULT_SITE_VALUE);
     setReason("");
     setRequireApproval(false);
     setApprovedByUsers([]);
@@ -347,7 +361,7 @@ export function TransfersPage() {
         transferType,
         toEmployeeId: toEmployeeId ? Number(toEmployeeId) : undefined,
         toDepartmentId: toDepartmentId ? Number(toDepartmentId) : undefined,
-        toSiteId: toSiteId ? Number(toSiteId) : undefined,
+        toSiteId: toSiteId && toSiteId !== DEFAULT_SITE_VALUE ? Number(toSiteId) : undefined,
         transferDate,
         plannedHandoverAt: `${decisionDate}T09:00:00`,
         reason,
@@ -368,22 +382,23 @@ export function TransfersPage() {
   };
 
   const formLabelStyle = {
-    fontSize: "14px",
+    fontSize: "12px",
     fontWeight: 500,
     color: "#334155",
     display: "flex",
     gap: "4px",
+    fontFamily: "Inter, Arial, sans-serif",
   };
   const formInputStyle = {
     padding: "8px 12px",
     borderRadius: "8px",
     border: "1px solid var(--qlvt-border, #e2e8f0)",
-    fontSize: "14px",
+    fontSize: "12px",
     outline: "none",
     width: "100%",
     minHeight: "38px",
     background: "#fff",
-    fontFamily: "inherit",
+    fontFamily: "Inter, Arial, sans-serif",
   };
 
   const getAssetLocation = (asset: any) => {
@@ -482,7 +497,8 @@ export function TransfersPage() {
 
   const renderTicketDetails = (ticket: TransferGroup) => {
     const transfer = ticket.first;
-    const siteName = (id?: number) => workSites.find((site) => site.id === id)?.name || "Chưa có";
+    const siteName = (id?: number) =>
+      id ? workSites.find((site) => site.id === id)?.name || "Chưa có" : "BIMLAB";
     const departmentName = (id?: number) =>
       departments.find((department) => department.id === id)?.name || "Chưa có";
     const statusColor =
@@ -1168,7 +1184,7 @@ export function TransfersPage() {
                         setToEmployeeId("");
                       }}
                     >
-                      <option value="">Chọn chi nhánh</option>
+                      <option value={DEFAULT_SITE_VALUE}>BIMLAB</option>
                       {workSites.map((s) => (
                         <option key={s.id} value={String(s.id)}>
                           {s.name}
@@ -1294,7 +1310,7 @@ export function TransfersPage() {
                             {employees.map((e) => (
                               <option key={e.id} value={String(e.id)}>
                                 {approvedByUsers.includes(String(e.id)) ? "✓ " : ""}
-                                {employeeName(e)}
+                                {approverName(e)}
                                 {approvedByUsers.includes(String(e.id)) ? " (đã chọn)" : ""}
                               </option>
                             ))}
@@ -1330,7 +1346,7 @@ export function TransfersPage() {
                                   }}
                                 >
                                   <span style={{ color: "#0f172a" }}>
-                                    {emp ? employeeName(emp) : empIdStr}
+                                    {emp ? approverName(emp) : empIdStr}
                                   </span>
                                   <button
                                     type="button"
@@ -1610,9 +1626,12 @@ export function TransfersPage() {
                       pagedAssetIds.map((id, index) => {
                         const asset = assets.find((a) => a.id === id);
 
-                        const siteName = toSiteId
-                          ? workSites.find((s) => s.id === Number(toSiteId))?.name
-                          : "";
+                        const siteName =
+                          toSiteId === DEFAULT_SITE_VALUE
+                            ? "BIMLAB"
+                            : toSiteId
+                              ? workSites.find((s) => s.id === Number(toSiteId))?.name
+                              : "";
                         const deptName = toDepartmentId
                           ? departments.find((d) => d.id === Number(toDepartmentId))?.name
                           : "";

@@ -406,7 +406,9 @@ export interface EmployeeLite {
   fullName?: string;
   name?: string;
   employeeCode?: string;
+  departmentId?: number;
   departmentName?: string;
+  positionName?: string;
 }
 
 export interface DepartmentLite {
