@@ -1572,6 +1572,7 @@ export function TransfersPage() {
                         <option key={a.id} value={String(a.id)}>
                           {selectedAssetIds.includes(a.id) ? "✓ " : ""}
                           {a.assetCode} · {a.name}
+                          {selectedAssetIds.includes(a.id) ? " (đã chọn)" : ""}
                         </option>
                       ))}
                     </SearchableSelect>
