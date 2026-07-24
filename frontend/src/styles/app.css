@@ -14164,12 +14164,12 @@ button {
 
 @media (min-width: 901px) {
   #root .transfer-pending-filters {
-    grid-template-columns: 110px 150px minmax(0, 1fr) !important;
+    grid-template-columns: 140px 150px minmax(0, 1fr) !important;
   }
 
   #root .transfer-pending-filters > .category-filter:first-child {
     min-width: 0 !important;
-    width: 110px !important;
+    width: 140px !important;
   }
 
   #root .transfer-pending-filters .searchable-select-container,
