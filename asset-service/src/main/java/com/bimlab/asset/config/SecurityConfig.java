@@ -45,7 +45,8 @@ public class SecurityConfig {
                             "/actuator/health", 
                             "/actuator/health/**", 
                             "/actuator.info",
-                            "/actuator/prometheus"
+                            "/actuator/prometheus",
+                            "/api/asset/qr/public/**"
                         ).permitAll()
                         .anyRequest().authenticated())
                 .addFilterAfter(new CsrfCookieFilter(), UsernamePasswordAuthenticationFilter.class);

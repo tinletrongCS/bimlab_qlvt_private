@@ -19,6 +19,7 @@ import type {
   AssetImportValidationResponse,
   AssetItem,
   AssetPayload,
+  AssetQrCode,
   AssetTransfer,
   AssetTransferPayload,
   AuthUser,
@@ -145,6 +146,19 @@ export async function updateAsset(id: number, payload: AssetPayload): Promise<As
 
 export async function deleteAsset(id: number): Promise<void> {
   await api.delete(`/asset/assets/${id}`);
+}
+
+export async function issueAssetQrCodes(assetIds: number[]): Promise<AssetQrCode[]> {
+  const response = await api.post<AssetQrCode[]>("/asset/qr/issue", { assetIds });
+  const configuredValue = import.meta.env.VITE_ASSET_QR_PUBLIC_PAGE_URL?.trim();
+  const configuredPage =
+    configuredValue && configuredValue.toLowerCase() !== "null" ? configuredValue : "";
+  const pageUrl = configuredPage || `${window.location.origin}/asset-qr.html`;
+  const separator = pageUrl.includes("?") ? "&" : "?";
+  return response.data.map((item) => ({
+    ...item,
+    publicUrl: `${pageUrl}${separator}token=${encodeURIComponent(item.token)}`,
+  }));
 }
 
 export async function validateAssetImport(

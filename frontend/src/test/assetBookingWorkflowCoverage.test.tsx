@@ -14,6 +14,7 @@ const mocks = vi.hoisted(() => ({
   deleteAsset: vi.fn(),
   ensureAssetDetailLookups: vi.fn(),
   ensureAssets: vi.fn(),
+  issueAssetQrCodes: vi.fn(),
   loadAssetBookings: vi.fn(),
   loadAssetCategoryTree: vi.fn(),
   loadAssets: vi.fn(),
@@ -262,6 +263,7 @@ vi.mock("../services/api", () => ({
   loadAssetBookings: mocks.loadAssetBookings,
   loadAssetCategoryTree: mocks.loadAssetCategoryTree,
   loadAssets: mocks.loadAssets,
+  issueAssetQrCodes: mocks.issueAssetQrCodes,
   updateAsset: mocks.updateAsset,
   validateAssetImport: mocks.validateAssetImport,
 }));
@@ -280,6 +282,15 @@ describe("QLVT asset and booking workflow coverage", () => {
     mocks.ensureAssetDetailLookups.mockResolvedValue(undefined);
     mocks.loadAssetCategoryTree.mockResolvedValue(categoryTree);
     mocks.loadAssets.mockResolvedValue(assets);
+    mocks.issueAssetQrCodes.mockResolvedValue([
+      {
+        assetId: 1,
+        assetCode: "TS-001",
+        assetName: "Laptop Dell Precision",
+        token: "qr-token",
+        publicUrl: "http://localhost:3002/asset-qr.html?token=qr-token",
+      },
+    ]);
     mocks.loadAssetBookings.mockResolvedValue(bookings);
     mocks.checkAssetBookingAvailability.mockResolvedValue({
       assetId: 2,
@@ -397,7 +408,8 @@ describe("QLVT asset and booking workflow coverage", () => {
     await user.click(screen.getByRole("button", { name: "Mở thao tác cho TS-001" }));
     await user.click(await screen.findByRole("menuitem", { name: "Xem QR" }));
     expect(await screen.findByRole("heading", { name: "Mã QR tài sản" })).toBeVisible();
-    expect(screen.getByText("Updated soon.")).toBeVisible();
+    expect(await screen.findByText("Quét mã để xem thông tin của tài sản này.")).toBeVisible();
+    expect(mocks.issueAssetQrCodes).toHaveBeenCalledWith([1]);
     await user.click(screen.getByRole("button", { name: "Đóng" }));
 
     await user.type(

@@ -1,3 +1,4 @@
+import QRCode from "qrcode";
 import {
   type ChangeEvent,
   type CSSProperties,
@@ -34,6 +35,7 @@ import { employeeLabel, money, projectLabel } from "../lib/format";
 import {
   commitAssetImport,
   deleteAsset,
+  issueAssetQrCodes,
   loadAssetCategoryTree,
   updateAsset,
   validateAssetImport,
@@ -45,13 +47,14 @@ import type {
   AssetImportValidationResponse,
   AssetItem,
   AssetPayload,
+  AssetQrCode,
 } from "../services/types";
 
 type AssetStatusFilter = "ALL" | "IN_STOCK" | "ASSIGNED" | "MAINTENANCE" | "DISPOSED";
 type AssetValueFilter = "ALL" | "UNDER_10M" | "FROM_10M_TO_50M" | "FROM_50M_TO_200M" | "FROM_200M";
 type ImportMode = AssetImportCommitPayload["importMode"];
 type ImportPreviewFilter = "ALL" | "VALID" | "INVALID" | "WARNING";
-type AssetBulkAction = "status" | "move" | "assign" | "return" | null;
+type AssetBulkAction = "status" | "move" | "assign" | "return" | "qr" | null;
 type AssetTableColumnId =
   | "asset"
   | "category"
@@ -80,6 +83,65 @@ interface AssetTableColumnConfig {
 interface AssetTableColumnDefinition extends AssetTableColumnConfig {
   render: (item: AssetItem) => ReactNode;
   align?: "right" | "center";
+}
+
+function escapeHtml(value: string) {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;");
+}
+
+async function renderQrPrint(printWindow: Window, codes: AssetQrCode[]) {
+  const labels = await Promise.all(
+    codes.map(async (code) => ({
+      ...code,
+      svg: await QRCode.toString(code.publicUrl, {
+        type: "svg",
+        errorCorrectionLevel: "M",
+        margin: 1,
+        width: 260,
+      }),
+    })),
+  );
+  printWindow.document.open();
+  printWindow.document.write(`<!doctype html>
+    <html lang="vi">
+      <head>
+        <meta charset="UTF-8">
+        <title>In mã QR tài sản</title>
+        <style>
+          @page { size: A4 portrait; margin: 10mm; }
+          * { box-sizing: border-box; }
+          body { margin: 0; color: #172033; font-family: Inter, Arial, "Segoe UI", sans-serif; }
+          .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8mm; }
+          .label { min-height: 82mm; padding: 7mm; display: grid; place-items: center; align-content: center;
+            border: 1px solid #cbd5e1; break-inside: avoid; text-align: center; }
+          .qr { width: 52mm; height: 52mm; }
+          .qr svg { display: block; width: 100%; height: 100%; }
+          strong { margin-top: 3mm; font-size: 13pt; }
+          span { margin-top: 1.5mm; color: #245f8a; font-size: 10pt; font-weight: 700; }
+          small { margin-top: 1.5mm; color: #64748b; font-size: 8pt; }
+        </style>
+      </head>
+      <body>
+        <div class="grid">
+          ${labels
+            .map(
+              (code) => `<article class="label">
+                <div class="qr">${code.svg}</div>
+                <strong>${escapeHtml(code.assetName)}</strong>
+                <span>${escapeHtml(code.assetCode)}</span>
+                <small>Quét để xem thông tin tài sản</small>
+              </article>`,
+            )
+            .join("")}
+        </div>
+        <script>window.addEventListener("load", () => { window.focus(); window.print(); });</script>
+      </body>
+    </html>`);
+  printWindow.document.close();
 }
 
 const ASSET_VALUE_FILTERS: Array<{
@@ -982,6 +1044,9 @@ export function AssetsPage() {
   const [assetDraft, setAssetDraft] = useState<AssetPayload | null>(null);
   const [assetSaving, setAssetSaving] = useState(false);
   const [qrAsset, setQrAsset] = useState<AssetItem | null>(null);
+  const [qrCode, setQrCode] = useState<AssetQrCode | null>(null);
+  const [qrSvg, setQrSvg] = useState("");
+  const [qrBusy, setQrBusy] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [importCancelConfirm, setImportCancelConfirm] = useState(false);
   const [importBusy, setImportBusy] = useState(false);
@@ -1495,6 +1560,11 @@ export function AssetsPage() {
 
   const openBulkPanelAction = (action: AssetBulkAction) => {
     if (selectedAssets.length === 0) return;
+    if (action === "qr") {
+      setBulkPanelAction(null);
+      void handlePrintQrBatch();
+      return;
+    }
     setBulkPanelAction((current) => (current === action ? null : action));
     if (action === "move" || action === "assign") {
       void ensureAssetDetailLookups();
@@ -1584,13 +1654,65 @@ export function AssetsPage() {
     );
   };
 
-  const handlePrintQr = () => {
-    if (selectedAssets.length !== 1) {
-      toast.error("Chọn đúng 1 tài sản để xem hoặc in QR.");
+  const openAssetQr = async (asset: AssetItem) => {
+    setQrAsset(asset);
+    setQrCode(null);
+    setQrSvg("");
+    setQrBusy(true);
+    try {
+      const [issued] = await issueAssetQrCodes([asset.id]);
+      if (!issued) throw new Error("Không tạo được mã QR");
+      const svg = await QRCode.toString(issued.publicUrl, {
+        type: "svg",
+        errorCorrectionLevel: "M",
+        margin: 1,
+        width: 280,
+      });
+      setQrCode(issued);
+      setQrSvg(`data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`);
+    } catch {
+      setQrAsset(null);
+      toast.error("Không tạo được mã QR tài sản.");
+    } finally {
+      setQrBusy(false);
+    }
+  };
+
+  const closeAssetQr = () => {
+    setQrAsset(null);
+    setQrCode(null);
+    setQrSvg("");
+  };
+
+  const handlePrintQrBatch = async () => {
+    if (selectedAssets.length === 0 || bulkActionBusy) return;
+    const printWindow = window.open("", "bimlab-asset-qr-print", "width=920,height=760");
+    if (!printWindow) {
+      toast.error("Trình duyệt đang chặn cửa sổ in.");
       return;
     }
-    setQrAsset(selectedAssets[0]);
-    toast.success("Đã mở khung QR tài sản.");
+    printWindow.document.write("<p>Đang chuẩn bị mã QR...</p>");
+    setBulkActionBusy(true);
+    try {
+      const codes = await issueAssetQrCodes(selectedAssets.map((asset) => asset.id));
+      await renderQrPrint(printWindow, codes);
+      toast.success(`Đã chuẩn bị ${codes.length} mã QR để in.`);
+    } catch {
+      printWindow.close();
+      toast.error("Không chuẩn bị được danh sách mã QR.");
+    } finally {
+      setBulkActionBusy(false);
+    }
+  };
+
+  const handlePrintCurrentQr = async () => {
+    if (!qrCode) return;
+    const printWindow = window.open("", "bimlab-asset-qr-print", "width=920,height=760");
+    if (!printWindow) {
+      toast.error("Trình duyệt đang chặn cửa sổ in.");
+      return;
+    }
+    await renderQrPrint(printWindow, [qrCode]);
   };
 
   const toggleAssetColumn = (id: AssetTableColumnId) => {
@@ -2241,7 +2363,7 @@ export function AssetsPage() {
                               },
                               {
                                 label: "Xem QR",
-                                onClick: () => setQrAsset(item),
+                                onClick: () => void openAssetQr(item),
                               },
                               ...(canManage
                                 ? [
@@ -2315,9 +2437,7 @@ export function AssetsPage() {
                       <option value="">Chọn thao tác</option>
                       <option value="status">Cập nhật trạng thái</option>
 
-                      <option value="qr" disabled>
-                        In QR theo nhóm
-                      </option>
+                      <option value="qr">In QR theo nhóm</option>
                     </SearchableSelect>
                   </label>
                   <button
@@ -3173,18 +3293,36 @@ export function AssetsPage() {
                   <p>{qrAsset.assetCode}</p>
                 </div>
               </div>
-              <button type="button" className="icon-button" onClick={() => setQrAsset(null)}>
+              <button type="button" className="icon-button" onClick={closeAssetQr}>
                 <FiX />
               </button>
             </div>
-            <div className="asset-qr-placeholder">
-              <FiGrid />
-              <strong>{qrAsset.name}</strong>
-              <span>Updated soon.</span>
+            <div className="asset-qr-preview">
+              {qrBusy ? (
+                <span>Đang tạo mã QR...</span>
+              ) : (
+                <>
+                  <img
+                    className="asset-qr-image"
+                    aria-label={`Mã QR của ${qrAsset.assetCode}`}
+                    src={qrSvg}
+                  />
+                  <strong>{qrAsset.name}</strong>
+                  <small>Quét mã để xem thông tin của tài sản này.</small>
+                </>
+              )}
             </div>
             <div className="modal-actions">
-              <button type="button" className="secondary" onClick={() => setQrAsset(null)}>
+              <button type="button" className="secondary" onClick={closeAssetQr}>
                 Đóng
+              </button>
+              <button
+                type="button"
+                className="primary-action"
+                disabled={!qrCode || qrBusy}
+                onClick={() => void handlePrintCurrentQr()}
+              >
+                In QR
               </button>
             </div>
           </div>
