@@ -518,7 +518,7 @@
       <section class="access-error" id="access-error" hidden>
         <h1 id="error-title">Không thể mở thông tin tài sản</h1>
         <p id="error-message">Mã QR không hợp lệ hoặc đã hết hiệu lực.</p>
-        <a class="login-link" id="login-link" href="/">Đăng nhập vào QLVT</a>
+        <a class="login-link" id="login-link" href="/login">Đăng nhập vào QLVT</a>
       </section>
 
       <div id="asset-content" hidden>
@@ -756,11 +756,26 @@
           throw new Error("Mã QR không hợp lệ.");
         }
         const apiBase = document.querySelector('meta[name="asset-api-base"]').content.replace(/\/$/, "");
+        const storedUserKey = Object.keys(sessionStorage).find((key) => key.startsWith("oidc.user:"));
+        let accessToken = "";
+        try {
+          const storedUser = storedUserKey ? sessionStorage.getItem(storedUserKey) : null;
+          accessToken = JSON.parse(storedUser || "{}").access_token || "";
+        } catch {
+          accessToken = "";
+        }
         const response = await fetch(`${apiBase}/api/asset/qr/public/${encodeURIComponent(token)}`, {
           credentials: "omit",
-          headers: { Accept: "application/json" },
+          headers: {
+            Accept: "application/json",
+            ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+          },
         });
         if (response.status === 401 || response.status === 403) {
+          sessionStorage.setItem(
+            "qlvt:oidc:return-url",
+            `${location.pathname}${location.search}${location.hash}`,
+          );
           const error = new Error("Bạn đang ở ngoài mạng nội bộ. Hãy đăng nhập QLVT để tiếp tục.");
           error.requiresLogin = true;
           throw error;
@@ -768,7 +783,7 @@
         if (!response.ok) {
           throw new Error("Mã QR không hợp lệ, đã bị thu hồi hoặc tài sản không còn tồn tại.");
         }
-        return response.json();
+        return { asset: await response.json(), authenticated: Boolean(accessToken) };
       }
 
       document.querySelectorAll("[data-panel]").forEach((tab) => {
@@ -784,9 +799,11 @@
       });
 
       loadAsset()
-        .then((asset) => {
+        .then(({ asset, authenticated }) => {
           renderAsset(asset);
-          document.getElementById("network-state").textContent = "Mạng nội bộ · Không cần đăng nhập";
+          document.getElementById("network-state").textContent = authenticated
+            ? "Đã xác thực"
+            : "Mạng nội bộ · Không cần đăng nhập";
           document.getElementById("asset-content").hidden = false;
         })
         .catch((error) => {

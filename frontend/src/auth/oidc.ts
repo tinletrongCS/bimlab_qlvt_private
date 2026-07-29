@@ -13,6 +13,7 @@ import {
 import { installPkceDigestFallback } from "./oidcCrypto";
 
 let accessToken: string | null = null;
+const LOGIN_RETURN_URL_KEY = "qlvt:oidc:return-url";
 
 /** Lý do mất phiên: "signed-out" = SLO từ app khác (check-session iframe); "expired" = hết hạn/renew fail. */
 export type SessionLostReason = "expired" | "signed-out";
@@ -21,6 +22,12 @@ let sessionLostHandler: ((reason: SessionLostReason) => void) | null = null;
 /** Token hiện tại để axios gắn Authorization: Bearer. null nếu chưa/không còn đăng nhập. */
 export function getAccessToken(): string | null {
   return accessToken;
+}
+
+export function consumeLoginReturnUrl(): string | null {
+  const returnUrl = window.sessionStorage.getItem(LOGIN_RETURN_URL_KEY);
+  window.sessionStorage.removeItem(LOGIN_RETURN_URL_KEY);
+  return returnUrl?.startsWith("/") && !returnUrl.startsWith("//") ? returnUrl : null;
 }
 
 /** Đăng ký callback khi mất phiên (refresh thất bại / token hết hạn / đăng xuất từ app khác). */

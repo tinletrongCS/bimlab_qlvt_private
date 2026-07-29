@@ -9,6 +9,7 @@ import {
 } from "react";
 import toast from "react-hot-toast";
 import {
+  consumeLoginReturnUrl,
   handleOidcCallback,
   isOidcCallback,
   keycloakLogin,
@@ -64,6 +65,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         if (!hasSession) {
           await keycloakLogin();
+          return;
+        }
+
+        const returnUrl = consumeLoginReturnUrl();
+        if (returnUrl) {
+          window.location.replace(returnUrl);
           return;
         }
 
