@@ -150,9 +150,7 @@ export async function deleteAsset(id: number): Promise<void> {
 
 export async function issueAssetQrCodes(assetIds: number[]): Promise<AssetQrCode[]> {
   const response = await api.post<AssetQrCode[]>("/asset/qr/issue", { assetIds });
-  const configuredValue = import.meta.env.VITE_ASSET_QR_PUBLIC_PAGE_URL?.trim();
-  const configuredPage =
-    configuredValue && configuredValue.toLowerCase() !== "null" ? configuredValue : "";
+  const configuredPage = import.meta.env.VITE_ASSET_QR_PUBLIC_PAGE_URL?.trim();
   const pageUrl = configuredPage || `${window.location.origin}/asset-qr.html`;
   const separator = pageUrl.includes("?") ? "&" : "?";
   return response.data.map((item) => ({
