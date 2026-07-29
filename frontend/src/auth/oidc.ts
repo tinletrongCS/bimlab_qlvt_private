@@ -15,6 +15,14 @@ import { installPkceDigestFallback } from "./oidcCrypto";
 let accessToken: string | null = null;
 const LOGIN_RETURN_URL_KEY = "qlvt:oidc:return-url";
 const LOGIN_RETURN_URL_PARAM = "returnTo";
+const LOGIN_RETURN_URL_COOKIE = "qlvt_oidc_return_url";
+export interface OidcCallbackResult {
+  authenticated: boolean;
+  returnUrl: string | null;
+}
+
+let callbackPromise: Promise<OidcCallbackResult> | null = null;
+let consumedLoginReturnUrl: string | null | undefined;
 
 /** Lý do mất phiên: "signed-out" = SLO từ app khác (check-session iframe); "expired" = hết hạn/renew fail. */
 export type SessionLostReason = "expired" | "signed-out";
@@ -31,17 +39,33 @@ function safeLoginReturnUrl(value: unknown): string | null {
     : null;
 }
 
+function cookieLoginReturnUrl(): string | null {
+  const prefix = `${LOGIN_RETURN_URL_COOKIE}=`;
+  const cookie = document.cookie.split("; ").find((item) => item.startsWith(prefix));
+  if (!cookie) return null;
+  try {
+    return safeLoginReturnUrl(decodeURIComponent(cookie.slice(prefix.length)));
+  } catch {
+    return null;
+  }
+}
+
 function pendingLoginReturnUrl(): string | null {
   return (
     safeLoginReturnUrl(window.sessionStorage.getItem(LOGIN_RETURN_URL_KEY)) ??
-    safeLoginReturnUrl(new URLSearchParams(window.location.search).get(LOGIN_RETURN_URL_PARAM))
+    safeLoginReturnUrl(new URLSearchParams(window.location.search).get(LOGIN_RETURN_URL_PARAM)) ??
+    cookieLoginReturnUrl()
   );
 }
 
 export function consumeLoginReturnUrl(): string | null {
+  if (consumedLoginReturnUrl !== undefined) return consumedLoginReturnUrl;
   const returnUrl = pendingLoginReturnUrl();
   window.sessionStorage.removeItem(LOGIN_RETURN_URL_KEY);
-  return returnUrl;
+  // biome-ignore lint/suspicious/noDocumentCookie: QR login must support mobile browsers without Cookie Store API.
+  document.cookie = `${LOGIN_RETURN_URL_COOKIE}=; Path=/; Max-Age=0; SameSite=Lax`;
+  consumedLoginReturnUrl = returnUrl;
+  return consumedLoginReturnUrl;
 }
 
 /** Đăng ký callback khi mất phiên (refresh thất bại / token hết hạn / đăng xuất từ app khác). */
@@ -113,16 +137,18 @@ export function isOidcCallback(): boolean {
 }
 
 /** Xử lý callback: đổi code→token (PKCE), giữ token in-memory, dọn ?code&state khỏi URL. */
-export async function handleOidcCallback(): Promise<boolean> {
+export function handleOidcCallback(): Promise<OidcCallbackResult> {
+  callbackPromise ??= processOidcCallback();
+  return callbackPromise;
+}
+
+async function processOidcCallback(): Promise<OidcCallbackResult> {
   try {
     const user = await userManager().signinRedirectCallback();
-    const returnUrl = safeLoginReturnUrl(
-      (user?.state as { returnUrl?: unknown } | undefined)?.returnUrl,
-    );
-    if (returnUrl) {
-      window.sessionStorage.setItem(LOGIN_RETURN_URL_KEY, returnUrl);
-    }
-    return adopt(user);
+    const returnUrl =
+      safeLoginReturnUrl((user?.state as { returnUrl?: unknown } | undefined)?.returnUrl) ??
+      consumeLoginReturnUrl();
+    return { authenticated: adopt(user), returnUrl };
   } finally {
     const clean = new URL(window.location.href);
     for (const key of [
