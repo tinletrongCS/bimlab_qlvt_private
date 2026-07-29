@@ -14,6 +14,7 @@ import { installPkceDigestFallback } from "./oidcCrypto";
 
 let accessToken: string | null = null;
 const LOGIN_RETURN_URL_KEY = "qlvt:oidc:return-url";
+const LOGIN_RETURN_URL_PARAM = "returnTo";
 
 /** Lý do mất phiên: "signed-out" = SLO từ app khác (check-session iframe); "expired" = hết hạn/renew fail. */
 export type SessionLostReason = "expired" | "signed-out";
@@ -24,10 +25,23 @@ export function getAccessToken(): string | null {
   return accessToken;
 }
 
+function safeLoginReturnUrl(value: unknown): string | null {
+  return typeof value === "string" && value.startsWith("/") && !value.startsWith("//")
+    ? value
+    : null;
+}
+
+function pendingLoginReturnUrl(): string | null {
+  return (
+    safeLoginReturnUrl(window.sessionStorage.getItem(LOGIN_RETURN_URL_KEY)) ??
+    safeLoginReturnUrl(new URLSearchParams(window.location.search).get(LOGIN_RETURN_URL_PARAM))
+  );
+}
+
 export function consumeLoginReturnUrl(): string | null {
-  const returnUrl = window.sessionStorage.getItem(LOGIN_RETURN_URL_KEY);
+  const returnUrl = pendingLoginReturnUrl();
   window.sessionStorage.removeItem(LOGIN_RETURN_URL_KEY);
-  return returnUrl?.startsWith("/") && !returnUrl.startsWith("//") ? returnUrl : null;
+  return returnUrl;
 }
 
 /** Đăng ký callback khi mất phiên (refresh thất bại / token hết hạn / đăng xuất từ app khác). */
@@ -102,6 +116,12 @@ export function isOidcCallback(): boolean {
 export async function handleOidcCallback(): Promise<boolean> {
   try {
     const user = await userManager().signinRedirectCallback();
+    const returnUrl = safeLoginReturnUrl(
+      (user?.state as { returnUrl?: unknown } | undefined)?.returnUrl,
+    );
+    if (returnUrl) {
+      window.sessionStorage.setItem(LOGIN_RETURN_URL_KEY, returnUrl);
+    }
     return adopt(user);
   } finally {
     const clean = new URL(window.location.href);
@@ -156,7 +176,10 @@ export async function trySilentLogin(): Promise<boolean> {
 
 /** Bắt đầu đăng nhập: redirect sang trang login Keycloak. Trang sẽ điều hướng đi (không trả về). */
 export async function keycloakLogin(): Promise<void> {
-  await userManager().signinRedirect();
+  const returnUrl = pendingLoginReturnUrl();
+  await userManager().signinRedirect({
+    state: returnUrl ? { returnUrl } : undefined,
+  });
 }
 
 /**

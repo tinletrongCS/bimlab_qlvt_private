@@ -59,6 +59,26 @@ describe("QLVT oidc helpers", () => {
 
     sessionStorage.setItem("qlvt:oidc:return-url", "//evil.example");
     expect(oidc.consumeLoginReturnUrl()).toBeNull();
+
+    window.history.replaceState({}, "", "/login?returnTo=%2Fasset-qr.html%3Ftoken%3Dquery-token");
+    expect(oidc.consumeLoginReturnUrl()).toBe("/asset-qr.html?token=query-token");
+  });
+
+  it("keeps the QR return URL in the OIDC transaction state", async () => {
+    window.history.replaceState({}, "", "/login?returnTo=%2Fasset-qr.html%3Ftoken%3Dqr-token");
+    mocks.manager.signinRedirectCallback.mockResolvedValue({
+      access_token: "token-1",
+      state: { returnUrl: "/asset-qr.html?token=qr-token" },
+    });
+    const oidc = await import("./oidc");
+
+    await oidc.keycloakLogin();
+    expect(mocks.manager.signinRedirect).toHaveBeenCalledWith({
+      state: { returnUrl: "/asset-qr.html?token=qr-token" },
+    });
+
+    await oidc.handleOidcCallback();
+    expect(oidc.consumeLoginReturnUrl()).toBe("/asset-qr.html?token=qr-token");
   });
 
   it("restores non-expired stored user without silent renew", async () => {

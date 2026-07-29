@@ -190,10 +190,9 @@ async function loadAsset() {
     },
   });
   if (response.status === 401 || response.status === 403) {
-    sessionStorage.setItem(
-      "qlvt:oidc:return-url",
-      `${location.pathname}${location.search}${location.hash}`,
-    );
+    const returnUrl = `${location.pathname}${location.search}${location.hash}`;
+    sessionStorage.setItem("qlvt:oidc:return-url", returnUrl);
+    document.getElementById("login-link").href = `/login?returnTo=${encodeURIComponent(returnUrl)}`;
     const error = new Error("Bạn đang ở ngoài mạng nội bộ. Hãy đăng nhập QLVT để tiếp tục.");
     error.requiresLogin = true;
     throw error;
