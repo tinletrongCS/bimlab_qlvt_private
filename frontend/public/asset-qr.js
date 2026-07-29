@@ -192,6 +192,10 @@ async function loadAsset() {
   if (response.status === 401 || response.status === 403) {
     const returnUrl = `${location.pathname}${location.search}${location.hash}`;
     sessionStorage.setItem("qlvt:oidc:return-url", returnUrl);
+    // biome-ignore lint/suspicious/noDocumentCookie: QR login must support mobile browsers without Cookie Store API.
+    document.cookie =
+      `qlvt_oidc_return_url=${encodeURIComponent(returnUrl)}; Path=/; Max-Age=600; SameSite=Lax` +
+      (location.protocol === "https:" ? "; Secure" : "");
     document.getElementById("login-link").href = `/login?returnTo=${encodeURIComponent(returnUrl)}`;
     const error = new Error("Bạn đang ở ngoài mạng nội bộ. Hãy đăng nhập QLVT để tiếp tục.");
     error.requiresLogin = true;

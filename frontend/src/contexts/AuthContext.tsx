@@ -41,6 +41,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let cancelled = false;
     async function bootstrap() {
+      let redirecting = false;
       try {
         // Refresh token rotation thất bại / token hết hạn → mất phiên → logout UI (về /login).
         // Toast cho user biết lý do (đăng xuất từ app khác qua SLO, hoặc hết hạn) thay vì văng im lặng.
@@ -57,10 +58,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         });
         // Keycloak: nếu là callback → đổi code→token; nếu không → thử khôi phục phiên (prompt=none).
         let hasSession = false;
+        let returnUrl: string | null = null;
         if (isOidcCallback()) {
-          hasSession = await handleOidcCallback();
+          const callback = await handleOidcCallback();
+          hasSession = callback.authenticated;
+          returnUrl = callback.returnUrl;
         } else {
           hasSession = await trySilentLogin();
+          returnUrl = consumeLoginReturnUrl();
         }
 
         if (!hasSession) {
@@ -68,8 +73,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return;
         }
 
-        const returnUrl = consumeLoginReturnUrl();
         if (returnUrl) {
+          redirecting = true;
           window.location.replace(returnUrl);
           return;
         }
@@ -80,7 +85,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } catch {
         // No active session -- fall through to login screen.
       } finally {
-        if (!cancelled) setBootstrapping(false);
+        if (!cancelled && !redirecting) setBootstrapping(false);
       }
     }
     bootstrap();

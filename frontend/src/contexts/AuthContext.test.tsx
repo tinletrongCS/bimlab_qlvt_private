@@ -78,7 +78,7 @@ describe("AuthProvider", () => {
 
   it("handles callback bootstrap and redirects when no session", async () => {
     mocks.callbackCheck.mockReturnValue(true);
-    mocks.callback.mockResolvedValue(false);
+    mocks.callback.mockResolvedValue({ authenticated: false, returnUrl: null });
     render(
       <AuthProvider>
         <Harness />
