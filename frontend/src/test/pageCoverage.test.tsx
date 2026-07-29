@@ -102,6 +102,7 @@ const { asset, categories, categoryTree, employee, permissions, vendor } = vi.ho
 });
 
 vi.mock("../auth/oidc", () => ({
+  consumeLoginReturnUrl: vi.fn(() => null),
   getAccessToken: () => "test-token",
   handleOidcCallback: vi.fn().mockResolvedValue(true),
   isOidcCallback: vi.fn(() => false),

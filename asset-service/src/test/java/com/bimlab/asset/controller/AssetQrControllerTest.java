@@ -46,12 +46,18 @@ class AssetQrControllerTest {
         when(assetService.getAssetById(2L)).thenReturn(second);
         when(qrService.issue(1L)).thenReturn(new AssetQrIssueResponse(1L, "TS-1", "A", "t1", "u1"));
         when(qrService.issue(2L)).thenReturn(new AssetQrIssueResponse(2L, "TS-2", "B", "t2", "u2"));
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setScheme("http");
+        request.addHeader("Host", "192.168.110.146:8891");
 
         List<AssetQrIssueResponse> responses = controller.issue(
-                new AssetQrIssueRequest(List.of(1L, 1L, 2L))
+                new AssetQrIssueRequest(List.of(1L, 1L, 2L)),
+                request
         );
 
         assertThat(responses).extracting(AssetQrIssueResponse::assetId).containsExactly(1L, 2L);
+        assertThat(responses.get(0).publicUrl())
+                .isEqualTo("http://192.168.110.146:8891/asset-qr.html?token=t1");
         verify(access).ensureSelfOrAny(10L, com.bimlab.asset.security.Permission.Sets.ASSET_ADMIN);
         verify(access).ensureSelfOrAny(20L, com.bimlab.asset.security.Permission.Sets.ASSET_ADMIN);
     }
@@ -60,7 +66,10 @@ class AssetQrControllerTest {
     void issueRejectsMoreThanOneHundredDistinctAssets() {
         List<Long> ids = LongStream.rangeClosed(1, 101).boxed().toList();
 
-        assertThatThrownBy(() -> controller.issue(new AssetQrIssueRequest(ids)))
+        assertThatThrownBy(() -> controller.issue(
+                new AssetQrIssueRequest(ids),
+                new MockHttpServletRequest()
+        ))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Mỗi lần chỉ được in tối đa 100 mã QR");
     }

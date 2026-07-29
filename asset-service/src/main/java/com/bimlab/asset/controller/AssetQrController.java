@@ -23,6 +23,8 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 @RestController
@@ -38,7 +40,10 @@ public class AssetQrController {
 
     @PostMapping("/issue")
     @PreAuthorize("hasAnyAuthority('asset_access','asset_view_self','asset_view_team','asset_view_all','asset_manage')")
-    public List<AssetQrIssueResponse> issue(@Valid @RequestBody AssetQrIssueRequest request) {
+    public List<AssetQrIssueResponse> issue(
+            @Valid @RequestBody AssetQrIssueRequest request,
+            HttpServletRequest httpRequest
+    ) {
         List<Long> assetIds = request.assetIds().stream().distinct().toList();
         if (assetIds.size() > MAX_BATCH_SIZE) {
             throw new IllegalArgumentException("Mỗi lần chỉ được in tối đa 100 mã QR");
@@ -46,8 +51,38 @@ public class AssetQrController {
         return assetIds.stream().map(assetId -> {
             AssetItem asset = assetService.getAssetById(assetId);
             access.ensureSelfOrAny(asset.getAssignedEmployeeId(), Permission.Sets.ASSET_ADMIN);
-            return qrService.issue(assetId);
+            AssetQrIssueResponse issued = qrService.issue(assetId);
+            return new AssetQrIssueResponse(
+                    issued.assetId(),
+                    issued.assetCode(),
+                    issued.assetName(),
+                    issued.token(),
+                    publicUrl(httpRequest, issued.token())
+            );
         }).toList();
+    }
+
+    private static String publicUrl(HttpServletRequest request, String token) {
+        String forwardedProto = firstHeaderValue(request.getHeader("X-Forwarded-Proto"));
+        String scheme = forwardedProto.isBlank() ? request.getScheme() : forwardedProto;
+        if (!"https".equalsIgnoreCase(scheme)) {
+            scheme = "http";
+        }
+        String forwardedHost = firstHeaderValue(request.getHeader("X-Forwarded-Host"));
+        String host = forwardedHost.isBlank() ? request.getHeader("Host") : forwardedHost;
+        if (host == null || host.isBlank()) {
+            host = request.getServerName();
+            int port = request.getServerPort();
+            if (port > 0 && port != 80 && port != 443) {
+                host += ":" + port;
+            }
+        }
+        return scheme + "://" + host + "/asset-qr.html?token="
+                + URLEncoder.encode(token, StandardCharsets.UTF_8);
+    }
+
+    private static String firstHeaderValue(String value) {
+        return value == null ? "" : value.split(",", 2)[0].trim();
     }
 
     @GetMapping("/public/{token}")

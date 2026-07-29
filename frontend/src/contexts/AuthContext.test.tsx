@@ -8,12 +8,14 @@ const mocks = vi.hoisted(() => ({
   login: vi.fn(),
   logout: vi.fn(),
   silent: vi.fn(),
+  consumeReturnUrl: vi.fn(),
   loadUser: vi.fn(),
   sessionLost: null as null | ((reason: string) => void),
   toast: vi.fn(),
 }));
 
 vi.mock("../auth/oidc", () => ({
+  consumeLoginReturnUrl: mocks.consumeReturnUrl,
   handleOidcCallback: mocks.callback,
   isOidcCallback: mocks.callbackCheck,
   keycloakLogin: mocks.login,
@@ -38,6 +40,7 @@ describe("AuthProvider", () => {
     mocks.sessionLost = null;
     mocks.callbackCheck.mockReturnValue(false);
     mocks.silent.mockResolvedValue(true);
+    mocks.consumeReturnUrl.mockReturnValue(null);
     mocks.loadUser.mockResolvedValue({
       username: "alice",
       role: "USER",
@@ -58,6 +61,7 @@ describe("AuthProvider", () => {
       </AuthProvider>,
     );
     expect(await screen.findByText("alice")).toBeVisible();
+    expect(mocks.consumeReturnUrl).toHaveBeenCalledOnce();
     expect(auth.hasPermission()).toBe(true);
     expect(auth.hasPermission("asset_access")).toBe(true);
     expect(auth.hasPermission("asset_manage")).toBe(false);

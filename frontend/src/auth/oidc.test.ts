@@ -51,6 +51,16 @@ describe("QLVT oidc helpers", () => {
     expect(oidc.getAccessToken()).toBe("token-1");
   });
 
+  it("returns only safe same-origin login destinations", async () => {
+    const oidc = await import("./oidc");
+    sessionStorage.setItem("qlvt:oidc:return-url", "/asset-qr.html?token=qr-token");
+    expect(oidc.consumeLoginReturnUrl()).toBe("/asset-qr.html?token=qr-token");
+    expect(oidc.consumeLoginReturnUrl()).toBeNull();
+
+    sessionStorage.setItem("qlvt:oidc:return-url", "//evil.example");
+    expect(oidc.consumeLoginReturnUrl()).toBeNull();
+  });
+
   it("restores non-expired stored user without silent renew", async () => {
     mocks.manager.getUser.mockResolvedValue({ expired: false, access_token: "stored-token" });
     const oidc = await import("./oidc");
