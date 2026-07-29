@@ -10,6 +10,7 @@ import {
   approveTransfer,
   cancelTransfer,
   createTransfer,
+  downloadTransferDocument,
   rejectTransfer,
   uploadTransferDocument,
 } from "../services/api";
@@ -224,24 +225,13 @@ export function TransfersPage() {
   const canManage = hasPermission(["asset_transfers_manage", "asset_manage"]);
   const canApprove = hasPermission(["asset_transfers_approve", "asset_manage"]);
   const empLabel = (id?: number) => (id ? employeeName(employees.find((e) => e.id === id)) : "--");
-  const selectedAsset =
-    selectedAssetIds.length === 1
-      ? assets.find((asset) => asset.id === selectedAssetIds[0])
-      : undefined;
-  const lockSite = selectedAsset?.siteId != null;
-  const lockDepartment = selectedAsset?.departmentId != null;
-  const lockEmployee = selectedAsset?.assignedEmployeeId != null;
   const isRevoke = transferType === "Thu hồi";
 
   const availableDepartments = useMemo(() => {
-    if (lockDepartment && selectedAsset?.departmentId)
-      return departments.filter((department) => department.id === selectedAsset.departmentId);
     return toSiteId ? departments : [];
-  }, [toSiteId, departments, lockDepartment, selectedAsset?.departmentId]);
+  }, [toSiteId, departments]);
 
   const availableEmployees = useMemo(() => {
-    if (lockEmployee && selectedAsset?.assignedEmployeeId)
-      return employees.filter((employee) => employee.id === selectedAsset.assignedEmployeeId);
     if (!toDepartmentId) return [];
     const dept = departments.find((d) => d.id === Number(toDepartmentId));
     if (!dept) return employees;
@@ -250,7 +240,7 @@ export function TransfersPage() {
         employee.departmentId === dept.id ||
         (employee.departmentId == null && employee.departmentName === dept.name),
     );
-  }, [toDepartmentId, employees, departments, lockEmployee, selectedAsset?.assignedEmployeeId]);
+  }, [toDepartmentId, employees, departments]);
 
   useEffect(() => {
     if (isRevoke) {
@@ -259,16 +249,8 @@ export function TransfersPage() {
       setToEmployeeId("");
       return;
     }
-    if (!selectedAsset) {
-      setToSiteId((current) => current || DEFAULT_SITE_VALUE);
-      return;
-    }
-    setToSiteId(selectedAsset.siteId ? String(selectedAsset.siteId) : DEFAULT_SITE_VALUE);
-    setToDepartmentId(selectedAsset.departmentId ? String(selectedAsset.departmentId) : "");
-    setToEmployeeId(
-      selectedAsset.assignedEmployeeId ? String(selectedAsset.assignedEmployeeId) : "",
-    );
-  }, [selectedAsset, isRevoke]);
+    setToSiteId((current) => current || DEFAULT_SITE_VALUE);
+  }, [isRevoke]);
 
   useEffect(() => setAssetPage(1), [selectedAssetIds]);
 
@@ -541,6 +523,20 @@ export function TransfersPage() {
     }
   };
 
+  const openTransferDocument = async (objectKey: string) => {
+    const previewWindow = window.open("", "_blank");
+    try {
+      const blob = await downloadTransferDocument(objectKey);
+      const url = URL.createObjectURL(blob);
+      if (previewWindow) previewWindow.location.href = url;
+      else window.open(url, "_blank", "noopener,noreferrer");
+      window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    } catch (error) {
+      previewWindow?.close();
+      toast.error(readError(error));
+    }
+  };
+
   const renderTicketDetails = (ticket: TransferGroup) => {
     const transfer = ticket.first;
     const siteName = (id?: number) =>
@@ -692,15 +688,15 @@ export function TransfersPage() {
           <div className="transfer-detail-documents">
             {transfer.documents?.length ? (
               transfer.documents.map((document) =>
-                document.downloadUrl ? (
-                  <a
+                document.objectKey ? (
+                  <button
+                    type="button"
+                    className="transfer-attachment-link"
                     key={document.id ?? document.fileName}
-                    href={document.downloadUrl}
-                    target="_blank"
-                    rel="noreferrer"
+                    onClick={() => void openTransferDocument(document.objectKey as string)}
                   >
                     {document.fileName}
-                  </a>
+                  </button>
                 ) : (
                   <span key={document.id ?? document.fileName}>{document.fileName}</span>
                 ),
@@ -765,8 +761,6 @@ export function TransfersPage() {
                   <option value="">Tất cả phân loại</option>
                   <option value="Bàn giao">Bàn giao</option>
                   <option value="Thu hồi">Thu hồi</option>
-                  <option value="Điều chuyển">Điều chuyển</option>
-                  <option value="Cấp phát">Cấp phát</option>
                 </SearchableSelect>
               </div>
               <div
@@ -1233,13 +1227,12 @@ export function TransfersPage() {
                       <option value="Thu hồi">Thu hồi</option>
                     </SearchableSelect>
                   </label>
-                  <div />
 
                   <label style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
                     <span style={formLabelStyle}>Chi nhánh</span>
                     <SearchableSelect
                       value={toSiteId}
-                      disabled={isRevoke || lockSite}
+                      disabled={isRevoke}
                       onChange={(value) => {
                         setToSiteId(value);
                         setToDepartmentId("");
@@ -1259,7 +1252,7 @@ export function TransfersPage() {
                     <span style={formLabelStyle}>Phòng ban nhận</span>
                     <SearchableSelect
                       value={toDepartmentId}
-                      disabled={isRevoke || !toSiteId || lockDepartment}
+                      disabled={isRevoke || !toSiteId}
                       onChange={(value) => {
                         setToDepartmentId(value);
                         setToEmployeeId("");
@@ -1279,7 +1272,7 @@ export function TransfersPage() {
                     <SearchableSelect
                       value={toEmployeeId}
                       onChange={setToEmployeeId}
-                      disabled={isRevoke || !toDepartmentId || lockEmployee}
+                      disabled={isRevoke || !toDepartmentId}
                     >
                       <option value="">Chọn nhân viên</option>
                       {availableEmployees.map((e) => (
@@ -1581,12 +1574,11 @@ export function TransfersPage() {
               </div>
 
               <div
-                className="table-wrap"
+                className="table-wrap transfer-create-assets-wrap"
                 style={{
                   border: "1px solid var(--qlvt-border, #e2e8f0)",
                   borderRadius: "8px",
                   overflow: "auto",
-                  maxHeight: "400px",
                 }}
               >
                 <table
@@ -1701,7 +1693,7 @@ export function TransfersPage() {
                           : "";
                         const eName = toEmployeeId ? empLabel(Number(toEmployeeId)) : "";
                         return (
-                          <tr key={id} style={{ borderBottom: "1px solid #f1f5f9" }}>
+                          <tr key={id} className="transfer-create-asset-row">
                             <td style={{ padding: "12px 16px", fontWeight: 500 }}>
                               {(safeAssetPage - 1) * assetPageSize + index + 1}
                             </td>

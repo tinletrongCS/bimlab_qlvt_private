@@ -151,7 +151,18 @@ export async function deleteAsset(id: number): Promise<void> {
 export async function issueAssetQrCodes(assetIds: number[]): Promise<AssetQrCode[]> {
   const response = await api.post<AssetQrCode[]>("/asset/qr/issue", { assetIds });
   const configuredPage = import.meta.env.VITE_ASSET_QR_PUBLIC_PAGE_URL?.trim();
-  const pageUrl = configuredPage || `${window.location.origin}/asset-qr.html`;
+  const fallbackPage = `${window.location.origin}/asset-qr.html`;
+  let pageUrl = fallbackPage;
+  try {
+    const configuredHost = configuredPage
+      ? new URL(configuredPage, window.location.origin).hostname
+      : "";
+    if (configuredPage && !["localhost", "127.0.0.1", "::1"].includes(configuredHost)) {
+      pageUrl = configuredPage;
+    }
+  } catch {
+    pageUrl = fallbackPage;
+  }
   const separator = pageUrl.includes("?") ? "&" : "?";
   return response.data.map((item) => ({
     ...item,
@@ -358,6 +369,14 @@ export async function uploadTransferDocument(file: File): Promise<FileUploadResp
   formData.append("file", file);
   const response = await api.post<FileUploadResponse>("/asset/transfer/upload", formData, {
     headers: { "Content-Type": "multipart/form-data" },
+  });
+  return response.data;
+}
+
+export async function downloadTransferDocument(objectKey: string): Promise<Blob> {
+  const response = await api.get<Blob>("/asset/transfer/files/view", {
+    params: { key: objectKey },
+    responseType: "blob",
   });
   return response.data;
 }

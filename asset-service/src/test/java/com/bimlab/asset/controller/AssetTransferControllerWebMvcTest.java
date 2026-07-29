@@ -18,6 +18,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.io.ByteArrayInputStream;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -108,5 +109,23 @@ class AssetTransferControllerWebMvcTest {
                                 """))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.transferType").value("ASSIGN"));
+    }
+
+    @Test
+    @WithMockUser(authorities = {"asset_transfers_view"})
+    void viewDocument_streamsFileThroughAssetService() throws Exception {
+        when(minioService.getObjectStream("transfer-documents/test.pdf"))
+                .thenReturn(new ByteArrayInputStream("pdf".getBytes()));
+        when(minioService.getContentType("transfer-documents/test.pdf"))
+                .thenReturn(MediaType.APPLICATION_PDF_VALUE);
+
+        mockMvc.perform(get("/api/asset/transfer/files/view")
+                        .param("key", "transfer-documents/test.pdf"))
+                .andExpect(status().isOk())
+                .andExpect(result ->
+                        org.junit.jupiter.api.Assertions.assertEquals(
+                                MediaType.APPLICATION_PDF_VALUE,
+                                result.getResponse().getContentType()
+                        ));
     }
 }

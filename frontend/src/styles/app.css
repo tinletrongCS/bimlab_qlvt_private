@@ -14181,3 +14181,32 @@ button {
     width: 100% !important;
   }
 }
+
+/* Transfer asset picker: keep the page stable while rows are added or removed. */
+#root .transfer-create-assets-wrap {
+  height: 330px;
+  max-height: 330px;
+  scrollbar-gutter: stable;
+}
+
+#root .transfer-create-asset-row {
+  animation: transfer-asset-row-settle 160ms ease-out;
+}
+
+@keyframes transfer-asset-row-settle {
+  from {
+    opacity: 0.7;
+    transform: translateY(6px);
+  }
+}
+
+/* Keep header separators; body cells use spacing and hover states. */
+#root .asset-table tbody td,
+#root .asset-table tbody td.asset-table-sticky-left,
+#root .asset-table tbody td.asset-table-sticky-right,
+#root .asset-table tbody td.asset-table-sticky-select,
+#root .asset-table tbody td.asset-table-sticky-asset,
+#root .asset-table tbody td.asset-table-sticky-category,
+#root .asset-table tbody td.asset-table-actions-col {
+  border: 0 !important;
+}

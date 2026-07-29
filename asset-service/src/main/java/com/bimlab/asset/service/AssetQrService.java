@@ -27,7 +27,7 @@ public class AssetQrService {
     private final AssetTransferRepository transfers;
     private final AssetReferenceLookup references;
 
-    @Value("${asset.qr.public-page-url:http://localhost:3002/asset-qr.html}")
+    @Value("${asset.qr.public-page-url:https://qlvt.bimlab.com.vn/asset-qr.html}")
     private String publicPageUrl;
 
     @Transactional
@@ -102,8 +102,10 @@ public class AssetQrService {
 
     private String buildPublicUrl(String token) {
         String pageUrl = publicPageUrl == null ? "" : publicPageUrl.trim();
-        if (pageUrl.isBlank() || "null".equalsIgnoreCase(pageUrl)) {
-            pageUrl = "http://localhost:3002/asset-qr.html";
+        if (pageUrl.isBlank()
+                || "null".equalsIgnoreCase(pageUrl)
+                || pageUrl.matches("(?i)^https?://(localhost|127\\.0\\.0\\.1|\\[::1])(?::\\d+)?(?:/.*)?$")) {
+            pageUrl = "https://qlvt.bimlab.com.vn/asset-qr.html";
         }
         String separator = pageUrl.contains("?") ? "&" : "?";
         return pageUrl + separator + "token=" + token;

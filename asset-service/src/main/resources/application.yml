@@ -59,7 +59,7 @@ app:
 
 asset:
   qr:
-    public-page-url: ${ASSET_QR_PUBLIC_PAGE_URL:http://localhost:3002/asset-qr.html}
+    public-page-url: ${ASSET_QR_PUBLIC_PAGE_URL:https://qlvt.bimlab.com.vn/asset-qr.html}
     # Chỉ mạng nội bộ được xem QR không cần đăng nhập.
     internal-cidrs: ${ASSET_QR_INTERNAL_CIDRS:127.0.0.1/32,::1/128}
     # Duyệt chuỗi X-Forwarded-For từ phải sang trái để bỏ qua các reverse proxy tin cậy.

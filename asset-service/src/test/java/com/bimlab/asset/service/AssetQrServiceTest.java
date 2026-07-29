@@ -92,6 +92,18 @@ class AssetQrServiceTest {
     }
 
     @Test
+    void issueNeverEmitsLoopbackUrl() {
+        AssetItem asset = asset();
+        ReflectionTestUtils.setField(service, "publicPageUrl", "http://localhost:3002/asset-qr.html");
+        when(assets.findById(7L)).thenReturn(Optional.of(asset));
+        when(qrCodes.findByAssetIdOrderByCreatedAtDesc(7L)).thenReturn(List.of());
+        when(qrCodes.save(any(AssetQrCode.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        assertThat(service.issue(7L).publicUrl())
+                .startsWith("https://qlvt.bimlab.com.vn/asset-qr.html?token=");
+    }
+
+    @Test
     void issueRejectsUnknownAsset() {
         when(assets.findById(99L)).thenReturn(Optional.empty());
 
