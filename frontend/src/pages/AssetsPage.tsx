@@ -115,14 +115,16 @@ async function renderQrPrint(printWindow: Window, codes: AssetQrCode[]) {
           @page { size: A4 portrait; margin: 10mm; }
           * { box-sizing: border-box; }
           body { margin: 0; color: #172033; font-family: Inter, Arial, "Segoe UI", sans-serif; }
-          .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8mm; }
-          .label { min-height: 82mm; padding: 7mm; display: grid; place-items: center; align-content: center;
-            border: 1px solid #cbd5e1; break-inside: avoid; text-align: center; }
-          .qr { width: 52mm; height: 52mm; }
+          .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: 31.5mm;
+            gap: 2mm 3mm; }
+          .label { min-width: 0; padding: 2mm; display: grid; grid-template-columns: 22mm minmax(0, 1fr);
+            align-items: center; gap: 3mm; border: 1px solid #cbd5e1; break-inside: avoid; text-align: left; }
+          .qr { width: 22mm; height: 22mm; }
           .qr svg { display: block; width: 100%; height: 100%; }
-          strong { margin-top: 3mm; font-size: 13pt; }
-          span { margin-top: 1.5mm; color: #245f8a; font-size: 10pt; font-weight: 700; }
-          small { margin-top: 1.5mm; color: #64748b; font-size: 8pt; }
+          .info { min-width: 0; display: grid; gap: 1.2mm; }
+          strong { font-size: 9pt; line-height: 1.2; overflow-wrap: anywhere; }
+          span { color: #245f8a; font-size: 8pt; font-weight: 700; }
+          small { color: #64748b; font-size: 6.5pt; line-height: 1.2; }
         </style>
       </head>
       <body>
@@ -130,18 +132,23 @@ async function renderQrPrint(printWindow: Window, codes: AssetQrCode[]) {
           ${labels
             .map(
               (code) => `<article class="label">
-                <div class="qr">${code.svg}</div>
-                <strong>${escapeHtml(code.assetName)}</strong>
-                <span>${escapeHtml(code.assetCode)}</span>
-                <small>Quét để xem thông tin tài sản</small>
-              </article>`,
+                 <div class="qr">${code.svg}</div>
+                 <div class="info">
+                   <strong>${escapeHtml(code.assetName)}</strong>
+                   <span>${escapeHtml(code.assetCode)}</span>
+                   <small>Quét để xem thông tin tài sản</small>
+                 </div>
+               </article>`,
             )
             .join("")}
         </div>
-        <script>window.addEventListener("load", () => { window.focus(); window.print(); });</script>
       </body>
     </html>`);
   printWindow.document.close();
+  window.setTimeout(() => {
+    printWindow.focus();
+    printWindow.print();
+  }, 150);
 }
 
 const ASSET_VALUE_FILTERS: Array<{

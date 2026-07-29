@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => {
   let requestHandler: ((config: any) => any) | null = null;
@@ -46,6 +46,10 @@ describe("asset api client", () => {
     mocks.token.mockReturnValue(null);
     mocks.api.get.mockReset();
     mocks.api.post.mockReset();
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
   });
 
   it("attaches bearer token when present", async () => {
@@ -110,6 +114,26 @@ describe("asset api client", () => {
     await expect(mocks.responseErrorHandler()?.(error)).rejects.toBe(error);
   });
 
+  it("never emits a loopback URL in issued QR codes", async () => {
+    const { issueAssetQrCodes } = await import("./api");
+    vi.stubEnv("VITE_ASSET_QR_PUBLIC_PAGE_URL", "http://localhost:3002/asset-qr.html");
+    mocks.api.post.mockResolvedValueOnce({
+      data: [
+        {
+          assetId: 1,
+          assetCode: "TS-1",
+          assetName: "Laptop",
+          token: "qr-token",
+          publicUrl: "http://localhost:3002/asset-qr.html?token=qr-token",
+        },
+      ],
+    });
+
+    const [issued] = await issueAssetQrCodes([1]);
+
+    expect(issued.publicUrl).toBe(`${window.location.origin}/asset-qr.html?token=qr-token`);
+  });
+
   it("covers CRUD and workflow endpoint wrappers", async () => {
     const client = await import("./api");
     for (const method of ["get", "post", "put", "patch"] as const) {
@@ -161,6 +185,7 @@ describe("asset api client", () => {
       client.loadTransfers(),
       client.createTransfer(payload),
       client.uploadTransferDocument(new File(["transfer"], "handover.pdf")),
+      client.downloadTransferDocument("transfer-documents/handover.pdf"),
       client.approveTransfer(1, "Đủ hồ sơ"),
       client.rejectTransfer(1, "Thiếu hồ sơ"),
       client.cancelTransfer(1, "Người tạo hủy"),
@@ -186,6 +211,10 @@ describe("asset api client", () => {
     expect(mocks.api.post).toHaveBeenCalledWith("/asset/transfer", payload);
     expect(mocks.api.post).toHaveBeenCalledWith("/asset/transfer/upload", expect.any(FormData), {
       headers: { "Content-Type": "multipart/form-data" },
+    });
+    expect(mocks.api.get).toHaveBeenCalledWith("/asset/transfer/files/view", {
+      params: { key: "transfer-documents/handover.pdf" },
+      responseType: "blob",
     });
     expect(mocks.api.post).toHaveBeenCalledWith("/asset/transfer/1/cancel", {
       reason: "Hủy phiếu từ giao diện",

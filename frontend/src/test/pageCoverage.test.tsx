@@ -213,9 +213,16 @@ vi.mock("../services/api", () => ({
       ],
       documents: [
         {
-          id: 1,
           fileName: "bien-ban-ban-giao.pdf",
+          objectKey: "transfer-documents/bien-ban-ban-giao.pdf",
           downloadUrl: "https://files.test/bien-ban-ban-giao.pdf",
+        },
+        {
+          id: 2,
+          fileName: "tep-cu-khong-co-object-key.pdf",
+        },
+        {
+          fileName: "tep-thieu-thong-tin.pdf",
         },
       ],
       lines: [
@@ -301,6 +308,9 @@ vi.mock("../services/api", () => ({
   loadWarrantyExpiring: vi.fn().mockResolvedValue([]),
   createTransfer: vi.fn().mockResolvedValue({}),
   uploadTransferDocument: vi.fn().mockResolvedValue({ fileKey: "transfer-documents/test.pdf" }),
+  downloadTransferDocument: vi
+    .fn()
+    .mockResolvedValue(new Blob(["pdf"], { type: "application/pdf" })),
   approveTransfer: vi.fn().mockResolvedValue({}),
   rejectTransfer: vi.fn().mockResolvedValue({}),
   cancelTransfer: vi.fn().mockResolvedValue({}),
@@ -414,6 +424,7 @@ describe("QLVT pages", () => {
     expect(employeeSelect).toBeDisabled();
     chooseSearchableOption(siteSelect, /Văn phòng/);
     chooseSearchableOption(departmentSelect, /^BIM$/);
+    chooseSearchableOption(employeeSelect, /Nguyễn Văn A/);
 
     await user.click(screen.getByLabelText("Chỉ định người xét duyệt"));
     chooseSearchableOption(screen.getByPlaceholderText("Thêm người duyệt..."), /Nguyễn Văn A/);
@@ -425,9 +436,9 @@ describe("QLVT pages", () => {
       assetSelector.closest(".searchable-select-container")?.querySelector('option[value="1"]'),
     ).toHaveTextContent(/✓ TS-001 .* \(đã chọn\)/);
     await waitFor(() => {
-      expect(siteSelect).toBeDisabled();
-      expect(departmentSelect).toBeDisabled();
-      expect(employeeSelect).toBeDisabled();
+      expect(siteSelect).toHaveValue("Văn phòng");
+      expect(departmentSelect).toHaveValue("BIM");
+      expect(employeeSelect).toHaveValue("Nguyễn Văn A");
     });
     await user.click(screen.getByRole("button", { name: "Gửi phiếu bàn giao" }));
 
@@ -443,6 +454,17 @@ describe("QLVT pages", () => {
 
   it("filters and decides assigned pending transfers", async () => {
     const user = userEvent.setup();
+    const previewWindow = { close: vi.fn(), location: { href: "" } };
+    const openWindow = vi.spyOn(window, "open").mockReturnValue(previewWindow as unknown as Window);
+    const createObjectUrl = vi.fn(() => "blob:transfer-document");
+    Object.defineProperty(URL, "createObjectURL", {
+      configurable: true,
+      value: createObjectUrl,
+    });
+    Object.defineProperty(URL, "revokeObjectURL", {
+      configurable: true,
+      value: vi.fn(),
+    });
     await renderRoute("/transfers", "Bàn giao dự án");
 
     const pendingPanel = screen.getByText("Phiếu cần xét duyệt").closest("section");
@@ -450,10 +472,28 @@ describe("QLVT pages", () => {
     const pending = within(pendingPanel as HTMLElement);
     expect(pending.getByText("Bàn giao laptop dự án")).toBeVisible();
     await user.click(pending.getByRole("button", { name: "Xem chi tiết" }));
-    expect(screen.getByRole("link", { name: "bien-ban-ban-giao.pdf" })).toHaveAttribute(
-      "href",
-      "https://files.test/bien-ban-ban-giao.pdf",
+    await user.click(screen.getByRole("button", { name: "bien-ban-ban-giao.pdf" }));
+    await waitFor(() =>
+      expect(api.downloadTransferDocument).toHaveBeenCalledWith(
+        "transfer-documents/bien-ban-ban-giao.pdf",
+      ),
     );
+    expect(previewWindow.location.href).toBe("blob:transfer-document");
+
+    openWindow.mockReturnValueOnce(null);
+    await user.click(screen.getByRole("button", { name: "bien-ban-ban-giao.pdf" }));
+    await waitFor(() => expect(api.downloadTransferDocument).toHaveBeenCalledTimes(2));
+    expect(openWindow).toHaveBeenCalledWith(
+      "blob:transfer-document",
+      "_blank",
+      "noopener,noreferrer",
+    );
+
+    vi.mocked(api.downloadTransferDocument).mockRejectedValueOnce(new Error("MinIO down"));
+    openWindow.mockReturnValueOnce(previewWindow as unknown as Window);
+    await user.click(screen.getByRole("button", { name: "bien-ban-ban-giao.pdf" }));
+    await waitFor(() => expect(previewWindow.close).toHaveBeenCalled());
+    openWindow.mockRestore();
     await user.click(screen.getByRole("button", { name: "Đóng" }));
 
     const pendingTypeSelect = pending.getByPlaceholderText("Tất cả phân loại");
