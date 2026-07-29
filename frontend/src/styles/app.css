@@ -5082,29 +5082,31 @@ button:hover {
   width: min(460px, calc(100vw - 32px));
 }
 
-.asset-qr-placeholder {
+.asset-qr-preview {
   align-items: center;
   color: #64748b;
   display: grid;
   gap: 8px;
   justify-items: center;
-  padding: 34px 24px;
+  min-height: 330px;
+  padding: 20px 24px;
   text-align: center;
 }
 
-.asset-qr-placeholder > svg {
-  background: #eff6ff;
-  border-radius: 16px;
-  color: #154d7c;
-  height: 72px;
-  padding: 18px;
-  width: 72px;
+.asset-qr-image {
+  display: block;
+  width: min(260px, 70vw);
+  height: min(260px, 70vw);
 }
 
-.asset-qr-placeholder strong {
+.asset-qr-preview strong {
   color: #111827;
   font-size: 15px;
   font-weight: 600;
+}
+
+.asset-qr-preview small {
+  font-size: 11px;
 }
 
 .asset-import-modal {
@@ -6831,7 +6833,6 @@ tr[data-status="WARNING"] .asset-import-row-status {
 .stat-icon,
 .asset-metric > span,
 .modal-title-icon,
-.asset-qr-placeholder > svg,
 .booking-hero-metrics > div {
   border-radius: 3px;
 }

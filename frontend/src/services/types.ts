@@ -108,6 +108,14 @@ export interface AssetItem {
   updatedAt?: string;
 }
 
+export interface AssetQrCode {
+  assetId: number;
+  assetCode: string;
+  assetName: string;
+  token: string;
+  publicUrl: string;
+}
+
 export interface AssetCategory {
   id: number;
   code: string;

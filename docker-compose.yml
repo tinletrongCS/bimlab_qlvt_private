@@ -64,6 +64,10 @@ services:
       - AUTH_KEYCLOAK_ISSUER=${AUTH_KEYCLOAK_ISSUER:-}
       - AUTH_KEYCLOAK_JWK_SET_URI=${AUTH_KEYCLOAK_JWK_SET_URI:-http://keycloak:8080/realms/bimlab/protocol/openid-connect/certs}
       - AUTH_KEYCLOAK_AUDIENCE=${AUTH_KEYCLOAK_AUDIENCE_ASSET:-asset-service}
+      # IP nội bộ của BIMLab không cần đăng nhập
+      - ASSET_QR_PUBLIC_PAGE_URL=${ASSET_QR_PUBLIC_PAGE_URL:-http://localhost:3002/asset-qr.html}
+      - ASSET_QR_INTERNAL_CIDRS=${ASSET_QR_INTERNAL_CIDRS:-127.0.0.1/32,::1/128,192.168.0.0/16,10.0.0.0/8}
+      - ASSET_QR_TRUSTED_PROXY_CIDRS=${ASSET_QR_TRUSTED_PROXY_CIDRS:-127.0.0.1/32,::1/128,172.16.0.0/12}
       - MINIO_ENDPOINT=http://minio:9000
       - MINIO_ACCESS_KEY=${MINIO_ROOT_USER:?MINIO_ROOT_USER is required — set it in .env}
       - MINIO_SECRET_KEY=${MINIO_ROOT_PASSWORD:?MINIO_ROOT_PASSWORD is required — set it in .env}
@@ -97,6 +101,7 @@ services:
         VITE_KEYCLOAK_AUTHORITY: ${VITE_KEYCLOAK_AUTHORITY:-http://localhost:8081/realms/bimlab}
         VITE_KEYCLOAK_CLIENT_ID: ${VITE_KEYCLOAK_CLIENT_ID:-qlvt}
         VITE_KEYCLOAK_REDIRECT_URI: ${VITE_KEYCLOAK_REDIRECT_URI:-http://localhost:3002/}
+        VITE_ASSET_QR_PUBLIC_PAGE_URL: ${VITE_ASSET_QR_PUBLIC_PAGE_URL:-}
     ports:
       - "${QLVT_FRONTEND_PORT:-3002}:80"
     networks:

@@ -482,6 +482,8 @@ public class AssetTransferService {
         return null;
     }
 
+    // Dùng trong trường hợp muốn hủy 1 phiếu khi mà đã gửi
+    // điều kiện là phiếu đó chưa được duyệt hoặc bị từ chối
     private void ensurePendingApproval(AssetTransferHeader header) {
         if (!"PENDING_APPROVAL".equals(header.getStatus())) {
             throw new IllegalStateException("Chỉ xử lý được phiếu đang chờ duyệt");
@@ -492,7 +494,9 @@ public class AssetTransferService {
         if (access.hasAnyPermission(Permission.ASSET_TRANSFERS_APPROVE, Permission.ASSET_MANAGE)) {
             return;
         }
-        Long currentEmployeeId = access.getCurrentEmployeeId();
+
+        // lấy id của người mà được gán/chỉ định để xét duyệt 1 phiếu bàn giao
+        Long currentEmployeeId = access.getCurrentEmployeeId();;
         boolean assignedApprover = currentEmployeeId != null && confirmations.stream()
                 .anyMatch(item -> java.util.Objects.equals(item.getConfirmerEmployeeId(), currentEmployeeId));
         if (!assignedApprover) {
@@ -587,6 +591,7 @@ public class AssetTransferService {
         Map<String, Object> changed = new LinkedHashMap<>();
         after.forEach((key, value) -> {
             Object oldValue = before.get(key);
+            // nếu giá trị tại 1 key bị thay đổi so với giá trị ban đầu
             if (!java.util.Objects.equals(oldValue, value)) {
                 Map<String, Object> pair = new LinkedHashMap<>();
                 pair.put("before", oldValue);
@@ -686,6 +691,7 @@ public class AssetTransferService {
         );
     }
 
+    // Map model dòng tài sản sang DTO response
     private AssetTransferHeaderResponse.Line toLineResponse(AssetTransfer transfer) {
         AssetItem asset = transfer.getAsset();
         return new AssetTransferHeaderResponse.Line(
