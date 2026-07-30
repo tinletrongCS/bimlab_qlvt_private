@@ -41,12 +41,13 @@ function fillFacts(id, facts) {
   );
 }
 
-function routeText(employeeId, departmentId, siteId) {
+function routeText(data) {
   return (
     [
-      employeeId ? `Nhân sự #${employeeId}` : null,
-      departmentId ? `Phòng ban #${departmentId}` : null,
-      siteId ? `Chi nhánh #${siteId}` : null,
+      data.assignedEmployeeName ||
+        (data.assignedEmployeeId ? `Nhân sự #${data.assignedEmployeeId}` : null),
+      data.departmentName || (data.departmentId ? `Phòng ban #${data.departmentId}` : null),
+      data.siteName || (data.siteId ? `Chi nhánh #${data.siteId}` : null),
     ]
       .filter(Boolean)
       .join(" · ") || "Kho / chưa gán"
@@ -105,11 +106,7 @@ function renderHistory(items) {
       const fromLabel = document.createElement("span");
       fromLabel.textContent = "Từ";
       const fromValue = document.createElement("strong");
-      fromValue.textContent = routeText(
-        before.assignedEmployeeId,
-        before.departmentId,
-        before.siteId,
-      );
+      fromValue.textContent = routeText(before);
       from.append(fromLabel, fromValue);
       const arrow = document.createElement("div");
       arrow.className = "route-arrow";
@@ -119,7 +116,7 @@ function renderHistory(items) {
       const toLabel = document.createElement("span");
       toLabel.textContent = "Đến";
       const toValue = document.createElement("strong");
-      toValue.textContent = routeText(after.assignedEmployeeId, after.departmentId, after.siteId);
+      toValue.textContent = routeText(after);
       to.append(toLabel, toValue);
       route.append(from, arrow, to);
       row.append(head, detail, route);

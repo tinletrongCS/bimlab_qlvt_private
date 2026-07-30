@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -132,10 +133,34 @@ public class AssetQrService {
                 "Bàn giao tài sản",
                 log.getSummary(),
                 log.getOccurredAt(),
-                log.getBeforeData(),
-                log.getAfterData(),
+                withReferenceNames(log.getBeforeData()),
+                withReferenceNames(log.getAfterData()),
                 log.getChangedFields()
         );
+    }
+
+    private Map<String, Object> withReferenceNames(Map<String, Object> data) {
+        if (data == null || data.isEmpty()) {
+            return Map.of();
+        }
+        Map<String, Object> enriched = new LinkedHashMap<>(data);
+        putIfPresent(enriched, "assignedEmployeeName",
+                references.employeeName(asLong(data.get("assignedEmployeeId"))));
+        putIfPresent(enriched, "departmentName",
+                references.departmentName(asLong(data.get("departmentId"))));
+        putIfPresent(enriched, "siteName",
+                references.siteName(asLong(data.get("siteId"))));
+        return enriched;
+    }
+
+    private static Long asLong(Object value) {
+        return value instanceof Number number ? number.longValue() : null;
+    }
+
+    private static void putIfPresent(Map<String, Object> data, String key, String value) {
+        if (value != null && !value.isBlank()) {
+            data.put(key, value);
+        }
     }
 
     private AssetItem findActiveAsset(String token) {
