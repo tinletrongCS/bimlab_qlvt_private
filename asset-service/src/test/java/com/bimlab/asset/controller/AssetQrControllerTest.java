@@ -1,6 +1,7 @@
 package com.bimlab.asset.controller;
 
 import com.bimlab.asset.dto.request.AssetQrIssueRequest;
+import com.bimlab.asset.dto.response.AssetQrHistoryResponse;
 import com.bimlab.asset.dto.response.AssetQrIssueResponse;
 import com.bimlab.asset.dto.response.AssetQrPublicResponse;
 import com.bimlab.asset.model.AssetItem;
@@ -18,6 +19,7 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.LongStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -96,5 +98,18 @@ class AssetQrControllerTest {
         when(qrService.getPublicAsset("token")).thenReturn(response);
 
         assertThat(controller.publicAsset("token", request)).isSameAs(response);
+    }
+
+    @Test
+    void publicTransferHistoryDelegatesWhenAccessIsAllowed() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        List<AssetQrHistoryResponse> response = List.of(new AssetQrHistoryResponse(
+                "ASSET_CREATED", "Khởi tạo hồ sơ tài sản", "Đã tạo", null,
+                Map.of(), Map.of(), Map.of()
+        ));
+        when(accessPolicy.canView(request)).thenReturn(true);
+        when(qrService.getTransferHistory("token")).thenReturn(response);
+
+        assertThat(controller.publicTransferHistory("token", request)).isSameAs(response);
     }
 }

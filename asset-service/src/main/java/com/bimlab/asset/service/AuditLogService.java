@@ -23,6 +23,8 @@ public class AuditLogService {
     public static final String ENTITY_ASSET_TRANSFER = "ASSET_TRANSFER"; // log cho phiếu bàn giao tài sản
     public static final String ENTITY_ASSET_TRANSFER_HEADER = "ASSET_TRANSFER_HEADER";
 
+    // action
+    public static final String ASSET_TRANSFER_APPROVED = "TRANSFER_APPROVED";
     private final AuditLogRepository auditLogs;
     private final AssetAccessService access;
 

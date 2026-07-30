@@ -1,6 +1,7 @@
 package com.bimlab.asset.controller;
 
 import com.bimlab.asset.dto.request.AssetQrIssueRequest;
+import com.bimlab.asset.dto.response.AssetQrHistoryResponse;
 import com.bimlab.asset.dto.response.AssetQrIssueResponse;
 import com.bimlab.asset.dto.response.AssetQrPublicResponse;
 import com.bimlab.asset.model.AssetItem;
@@ -91,5 +92,19 @@ public class AssetQrController {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Cần đăng nhập ngoài mạng nội bộ");
         }
         return qrService.getPublicAsset(token);
+    }
+
+    // Tại tab Lịch sử bàn giao - chỉ hiện thông tin cho mỗi lần ban giao được xét duyệt
+    // khi đó trạng thái (chi nhánh/phòng ban/nhân sự đang giữ) mới có thay đổi
+    // -> hiện nhiều quá bị dư thừa
+    @GetMapping("/public/{token}/transfer-history")
+    public List<AssetQrHistoryResponse> publicTransferHistory(
+            @PathVariable String token,
+            HttpServletRequest request
+    ) {
+        if (!accessPolicy.canView(request)) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Cần đăng nhập ngoài mạng nội bộ");
+        }
+        return qrService.getTransferHistory(token);
     }
 }
