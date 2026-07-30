@@ -232,9 +232,9 @@ vi.mock("../services/api", () => ({
           assetId: 1,
           assetCode: "TS-001",
           assetName: "Laptop Dell Precision",
-          fromEmployeeId: 1,
-          fromDepartmentId: 1,
-          fromSiteId: 1,
+          fromEmployeeId: 2,
+          fromDepartmentId: 2,
+          fromSiteId: 2,
           toEmployeeId: 1,
           toDepartmentId: 1,
           toSiteId: 1,
@@ -243,9 +243,25 @@ vi.mock("../services/api", () => ({
       ],
     },
   ]),
-  loadEmployees: vi.fn().mockResolvedValue([employee]),
-  loadDepartments: vi.fn().mockResolvedValue([{ id: 1, name: "BIM" }]),
-  loadWorkSites: vi.fn().mockResolvedValue([{ id: 1, name: "Văn phòng", active: true }]),
+  loadEmployees: vi.fn().mockResolvedValue([
+    employee,
+    {
+      id: 2,
+      fullName: "Nguyễn Văn B",
+      employeeCode: "E002",
+      departmentId: 2,
+      departmentName: "Kết cấu",
+      positionName: "Nhân viên",
+    },
+  ]),
+  loadDepartments: vi.fn().mockResolvedValue([
+    { id: 1, name: "BIM" },
+    { id: 2, name: "Kết cấu" },
+  ]),
+  loadWorkSites: vi.fn().mockResolvedValue([
+    { id: 1, name: "Văn phòng", active: true },
+    { id: 2, name: "PCC", active: true },
+  ]),
   loadProjects: vi.fn().mockResolvedValue([{ id: 1, name: "Dự án Alpha", code: "ALPHA" }]),
   loadAssetCategories: vi.fn().mockResolvedValue(categories),
   loadAssetCategoryTree: vi.fn().mockResolvedValue(categoryTree),
@@ -473,6 +489,13 @@ describe("QLVT pages", () => {
     const pending = within(pendingPanel as HTMLElement);
     expect(pending.getByText("Bàn giao laptop dự án")).toBeVisible();
     await user.click(pending.getByRole("button", { name: "Xem chi tiết" }));
+    const detailModal = screen.getByText("Chi tiết phiếu bàn giao").closest(".crud-modal");
+    expect(detailModal).not.toBeNull();
+    expect(within(detailModal as HTMLElement).getByText("Người xử lý")).toBeVisible();
+    expect(within(detailModal as HTMLElement).getAllByText("Chờ duyệt")).toHaveLength(2);
+    const transferTable = screen.getByRole("table", { name: "Danh sách tài sản luân chuyển" });
+    expect(within(transferTable).getByText("Nhân viên: Nguyễn Văn B")).toBeVisible();
+    expect(within(transferTable).getByText("Nhân viên: Nguyễn Văn A")).toBeVisible();
     await user.click(screen.getByRole("button", { name: "bien-ban-ban-giao.pdf" }));
     await waitFor(() =>
       expect(api.downloadTransferDocument).toHaveBeenCalledWith(

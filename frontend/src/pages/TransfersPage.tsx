@@ -49,6 +49,14 @@ function transferStatusBadgeClass(status?: string): string {
   return `badge transfer-status-badge badge-${(status || "pending").toLowerCase()}`;
 }
 
+function confirmationStatusLabel(status?: string): string {
+  if (status === "APPROVED") return "Đã duyệt";
+  if (status === "REJECTED") return "Đã từ chối";
+  if (status === "CANCELLED") return "Đã hủy";
+  if (status === "SKIPPED") return "Đã bỏ qua";
+  return "Chờ duyệt";
+}
+
 function highlightTransferText(value: string, query: string) {
   const normalizedQuery = query.trim().toLowerCase();
   if (!normalizedQuery) return value;
@@ -64,7 +72,13 @@ function highlightTransferText(value: string, query: string) {
 }
 
 function formatTransferDate(value?: string): string {
-  return value ? new Date(`${value}T00:00:00`).toLocaleDateString("vi-VN") : "--";
+  return value
+    ? new Date(`${value}T00:00:00`).toLocaleDateString("vi-VN", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      })
+    : "--";
 }
 
 function formatTransferDateTime(value?: string): string {
@@ -539,6 +553,12 @@ export function TransfersPage() {
 
   const renderTicketDetails = (ticket: TransferGroup) => {
     const transfer = ticket.first;
+    const decisionLabel =
+      transfer.status === "REJECTED"
+        ? "Từ chối bởi"
+        : transfer.status === "APPROVED"
+          ? "Duyệt bởi"
+          : "Người xử lý";
     const siteName = (id?: number) =>
       id ? workSites.find((site) => site.id === id)?.name || "Chưa có" : "BIMLAB";
     const departmentName = (id?: number) =>
@@ -553,6 +573,10 @@ export function TransfersPage() {
           <div>
             <span>Trạng thái</span>
             <strong className={transferStatusBadgeClass(transfer.status)}>{ticket.status}</strong>
+          </div>
+          <div>
+            <span>{decisionLabel}</span>
+            <strong>{transfer.approvedBy || "--"}</strong>
           </div>
         </div>
 
@@ -615,10 +639,14 @@ export function TransfersPage() {
           <div className="transfer-detail-people">
             {transfer.confirmations?.length ? (
               transfer.confirmations.map((confirmation) => (
-                <span key={confirmation.id}>
-                  {confirmation.confirmerName || empLabel(confirmation.confirmerEmployeeId)}
-                  {confirmation.status ? ` · ${confirmation.status}` : ""}
-                </span>
+                <div className="transfer-approver-item" key={confirmation.id}>
+                  <strong>
+                    {confirmation.confirmerName || empLabel(confirmation.confirmerEmployeeId)}
+                  </strong>
+                  <span className={transferStatusBadgeClass(confirmation.status)}>
+                    {confirmationStatusLabel(confirmation.status)}
+                  </span>
+                </div>
               ))
             ) : (
               <span>Không chỉ định, người có quyền duyệt sẽ xử lý</span>
@@ -629,10 +657,12 @@ export function TransfersPage() {
         <section className="transfer-detail-block">
           <h3>Danh sách tài sản luân chuyển</h3>
           <div className="table-wrap transfer-detail-table-wrap">
-            <table className="transfer-detail-table">
+            <table className="transfer-detail-table" aria-label="Danh sách tài sản luân chuyển">
               <thead>
                 <tr>
-                  <th>STT</th>
+                  <th className="table-index-header" data-column-resize="locked">
+                    STT
+                  </th>
                   <th>Tài sản</th>
                   <th>Từ</th>
                   <th>Đến</th>
@@ -642,20 +672,17 @@ export function TransfersPage() {
               <tbody>
                 {ticket.assets.map((line, index) => {
                   const asset = assets.find((item) => item.id === line.assetId);
-                  const fromSiteId = line.fromSiteId ?? asset?.siteId;
-                  const fromDepartmentId = line.fromDepartmentId ?? asset?.departmentId;
-                  const fromEmployeeId = line.fromEmployeeId ?? asset?.assignedEmployeeId;
                   return (
                     <tr key={line.id ?? line.assetId}>
-                      <td>{index + 1}</td>
+                      <td className="table-index-cell">{index + 1}</td>
                       <td>
                         <strong>{line.assetCode || asset?.assetCode || `#${line.assetId}`}</strong>
                         <span>{line.assetName || asset?.name || "--"}</span>
                       </td>
                       <td>
-                        <span>Chi nhánh: {siteName(fromSiteId)}</span>
-                        <span>Phòng ban: {departmentName(fromDepartmentId)}</span>
-                        <span>Nhân viên: {empLabel(fromEmployeeId)}</span>
+                        <span>Chi nhánh: {siteName(line.fromSiteId)}</span>
+                        <span>Phòng ban: {departmentName(line.fromDepartmentId)}</span>
+                        <span>Nhân viên: {empLabel(line.fromEmployeeId)}</span>
                       </td>
                       <td>
                         {transfer.transferType === "REVOKE" ||
@@ -747,6 +774,15 @@ export function TransfersPage() {
           <div className="panel-body" style={{ padding: "24px" }}>
             <div className="transfer-list-heading">
               <h2>Danh sách phiếu bàn giao</h2>
+              {canManage && (
+                <button
+                  type="button"
+                  className="primary-action transfer-list-add-button btn-download-green"
+                  onClick={() => handleTabChange("create")}
+                >
+                  <FiPlus /> Thêm mới
+                </button>
+              )}
             </div>
             {/* Filters */}
             <div
@@ -807,10 +843,12 @@ export function TransfersPage() {
                 overflow: "hidden",
               }}
             >
-              <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left" }}>
+              <table className="transfer-list-table">
                 <thead style={{ background: "#f8fafc", borderBottom: "1px solid #e2e8f0" }}>
                   <tr>
                     <th
+                      className="table-index-header"
+                      data-column-resize="locked"
                       style={{
                         padding: "12px 16px",
                         color: "#64748b",
@@ -881,6 +919,7 @@ export function TransfersPage() {
                       Xét duyệt
                     </th>
                     <th
+                      data-column-resize="locked"
                       style={{
                         padding: "12px 16px",
                         color: "#64748b",
@@ -905,8 +944,11 @@ export function TransfersPage() {
                     </tr>
                   ) : (
                     pagedTransfers.map((ticket, index) => (
-                      <tr key={ticket.ticketId} style={{ borderBottom: "1px solid #f1f5f9" }}>
-                        <td style={{ padding: "12px 16px", fontWeight: 500 }}>
+                      <tr key={ticket.ticketId}>
+                        <td
+                          className="table-index-cell"
+                          style={{ padding: "12px 16px", fontWeight: 500 }}
+                        >
                           {(safeListPage - 1) * listPageSize + index + 1}
                         </td>
                         <td style={{ padding: "12px 16px" }}>
@@ -917,7 +959,9 @@ export function TransfersPage() {
                         </td>
                         <td style={{ padding: "12px 16px" }}>{ticket.transferType}</td>
                         <td style={{ padding: "12px 16px" }}>{ticket.reason || "--"}</td>
-                        <td style={{ padding: "12px 16px" }}>{ticket.transferDate}</td>
+                        <td style={{ padding: "12px 16px" }}>
+                          {formatTransferDate(ticket.transferDate)}
+                        </td>
                         <td style={{ padding: "12px 16px" }}>
                           <span className={transferStatusBadgeClass(ticket.first.status)}>
                             {ticket.status}
@@ -955,15 +999,6 @@ export function TransfersPage() {
                   setListPage(1);
                 }}
               />
-              {canManage && (
-                <button
-                  type="button"
-                  className="primary-action transfer-list-add-button"
-                  onClick={() => handleTabChange("create")}
-                >
-                  <FiPlus /> Thêm mới
-                </button>
-              )}
             </div>
           </div>
         </section>
@@ -1050,7 +1085,8 @@ export function TransfersPage() {
                         </button>
                       </div>
                       <div className="transfer-pending-actions">
-                        <textarea
+                        <input
+                          type="text"
                           aria-label={`Lý do xử lý ${ticket.ticketId}`}
                           value={decisionReasons[ticket.first.id] || ""}
                           onChange={(event) =>
@@ -1060,7 +1096,6 @@ export function TransfersPage() {
                             }))
                           }
                           placeholder="Nhập lý do khi từ chối hoặc hủy phiếu..."
-                          rows={1}
                         />
                         <div>
                           {canCancelTicket(ticket) && (
@@ -1594,6 +1629,8 @@ export function TransfersPage() {
                   <thead style={{ background: "#f8fafc", position: "sticky", top: 0, zIndex: 1 }}>
                     <tr>
                       <th
+                        className="table-index-header"
+                        data-column-resize="locked"
                         style={{
                           padding: "12px 16px",
                           color: "#64748b",
@@ -1694,7 +1731,10 @@ export function TransfersPage() {
                         const eName = toEmployeeId ? empLabel(Number(toEmployeeId)) : "";
                         return (
                           <tr key={id} className="transfer-create-asset-row">
-                            <td style={{ padding: "12px 16px", fontWeight: 500 }}>
+                            <td
+                              className="table-index-cell"
+                              style={{ padding: "12px 16px", fontWeight: 500 }}
+                            >
                               {(safeAssetPage - 1) * assetPageSize + index + 1}
                             </td>
                             <td style={{ padding: "12px 16px" }}>

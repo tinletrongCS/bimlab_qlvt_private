@@ -91,6 +91,7 @@ function CrudFormInner({
   const [form, setForm] = useState<Record<string, string>>(() => initialForm(modal));
   const setField = (key: string, value: string) => setForm((prev) => ({ ...prev, [key]: value }));
   const titlePrefix = modal.mode === "create" ? "Thêm" : "Cập nhật";
+  const creatingAsset = modal.type === "asset" && modal.mode === "create";
 
   useEffect(() => {
     if (form.siteId) {
@@ -156,15 +157,15 @@ function CrudFormInner({
         serialNumber: empty(form.serialNumber),
         source: empty(form.source),
         vendorId: num(form.vendorId),
-        assignedEmployeeId: num(form.assignedEmployeeId),
-        departmentId: num(form.departmentId),
-        siteId: num(form.siteId),
+        assignedEmployeeId: creatingAsset ? null : num(form.assignedEmployeeId),
+        departmentId: creatingAsset ? null : num(form.departmentId),
+        siteId: creatingAsset ? null : num(form.siteId),
         projectId: num(form.projectId),
         purchaseCost: num(form.purchaseCost),
         residualValue: num(form.residualValue),
         purchaseDate: empty(form.purchaseDate),
         warrantyUntil: empty(form.warrantyUntil),
-        status: form.status || "IN_STOCK",
+        status: creatingAsset ? "IN_STOCK" : form.status || "IN_STOCK",
         depreciationMethod: empty(form.depreciationMethod) || "NONE",
         usefulLifeYears: num(form.usefulLifeYears),
         notes: empty(form.notes),
@@ -330,24 +331,52 @@ function CrudFormInner({
               value={form.vendorId}
               onChange={(value) => setField("vendorId", value)}
             />
-            <WorkSiteSelect
-              workSites={workSites}
-              value={form.siteId}
-              onChange={(value) => setField("siteId", value)}
-            />
-            <DepartmentSelect
-              departments={filteredDepartments}
-              value={form.departmentId}
-              onChange={(value) => setField("departmentId", value)}
-            />
-            <EmployeeSelect
-              employees={filteredEmployees}
-              value={form.assignedEmployeeId}
-              onChange={(value) => {
-                setField("assignedEmployeeId", value);
-                setField("status", value ? "ASSIGNED" : "IN_STOCK");
-              }}
-            />
+            {creatingAsset ? (
+              <>
+                <Field
+                  label="Site làm việc"
+                  value=""
+                  onChange={() => undefined}
+                  disabled
+                  placeholder="Cập nhật khi bàn giao"
+                />
+                <Field
+                  label="Phòng ban"
+                  value=""
+                  onChange={() => undefined}
+                  disabled
+                  placeholder="Cập nhật khi bàn giao"
+                />
+                <Field
+                  label="Nhân viên sử dụng"
+                  value=""
+                  onChange={() => undefined}
+                  disabled
+                  placeholder="Cập nhật khi bàn giao"
+                />
+              </>
+            ) : (
+              <>
+                <WorkSiteSelect
+                  workSites={workSites}
+                  value={form.siteId}
+                  onChange={(value) => setField("siteId", value)}
+                />
+                <DepartmentSelect
+                  departments={filteredDepartments}
+                  value={form.departmentId}
+                  onChange={(value) => setField("departmentId", value)}
+                />
+                <EmployeeSelect
+                  employees={filteredEmployees}
+                  value={form.assignedEmployeeId}
+                  onChange={(value) => {
+                    setField("assignedEmployeeId", value);
+                    setField("status", value ? "ASSIGNED" : "IN_STOCK");
+                  }}
+                />
+              </>
+            )}
             <ProjectSelect
               projects={projects}
               value={form.projectId}
@@ -393,17 +422,21 @@ function CrudFormInner({
               onChange={(value) => setField("usefulLifeYears", value)}
               type="number"
             />
-            <Select
-              label="Trạng thái"
-              value={form.status}
-              onChange={(value) => setField("status", value)}
-              options={[
-                ["IN_STOCK", "Trong kho"],
-                ["ASSIGNED", "Đã cấp phát"],
-                ["MAINTENANCE", "Bảo trì"],
-                ["DISPOSED", "Đã thanh lý"],
-              ]}
-            />
+            {creatingAsset ? (
+              <Field label="Trạng thái" value="Trong kho" onChange={() => undefined} disabled />
+            ) : (
+              <Select
+                label="Trạng thái"
+                value={form.status}
+                onChange={(value) => setField("status", value)}
+                options={[
+                  ["IN_STOCK", "Trong kho"],
+                  ["ASSIGNED", "Đã cấp phát"],
+                  ["MAINTENANCE", "Bảo trì"],
+                  ["DISPOSED", "Đã thanh lý"],
+                ]}
+              />
+            )}
             <div style={{ gridColumn: "1 / -1" }}>
               <label>
                 <FormLabel>Ghi chú</FormLabel>

@@ -1,6 +1,7 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { ToastBar, Toaster, toast } from "react-hot-toast";
+import { FiAlertCircle, FiCheckCircle, FiInfo } from "react-icons/fi";
 import App from "./App";
 import "./styles/app.css";
 import "./styles/booking-overrides.css";
@@ -29,26 +30,46 @@ if (isSilentRenewIframe) {
               maxWidth: 400,
             }}
           >
-            {({ icon, message }) => (
+            {({ message }) => (
               <div
+                className="qlvt-toast"
                 onClick={() => toast.dismiss(t.id)}
                 title="Click để đóng"
                 style={{
                   display: "flex",
                   alignItems: "center",
                   gap: "10px",
-                  background: "#fff",
-                  borderRadius: 0,
+                  background:
+                    t.type === "success" ? "#f0fdf4" : t.type === "error" ? "#fff1f2" : "#eff6ff",
+                  borderRadius: "4px",
                   padding: "8px 12px",
                   boxShadow: "none",
                   cursor: "pointer",
                   minWidth: "260px",
                   maxWidth: "380px",
-                  border: "1px solid #d7dde5",
+                  border: `1px solid ${
+                    t.type === "success" ? "#bbf7d0" : t.type === "error" ? "#fecdd3" : "#bfdbfe"
+                  }`,
                   userSelect: "none",
                 }}
               >
-                <span style={{ flexShrink: 0 }}>{icon}</span>
+                <span
+                  style={{
+                    color:
+                      t.type === "success" ? "#15803d" : t.type === "error" ? "#be123c" : "#1d4ed8",
+                    display: "flex",
+                    flexShrink: 0,
+                    fontSize: "18px",
+                  }}
+                >
+                  {t.type === "success" ? (
+                    <FiCheckCircle />
+                  ) : t.type === "error" ? (
+                    <FiAlertCircle />
+                  ) : (
+                    <FiInfo />
+                  )}
+                </span>
                 <span
                   style={{
                     flex: 1,

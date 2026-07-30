@@ -120,6 +120,8 @@ public class AssetQrService {
                 "Khởi tạo hồ sơ tài sản",
                 "Hồ sơ tài sản " + asset.getAssetCode() + " được tạo trên hệ thống.",
                 asset.getCreatedAt(),
+                null,
+                null,
                 Map.of(),
                 Map.of(),
                 Map.of()
@@ -133,6 +135,8 @@ public class AssetQrService {
                 "Bàn giao tài sản",
                 log.getSummary(),
                 log.getOccurredAt(),
+                references.employeeName(log.getActorEmployeeId()),
+                log.getActorUsername(),
                 withReferenceNames(log.getBeforeData()),
                 withReferenceNames(log.getAfterData()),
                 log.getChangedFields()

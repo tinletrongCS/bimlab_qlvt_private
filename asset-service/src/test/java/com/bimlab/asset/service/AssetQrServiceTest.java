@@ -174,6 +174,8 @@ class AssetQrServiceTest {
         AssetItem asset = asset();
         AuditLog approved = AuditLog.builder()
                 .action("TRANSFER_APPROVED")
+                .actorEmployeeId(9L)
+                .actorUsername("approver")
                 .summary("Duyệt bàn giao tài sản trong phiếu PBG-001")
                 .occurredAt(LocalDateTime.of(2026, 7, 15, 10, 30))
                 .beforeData(Map.of("siteId", 1))
@@ -194,6 +196,7 @@ class AssetQrServiceTest {
                 .thenReturn(List.of(approved));
         when(references.siteName(1L)).thenReturn("BIMLab");
         when(references.siteName(2L)).thenReturn("PCC");
+        when(references.employeeName(9L)).thenReturn("Người duyệt");
 
         var history = service.getTransferHistory("public-token");
 
@@ -201,6 +204,8 @@ class AssetQrServiceTest {
                 .containsExactly("TRANSFER_APPROVED", "ASSET_CREATED");
         assertThat(history.get(0).beforeData()).containsEntry("siteName", "BIMLab");
         assertThat(history.get(0).afterData()).containsEntry("siteName", "PCC");
+        assertThat(history.get(0).approvedByName()).isEqualTo("Người duyệt");
+        assertThat(history.get(0).approvedByUsername()).isEqualTo("approver");
         var creation = history.get(history.size() - 1);
         assertThat(creation.title()).isEqualTo("Khởi tạo hồ sơ tài sản");
         assertThat(creation.occurredAt()).isEqualTo(asset.getCreatedAt());
