@@ -14,6 +14,11 @@ public class AssetReferenceLookup {
         return findName("select full_name from hrm.employees where id = ?", id);
     }
 
+    public String employeeName(Long id, String username) {
+        String name = employeeName(id);
+        return name != null ? name : findName("select full_name from auth.users where username = ?", username);
+    }
+
     public String departmentName(Long id) {
         return findName("select name from hrm.departments where id = ?", id);
     }
@@ -22,12 +27,12 @@ public class AssetReferenceLookup {
         return findName("select name from hrm.work_sites where id = ?", id);
     }
 
-    private String findName(String sql, Long id) {
-        if (id == null) {
+    private String findName(String sql, Object value) {
+        if (value == null) {
             return null;
         }
         try {
-            return jdbc.queryForObject(sql, String.class, id);
+            return jdbc.queryForObject(sql, String.class, value);
         } catch (DataAccessException ignored) {
             // ponytail: QLVT hiện dùng DB chung; fallback null khi reference chưa có hoặc DB đã tách.
             return null;

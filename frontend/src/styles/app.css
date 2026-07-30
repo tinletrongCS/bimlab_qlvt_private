@@ -14347,28 +14347,6 @@ button {
   background: #e3edf5 !important;
 }
 
-#root .app-shell table thead th {
-  box-sizing: border-box;
-  position: relative;
-}
-
-#root .app-shell table thead th::after {
-  bottom: 0;
-  content: "";
-  cursor: col-resize;
-  position: absolute;
-  right: 0;
-  top: 0;
-  width: 8px;
-  z-index: 100;
-}
-
-body.is-resizing-table-column,
-body.is-resizing-table-column * {
-  cursor: col-resize !important;
-  user-select: none !important;
-}
-
 #root .app-shell .table-wrap table tbody tr:hover > td,
 #root .app-shell .asset-table table tbody tr:hover > td,
 #root .app-shell table tbody tr:hover > td {
@@ -14407,7 +14385,7 @@ body.is-resizing-table-column * {
 }
 
 #root .asset-table .asset-table-sticky-category {
-  left: 398px !important;
+  left: 268px !important;
 }
 
 #root .asset-table table.is-single-select .asset-table-sticky-index {
@@ -14419,7 +14397,7 @@ body.is-resizing-table-column * {
 }
 
 #root .asset-table table.is-single-select .asset-table-sticky-category {
-  left: 356px !important;
+  left: 226px !important;
 }
 
 #root .asset-table th.asset-table-actions-col,
@@ -14428,10 +14406,6 @@ body.is-resizing-table-column * {
   max-width: 86px !important;
   min-width: 86px !important;
   width: 86px !important;
-}
-
-#root .app-shell table thead th[data-column-resize="locked"]::after {
-  content: none;
 }
 
 #root .asset-table tbody td.asset-table-sticky-left,

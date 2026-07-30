@@ -286,8 +286,10 @@ public class AssetTransferService {
                 assetTransferConfirmations.findByTransferHeaderIdOrderByIdAsc(header.getId());
         ensureCurrentUserCanDecide(confirmations);
 
-        String username = access.getCurrentUsername();
-        String approvedBy = actorLabel(references.employeeName(access.getCurrentEmployeeId()), username);
+        String approvedBy = references.employeeName(
+                access.getCurrentEmployeeId(),
+                access.getCurrentUsername()
+        );
         Map<String, Object> beforeHeader = transferHeaderSnapshot(header);
         header.setStatus("APPROVED");
         header.setApprovedBy(approvedBy);
@@ -351,8 +353,8 @@ public class AssetTransferService {
 
         Map<String, Object> beforeHeader = transferHeaderSnapshot(header);
         header.setStatus("REJECTED");
-        header.setApprovedBy(actorLabel(
-                references.employeeName(access.getCurrentEmployeeId()),
+        header.setApprovedBy(references.employeeName(
+                access.getCurrentEmployeeId(),
                 access.getCurrentUsername()
         ));
         header.setNote(appendDecisionNote(header.getNote(), "Từ chối: " + req.reason()));
@@ -538,10 +540,6 @@ public class AssetTransferService {
 
     private boolean isBlank(String value) {
         return value == null || value.trim().isEmpty();
-    }
-
-    private String actorLabel(String name, String username) {
-        return isBlank(name) ? username : isBlank(username) ? name : name + " (" + username + ")";
     }
 
     private Map<String, Object> assetSnapshot(AssetItem asset) {

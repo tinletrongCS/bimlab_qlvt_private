@@ -54,9 +54,8 @@ function routeText(data) {
   );
 }
 
-function approverText(name, username) {
-  if (name && username) return `${name} (${username})`;
-  return name || username || "—";
+function approverText(name) {
+  return name || "—";
 }
 
 function renderHistory(items) {
@@ -106,10 +105,7 @@ function renderHistory(items) {
       const after = item.afterData || {};
       const approver = document.createElement("p");
       approver.className = "timeline-approver";
-      approver.textContent = `Duyệt bởi: ${approverText(
-        item.approvedByName,
-        item.approvedByUsername,
-      )}`;
+      approver.textContent = `Duyệt bởi: ${approverText(item.approvedByName)}`;
       const route = document.createElement("div");
       route.className = "transfer-route";
       const from = document.createElement("div");

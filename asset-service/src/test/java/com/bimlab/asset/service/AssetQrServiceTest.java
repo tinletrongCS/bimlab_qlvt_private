@@ -174,7 +174,7 @@ class AssetQrServiceTest {
         AssetItem asset = asset();
         AuditLog approved = AuditLog.builder()
                 .action("TRANSFER_APPROVED")
-                .actorEmployeeId(9L)
+                .actorEmployeeId(null)
                 .actorUsername("approver")
                 .summary("Duyệt bàn giao tài sản trong phiếu PBG-001")
                 .occurredAt(LocalDateTime.of(2026, 7, 15, 10, 30))
@@ -196,7 +196,7 @@ class AssetQrServiceTest {
                 .thenReturn(List.of(approved));
         when(references.siteName(1L)).thenReturn("BIMLab");
         when(references.siteName(2L)).thenReturn("PCC");
-        when(references.employeeName(9L)).thenReturn("Người duyệt");
+        when(references.employeeName(null, "approver")).thenReturn("Người duyệt");
 
         var history = service.getTransferHistory("public-token");
 
