@@ -1,4 +1,4 @@
-import { fireEvent, render, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { CrudForm } from "./CrudForm";
 
@@ -61,6 +61,29 @@ describe("CrudForm", () => {
 
     await waitFor(() => expect(state.submit).toHaveBeenCalledOnce());
     expect(state.submit).toHaveBeenCalledWith(expect.any(Object));
+  });
+
+  it("creates manual assets in stock without assignment data", async () => {
+    state.modal = { type: "asset", mode: "create" };
+    const { container } = render(<CrudForm />);
+
+    expect(screen.getByLabelText("Site làm việc")).toBeDisabled();
+    expect(screen.getByLabelText("Phòng ban")).toBeDisabled();
+    expect(screen.getByLabelText("Nhân viên sử dụng")).toBeDisabled();
+    expect(screen.getByLabelText("Trạng thái")).toHaveValue("Trong kho");
+
+    fireEvent.submit(container.querySelector("form") as HTMLFormElement);
+
+    await waitFor(() =>
+      expect(state.submit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          status: "IN_STOCK",
+          siteId: null,
+          departmentId: null,
+          assignedEmployeeId: null,
+        }),
+      ),
+    );
   });
 
   it.each([

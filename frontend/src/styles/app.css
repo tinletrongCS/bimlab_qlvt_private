@@ -13523,8 +13523,16 @@ button {
 }
 
 .transfer-list-heading {
+  align-items: center;
   border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: space-between;
   margin-bottom: 10px;
+  padding-bottom: 8px;
+}
+
+.transfer-list-heading h2 {
+  margin: 0;
 }
 
 .transfer-detail-fields {
@@ -13549,6 +13557,22 @@ button {
 .transfer-detail-people span {
   color: #0f172a;
   font-family: Inter, Arial, sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.transfer-approver-item {
+  align-items: center;
+  background: #fff;
+  display: flex;
+  gap: 8px;
+  justify-content: space-between;
+  min-width: 210px;
+  padding: 6px 8px;
+}
+
+.transfer-approver-item > strong {
+  color: #0f172a;
   font-size: 13px;
   font-weight: 500;
 }
@@ -13613,11 +13637,84 @@ button {
 }
 
 .transfer-detail-table th:nth-child(2) {
-  width: 170px;
+  width: 250px;
+}
+
+.transfer-detail-table th:nth-child(3),
+.transfer-detail-table th:nth-child(4) {
+  width: 190px;
 }
 
 .transfer-detail-table th:last-child {
   width: 140px;
+}
+
+.transfer-list-table {
+  border-collapse: collapse;
+  table-layout: fixed;
+  text-align: left;
+  width: 100%;
+}
+
+.transfer-list-table th {
+  border-left: 1px solid #e2e8f0;
+  padding: 8px 10px !important;
+}
+
+.transfer-list-table th:first-child {
+  border-left: 0;
+  width: 48px;
+}
+
+.transfer-list-table th:nth-child(2) {
+  width: 165px;
+}
+
+.transfer-list-table th:nth-child(3) {
+  width: 190px;
+}
+
+.transfer-list-table th:nth-child(4) {
+  width: 110px;
+}
+
+.transfer-list-table th:nth-child(6) {
+  width: 110px;
+}
+
+.transfer-list-table th:nth-child(7) {
+  width: 115px;
+}
+
+.transfer-list-table th:last-child {
+  width: 92px;
+}
+
+.transfer-list-table tbody tr,
+.transfer-list-table tbody td {
+  border: 0 !important;
+}
+
+.transfer-list-table tbody td {
+  overflow: hidden;
+  padding: 4px 8px !important;
+  text-overflow: ellipsis;
+}
+
+.transfer-ticket-detail > .asset-detail-hero {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.qlvt-toast {
+  border-radius: 4px !important;
+}
+
+#root .asset-detail-modal .modal-close,
+#root .asset-detail-modal .modal-close:hover {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  color: #64748b !important;
 }
 
 .transfer-detail-table td > span,
@@ -13670,7 +13767,7 @@ button {
   align-items: center;
   display: grid;
   gap: 10px;
-  grid-template-columns: minmax(180px, 1fr) minmax(220px, auto) auto auto;
+  grid-template-columns: minmax(240px, 1fr) 240px 110px 112px;
   min-height: 48px;
   padding: 7px 10px;
 }
@@ -13696,8 +13793,9 @@ button {
 
 .transfer-pending-meta {
   align-items: center;
-  display: flex;
-  gap: 18px;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .transfer-pending-meta > span {
@@ -13741,20 +13839,23 @@ button {
 
 .transfer-pending-actions {
   border-top: 1px solid #e2e8f0;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(280px, 1fr) auto;
   padding: 8px 12px;
 }
 
-.transfer-pending-actions textarea {
+.transfer-pending-actions input {
   background: #f8fafc;
   box-sizing: border-box;
   line-height: 20px;
   min-height: 36px;
+  min-width: 0;
   padding: 7px 10px;
-  resize: vertical;
-  width: min(520px, 60%);
+  width: 100%;
 }
 
-.transfer-pending-actions textarea,
+.transfer-pending-actions input,
 .transfer-pending-actions button,
 .transfer-pending-detail-button {
   font-family: Inter, Arial, sans-serif !important;
@@ -13775,7 +13876,7 @@ button {
 
 #root .transfer-list-add-button {
   align-items: center;
-  background: #16a34a !important;
+  background: #166534 !important;
   border: 0 !important;
   display: inline-flex;
   font-family: Inter, Arial, sans-serif !important;
@@ -13786,7 +13887,7 @@ button {
 }
 
 #root .transfer-list-add-button:hover {
-  background: #15803d !important;
+  background: #14532d !important;
 }
 
 #root .transfer-reject-button {
@@ -13884,10 +13985,10 @@ button {
 
   .transfer-pending-actions {
     align-items: stretch;
-    flex-direction: column;
+    grid-template-columns: 1fr;
   }
 
-  .transfer-pending-actions textarea {
+  .transfer-pending-actions input {
     width: 100%;
   }
 
@@ -14209,4 +14310,158 @@ button {
 #root .asset-table tbody td.asset-table-sticky-category,
 #root .asset-table tbody td.asset-table-actions-col {
   border: 0 !important;
+}
+
+/* Shared data-table treatment inspired by pgAdmin's compact grid. */
+#root .app-shell table thead th {
+  background: #dce3eb !important;
+  border-bottom: 1px solid #c8d1dc !important;
+  border-right: 1px solid #c8d1dc !important;
+  color: #1f2937 !important;
+  font-weight: 600 !important;
+}
+
+#root .app-shell table thead th:last-child {
+  border-right: 0 !important;
+}
+
+#root .app-shell table tbody td {
+  color: #475569 !important;
+  font-weight: 400 !important;
+}
+
+#root .app-shell table tbody td strong:not(.badge) {
+  color: inherit !important;
+  font-weight: 500 !important;
+}
+
+#root .app-shell table tbody tr:nth-child(odd):not(.is-selected):not([data-status]) > td {
+  background: #ffffff !important;
+}
+
+#root .app-shell table tbody tr:nth-child(even):not(.is-selected):not([data-status]) > td {
+  background: #edf0f4 !important;
+}
+
+#root .app-shell table tbody tr:not([data-status]):hover > td {
+  background: #e3edf5 !important;
+}
+
+#root .app-shell table thead th {
+  box-sizing: border-box;
+  position: relative;
+}
+
+#root .app-shell table thead th::after {
+  bottom: 0;
+  content: "";
+  cursor: col-resize;
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 8px;
+  z-index: 100;
+}
+
+body.is-resizing-table-column,
+body.is-resizing-table-column * {
+  cursor: col-resize !important;
+  user-select: none !important;
+}
+
+#root .app-shell .table-wrap table tbody tr:hover > td,
+#root .app-shell .asset-table table tbody tr:hover > td,
+#root .app-shell table tbody tr:hover > td {
+  background: #dce8f3 !important;
+}
+
+#root .app-shell .asset-table thead th.asset-table-sticky-select,
+#root .app-shell .asset-table thead th.asset-table-sticky-left,
+#root .app-shell .asset-table thead th.asset-table-sticky-right {
+  background: #dce3eb !important;
+}
+
+#root .asset-table .overflow-actions-trigger {
+  color: #475569 !important;
+}
+
+#root .asset-table .overflow-actions-trigger:hover {
+  color: #111827 !important;
+}
+
+#root .asset-table .asset-table-index-col {
+  box-sizing: border-box;
+  max-width: 36px !important;
+  min-width: 36px !important;
+  text-align: center !important;
+  width: 36px !important;
+}
+
+#root .asset-table .asset-table-sticky-index {
+  left: 42px !important;
+  z-index: 7 !important;
+}
+
+#root .asset-table .asset-table-sticky-asset {
+  left: 78px !important;
+}
+
+#root .asset-table .asset-table-sticky-category {
+  left: 398px !important;
+}
+
+#root .asset-table table.is-single-select .asset-table-sticky-index {
+  left: 0 !important;
+}
+
+#root .asset-table table.is-single-select .asset-table-sticky-asset {
+  left: 36px !important;
+}
+
+#root .asset-table table.is-single-select .asset-table-sticky-category {
+  left: 356px !important;
+}
+
+#root .asset-table th.asset-table-actions-col,
+#root .asset-table td.asset-table-actions-col {
+  box-sizing: border-box;
+  max-width: 86px !important;
+  min-width: 86px !important;
+  width: 86px !important;
+}
+
+#root .app-shell table thead th[data-column-resize="locked"]::after {
+  content: none;
+}
+
+#root .asset-table tbody td.asset-table-sticky-left,
+#root .asset-table tbody td.asset-table-sticky-right,
+#root .asset-table tbody td.asset-table-sticky-select {
+  border-left: 0 !important;
+  border-right: 0 !important;
+  box-shadow: none !important;
+}
+
+#root .app-shell .table-wrap table tbody tr:hover:not(.table-hover-disabled) > td,
+#root .app-shell .asset-table table tbody tr:hover:not(.table-hover-disabled) > td,
+#root .app-shell table tbody tr:hover:not(.table-hover-disabled):not([hidden]) > td {
+  background: #d8e6f2 !important;
+}
+
+#root .app-shell table th.table-index-header,
+#root .app-shell table td.table-index-cell {
+  box-sizing: border-box;
+  max-width: 36px !important;
+  min-width: 36px !important;
+  padding-left: 4px !important;
+  padding-right: 4px !important;
+  text-align: center !important;
+  width: 36px !important;
+}
+
+#root .app-shell table tbody tr > td.table-index-cell,
+#root .app-shell table tbody tr:hover > td.table-index-cell {
+  background: #dce3eb !important;
+  color: #334155 !important;
+  font-weight: 500 !important;
 }

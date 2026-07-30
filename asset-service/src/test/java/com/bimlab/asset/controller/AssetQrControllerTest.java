@@ -105,6 +105,7 @@ class AssetQrControllerTest {
         MockHttpServletRequest request = new MockHttpServletRequest();
         List<AssetQrHistoryResponse> response = List.of(new AssetQrHistoryResponse(
                 "ASSET_CREATED", "Khởi tạo hồ sơ tài sản", "Đã tạo", null,
+                null, null,
                 Map.of(), Map.of(), Map.of()
         ));
         when(accessPolicy.canView(request)).thenReturn(true);

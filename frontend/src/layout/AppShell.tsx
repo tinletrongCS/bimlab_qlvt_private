@@ -27,6 +27,7 @@ import { UserAvatar } from "../components/UserAvatar";
 import { useActions } from "../contexts/ActionsContext";
 import { useAppData } from "../contexts/AppDataContext";
 import { useAuth } from "../contexts/AuthContext";
+import { enableTableColumnResize } from "../lib/tableColumnResize";
 import type { Permission } from "../services/types";
 
 interface NavItem {
@@ -140,6 +141,11 @@ export function AppShell() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [sidebarSearch, setSidebarSearch] = useState("");
+
+  useEffect(() => {
+    const shell = document.querySelector<HTMLElement>(".app-shell");
+    return shell ? enableTableColumnResize(shell) : undefined;
+  }, []);
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() =>
     NAV_GROUPS.reduce<Record<string, boolean>>((acc, group) => {
       acc[group.key] = group.children.some((item) => location.pathname.startsWith(item.to));

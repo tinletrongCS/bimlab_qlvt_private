@@ -8,6 +8,8 @@ public record AssetQrHistoryResponse(
         String title,
         String summary,
         LocalDateTime occurredAt,
+        String approvedByName,
+        String approvedByUsername,
         Map<String, Object> beforeData,
         Map<String, Object> afterData,
         Map<String, Object> changedFields

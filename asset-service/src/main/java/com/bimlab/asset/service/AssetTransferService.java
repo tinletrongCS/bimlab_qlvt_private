@@ -46,6 +46,7 @@ public class AssetTransferService {
     private final AuditLogService auditLogService;
     private final AssetAccessService access;
     private final MinioService minioService;
+    private final AssetReferenceLookup references;
     @Transactional(readOnly = true)
     public List<AssetTransfer> listTransfers() {
         return assetTransfers.findAllSortedByDateDesc();
@@ -286,15 +287,15 @@ public class AssetTransferService {
         ensureCurrentUserCanDecide(confirmations);
 
         String username = access.getCurrentUsername();
+        String approvedBy = actorLabel(references.employeeName(access.getCurrentEmployeeId()), username);
         Map<String, Object> beforeHeader = transferHeaderSnapshot(header);
         header.setStatus("APPROVED");
-        header.setApprovedBy(username);
+        header.setApprovedBy(approvedBy);
         AssetTransferHeader savedHeader = assetTransferRepo.save(header);
 
-        LocalDateTime now = LocalDateTime.now();
         confirmations.forEach(confirmation -> {
             confirmation.setStatus("APPROVED");
-            confirmation.setConfirmedAt(now);
+            confirmation.setConfirmedAt(LocalDateTime.now());
             confirmation.setNote(req == null ? null : req.reason());
         });
         List<AssetTransferConfirmation> savedConfirmations = assetTransferConfirmations.saveAll(confirmations);
@@ -304,7 +305,7 @@ public class AssetTransferService {
             AssetItem asset = line.getAsset();
             Map<String, Object> beforeAsset = assetSnapshot(asset);
             line.setLineStatus("APPROVED");
-            line.setApprovedBy(username);
+            line.setApprovedBy(approvedBy);
             applyApprovedTransfer(line, asset, header.getTransferDate());
             assets.save(asset);
             auditLogService.log(
@@ -313,7 +314,7 @@ public class AssetTransferService {
                     asset.getId(),
                     asset.getAssetCode(),
                     "TRANSFER_APPROVED",
-                    "Duyệt bàn giao tài sản trong phiếu " + savedHeader.getTransferCode(),
+                    "Duyệt phiếu bàn giao" + savedHeader.getTransferCode(),
                     beforeAsset,
                     assetSnapshot(asset),
                     changedFields(beforeAsset, assetSnapshot(asset))
@@ -350,6 +351,10 @@ public class AssetTransferService {
 
         Map<String, Object> beforeHeader = transferHeaderSnapshot(header);
         header.setStatus("REJECTED");
+        header.setApprovedBy(actorLabel(
+                references.employeeName(access.getCurrentEmployeeId()),
+                access.getCurrentUsername()
+        ));
         header.setNote(appendDecisionNote(header.getNote(), "Từ chối: " + req.reason()));
         AssetTransferHeader savedHeader = assetTransferRepo.save(header);
 
@@ -533,6 +538,10 @@ public class AssetTransferService {
 
     private boolean isBlank(String value) {
         return value == null || value.trim().isEmpty();
+    }
+
+    private String actorLabel(String name, String username) {
+        return isBlank(name) ? username : isBlank(username) ? name : name + " (" + username + ")";
     }
 
     private Map<String, Object> assetSnapshot(AssetItem asset) {

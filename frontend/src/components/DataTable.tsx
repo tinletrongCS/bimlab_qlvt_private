@@ -57,6 +57,9 @@ export function DataTable<T>({
         <table>
           <thead>
             <tr>
+              <th className="table-index-header" data-column-resize="locked">
+                STT
+              </th>
               {columns.map((column) => (
                 <th key={column.key} className={column.className}>
                   {column.title}
@@ -67,13 +70,14 @@ export function DataTable<T>({
           <tbody>
             {data.length === 0 ? (
               <tr>
-                <td className="empty" colSpan={columns.length}>
+                <td className="empty" colSpan={columns.length + 1}>
                   {emptyText}
                 </td>
               </tr>
             ) : (
               visibleData.map((item, index) => (
                 <tr key={getRowKey ? getRowKey(item, (safePage - 1) * pageSize + index) : index}>
+                  <td className="table-index-cell">{(safePage - 1) * pageSize + index + 1}</td>
                   {columns.map((column) => (
                     <td key={column.key} className={column.className}>
                       {column.render(item)}

@@ -16,11 +16,14 @@ describe("DataTable", () => {
         itemLabel="dòng"
       />,
     );
+    expect(screen.getByRole("columnheader", { name: "STT" })).toBeVisible();
+    expect(screen.getByRole("cell", { name: "1" })).toBeVisible();
     expect(screen.getByText("Dòng 1")).toBeVisible();
     expect(screen.queryByText("Dòng 11")).not.toBeInTheDocument();
 
     const next = screen.getAllByRole("button")[2];
     fireEvent.click(next);
+    expect(screen.getByRole("cell", { name: "11" })).toBeVisible();
     expect(screen.getByText("Dòng 11")).toBeVisible();
 
     const last = screen.getAllByRole("button")[3];

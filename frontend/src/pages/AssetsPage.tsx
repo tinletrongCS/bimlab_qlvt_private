@@ -202,6 +202,7 @@ const ASSET_TABLE_COLUMN_WIDTHS: Record<AssetTableColumnId, number> = {
   warrantyUntil: 138,
 };
 const ASSET_TABLE_SELECT_WIDTH = 42;
+const ASSET_TABLE_INDEX_WIDTH = 36;
 const ASSET_TABLE_ACTIONS_WIDTH = 86;
 const ASSET_TABLE_COLUMN_IDS = ASSET_TABLE_COLUMNS.map((column) => column.id);
 const DEFAULT_ASSET_TABLE_VISIBLE_COLUMNS = ASSET_TABLE_COLUMNS.filter(
@@ -1875,7 +1876,9 @@ export function AssetsPage() {
     });
   const assetTableMinWidth = configuredAssetColumns.reduce(
     (total, column) => total + (ASSET_TABLE_COLUMN_WIDTHS[column.id] ?? 150),
-    ASSET_TABLE_ACTIONS_WIDTH + (assetMultiSelectMode ? ASSET_TABLE_SELECT_WIDTH : 0),
+    ASSET_TABLE_ACTIONS_WIDTH +
+      ASSET_TABLE_INDEX_WIDTH +
+      (assetMultiSelectMode ? ASSET_TABLE_SELECT_WIDTH : 0),
   );
   const columnConfigOrder = [
     ...assetColumnOrder.filter((id) =>
@@ -2291,6 +2294,12 @@ export function AssetsPage() {
                         </label>
                       </th>
                     )}
+                    <th
+                      className="asset-table-index-col asset-table-sticky-left asset-table-sticky-index table-index-header"
+                      data-column-resize="locked"
+                    >
+                      STT
+                    </th>
                     {configuredAssetColumns.map((column) => (
                       <th
                         key={column.id}
@@ -2303,14 +2312,19 @@ export function AssetsPage() {
                         {column.label}
                       </th>
                     ))}
-                    <th className="asset-table-actions-col asset-table-sticky-right">Thao tác</th>
+                    <th
+                      className="asset-table-actions-col asset-table-sticky-right"
+                      data-column-resize="locked"
+                    >
+                      Thao tác
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
                   {pagedAssets.length === 0 ? (
                     <tr className="asset-table-empty-row">
                       <td
-                        colSpan={configuredAssetColumns.length + 1 + (assetMultiSelectMode ? 1 : 0)}
+                        colSpan={configuredAssetColumns.length + 2 + (assetMultiSelectMode ? 1 : 0)}
                       >
                         <div className="asset-table-empty-state">
                           Không có tài sản phù hợp bộ lọc.
@@ -2318,7 +2332,7 @@ export function AssetsPage() {
                       </td>
                     </tr>
                   ) : (
-                    pagedAssets.map((item) => (
+                    pagedAssets.map((item, index) => (
                       <tr
                         key={item.id}
                         className={selectedAssetIds.has(item.id) ? "is-selected" : undefined}
@@ -2338,6 +2352,9 @@ export function AssetsPage() {
                             </label>
                           </td>
                         )}
+                        <td className="asset-table-index-col asset-table-sticky-left asset-table-sticky-index table-index-cell">
+                          {(safeAssetPage - 1) * assetPageSize + index + 1}
+                        </td>
                         {configuredAssetColumns.map((column) => {
                           const content = column.render(item);
                           const titleText =
@@ -2831,10 +2848,6 @@ export function AssetsPage() {
                     <label>
                       <span>Ngày đưa vào sử dụng</span>
                       <input type="date" value={selectedAsset.useDate || ""} disabled />
-                    </label>
-                    <label>
-                      <span>Nguồn hình thành</span>
-                      <input type="text" value={assetDraft.source || ""} disabled />
                     </label>
                   </div>
                 </section>

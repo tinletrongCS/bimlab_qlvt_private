@@ -54,6 +54,11 @@ function routeText(data) {
   );
 }
 
+function approverText(name, username) {
+  if (name && username) return `${name} (${username})`;
+  return name || username || "—";
+}
+
 function renderHistory(items) {
   const list = document.getElementById("history-list");
   if (!Array.isArray(items)) {
@@ -99,6 +104,12 @@ function renderHistory(items) {
 
       const before = item.beforeData || {};
       const after = item.afterData || {};
+      const approver = document.createElement("p");
+      approver.className = "timeline-approver";
+      approver.textContent = `Duyệt bởi: ${approverText(
+        item.approvedByName,
+        item.approvedByUsername,
+      )}`;
       const route = document.createElement("div");
       route.className = "transfer-route";
       const from = document.createElement("div");
@@ -119,7 +130,7 @@ function renderHistory(items) {
       toValue.textContent = routeText(after);
       to.append(toLabel, toValue);
       route.append(from, arrow, to);
-      row.append(head, detail, route);
+      row.append(head, detail, approver, route);
       return row;
     }),
   );
