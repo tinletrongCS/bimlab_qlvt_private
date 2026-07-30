@@ -7,6 +7,7 @@ import com.bimlab.asset.model.AssetItem;
 import com.bimlab.asset.model.AssetQrCode;
 import com.bimlab.asset.model.AssetTransfer;
 import com.bimlab.asset.model.AssetTransferHeader;
+import com.bimlab.asset.model.AuditLog;
 import com.bimlab.asset.model.Vendor;
 import com.bimlab.asset.model.status.AssetClass;
 import com.bimlab.asset.model.status.AssetStatus;
@@ -14,6 +15,7 @@ import com.bimlab.asset.model.status.QrCodeStatus;
 import com.bimlab.asset.repository.AssetItemRepository;
 import com.bimlab.asset.repository.AssetQrCodeRepository;
 import com.bimlab.asset.repository.AssetTransferRepository;
+import com.bimlab.asset.repository.AuditLogRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -27,6 +29,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
@@ -44,6 +47,8 @@ class AssetQrServiceTest {
     AssetQrCodeRepository qrCodes;
     @Mock
     AssetTransferRepository transfers;
+    @Mock
+    AuditLogRepository auditLogs;
     @Mock
     AssetReferenceLookup references;
     @InjectMocks
@@ -164,6 +169,39 @@ class AssetQrServiceTest {
                 .hasMessage("Không tìm thấy mã QR");
     }
 
+    @Test
+    void transferHistoryKeepsNewestApprovedFirstAndCreationLast() {
+        AssetItem asset = asset();
+        AuditLog approved = AuditLog.builder()
+                .action("TRANSFER_APPROVED")
+                .summary("Duyệt bàn giao tài sản trong phiếu PBG-001")
+                .occurredAt(LocalDateTime.of(2026, 7, 15, 10, 30))
+                .beforeData(Map.of("siteId", 1))
+                .afterData(Map.of("siteId", 2))
+                .changedFields(Map.of("siteId", Map.of("before", 1, "after", 2)))
+                .build();
+        when(qrCodes.findByQrToken("public-token")).thenReturn(Optional.of(
+                AssetQrCode.builder()
+                        .asset(asset)
+                        .qrToken("public-token")
+                        .status(QrCodeStatus.ACTIVE)
+                        .build()
+        ));
+        when(auditLogs
+                .findByEntityTypeAndEntityIdAndActionAndChangedFieldsIsNotNullOrderByOccurredAtDesc(
+                        "ASSET", 7L, "TRANSFER_APPROVED"
+                ))
+                .thenReturn(List.of(approved));
+
+        var history = service.getTransferHistory("public-token");
+
+        assertThat(history).extracting(event -> event.action())
+                .containsExactly("TRANSFER_APPROVED", "ASSET_CREATED");
+        var creation = history.get(history.size() - 1);
+        assertThat(creation.title()).isEqualTo("Khởi tạo hồ sơ tài sản");
+        assertThat(creation.occurredAt()).isEqualTo(asset.getCreatedAt());
+    }
+
     private AssetItem asset() {
         return AssetItem.builder()
                 .id(7L)
@@ -185,6 +223,7 @@ class AssetQrServiceTest {
                 .originalCost(BigDecimal.valueOf(25_000_000))
                 .source("Mua mới")
                 .status(AssetStatus.ASSIGNED)
+                .createdAt(LocalDateTime.of(2026, 1, 2, 8, 30))
                 .updatedAt(LocalDateTime.of(2026, 7, 20, 9, 30))
                 .build();
     }

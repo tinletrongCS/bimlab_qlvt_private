@@ -55,28 +55,49 @@ function routeText(employeeId, departmentId, siteId) {
 
 function renderHistory(items) {
   const list = document.getElementById("history-list");
-  document.getElementById("history-count").textContent = `${items.length} sự kiện`;
-  if (items.length === 0) {
+  if (!Array.isArray(items)) {
+    document.getElementById("history-count").textContent = "Không khả dụng";
     const empty = document.createElement("li");
     empty.className = "empty";
-    empty.textContent = "Chưa có lịch sử bàn giao đã hoàn tất.";
+    empty.textContent = "Không tải được lịch sử bàn giao.";
+    list.replaceChildren(empty);
+    return;
+  }
+
+  const orderedItems = [...items].sort((left, right) => {
+    if (left.action === "ASSET_CREATED" && right.action === "ASSET_CREATED") return 0;
+    if (left.action === "ASSET_CREATED") return 1;
+    if (right.action === "ASSET_CREATED") return -1;
+    return new Date(right.occurredAt).getTime() - new Date(left.occurredAt).getTime();
+  });
+  document.getElementById("history-count").textContent = `${orderedItems.length} sự kiện`;
+  if (orderedItems.length === 0) {
+    const empty = document.createElement("li");
+    empty.className = "empty";
+    empty.textContent = "Chưa có lịch sử bàn giao.";
     list.replaceChildren(empty);
     return;
   }
   list.replaceChildren(
-    ...items.map((item) => {
+    ...orderedItems.map((item) => {
       const row = document.createElement("li");
       const head = document.createElement("div");
       head.className = "timeline-head";
       const title = document.createElement("h3");
-      title.textContent = item.transferType || "Bàn giao tài sản";
+      title.textContent = item.title || "Bàn giao tài sản";
       const time = document.createElement("time");
-      time.textContent = formatDate(item.transferDate);
+      time.textContent = formatDateTime(item.occurredAt);
       head.append(title, time);
 
       const detail = document.createElement("p");
-      detail.textContent = [item.transferCode, item.status].filter(Boolean).join(" · ");
+      detail.textContent = item.summary || "";
+      if (item.action === "ASSET_CREATED") {
+        row.append(head, detail);
+        return row;
+      }
 
+      const before = item.beforeData || {};
+      const after = item.afterData || {};
       const route = document.createElement("div");
       route.className = "transfer-route";
       const from = document.createElement("div");
@@ -85,9 +106,9 @@ function renderHistory(items) {
       fromLabel.textContent = "Từ";
       const fromValue = document.createElement("strong");
       fromValue.textContent = routeText(
-        item.fromEmployeeId,
-        item.fromDepartmentId,
-        item.fromSiteId,
+        before.assignedEmployeeId,
+        before.departmentId,
+        before.siteId,
       );
       from.append(fromLabel, fromValue);
       const arrow = document.createElement("div");
@@ -98,7 +119,7 @@ function renderHistory(items) {
       const toLabel = document.createElement("span");
       toLabel.textContent = "Đến";
       const toValue = document.createElement("strong");
-      toValue.textContent = routeText(item.toEmployeeId, item.toDepartmentId, item.toSiteId);
+      toValue.textContent = routeText(after.assignedEmployeeId, after.departmentId, after.siteId);
       to.append(toLabel, toValue);
       route.append(from, arrow, to);
       row.append(head, detail, route);
@@ -162,7 +183,6 @@ function renderAsset(asset) {
         : "Hết hiệu lực / chưa cập nhật",
     ],
   ]);
-  renderHistory(asset.transferHistory || []);
 }
 
 function storedAccessToken() {
@@ -182,14 +202,26 @@ async function loadAsset() {
   }
   const apiBase = document.querySelector('meta[name="asset-api-base"]').content.replace(/\/$/, "");
   const accessToken = storedAccessToken();
-  const response = await fetch(`${apiBase}/api/asset/qr/public/${encodeURIComponent(token)}`, {
-    credentials: "omit",
-    headers: {
-      Accept: "application/json",
-      ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
-    },
-  });
-  if (response.status === 401 || response.status === 403) {
+  const headers = {
+    Accept: "application/json",
+    ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+  };
+  const [assetResponse, historyResponse] = await Promise.all([
+    fetch(`${apiBase}/api/asset/qr/public/${encodeURIComponent(token)}`, {
+      credentials: "omit",
+      headers,
+    }),
+    fetch(`${apiBase}/api/asset/qr/public/${encodeURIComponent(token)}/transfer-history`, {
+      credentials: "omit",
+      headers,
+    }),
+  ]);
+  if (
+    assetResponse.status === 401 ||
+    assetResponse.status === 403 ||
+    historyResponse.status === 401 ||
+    historyResponse.status === 403
+  ) {
     const returnUrl = `${location.pathname}${location.search}${location.hash}`;
     sessionStorage.setItem("qlvt:oidc:return-url", returnUrl);
     // biome-ignore lint/suspicious/noDocumentCookie: QR login must support mobile browsers without Cookie Store API.
@@ -201,10 +233,14 @@ async function loadAsset() {
     error.requiresLogin = true;
     throw error;
   }
-  if (!response.ok) {
+  if (!assetResponse.ok) {
     throw new Error("Mã QR không hợp lệ, đã bị thu hồi hoặc tài sản không còn tồn tại.");
   }
-  return { asset: await response.json(), authenticated: Boolean(accessToken) };
+  return {
+    asset: await assetResponse.json(),
+    history: historyResponse.ok ? await historyResponse.json() : null,
+    authenticated: Boolean(accessToken),
+  };
 }
 
 document.querySelectorAll("[data-panel]").forEach((tab) => {
@@ -220,8 +256,9 @@ document.querySelectorAll("[data-panel]").forEach((tab) => {
 });
 
 loadAsset()
-  .then(({ asset, authenticated }) => {
+  .then(({ asset, history, authenticated }) => {
     renderAsset(asset);
+    renderHistory(history);
     document.getElementById("network-state").textContent = authenticated
       ? "Đã xác thực"
       : "Mạng nội bộ · Không cần đăng nhập";
