@@ -27,8 +27,12 @@ class AssetReferenceLookupTest {
         when(jdbc.queryForObject(
                 "select name from hrm.work_sites where id = ?", String.class, 3L
         )).thenThrow(new DataAccessResourceFailureException("hrm down"));
+        when(jdbc.queryForObject(
+                "select full_name from auth.users where username = ?", String.class, "admin"
+        )).thenReturn("Quản trị viên");
 
         assertThat(lookup.employeeName(1L)).isEqualTo("Nguyễn Văn A");
+        assertThat(lookup.employeeName(null, "admin")).isEqualTo("Quản trị viên");
         assertThat(lookup.departmentName(2L)).isEqualTo("Phòng Kỹ thuật");
         assertThat(lookup.siteName(3L)).isNull();
         assertThat(lookup.employeeName(null)).isNull();

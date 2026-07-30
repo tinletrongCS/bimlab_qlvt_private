@@ -2294,10 +2294,7 @@ export function AssetsPage() {
                         </label>
                       </th>
                     )}
-                    <th
-                      className="asset-table-index-col asset-table-sticky-left asset-table-sticky-index table-index-header"
-                      data-column-resize="locked"
-                    >
+                    <th className="asset-table-index-col asset-table-sticky-left asset-table-sticky-index table-index-header">
                       STT
                     </th>
                     {configuredAssetColumns.map((column) => (
@@ -2312,12 +2309,7 @@ export function AssetsPage() {
                         {column.label}
                       </th>
                     ))}
-                    <th
-                      className="asset-table-actions-col asset-table-sticky-right"
-                      data-column-resize="locked"
-                    >
-                      Thao tác
-                    </th>
+                    <th className="asset-table-actions-col asset-table-sticky-right">Thao tác</th>
                   </tr>
                 </thead>
                 <tbody>

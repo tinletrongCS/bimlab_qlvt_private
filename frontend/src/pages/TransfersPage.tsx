@@ -576,7 +576,7 @@ export function TransfersPage() {
           </div>
           <div>
             <span>{decisionLabel}</span>
-            <strong>{transfer.approvedBy || "--"}</strong>
+            <strong>{transfer.approvedBy?.replace(/\s+\([^)]*\)$/, "") || "--"}</strong>
           </div>
         </div>
 
@@ -660,9 +660,7 @@ export function TransfersPage() {
             <table className="transfer-detail-table" aria-label="Danh sách tài sản luân chuyển">
               <thead>
                 <tr>
-                  <th className="table-index-header" data-column-resize="locked">
-                    STT
-                  </th>
+                  <th className="table-index-header">STT</th>
                   <th>Tài sản</th>
                   <th>Từ</th>
                   <th>Đến</th>
@@ -848,7 +846,6 @@ export function TransfersPage() {
                   <tr>
                     <th
                       className="table-index-header"
-                      data-column-resize="locked"
                       style={{
                         padding: "12px 16px",
                         color: "#64748b",
@@ -919,7 +916,6 @@ export function TransfersPage() {
                       Xét duyệt
                     </th>
                     <th
-                      data-column-resize="locked"
                       style={{
                         padding: "12px 16px",
                         color: "#64748b",
@@ -1630,7 +1626,6 @@ export function TransfersPage() {
                     <tr>
                       <th
                         className="table-index-header"
-                        data-column-resize="locked"
                         style={{
                           padding: "12px 16px",
                           color: "#64748b",

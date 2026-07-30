@@ -57,9 +57,7 @@ export function DataTable<T>({
         <table>
           <thead>
             <tr>
-              <th className="table-index-header" data-column-resize="locked">
-                STT
-              </th>
+              <th className="table-index-header">STT</th>
               {columns.map((column) => (
                 <th key={column.key} className={column.className}>
                   {column.title}

@@ -193,9 +193,9 @@ class AssetTransferServiceTest {
         when(assetTransferConfirmations.findByTransferHeaderIdOrderByIdAsc(10L))
                 .thenReturn(List.of(confirmation));
         when(access.hasAnyPermission(any(), any())).thenReturn(true);
+        when(access.getCurrentEmployeeId()).thenReturn(null);
         when(access.getCurrentUsername()).thenReturn("approver");
-        when(access.getCurrentEmployeeId()).thenReturn(9L);
-        when(references.employeeName(9L)).thenReturn("Người duyệt");
+        when(references.employeeName(null, "approver")).thenReturn("Người duyệt");
         when(assetTransferRepo.save(header)).thenReturn(header);
         when(assetTransferConfirmations.saveAll(any())).thenAnswer(inv -> inv.getArgument(0));
         when(assetTransfers.findByTransferHeaderIdOrderByLineNoAscIdAsc(10L))
@@ -207,7 +207,7 @@ class AssetTransferServiceTest {
                 10L, new AssetTransferDecisionRequest("Đồng ý", null));
 
         assertEquals("APPROVED", response.status());
-        assertEquals("Người duyệt (approver)", response.approvedBy());
+        assertEquals("Người duyệt", response.approvedBy());
         assertEquals("APPROVED", confirmation.getStatus());
         assertEquals("APPROVED", assignLine.getLineStatus());
         assertEquals(7L, assignedAsset.getAssignedEmployeeId());
@@ -246,7 +246,7 @@ class AssetTransferServiceTest {
                 .thenReturn(List.of(confirmation));
         when(access.getCurrentEmployeeId()).thenReturn(7L);
         when(access.getCurrentUsername()).thenReturn("reviewer");
-        when(references.employeeName(7L)).thenReturn("Người từ chối");
+        when(references.employeeName(7L, "reviewer")).thenReturn("Người từ chối");
         when(assetTransferRepo.save(header)).thenReturn(header);
         when(assetTransferConfirmations.saveAll(any())).thenAnswer(inv -> inv.getArgument(0));
         when(assetTransfers.findByTransferHeaderIdOrderByLineNoAscIdAsc(10L)).thenReturn(List.of(line));
@@ -257,7 +257,7 @@ class AssetTransferServiceTest {
                 10L, new AssetTransferDecisionRequest("Sai thông tin", null));
 
         assertEquals("REJECTED", response.status());
-        assertEquals("Người từ chối (reviewer)", response.approvedBy());
+        assertEquals("Người từ chối", response.approvedBy());
         assertEquals("Ghi chú cũ\nTừ chối: Sai thông tin", response.note());
         assertEquals("REJECTED", confirmation.getStatus());
         assertEquals("Sai thông tin", confirmation.getNote());

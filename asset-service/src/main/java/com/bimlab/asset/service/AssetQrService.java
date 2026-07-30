@@ -135,7 +135,7 @@ public class AssetQrService {
                 "Bàn giao tài sản",
                 log.getSummary(),
                 log.getOccurredAt(),
-                references.employeeName(log.getActorEmployeeId()),
+                references.employeeName(log.getActorEmployeeId(), log.getActorUsername()),
                 log.getActorUsername(),
                 withReferenceNames(log.getBeforeData()),
                 withReferenceNames(log.getAfterData()),
