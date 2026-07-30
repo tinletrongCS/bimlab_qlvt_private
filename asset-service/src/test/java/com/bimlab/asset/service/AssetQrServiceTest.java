@@ -192,11 +192,15 @@ class AssetQrServiceTest {
                         "ASSET", 7L, "TRANSFER_APPROVED"
                 ))
                 .thenReturn(List.of(approved));
+        when(references.siteName(1L)).thenReturn("BIMLab");
+        when(references.siteName(2L)).thenReturn("PCC");
 
         var history = service.getTransferHistory("public-token");
 
         assertThat(history).extracting(event -> event.action())
                 .containsExactly("TRANSFER_APPROVED", "ASSET_CREATED");
+        assertThat(history.get(0).beforeData()).containsEntry("siteName", "BIMLab");
+        assertThat(history.get(0).afterData()).containsEntry("siteName", "PCC");
         var creation = history.get(history.size() - 1);
         assertThat(creation.title()).isEqualTo("Khởi tạo hồ sơ tài sản");
         assertThat(creation.occurredAt()).isEqualTo(asset.getCreatedAt());
