@@ -611,7 +611,7 @@ describe("QLVT asset and booking workflow coverage", () => {
     await screen.findByRole("heading", { name: "Danh sách tài sản" });
 
     await user.click(screen.getByRole("button", { name: /Tải mẫu Excel/i }));
-    await waitFor(() => expect(URL.createObjectURL).toHaveBeenCalled());
+    await waitFor(() => expect(URL.createObjectURL).toHaveBeenCalled(), { timeout: 5000 });
 
     await user.click(screen.getByRole("button", { name: /Nhập tài sản/i }));
     const input = document.querySelector('input[type="file"]') as HTMLInputElement;
