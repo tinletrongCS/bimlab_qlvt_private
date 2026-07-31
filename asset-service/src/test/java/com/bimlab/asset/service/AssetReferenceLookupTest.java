@@ -35,6 +35,7 @@ class AssetReferenceLookupTest {
         assertThat(lookup.employeeName(null, "admin")).isEqualTo("Quản trị viên");
         assertThat(lookup.departmentName(2L)).isEqualTo("Phòng Kỹ thuật");
         assertThat(lookup.siteName(3L)).isNull();
+        assertThat(lookup.siteName(null)).isEqualTo("BIMLAB");
         assertThat(lookup.employeeName(null)).isNull();
     }
 }

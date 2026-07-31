@@ -639,10 +639,11 @@
       }
 
       function routeText(employeeId, departmentId, siteId) {
+        const hasAssignment = employeeId || departmentId || siteId;
         return [
           employeeId ? `Nhân sự #${employeeId}` : null,
           departmentId ? `Phòng ban #${departmentId}` : null,
-          siteId ? `Chi nhánh #${siteId}` : null,
+          siteId ? `Chi nhánh #${siteId}` : hasAssignment ? "BIMLAB" : null,
         ]
           .filter(Boolean)
           .join(" · ") || "Kho / chưa gán";
@@ -722,7 +723,7 @@
             asset.assignedEmployeeName || reference("Nhân sự", asset.assignedEmployeeId),
           ],
           ["Phòng ban", asset.departmentName || reference("Phòng ban", asset.departmentId)],
-          ["Chi nhánh", asset.siteName || reference("Chi nhánh", asset.siteId)],
+          ["Chi nhánh", asset.siteName || (asset.siteId ? reference("Chi nhánh", asset.siteId) : "BIMLAB")],
           [
             "Danh mục",
             [asset.categoryName, assetClassLabels[asset.assetClass]].filter(Boolean).join(" · "),

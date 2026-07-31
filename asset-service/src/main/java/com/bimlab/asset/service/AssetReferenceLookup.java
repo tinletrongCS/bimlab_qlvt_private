@@ -24,6 +24,9 @@ public class AssetReferenceLookup {
     }
 
     public String siteName(Long id) {
+        if (id == null) {
+            return "BIMLAB";
+        }
         return findName("select name from hrm.work_sites where id = ?", id);
     }
 
