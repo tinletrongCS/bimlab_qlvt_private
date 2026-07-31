@@ -1094,8 +1094,8 @@ export function AssetsPage() {
     id ? employeeLabel(employees.find((employee) => employee.id === id)) : "Chưa gán người dùng";
   const departmentName = (id?: number) =>
     id ? departments.find((department) => department.id === id)?.name || `Phòng ban #${id}` : "--";
-  const siteName = (id?: number) =>
-    id ? workSites.find((site) => site.id === id)?.name || `Site #${id}` : "--";
+  const siteName = (id?: number | null) =>
+    id ? workSites.find((site) => site.id === id)?.name || `Site #${id}` : "BIMLAB";
   const projectName = (id?: number) =>
     id ? projectLabel(projects.find((project) => project.id === id)) : "--";
 
@@ -1431,11 +1431,7 @@ export function AssetsPage() {
         ),
       ),
       values: valueBuckets,
-      sites: countMap(
-        filteredAssets.map((asset) =>
-          asset.siteId ? siteName(asset.siteId) : "Chưa gán chi nhánh",
-        ),
-      ),
+      sites: countMap(filteredAssets.map((asset) => siteName(asset.siteId))),
     };
   }, [filteredAssets, workSites]);
 
@@ -2805,11 +2801,7 @@ export function AssetsPage() {
                   <div className="asset-detail-fields">
                     <label>
                       <span>Site hiện tại</span>
-                      <input
-                        type="text"
-                        value={workSites.find((s) => s.id === assetDraft.siteId)?.name || "--"}
-                        disabled
-                      />
+                      <input type="text" value={siteName(assetDraft.siteId)} disabled />
                     </label>
                     <label>
                       <span>Phòng ban quản lý</span>

@@ -444,11 +444,8 @@ export function TransfersPage() {
   };
 
   const getAssetLocation = (asset: any) => {
-    const parts = [];
-    if (asset.siteId) {
-      const site = workSites.find((s) => s.id === asset.siteId);
-      if (site) parts.push(site.name);
-    }
+    const site = workSites.find((item) => item.id === asset.siteId);
+    const parts = [site?.name || "BIMLAB"];
     if (asset.departmentId) {
       const dept = departments.find((d) => d.id === asset.departmentId);
       if (dept) parts.push(dept.name);
