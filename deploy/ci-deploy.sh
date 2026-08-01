@@ -35,6 +35,23 @@ restart_gateway(){
   fi
 }
 
+dump_failed_logs(){
+  dc ps -a || true
+  for cid in $(dc ps -aq 2>/dev/null); do
+    nm=$(docker inspect -f '{{.Name}}' "$cid" 2>/dev/null | sed 's#^/##' || echo '?')
+    log "log $nm (120 dòng cuối)"
+    docker logs --tail 120 "$cid" 2>&1 || true
+  done
+}
+
+rollback_images(){
+  while read ref iid; do
+    [ -n "$ref" ] && [ -n "$iid" ] && docker image tag "$iid" "$ref" 2>/dev/null && log "  khôi phục $ref"
+  done < "$SNAP"
+  dc up -d --no-build || true
+  restart_gateway
+}
+
 # 1) Snapshot image của các service đang chạy để rollback (image ref + image id)
 SNAP="/tmp/ci-rollback-$APP.txt"; : > "$SNAP"
 for cid in $(dc ps -q 2>/dev/null); do
@@ -59,7 +76,9 @@ rsync -a --delete --no-owner --no-group \
 # 3) Build + up (dùng compose/.env host). Build lỗi -> compose KHÔNG recreate -> giữ container cũ.
 log "docker compose up -d --build"
 if ! dc up -d --build; then
-  log "!! BUILD/UP LỖI — container cũ giữ nguyên. Thoát."
+  log "!! BUILD/UP LỖI — in log và rollback image cũ"
+  dump_failed_logs
+  rollback_images
   exit 1
 fi
 
@@ -84,11 +103,8 @@ done
 # 5) Rollback toàn bộ nếu có service không healthy
 if [ "$ok" != 1 ]; then
   log "!! CÓ SERVICE KHÔNG HEALTHY -> ROLLBACK toàn bộ image cũ"
-  while read ref iid; do
-    [ -n "$ref" ] && [ -n "$iid" ] && docker image tag "$iid" "$ref" 2>/dev/null && log "  khôi phục $ref"
-  done < "$SNAP"
-  dc up -d --no-build || true
-  restart_gateway
+  dump_failed_logs
+  rollback_images
   log "đã rollback về image cũ (kiểm tra lại thủ công nếu cần)"
   exit 1
 fi
