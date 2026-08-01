@@ -14480,3 +14480,22 @@ button {
 #root .asset-table .asset-table-checkbox {
   vertical-align: middle;
 }
+
+#root .asset-category-filter-list {
+  align-content: start;
+  height: min(68vh, 680px);
+  max-height: none !important;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+#root .asset-category-filter-item.all {
+  min-height: 44px !important;
+  position: sticky;
+  top: 0;
+  z-index: 4;
+}
+
+#root .asset-category-filter-item.all:not([data-selected="true"]) {
+  background: #ffffff !important;
+}
