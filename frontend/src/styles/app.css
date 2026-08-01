@@ -11078,7 +11078,7 @@ body,
 }
 
 #root .asset-list-layout {
-  grid-template-columns: minmax(0, 260px) minmax(0, 1fr) !important;
+  grid-template-columns: minmax(280px, 300px) minmax(0, 1fr) !important;
 }
 
 #root .asset-list-layout.category-collapsed {
@@ -14438,4 +14438,45 @@ button {
   background: #dce3eb !important;
   color: #334155 !important;
   font-weight: 500 !important;
+}
+
+#root .asset-list-head-actions .asset-multi-select-toggle[data-active="true"],
+#root .asset-list-head-actions .asset-multi-select-toggle[data-active="true"]:hover {
+  color: #dc2626 !important;
+}
+
+#root .asset-table .asset-table-checkbox,
+#root .asset-table .asset-table-checkbox input,
+#root .asset-table .asset-table-checkbox span {
+  height: 14px;
+  width: 14px;
+}
+
+#root .asset-table .asset-table-checkbox input:checked + span::after {
+  height: 6px;
+  left: 5px;
+  top: 2px;
+  width: 3px;
+}
+
+#root .asset-table .asset-table-checkbox input:indeterminate + span::after {
+  left: 3px;
+  top: 6px;
+  width: 8px;
+}
+
+#root .asset-category-filter-children {
+  padding-left: 14px !important;
+}
+
+#root .asset-table th.asset-table-select-col,
+#root .asset-table td.asset-table-select-col {
+  line-height: 0 !important;
+  padding-bottom: 0 !important;
+  padding-top: 0 !important;
+  vertical-align: middle !important;
+}
+
+#root .asset-table .asset-table-checkbox {
+  vertical-align: middle;
 }
