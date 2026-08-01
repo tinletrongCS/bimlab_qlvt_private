@@ -447,7 +447,6 @@ function assetMatchesCategoryNode(
 
 function AssetCategoryFilterNode({
   node,
-  depth = 0,
   selectedId,
   selectedPathIds,
   expandedIds,
@@ -456,7 +455,6 @@ function AssetCategoryFilterNode({
   onToggle,
 }: {
   node: AssetCategoryTree;
-  depth?: number;
   selectedId?: number;
   selectedPathIds: Set<number>;
   expandedIds: Set<number>;
@@ -474,7 +472,6 @@ function AssetCategoryFilterNode({
         type="button"
         className="asset-category-filter-item"
         data-selected={selectedId === node.id ? "true" : undefined}
-        style={{ paddingLeft: 8 + depth * 8 }}
         onClick={() => {
           onSelect(node);
           if (hasChildren) onToggle(node.id);
@@ -498,7 +495,6 @@ function AssetCategoryFilterNode({
             <AssetCategoryFilterNode
               key={child.id}
               node={child}
-              depth={depth + 1}
               selectedId={selectedId}
               selectedPathIds={selectedPathIds}
               expandedIds={expandedIds}
@@ -2276,7 +2272,7 @@ export function AssetsPage() {
                       <th className="asset-table-select-col asset-table-sticky-select">
                         <label
                           className="asset-table-checkbox"
-                          title="Chọn toàn bộ dòng trên trang"
+                          title="Chọn toàn bộ dòng hiển thị trên trang hiện tại"
                         >
                           <input
                             type="checkbox"
