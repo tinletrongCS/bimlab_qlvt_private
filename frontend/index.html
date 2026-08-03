@@ -11,10 +11,15 @@
     <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
+    <!-- Giữ `default` chứ KHÔNG dùng `black-translucent`: kiểu đó bắt chữ của status bar
+         phải màu trắng, mà .mobile-topbar của QLVT là nền trắng — đồng hồ, pin, cột sóng sẽ
+         biến mất. Muốn màu app tràn lên tận đỉnh máy thì phải đổi dải đó sang nền tối trước. -->
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="QLVT" />
     <meta name="theme-color" content="#154d7c" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- viewport-fit=cover: KHÔNG có nó thì mọi env(safe-area-inset-*) đều bằng 0 và phần
+         chừa chỗ cho tai thỏ / thanh home ở cuối app.css thành vô nghĩa. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>BIMLab QLVT</title>
   </head>
   <body>
