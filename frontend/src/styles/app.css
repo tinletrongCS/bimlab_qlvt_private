@@ -14499,3 +14499,45 @@ button {
 #root .asset-category-filter-item.all:not([data-selected="true"]) {
   background: #ffffff !important;
 }
+
+/* ---------------------------------------------------------------------------
+   Cài lên màn hình chính (PWA)
+   Đặt ở CUỐI file vì phần cuối app.css có nhiều rule `!important` ghi đè padding
+   của .content và .mobile-topbar; chen vào giữa thì bị nuốt mất.
+   --------------------------------------------------------------------------- */
+
+/* Không còn thanh địa chỉ thì mấy mặc định của trình duyệt lộ ra ngay. */
+html {
+  /* Trình duyệt chờ ~300ms xem cú chạm có thành double-tap-để-zoom không rồi mới báo click.
+     `manipulation` bỏ chờ mà VẪN giữ được vuốt và pinch-zoom. */
+  touch-action: manipulation;
+  /* Kéo quá đầu danh sách không làm cả trang nảy, cũng không kích hoạt pull-to-refresh. */
+  overscroll-behavior-y: none;
+  /* WebKit loé một ô xám xanh sau mỗi cú chạm. App thật không có. */
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Giữ lâu trên nút/menu thì bung bảng "Copy". Chỉ chặn trên phần điều khiển — KHÔNG chặn
+   toàn trang, vì bảng vật tư thì người dùng phải bôi đen chép được mã tài sản. */
+button,
+[role="button"],
+.sidebar nav a {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Máy có tai thỏ / thanh home: standalone thì khung app chạm sát mép màn hình. Đặt lên
+   .app-shell (không phải .content) để né hẳn đám `!important` padding ở trên, và vì
+   .app-shell là box bao ngoài nên thụt nó là thụt cả nội dung lẫn thanh sticky bên trong. */
+.app-shell {
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Menu trượt ở mobile là `position: fixed` nên KHÔNG ăn theo padding của .app-shell,
+   phải chừa riêng. */
+.sidebar {
+  padding-left: env(safe-area-inset-left);
+  padding-bottom: env(safe-area-inset-bottom);
+}
