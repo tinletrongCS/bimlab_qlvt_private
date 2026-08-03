@@ -3,6 +3,17 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/x-icon" href="/lgBL.ico" />
+    <!-- Cài lên màn hình chính. manifest.json là thứ QUYẾT ĐỊNH việc mở ra không còn thanh
+         địa chỉ của trình duyệt: thiếu nó, Android chỉ tạo lối tắt mở trong tab thường.
+         Đuôi .json chứ không phải .webmanifest vì mime.types của nginx không có webmanifest,
+         file sẽ đi ra với Content-Type octet-stream. -->
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="QLVT" />
+    <meta name="theme-color" content="#154d7c" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>BIMLab QLVT</title>
   </head>
