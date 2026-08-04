@@ -15,19 +15,22 @@
       "name": "Tài sản",
       "short_name": "Tài sản",
       "description": "Danh sách tài sản và vật tư",
-      "url": "/assets"
+      "url": "/assets",
+      "icons": [{ "src": "/icons/shortcut-assets.png", "sizes": "96x96", "type": "image/png" }]
     },
     {
       "name": "Đặt chỗ",
       "short_name": "Đặt chỗ",
       "description": "Đặt phòng họp và chỗ ngồi",
-      "url": "/booking"
+      "url": "/booking",
+      "icons": [{ "src": "/icons/shortcut-booking.png", "sizes": "96x96", "type": "image/png" }]
     },
     {
       "name": "Yêu cầu",
       "short_name": "Yêu cầu",
       "description": "Yêu cầu cấp phát đang chờ xử lý",
-      "url": "/requests"
+      "url": "/requests",
+      "icons": [{ "src": "/icons/shortcut-requests.png", "sizes": "96x96", "type": "image/png" }]
     }
   ],
   "icons": [
