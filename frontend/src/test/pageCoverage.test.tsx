@@ -113,6 +113,7 @@ vi.mock("../auth/oidc", () => ({
 }));
 
 vi.mock("../services/api", () => ({
+  loadAssetChangeHistory: vi.fn().mockResolvedValue([]),
   loadCurrentUser: vi.fn().mockResolvedValue({
     id: 1,
     username: "admin",

@@ -16,6 +16,7 @@ const mocks = vi.hoisted(() => ({
   ensureAssets: vi.fn(),
   issueAssetQrCodes: vi.fn(),
   loadAssetBookings: vi.fn(),
+  loadAssetChangeHistory: vi.fn(),
   loadAssetCategoryTree: vi.fn(),
   loadAssets: vi.fn(),
   openModal: vi.fn(),
@@ -261,6 +262,7 @@ vi.mock("../services/api", () => ({
   createAssetBooking: mocks.createAssetBooking,
   deleteAsset: mocks.deleteAsset,
   loadAssetBookings: mocks.loadAssetBookings,
+  loadAssetChangeHistory: mocks.loadAssetChangeHistory,
   loadAssetCategoryTree: mocks.loadAssetCategoryTree,
   loadAssets: mocks.loadAssets,
   issueAssetQrCodes: mocks.issueAssetQrCodes,
@@ -281,6 +283,20 @@ describe("QLVT asset and booking workflow coverage", () => {
     mocks.ensureAssets.mockResolvedValue(undefined);
     mocks.ensureAssetDetailLookups.mockResolvedValue(undefined);
     mocks.loadAssetCategoryTree.mockResolvedValue(categoryTree);
+    mocks.loadAssetChangeHistory.mockResolvedValue([
+      {
+        id: 1,
+        occurredAt: "2026-07-20T09:00:00",
+        actorEmployeeId: 1,
+        action: "TRANSFER_APPROVED",
+        summary: "Duyệt phiếu bàn giao PBG-001",
+        changedFields: {
+          status: { before: "IN_STOCK", after: "ASSIGNED" },
+          assignedEmployeeId: { before: null, after: 1 },
+          useDate: { before: null, after: [2026, 7, 31] },
+        },
+      },
+    ]);
     mocks.loadAssets.mockResolvedValue(assets);
     mocks.issueAssetQrCodes.mockResolvedValue([
       {
@@ -336,6 +352,19 @@ describe("QLVT asset and booking workflow coverage", () => {
     expect(screen.getAllByText("TS-001 · Laptop Dell Precision").length).toBeGreaterThan(0);
     const detailModal = screen.getByText("Định danh và phân loại").closest(".asset-detail-modal");
     expect(detailModal).not.toBeNull();
+    await user.click(within(detailModal as HTMLElement).getByRole("tab", { name: /Lịch sử/i }));
+    expect(await within(detailModal as HTMLElement).findByText("31/07/2026")).toBeVisible();
+    expect(
+      within(detailModal as HTMLElement).getByText("Chưa gán hoặc đã thu hồi về kho"),
+    ).toBeVisible();
+    expect(
+      within(detailModal as HTMLElement).getByText("Chưa xác định ngày sử dụng"),
+    ).toBeVisible();
+    expect(within(detailModal as HTMLElement).getAllByText("Trong kho").length).toBeGreaterThan(0);
+    expect(within(detailModal as HTMLElement).getAllByText("Đang sử dụng").length).toBeGreaterThan(
+      0,
+    );
+    await user.click(within(detailModal as HTMLElement).getByRole("button", { name: /Quay lại/i }));
     const nameInput = within(detailModal as HTMLElement).getByDisplayValue("Laptop Dell Precision");
     fireEvent.change(nameInput, { target: { value: "Laptop Dell Precision 7780" } });
     await user.click(

@@ -49,5 +49,9 @@ export function StatusBadge({ value, label }: StatusBadgeProps) {
               ? "pending"
               : status.toLowerCase();
 
-  return <span className={`badge badge-${colorClass}`}>{label || labelMap[status] || status}</span>;
+  return (
+    <span className={`badge status-badge badge-${colorClass}`}>
+      {label || labelMap[status] || status}
+    </span>
+  );
 }

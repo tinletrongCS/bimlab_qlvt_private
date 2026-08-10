@@ -201,6 +201,8 @@ BUILD_NUMBER=${env.BUILD_NUMBER ?: ''}
           docker run -d --name "$PG" --network "$NET" -e POSTGRES_DB=bimlab -e POSTGRES_USER=smoke -e POSTGRES_PASSWORD=smokepass postgres:16-alpine >/dev/null
           docker run -d --name "$MINIO" --network "$NET" -e MINIO_ROOT_USER=smokeminio -e MINIO_ROOT_PASSWORD=smokeminiopass minio/minio server /data >/dev/null
           echo "[smoke] wait postgres"; for i in $(seq 1 30); do docker exec "$PG" pg_isready -U smoke -d bimlab >/dev/null 2>&1 && break; sleep 2; done
+          docker exec "$PG" psql -U smoke -d bimlab -v ON_ERROR_STOP=1 -c \
+            'CREATE SCHEMA hrm; CREATE TABLE hrm.employees (id BIGINT PRIMARY KEY, full_name VARCHAR(255)); CREATE SCHEMA auth; CREATE TABLE auth.users (username VARCHAR(100) PRIMARY KEY, full_name VARCHAR(255));' >/dev/null
           echo "[smoke] wait minio"; for i in $(seq 1 30); do docker run --rm --network "$NET" "$CURL" -sf "http://$MINIO:9000/minio/health/live" >/dev/null 2>&1 && break; sleep 2; done
           echo "[smoke] start asset-service"
           docker run -d --name "$APP" --network "$NET" \

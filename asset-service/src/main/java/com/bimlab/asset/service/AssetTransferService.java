@@ -200,6 +200,9 @@ public class AssetTransferService {
             savedConfirmations = assetTransferConfirmations.saveAll(confirmations);
         }
 
+        /*
+        Xử lý tệp đính kèm
+         */
         List<AssetTransferDocument> savedDocuments = List.of();
         if (req.documents() != null && !req.documents().isEmpty()) {
             List<AssetTransferDocument> documents = req.documents().stream()
@@ -251,6 +254,9 @@ public class AssetTransferService {
                 }).toList();
         List<AssetTransfer> savedLines = assetTransfers.saveAll(transferLines);
 
+        /*
+        Ghi log lại
+         */
         auditLogService.log(
                 "ASSET_TRANSFER",
                 AuditLogService.ENTITY_ASSET_TRANSFER_HEADER,
@@ -264,7 +270,7 @@ public class AssetTransferService {
         );
         savedLines.forEach(line -> auditLogService.log(
                 "ASSET_TRANSFER",
-                AuditLogService.ENTITY_ASSET,
+                AuditLogService.ENTITY_TYPE_ASSET,
                 line.getAsset().getId(),
                 line.getAsset().getAssetCode(),
                 "TRANSFER_LINE_ADDED",
@@ -312,7 +318,7 @@ public class AssetTransferService {
             assets.save(asset);
             auditLogService.log(
                     "ASSET_TRANSFER",
-                    AuditLogService.ENTITY_ASSET,
+                    AuditLogService.ENTITY_TYPE_ASSET,
                     asset.getId(),
                     asset.getAssetCode(),
                     "TRANSFER_APPROVED",
@@ -596,13 +602,13 @@ public class AssetTransferService {
     // API ghi lại ghi tiết các dòng đã bị thay đổi
     private Map<String, Object> changedFields(Map<String, Object> before, Map<String, Object> after) {
         Map<String, Object> changed = new LinkedHashMap<>();
-        after.forEach((key, value) -> {
+        after.forEach((key, newValue) -> {
             Object oldValue = before.get(key);
             // nếu giá trị tại 1 key bị thay đổi so với giá trị ban đầu
-            if (!java.util.Objects.equals(oldValue, value)) {
+            if (!java.util.Objects.equals(oldValue, newValue)) {
                 Map<String, Object> pair = new LinkedHashMap<>();
                 pair.put("before", oldValue);
-                pair.put("after", value);
+                pair.put("after", newValue);
                 changed.put(key, pair);
             }
         });

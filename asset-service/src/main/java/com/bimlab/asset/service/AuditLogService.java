@@ -19,7 +19,7 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class AuditLogService {
-    public static final String ENTITY_ASSET = "ASSET"; // log cho từng tài sản
+    public static final String ENTITY_TYPE_ASSET = "ASSET"; // log cho từng tài sản
     public static final String ENTITY_ASSET_TRANSFER = "ASSET_TRANSFER"; // log cho phiếu bàn giao tài sản
     public static final String ENTITY_ASSET_TRANSFER_HEADER = "ASSET_TRANSFER_HEADER";
 
@@ -61,6 +61,19 @@ public class AuditLogService {
     public Page<AuditLogResponse> listByEntity(String entityType, Long entityId, Pageable pageable) {
         return auditLogs.findByEntityTypeAndEntityIdOrderByOccurredAtDesc(entityType, entityId, pageable)
                 .map(this::toResponse);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<AuditLogResponse> listAssetChanges(Long assetId, Pageable pageable) {
+        // TODO PRACTICE ASSET HISTORY:
+        // 1. Gọi repository để lấy log có:
+        //    - entityType = ENTITY_ASSET
+        //    - entityId = assetId
+        //    - changedFields IS NOT NULL
+        //    - sắp xếp occurredAt giảm dần.
+        // 2. Dùng Page.map(...) để chuyển từng AuditLog thành AuditLogResponse.
+        Page<AuditLog> logs = auditLogs.findByEntityTypeAndEntityIdAndChangedFieldsIsNotNullOrderByOccurredAtDesc(ENTITY_TYPE_ASSET, assetId, pageable);
+        return logs.map(this::toResponse);
     }
 
     private AuditLogResponse toResponse(AuditLog log) {

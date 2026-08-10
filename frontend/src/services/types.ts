@@ -116,6 +116,22 @@ export interface AssetQrCode {
   publicUrl: string;
 }
 
+export interface AuditFieldChange {
+  before: unknown;
+  after: unknown;
+}
+
+export interface AssetChangeLog {
+  id: number;
+  occurredAt: string;
+  actorEmployeeId?: number | null;
+  actorUsername?: string;
+  actorRole?: string;
+  action: string;
+  summary?: string;
+  changedFields: Record<string, AuditFieldChange>;
+}
+
 export interface AssetCategory {
   id: number;
   code: string;
