@@ -10,6 +10,12 @@ import java.util.List;
 public interface AuditLogRepository extends JpaRepository<AuditLog, Long> {
     Page<AuditLog> findByEntityTypeAndEntityIdOrderByOccurredAtDesc(String entityType, Long entityId, Pageable pageable);
 
+    Page<AuditLog> findByEntityTypeAndEntityIdAndChangedFieldsIsNotNullOrderByOccurredAtDesc(
+            String entityType,
+            Long entityId,
+            Pageable pageable
+    );
+
     List<AuditLog> findByEntityTypeAndEntityIdAndActionAndChangedFieldsIsNotNullOrderByOccurredAtDesc(
             String entityType,
             Long entityId,

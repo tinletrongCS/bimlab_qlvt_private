@@ -101,7 +101,7 @@ public class AssetQrService {
         // Chỉ hiển thị những bàn giao nào đã được duyệt (TRANSFER_APPROVED)
         List<AuditLog> approvedTransfers =
                 auditLogs.findByEntityTypeAndEntityIdAndActionAndChangedFieldsIsNotNullOrderByOccurredAtDesc(
-                        AuditLogService.ENTITY_ASSET,
+                        AuditLogService.ENTITY_TYPE_ASSET,
                         asset.getId(),
                         AuditLogService.ASSET_TRANSFER_APPROVED
                 );

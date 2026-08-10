@@ -14,6 +14,7 @@ import {
   FiChevronRight,
   FiChevronsLeft,
   FiChevronsRight,
+  FiClock,
   FiDownload,
   FiEye,
   FiFileText,
@@ -37,11 +38,13 @@ import {
   deleteAsset,
   issueAssetQrCodes,
   loadAssetCategoryTree,
+  loadAssetChangeHistory,
   updateAsset,
   validateAssetImport,
 } from "../services/api";
 import type {
   AssetCategoryTree,
+  AssetChangeLog,
   AssetImportCommitPayload,
   AssetImportRowPayload,
   AssetImportValidationResponse,
@@ -55,6 +58,7 @@ type AssetValueFilter = "ALL" | "UNDER_10M" | "FROM_10M_TO_50M" | "FROM_50M_TO_2
 type ImportMode = AssetImportCommitPayload["importMode"];
 type ImportPreviewFilter = "ALL" | "VALID" | "INVALID" | "WARNING";
 type AssetBulkAction = "status" | "move" | "assign" | "return" | "qr" | null;
+type AssetDetailView = "details" | "history";
 type AssetTableColumnId =
   | "asset"
   | "category"
@@ -421,6 +425,20 @@ function dateTimeLabel(value?: string) {
   if (Number.isNaN(date.getTime())) return value;
   return date.toLocaleString("vi-VN");
 }
+
+const ASSET_AUDIT_FIELD_LABELS: Record<string, string> = {
+  assignedEmployeeId: "Nhân sự đang giữ",
+  departmentId: "Phòng ban",
+  siteId: "Chi nhánh",
+  projectId: "Dự án",
+  useDate: "Ngày bắt đầu sử dụng",
+  status: "Trạng thái",
+};
+
+const ASSET_AUDIT_ACTION_LABELS: Record<string, string> = {
+  TRANSFER_APPROVED: "Phiếu bàn giao được phê duyệt",
+  ASSET_UPDATED: "Cập nhật thông tin tài sản",
+};
 
 function dateKey(value?: string) {
   if (!value) return "";
@@ -1047,6 +1065,10 @@ export function AssetsPage() {
   const [selectedAsset, setSelectedAsset] = useState<AssetItem | null>(null);
   const [assetDraft, setAssetDraft] = useState<AssetPayload | null>(null);
   const [assetSaving, setAssetSaving] = useState(false);
+  const [assetDetailView, setAssetDetailView] = useState<AssetDetailView>("details");
+  const [assetChangeHistory, setAssetChangeHistory] = useState<AssetChangeLog[]>([]);
+  const [assetHistoryLoading, setAssetHistoryLoading] = useState(false);
+  const [assetHistoryError, setAssetHistoryError] = useState("");
   const [qrAsset, setQrAsset] = useState<AssetItem | null>(null);
   const [qrCode, setQrCode] = useState<AssetQrCode | null>(null);
   const [qrSvg, setQrSvg] = useState("");
@@ -1465,6 +1487,9 @@ export function AssetsPage() {
   const openAssetDetail = (item: AssetItem) => {
     setSelectedAsset(item);
     setAssetDraft(buildAssetPayload(item));
+    setAssetDetailView("details");
+    setAssetChangeHistory([]);
+    setAssetHistoryError("");
     void ensureAssetDetailLookups();
   };
 
@@ -1472,6 +1497,63 @@ export function AssetsPage() {
     if (assetSaving) return;
     setSelectedAsset(null);
     setAssetDraft(null);
+    setAssetDetailView("details");
+  };
+
+  const openAssetHistory = async () => {
+    if (!selectedAsset || assetHistoryLoading) return;
+    setAssetDetailView("history");
+    setAssetHistoryLoading(true);
+    setAssetHistoryError("");
+    try {
+      setAssetChangeHistory(await loadAssetChangeHistory(selectedAsset.id));
+    } catch {
+      setAssetHistoryError("Không tải được lịch sử chỉnh sửa của tài sản.");
+    } finally {
+      setAssetHistoryLoading(false);
+    }
+  };
+
+  const assetAuditValue = (field: string, value: unknown) => {
+    if (value === null || value === undefined) {
+      return (
+        {
+          assignedEmployeeId: "Chưa gán hoặc đã thu hồi về kho",
+          departmentId: "Chưa gán phòng ban",
+          siteId: "Chưa gán chi nhánh",
+          projectId: "Chưa gán dự án",
+          useDate: "Chưa xác định ngày sử dụng",
+        }[field] || "Chưa có dữ liệu"
+      );
+    }
+    if (value === "") return "Chưa có";
+    const id = Number(value);
+    if (field === "assignedEmployeeId") return employeeName(id);
+    if (field === "departmentId") return departmentName(id);
+    if (field === "siteId") return siteName(id);
+    if (field === "projectId") return projectName(id);
+    if (field === "useDate") {
+      const parts = Array.isArray(value)
+        ? value
+        : String(value)
+            .match(/^(\d{4})-(\d{1,2})-(\d{1,2})/)
+            ?.slice(1);
+      if (parts && parts.length >= 3) {
+        return `${String(parts[2]).padStart(2, "0")}/${String(parts[1]).padStart(2, "0")}/${parts[0]}`;
+      }
+    }
+    if (field === "status") {
+      return (
+        {
+          IN_STOCK: "Trong kho",
+          ASSIGNED: "Đang sử dụng",
+          MAINTENANCE: "Bảo trì",
+          DISPOSED: "Đã thanh lý",
+        }[String(value)] || String(value)
+      );
+    }
+    if (typeof value === "object") return JSON.stringify(value);
+    return String(value);
   };
 
   const updateAssetDraft = (field: keyof AssetPayload, value: AssetPayload[keyof AssetPayload]) => {
@@ -1797,7 +1879,7 @@ export function AssetsPage() {
     {
       id: "status",
       label: "Trạng thái",
-      render: (item) => <StatusBadge value={item.status} />,
+      render: (item) => statusLabel(item.status),
     },
     {
       id: "purchaseCost",
@@ -2630,7 +2712,30 @@ export function AssetsPage() {
               </button>
             </div>
 
-            <div className="asset-detail-body">
+            <div className="asset-detail-tabs" role="tablist" aria-label="Nội dung tài sản">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={assetDetailView === "details"}
+                className={assetDetailView === "details" ? "is-active" : ""}
+                onClick={() => setAssetDetailView("details")}
+              >
+                <FiFileText /> Thông tin tài sản
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={assetDetailView === "history"}
+                className={assetDetailView === "history" ? "is-active" : ""}
+                onClick={() => void openAssetHistory()}
+              >
+                <FiClock /> Lịch sử chỉnh sửa
+              </button>
+            </div>
+
+            <div
+              className={`asset-detail-body ${assetDetailView === "history" ? "is-hidden" : ""}`}
+            >
               <div className="asset-detail-hero">
                 <div>
                   <span>Mã tài sản</span>
@@ -2654,31 +2759,7 @@ export function AssetsPage() {
                 </div>
                 <div>
                   <span>Trạng thái</span>
-                  <strong style={{ color: "#2563eb", fontWeight: 700, fontSize: "14px" }}>
-                    {{
-                      ACTIVE: "Đang hoạt động",
-                      INACTIVE: "Ngưng hoạt động",
-                      IN_STOCK: "Trong kho",
-                      ASSIGNED: "Đã cấp phát",
-                      MAINTENANCE: "Bảo trì",
-                      DISPOSED: "Đã thanh lý",
-                      LIQUIDATED: "Đã thanh lý",
-                      DRAFT: "Bản nháp",
-                      PENDING: "Chờ duyệt",
-                      PENDING_APPROVAL: "Chờ duyệt",
-                      APPROVED: "Đã duyệt",
-                      CONFIRMED: "Đã xác nhận",
-                      IN_USE: "Đang sử dụng",
-                      COMPLETED: "Hoàn tất",
-                      CANCELLED: "Đã hủy",
-                      REJECTED: "Từ chối",
-                      EXPIRED: "Quá hạn",
-                      VALID: "Hợp lệ",
-                      INVALID: "Không hợp lệ",
-                      WARNING: "Cảnh báo",
-                      HAS_ERROR: "Lỗi",
-                    }[selectedAsset.status || ""] || selectedAsset.status}
-                  </strong>
+                  <StatusBadge value={selectedAsset.status} />
                 </div>
               </div>
 
@@ -3256,6 +3337,67 @@ export function AssetsPage() {
               </div>
             </div>
 
+            {assetDetailView === "history" && (
+              <div className="asset-change-history">
+                <div className="asset-change-history-head">
+                  <button type="button" onClick={() => setAssetDetailView("details")}>
+                    <FiChevronLeft /> Quay lại thông tin
+                  </button>
+                  <span>{assetChangeHistory.length} lần thay đổi</span>
+                </div>
+
+                {assetHistoryLoading ? (
+                  <div className="asset-change-history-state">Đang tải lịch sử...</div>
+                ) : assetHistoryError ? (
+                  <div className="asset-change-history-state is-error">{assetHistoryError}</div>
+                ) : assetChangeHistory.length === 0 ? (
+                  <div className="asset-change-history-state">
+                    Tài sản chưa có lịch sử chỉnh sửa.
+                  </div>
+                ) : (
+                  <div className="asset-change-timeline">
+                    {assetChangeHistory.map((log) => (
+                      <article className="asset-change-commit" key={log.id}>
+                        <span className="asset-change-commit-dot">
+                          <FiClock />
+                        </span>
+                        <div className="asset-change-commit-card">
+                          <header>
+                            <div>
+                              <strong>{ASSET_AUDIT_ACTION_LABELS[log.action] || log.action}</strong>
+                              <span>{log.summary || "Thông tin tài sản được cập nhật"}</span>
+                            </div>
+                            <time>{dateTimeLabel(log.occurredAt)}</time>
+                          </header>
+                          <p className="asset-change-actor">
+                            {log.actorEmployeeId
+                              ? employeeName(log.actorEmployeeId)
+                              : log.actorUsername || "Hệ thống"}
+                            {log.actorRole ? ` · ${log.actorRole}` : ""}
+                          </p>
+                          <div className="asset-change-diff-list">
+                            {Object.entries(log.changedFields || {}).map(([field, change]) => (
+                              <div className="asset-change-diff" key={field}>
+                                <b>{ASSET_AUDIT_FIELD_LABELS[field] || field}</b>
+                                <div>
+                                  <del>
+                                    <span>{assetAuditValue(field, change.before)}</span>
+                                  </del>
+                                  <ins>
+                                    <span>{assetAuditValue(field, change.after)}</span>
+                                  </ins>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
             <div className="modal-actions asset-detail-actions">
               <button
                 type="button"
@@ -3265,7 +3407,7 @@ export function AssetsPage() {
               >
                 Đóng
               </button>
-              {canManage && (
+              {canManage && assetDetailView === "details" && (
                 <button
                   type="button"
                   className="primary-action"

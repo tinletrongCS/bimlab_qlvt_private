@@ -13,6 +13,7 @@ import type {
   AssetCategoryImportValidationResponse,
   AssetCategoryPayload,
   AssetCategoryTree,
+  AssetChangeLog,
   AssetImportCommitPayload,
   AssetImportCommitResponse,
   AssetImportRowPayload,
@@ -146,6 +147,14 @@ export async function updateAsset(id: number, payload: AssetPayload): Promise<As
 
 export async function deleteAsset(id: number): Promise<void> {
   await api.delete(`/asset/assets/${id}`);
+}
+
+export async function loadAssetChangeHistory(assetId: number): Promise<AssetChangeLog[]> {
+  const response = await api.get<{ content: AssetChangeLog[] }>(
+    `/asset/logs/assets/${assetId}/changes`,
+    { params: { size: 100 } },
+  );
+  return response.data.content;
 }
 
 export async function issueAssetQrCodes(assetIds: number[]): Promise<AssetQrCode[]> {

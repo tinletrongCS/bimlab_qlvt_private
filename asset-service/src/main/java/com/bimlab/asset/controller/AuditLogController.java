@@ -42,6 +42,17 @@ public class AuditLogController {
     public Page<AuditLogResponse> byAsset(@PathVariable Long assetId, @PageableDefault(size = 20) Pageable pageable) {
         AssetItem assetItem = assetService.getAssetById(assetId);
         access.ensureSelfOrAny(assetItem.getAssignedEmployeeId(), Permission.Sets.ASSET_ADMIN);
-        return service.listByEntity(AuditLogService.ENTITY_ASSET, assetId, pageable);
+        return service.listByEntity(AuditLogService.ENTITY_TYPE_ASSET, assetId, pageable);
+    }
+
+    @GetMapping("assets/{assetId}/changes")
+    @PreAuthorize("hasAnyAuthority('asset_access','asset_view_self','asset_view_team','asset_view_all','asset_manage','asset_report_view','asset_finance_manage')")
+    public Page<AuditLogResponse> assetChanges(
+            @PathVariable Long assetId,
+            @PageableDefault(size = 20) Pageable pageable
+    ) {
+        AssetItem assetItem = assetService.getAssetById(assetId);
+        access.ensureSelfOrAny(assetItem.getAssignedEmployeeId(), Permission.Sets.ASSET_ADMIN);
+        return service.listAssetChanges(assetId, pageable);
     }
 }
