@@ -1,9 +1,9 @@
 package com.bimlab.asset.service;
 
 import com.bimlab.asset.dto.request.MaintenanceRecordRequest;
-import com.bimlab.asset.model.MaintenanceRecord;
-import com.bimlab.asset.model.status.MaintenanceStatus;
-import com.bimlab.asset.model.status.StatusParser;
+import com.bimlab.asset.entity.MaintenanceRecord;
+import com.bimlab.asset.entity.status.MaintenanceStatus;
+import com.bimlab.asset.entity.status.StatusParser;
 import com.bimlab.asset.repository.MaintenanceRecordRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;

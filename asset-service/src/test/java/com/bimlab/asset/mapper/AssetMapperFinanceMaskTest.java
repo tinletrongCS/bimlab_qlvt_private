@@ -1,7 +1,7 @@
 package com.bimlab.asset.mapper;
 
 import com.bimlab.asset.dto.response.AssetResponse;
-import com.bimlab.asset.model.AssetItem;
+import com.bimlab.asset.entity.AssetItem;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;

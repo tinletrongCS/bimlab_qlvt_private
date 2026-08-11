@@ -1,6 +1,6 @@
 package com.bimlab.asset.service;
 
-import com.bimlab.asset.model.AuditLog;
+import com.bimlab.asset.entity.AuditLog;
 import com.bimlab.asset.repository.AuditLogRepository;
 import com.bimlab.asset.security.AssetAccessService;
 import org.junit.jupiter.api.AfterEach;

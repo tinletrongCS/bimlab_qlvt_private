@@ -372,7 +372,7 @@ describe("QLVT pages", () => {
     const user = userEvent.setup();
     await renderRoute("/vendors", "Công ty Thiết bị BIM");
 
-    await user.click(screen.getByRole("button", { name: /Thêm mới/i }));
+    await user.click(screen.getByRole("button", { name: /Thêm nhà cung cấp/i }));
     expect(await screen.findByRole("heading", { name: "Thêm nhà cung cấp" })).toBeVisible();
     await user.clear(screen.getByLabelText(/Tên nhà cung cấp/i));
     await user.type(screen.getByLabelText(/Tên nhà cung cấp/i), "Công ty Máy trạm BIM");
@@ -388,7 +388,7 @@ describe("QLVT pages", () => {
       ),
     );
 
-    await user.click(screen.getByRole("button", { name: /Xóa/i }));
+    await user.click(screen.getByRole("button", { name: /Ngưng/i }));
     await waitFor(() => expect(api.deleteVendor).toHaveBeenCalledWith(1));
   });
 

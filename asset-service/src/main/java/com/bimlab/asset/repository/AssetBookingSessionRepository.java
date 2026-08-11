@@ -1,7 +1,7 @@
 package com.bimlab.asset.repository;
 
-import com.bimlab.asset.model.AssetBookingSession;
-import com.bimlab.asset.model.status.AssetBookingStatus;
+import com.bimlab.asset.entity.AssetBookingSession;
+import com.bimlab.asset.entity.status.AssetBookingStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;

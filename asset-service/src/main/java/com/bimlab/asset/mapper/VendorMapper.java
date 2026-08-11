@@ -1,7 +1,7 @@
 package com.bimlab.asset.mapper;
 
 import com.bimlab.asset.dto.response.VendorResponse;
-import com.bimlab.asset.model.Vendor;
+import com.bimlab.asset.entity.Vendor;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -17,6 +17,9 @@ public class VendorMapper {
                 vendor.getEmail(),
                 vendor.getPhone(),
                 vendor.getAddress(),
+                vendor.getWebsite(),
+                vendor.getBankName(),
+                vendor.getBankAccountNumber(),
                 vendor.getStatus() == null ? null : vendor.getStatus().name()
         );
     }

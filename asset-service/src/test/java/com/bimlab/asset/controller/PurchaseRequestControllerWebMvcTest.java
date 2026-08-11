@@ -2,8 +2,8 @@ package com.bimlab.asset.controller;
 
 import com.bimlab.asset.config.TestSecurityConfig;
 import com.bimlab.asset.mapper.PurchaseRequestMapper;
-import com.bimlab.asset.model.PurchaseRequest;
-import com.bimlab.asset.model.status.PurchaseRequestStatus;
+import com.bimlab.asset.entity.PurchaseRequest;
+import com.bimlab.asset.entity.status.PurchaseRequestStatus;
 import com.bimlab.asset.security.AssetAccessService;
 import com.bimlab.asset.service.PurchaseRequestService;
 import org.junit.jupiter.api.Test;

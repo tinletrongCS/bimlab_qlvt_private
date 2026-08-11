@@ -1,8 +1,8 @@
 package com.bimlab.asset.mapper;
 
 import com.bimlab.asset.dto.response.AssetBookingResponse;
-import com.bimlab.asset.model.AssetBookingSession;
-import com.bimlab.asset.model.AssetItem;
+import com.bimlab.asset.entity.AssetBookingSession;
+import com.bimlab.asset.entity.AssetItem;
 import org.springframework.stereotype.Component;
 
 @Component

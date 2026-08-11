@@ -5,10 +5,10 @@ import com.bimlab.asset.dto.response.AssetCategoryResponse;
 import com.bimlab.asset.dto.response.AssetResponse;
 import com.bimlab.asset.dto.response.AssetSummaryResponse;
 import com.bimlab.asset.dto.response.VendorResponse;
-import com.bimlab.asset.model.AssetCatalogItem;
-import com.bimlab.asset.model.AssetCategory;
-import com.bimlab.asset.model.AssetItem;
-import com.bimlab.asset.model.Vendor;
+import com.bimlab.asset.entity.AssetCatalogItem;
+import com.bimlab.asset.entity.AssetCategory;
+import com.bimlab.asset.entity.AssetItem;
+import com.bimlab.asset.entity.Vendor;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -111,6 +111,9 @@ public class AssetMapper {
                 vendor.getEmail(),
                 vendor.getPhone(),
                 vendor.getAddress(),
+                vendor.getWebsite(),
+                vendor.getBankName(),
+                vendor.getBankAccountNumber(),
                 enumName(vendor.getStatus())
         );
     }

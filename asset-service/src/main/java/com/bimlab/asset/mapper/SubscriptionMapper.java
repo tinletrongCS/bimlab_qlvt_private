@@ -2,8 +2,8 @@ package com.bimlab.asset.mapper;
 
 import com.bimlab.asset.dto.response.AssetSummaryResponse;
 import com.bimlab.asset.dto.response.SubscriptionResponse;
-import com.bimlab.asset.model.AssetItem;
-import com.bimlab.asset.model.Subscription;
+import com.bimlab.asset.entity.AssetItem;
+import com.bimlab.asset.entity.Subscription;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

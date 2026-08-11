@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.bimlab.asset.dto.response.AuditLogResponse;
-import com.bimlab.asset.model.AuditLog;
+import com.bimlab.asset.entity.AuditLog;
 import com.bimlab.asset.repository.AuditLogRepository;
 import com.bimlab.asset.security.AssetAccessService;
 
@@ -19,12 +19,28 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class AuditLogService {
-    public static final String ENTITY_TYPE_ASSET = "ASSET"; // log cho từng tài sản
-    public static final String ENTITY_ASSET_TRANSFER = "ASSET_TRANSFER"; // log cho phiếu bàn giao tài sản
+    // LOG CHO CÁC NHÓM ĐỐI TƯỢNG
+    public static final String ENTITY_TYPE_ASSET = "ASSET";
+    /*
+    Liên quan đến nhà cung cấp
+     */
+    public static final String ENTITY_TYPE_VENDOR = "VENDOR";
+    /*
+    Phiếu bàn giao
+     */
+    public static final String ENTITY_ASSET_TRANSFER = "ASSET_TRANSFER";
+    /*
+    Từng dòng tài sản trong phiếu bàn giao
+     */
     public static final String ENTITY_ASSET_TRANSFER_HEADER = "ASSET_TRANSFER_HEADER";
-
-    // action
+    // LOG CHO TỪNG HÀNH ĐỘNG LIÊN QUAN ĐẾN CÁC NHÓM ĐỐI TƯỢNG
     public static final String ASSET_TRANSFER_APPROVED = "TRANSFER_APPROVED";
+    public static final String ASSET_TRANSFER_REJECTED = "TRANSFER_REJECTED";
+    public static final String VENDOR_CREATED = "VENDOR_CREATED";
+    public static final String VENDOR_UPDATED = "VENDOR_UPDATED";
+    public static final String VENDOR_ACTIVATED = "VENDOR_ACTIVATED";
+    public static final String VENDOR_DEACTIVATED = "VENDOR_DEACTIVATED";
+
     private final AuditLogRepository auditLogs;
     private final AssetAccessService access;
 

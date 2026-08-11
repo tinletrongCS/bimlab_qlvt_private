@@ -1,7 +1,7 @@
 package com.bimlab.asset.mapper;
 
 import com.bimlab.asset.dto.response.MaintenanceRecordResponse;
-import com.bimlab.asset.model.MaintenanceRecord;
+import com.bimlab.asset.entity.MaintenanceRecord;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

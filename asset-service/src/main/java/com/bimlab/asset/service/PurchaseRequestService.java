@@ -1,9 +1,9 @@
 package com.bimlab.asset.service;
 
 import com.bimlab.asset.dto.request.PurchaseRequestRequest;
-import com.bimlab.asset.model.PurchaseRequest;
-import com.bimlab.asset.model.status.PurchaseRequestStatus;
-import com.bimlab.asset.model.status.StatusParser;
+import com.bimlab.asset.entity.PurchaseRequest;
+import com.bimlab.asset.entity.status.PurchaseRequestStatus;
+import com.bimlab.asset.entity.status.StatusParser;
 import com.bimlab.asset.repository.PurchaseRequestRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;

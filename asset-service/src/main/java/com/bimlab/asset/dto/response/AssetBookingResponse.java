@@ -1,6 +1,6 @@
 package com.bimlab.asset.dto.response;
 
-import com.bimlab.asset.model.status.AssetBookingStatus;
+import com.bimlab.asset.entity.status.AssetBookingStatus;
 
 import java.time.LocalDateTime;
 

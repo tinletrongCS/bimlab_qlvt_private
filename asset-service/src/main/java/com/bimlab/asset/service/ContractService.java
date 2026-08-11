@@ -1,9 +1,9 @@
 package com.bimlab.asset.service;
 
 import com.bimlab.asset.dto.request.ContractRequest;
-import com.bimlab.asset.model.Contract;
-import com.bimlab.asset.model.status.ContractStatus;
-import com.bimlab.asset.model.status.StatusParser;
+import com.bimlab.asset.entity.Contract;
+import com.bimlab.asset.entity.status.ContractStatus;
+import com.bimlab.asset.entity.status.StatusParser;
 import com.bimlab.asset.repository.ContractRepository;
 import com.bimlab.asset.repository.AssetDocumentRepository;
 import com.bimlab.asset.storage.MinioService;

@@ -2,9 +2,9 @@ package com.bimlab.asset.mapper;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.bimlab.asset.model.AssetBookingSession;
-import com.bimlab.asset.model.AssetItem;
-import com.bimlab.asset.model.status.AssetBookingStatus;
+import com.bimlab.asset.entity.AssetBookingSession;
+import com.bimlab.asset.entity.AssetItem;
+import com.bimlab.asset.entity.status.AssetBookingStatus;
 import java.time.LocalDateTime;
 import org.junit.jupiter.api.Test;
 

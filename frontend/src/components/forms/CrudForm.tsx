@@ -146,6 +146,9 @@ function CrudFormInner({
         email: empty(form.email),
         phone: empty(form.phone),
         address: empty(form.address),
+        website: empty(form.website),
+        bankName: empty(form.bankName),
+        bankAccountNumber: empty(form.bankAccountNumber),
         status: form.status || "ACTIVE",
       });
     }
@@ -292,6 +295,21 @@ function CrudFormInner({
             label="Địa chỉ"
             value={form.address}
             onChange={(value) => setField("address", value)}
+          />
+          <Field
+            label="Website"
+            value={form.website}
+            onChange={(value) => setField("website", value)}
+          />
+          <Field
+            label="Ngân hàng"
+            value={form.bankName}
+            onChange={(value) => setField("bankName", value)}
+          />
+          <Field
+            label="Số tài khoản"
+            value={form.bankAccountNumber}
+            onChange={(value) => setField("bankAccountNumber", value)}
           />
           <Select
             label="Trạng thái"
@@ -872,6 +890,9 @@ function initialForm(modal: NonNullable<ModalState>): Record<string, string> {
       email: modal.item?.email || "",
       phone: modal.item?.phone || "",
       address: modal.item?.address || "",
+      website: modal.item?.website || "",
+      bankName: modal.item?.bankName || "",
+      bankAccountNumber: modal.item?.bankAccountNumber || "",
       status: modal.item?.status || "ACTIVE",
     };
   if (modal.type === "asset")

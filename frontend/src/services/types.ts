@@ -43,6 +43,9 @@ export interface Vendor {
   email?: string;
   phone?: string;
   address?: string;
+  website?: string;
+  bankName?: string;
+  bankAccountNumber?: string;
   status: string;
 }
 

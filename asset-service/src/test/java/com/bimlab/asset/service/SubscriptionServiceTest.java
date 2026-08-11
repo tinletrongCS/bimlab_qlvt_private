@@ -1,11 +1,11 @@
 package com.bimlab.asset.service;
 
 
-import com.bimlab.asset.model.status.SubscriptionStatus;
-import com.bimlab.asset.model.status.VendorStatus;
+import com.bimlab.asset.entity.status.SubscriptionStatus;
+import com.bimlab.asset.entity.status.VendorStatus;
 import com.bimlab.asset.dto.request.SubscriptionRequest;
-import com.bimlab.asset.model.Subscription;
-import com.bimlab.asset.model.Vendor;
+import com.bimlab.asset.entity.Subscription;
+import com.bimlab.asset.entity.Vendor;
 import com.bimlab.asset.repository.SubscriptionRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.bimlab.asset.model.*;
+import com.bimlab.asset.entity.*;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -21,7 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.bimlab.asset.dto.request.AssetTransferDecisionRequest;
 import com.bimlab.asset.dto.request.AssetTransferHeaderRequest;
 import com.bimlab.asset.dto.response.AssetTransferHeaderResponse;
-import com.bimlab.asset.model.status.AssetStatus;
+import com.bimlab.asset.entity.status.AssetStatus;
 import com.bimlab.asset.repository.AssetDocumentRepository;
 import com.bimlab.asset.repository.AssetItemRepository;
 import com.bimlab.asset.repository.AssetTransferConfirmationRepository;
