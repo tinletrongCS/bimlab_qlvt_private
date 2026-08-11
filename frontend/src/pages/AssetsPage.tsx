@@ -98,6 +98,7 @@ function escapeHtml(value: string) {
 }
 
 async function renderQrPrint(printWindow: Window, codes: AssetQrCode[]) {
+  const logoUrl = new URL("/light background.png", window.location.origin).href;
   const labels = await Promise.all(
     codes.map(async (code) => ({
       ...code,
@@ -123,27 +124,37 @@ async function renderQrPrint(printWindow: Window, codes: AssetQrCode[]) {
             gap: 2mm 3mm; }
           .label { min-width: 0; padding: 2mm; display: grid; grid-template-columns: 22mm minmax(0, 1fr);
             align-items: center; gap: 3mm; border: 1px solid #cbd5e1; break-inside: avoid; text-align: left; }
-          .qr { width: 22mm; height: 22mm; }
+          .qr { grid-column: 1; grid-row: 1; width: 22mm; height: 22mm; margin: 0; }
           .qr svg { display: block; width: 100%; height: 100%; }
-          .info { min-width: 0; display: grid; gap: 1.2mm; }
-          strong { font-size: 9pt; line-height: 1.2; overflow-wrap: anywhere; }
-          span { color: #245f8a; font-size: 8pt; font-weight: 700; }
-          small { color: #64748b; font-size: 6.5pt; line-height: 1.2; }
+          .info { grid-column: 2; grid-row: 1; min-width: 0; height: 22mm; margin: 0; overflow: hidden;
+            display: grid; align-content: start; gap: 1mm; }
+          .logo { display: block; width: 40mm; height: auto; margin: 0; object-fit: contain; object-position: left top;
+            line-height: 0; vertical-align: top; }
+          .asset-code { color: #172033; font-size: 8pt; font-weight: 800; line-height: 1.15;
+            overflow-wrap: anywhere; word-break: break-all; }
+          .asset-name { color: #475569; font-size: 7pt; font-weight: 600; line-height: 1.2;
+            display: -webkit-box; overflow: hidden; overflow-wrap: anywhere; -webkit-box-orient: vertical;
+            -webkit-line-clamp: 2; }
         </style>
       </head>
       <body>
         <div class="grid">
           ${labels
-            .map(
-              (code) => `<article class="label">
+            .map((code) => {
+              const codeLength = Array.from(code.assetCode).length;
+              const nameLength = Array.from(code.assetName).length;
+              const codeFontSize =
+                codeLength > 48 ? 5 : codeLength > 36 ? 5.8 : codeLength > 26 ? 6.8 : 8;
+              const nameFontSize = nameLength > 60 ? 5.8 : nameLength > 38 ? 6.3 : 7;
+              return `<article class="label">
                  <div class="qr">${code.svg}</div>
                  <div class="info">
-                   <strong>${escapeHtml(code.assetName)}</strong>
-                   <span>${escapeHtml(code.assetCode)}</span>
-                   <small>Quét để xem thông tin tài sản</small>
+                   <img class="logo" src="${escapeHtml(logoUrl)}" alt="BIMLab">
+                   <strong class="asset-code" style="font-size:${codeFontSize}pt">${escapeHtml(code.assetCode)}</strong>
+                   <span class="asset-name" style="font-size:${nameFontSize}pt">${escapeHtml(code.assetName)}</span>
                  </div>
-               </article>`,
-            )
+               </article>`;
+            })
             .join("")}
         </div>
       </body>
