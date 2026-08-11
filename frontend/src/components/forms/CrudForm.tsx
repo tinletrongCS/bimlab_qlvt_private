@@ -383,7 +383,7 @@ function CrudFormInner({
               onChange={(value) => setField("projectId", value)}
             />
             <Field
-              label="Giá mua"
+              label="Giá trước thuế"
               value={form.purchaseCost}
               onChange={(value) => setField("purchaseCost", value)}
               type="currency"
