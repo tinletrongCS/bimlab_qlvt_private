@@ -24,7 +24,8 @@ class MigrationImmutabilityTest {
             Map.entry("V6__create_audit_logs.sql", "3424d4f050d930e2fe1787eac45595b4beb0414d5f796978f20318de1d3c2314"),
             Map.entry("V7__expand_asset_transfer_workflow.sql", "9d64369ac71dfcfc53b90a39bbf0fe2fdd62dedfc40acdaab34e6c13c0e46d38"),
             Map.entry("V8__create_audit_log_definitions.sql", "5643b5ed74f57d5e2ff39ee027007d1bf1e1f93beb5a60732a65fd4c334d24b9"),
-            Map.entry("V9__backfill_transfer_approver_full_name.sql", "5524b507548dfb3c634e4dfe0e6797c0566cfa7422d2b833ed4ff753cb2508ce")
+            Map.entry("V9__backfill_transfer_approver_full_name.sql", "5524b507548dfb3c634e4dfe0e6797c0566cfa7422d2b833ed4ff753cb2508ce"),
+            Map.entry("V10__expand_vendor_invoice_information.sql", "92e7b8a47173ef6e433799972fa7bc49bb3d186586dccb93f40d6dcf4d623852")
     );
 
     @Test
