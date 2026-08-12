@@ -261,15 +261,19 @@ function CrudFormInner({
       onClose={onClose}
       onSubmit={submit}
       wide={modal.type === "asset"}
+      className={modal.type === "vendor" ? "crud-modal-vendor" : undefined}
     >
       {modal.type === "vendor" && (
-        <>
-          <Field
-            label="Tên nhà cung cấp"
-            value={form.name}
-            onChange={(value) => setField("name", value)}
-            required
-          />
+        <div className="vendor-form-grid">
+          <label className="vendor-form-name">
+            <FormLabel required>Tên nhà cung cấp</FormLabel>
+            <textarea
+              rows={2}
+              value={form.name}
+              onChange={(event) => setField("name", event.target.value)}
+              required
+            />
+          </label>
           <Field
             label="Mã số thuế"
             value={form.taxCode}
@@ -311,16 +315,15 @@ function CrudFormInner({
             value={form.bankAccountNumber}
             onChange={(value) => setField("bankAccountNumber", value)}
           />
-          <Select
-            label="Trạng thái"
-            value={form.status}
-            onChange={(value) => setField("status", value)}
-            options={[
-              ["ACTIVE", "Đang hoạt động"],
-              ["INACTIVE", "Ngưng hoạt động"],
-            ]}
-          />
-        </>
+          <label className="vendor-active-checkbox">
+            <input
+              type="checkbox"
+              checked={form.status === "ACTIVE"}
+              onChange={(event) => setField("status", event.target.checked ? "ACTIVE" : "INACTIVE")}
+            />
+            <span>Đang hoạt động</span>
+          </label>
+        </div>
       )}
       {modal.type === "asset" && (
         <div className="crud-modal-two-col">

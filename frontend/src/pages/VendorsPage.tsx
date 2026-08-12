@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import { FiEdit2, FiPlus, FiSearch, FiSlash } from "react-icons/fi";
+import { FiPlus, FiSearch } from "react-icons/fi";
 import { DataTable } from "../components/DataTable";
 import { SearchableSelect } from "../components/forms/SearchableSelect";
+import { OverflowActions } from "../components/OverflowActions";
 import { StatusBadge } from "../components/StatusBadge";
 import { useActions } from "../contexts/ActionsContext";
 import { useAppData } from "../contexts/AppDataContext";
@@ -20,7 +21,7 @@ export function VendorsPage() {
     void ensureVendors();
   }, [ensureVendors]);
 
-  const canManage = hasPermission("vendor_manage");
+  const canManage = hasPermission("vendor_manage") || hasPermission("asset_manage");
   const filteredVendors = useMemo(() => {
     const keyword = normalizeSearch(query);
     return vendors.filter((vendor) => {
@@ -51,7 +52,6 @@ export function VendorsPage() {
       <header className="asset-page-header">
         <div>
           <h2>Nhà cung cấp</h2>
-          <span>Danh mục đối tác cung cấp tài sản, dịch vụ và hợp đồng mua sắm</span>
         </div>
       </header>
 
@@ -59,7 +59,7 @@ export function VendorsPage() {
         <div className="asset-page-actions vendor-page-actions">
           <button
             type="button"
-            className="asset-add-button"
+            className="asset-add-button btn-download-green vendor-add-button"
             onClick={() => openModal({ type: "vendor", mode: "create" })}
           >
             <FiPlus /> Thêm nhà cung cấp
@@ -167,24 +167,24 @@ export function VendorsPage() {
               className: "vendor-col-actions",
               render: (item) =>
                 canManage ? (
-                  <div className="row-actions">
-                    <button
-                      type="button"
-                      className="mini"
-                      onClick={() => openModal({ type: "vendor", mode: "edit", item })}
-                    >
-                      <FiEdit2 /> Sửa
-                    </button>
-                    {item.status !== "INACTIVE" && (
-                      <button
-                        type="button"
-                        className="mini danger"
-                        onClick={() => void deleteResource("vendors", item.id)}
-                      >
-                        <FiSlash /> Ngưng
-                      </button>
-                    )}
-                  </div>
+                  <OverflowActions
+                    label={`Mở thao tác cho ${item.name}`}
+                    actions={[
+                      {
+                        label: "Sửa thông tin",
+                        onClick: () => openModal({ type: "vendor", mode: "edit", item }),
+                      },
+                      ...(item.status !== "INACTIVE"
+                        ? [
+                            {
+                              label: "Ngưng hoạt động",
+                              danger: true,
+                              onClick: () => void deleteResource("vendors", item.id),
+                            },
+                          ]
+                        : []),
+                    ]}
+                  />
                 ) : null,
             },
           ]}

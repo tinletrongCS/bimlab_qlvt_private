@@ -110,10 +110,24 @@ class VendorControllerWebMvcTest {
     }
 
     @Test
+    @WithMockUser(authorities = {"vendor_manage"})
+    void create_acceptsMissingTaxCode() throws Exception {
+        when(vendorService.createVendor(any(VendorRequest.class))).thenReturn(sampleVendor());
+        String body = objectMapper.writeValueAsString(new VendorRequest(
+                "Acme Corp", null, "Alice", "alice@acme.test",
+                "0900000000", "Hà Nội", "ACTIVE"));
+
+        mockMvc.perform(post("/api/asset/vendors")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isOk());
+    }
+
+    @Test
     @WithMockUser(authorities = {"asset_view_self"})
     void create_returnsForbidden_forReadOnlyUser() throws Exception {
         String body = objectMapper.writeValueAsString(new VendorRequest(
-                "Acme", null, null, null, null, null, "ACTIVE"));
+                "Acme", "0123456789", null, null, null, null, "ACTIVE"));
         mockMvc.perform(post("/api/asset/vendors")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
