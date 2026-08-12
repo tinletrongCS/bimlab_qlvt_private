@@ -44,7 +44,7 @@ class AuditLogControllerWebMvcTest {
                         .param("entityType", "ASSET")
                         .param("entityId", "12"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.totalElements").value(0));
+                .andExpect(jsonPath("$.page.totalElements").value(0));
     }
 
     @Test
@@ -60,7 +60,7 @@ class AuditLogControllerWebMvcTest {
 
         mockMvc.perform(get("/api/asset/logs/assets/12"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.totalElements").value(0));
+                .andExpect(jsonPath("$.page.totalElements").value(0));
 
         verify(access).ensureSelfOrAny(any(), any());
     }

@@ -87,7 +87,7 @@ class VendorControllerWebMvcTest {
         mockMvc.perform(get("/api/asset/vendors/paged"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].name").value("Acme Corp"))
-                .andExpect(jsonPath("$.totalElements").value(1));
+                .andExpect(jsonPath("$.page.totalElements").value(1));
     }
 
     @Test
