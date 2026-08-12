@@ -39,6 +39,7 @@ const { asset, categories, categoryTree, employee, permissions, vendor } = vi.ho
     contactName: "Nguyễn Vendor",
     email: "vendor@bimlab.test",
     phone: "0900000001",
+    website: "vendor.bimlab.test",
     status: "ACTIVE",
   };
 
@@ -371,6 +372,15 @@ describe("QLVT pages", () => {
   it("creates and deletes a vendor from the vendors route", async () => {
     const user = userEvent.setup();
     await renderRoute("/vendors", "Công ty Thiết bị BIM");
+
+    expect(screen.getByRole("link", { name: "vendor.bimlab.test" })).toHaveAttribute(
+      "href",
+      "https://vendor.bimlab.test",
+    );
+    const search = screen.getByPlaceholderText(/Tìm theo tên, mã số thuế/i);
+    await user.type(search, "không tồn tại");
+    expect(screen.getByText("Không tìm thấy nhà cung cấp")).toBeVisible();
+    await user.clear(search);
 
     await user.click(screen.getByRole("button", { name: /Thêm nhà cung cấp/i }));
     expect(await screen.findByRole("heading", { name: "Thêm nhà cung cấp" })).toBeVisible();
