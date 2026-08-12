@@ -393,12 +393,14 @@ describe("QLVT pages", () => {
       expect(api.createVendor).toHaveBeenCalledWith(
         expect.objectContaining({
           name: "Công ty Máy trạm BIM",
+          taxCode: undefined,
           email: "workstation@bimlab.test",
         }),
       ),
     );
 
-    await user.click(screen.getByRole("button", { name: /Ngưng/i }));
+    await user.click(screen.getByRole("button", { name: /Mở thao tác cho Công ty Thiết bị BIM/i }));
+    await user.click(screen.getByRole("menuitem", { name: "Ngưng hoạt động" }));
     await waitFor(() => expect(api.deleteVendor).toHaveBeenCalledWith(1));
   });
 
