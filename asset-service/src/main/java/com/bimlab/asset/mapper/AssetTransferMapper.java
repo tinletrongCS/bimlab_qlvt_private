@@ -2,8 +2,8 @@ package com.bimlab.asset.mapper;
 
 import com.bimlab.asset.dto.response.AssetDocumentSummaryResponse;
 import com.bimlab.asset.dto.response.AssetTransferResponse;
-import com.bimlab.asset.model.AssetDocument;
-import com.bimlab.asset.model.AssetTransfer;
+import com.bimlab.asset.entity.AssetDocument;
+import com.bimlab.asset.entity.AssetTransfer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

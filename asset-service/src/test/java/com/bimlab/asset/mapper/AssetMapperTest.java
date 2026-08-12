@@ -1,14 +1,14 @@
 package com.bimlab.asset.mapper;
 
-import com.bimlab.asset.model.AssetCatalogItem;
-import com.bimlab.asset.model.AssetCategory;
-import com.bimlab.asset.model.AssetItem;
-import com.bimlab.asset.model.Vendor;
-import com.bimlab.asset.model.status.AssetClass;
-import com.bimlab.asset.model.status.AssetStatus;
-import com.bimlab.asset.model.status.CatalogType;
-import com.bimlab.asset.model.status.FixedAssetType;
-import com.bimlab.asset.model.status.VendorStatus;
+import com.bimlab.asset.entity.AssetCatalogItem;
+import com.bimlab.asset.entity.AssetCategory;
+import com.bimlab.asset.entity.AssetItem;
+import com.bimlab.asset.entity.Vendor;
+import com.bimlab.asset.entity.status.AssetClass;
+import com.bimlab.asset.entity.status.AssetStatus;
+import com.bimlab.asset.entity.status.CatalogType;
+import com.bimlab.asset.entity.status.FixedAssetType;
+import com.bimlab.asset.entity.status.VendorStatus;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

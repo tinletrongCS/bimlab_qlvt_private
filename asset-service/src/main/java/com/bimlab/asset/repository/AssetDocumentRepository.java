@@ -1,6 +1,6 @@
 package com.bimlab.asset.repository;
 
-import com.bimlab.asset.model.AssetDocument;
+import com.bimlab.asset.entity.AssetDocument;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

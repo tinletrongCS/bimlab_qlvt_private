@@ -3,8 +3,8 @@ package com.bimlab.asset.controller;
 import com.bimlab.asset.config.TestSecurityConfig;
 import com.bimlab.asset.mapper.VendorMapper;
 import com.bimlab.asset.dto.request.VendorRequest;
-import com.bimlab.asset.model.Vendor;
-import com.bimlab.asset.model.status.VendorStatus;
+import com.bimlab.asset.entity.Vendor;
+import com.bimlab.asset.entity.status.VendorStatus;
 import com.bimlab.asset.security.AssetAccessService;
 import com.bimlab.asset.service.VendorService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -14,7 +14,6 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -126,6 +125,6 @@ class VendorControllerWebMvcTest {
     void delete_callsService() throws Exception {
         mockMvc.perform(delete("/api/asset/vendors/7"))
                 .andExpect(status().isOk());
-        verify(vendorService).deleteVendor(eq(7L));
+        verify(vendorService).deactiveVendor(eq(7L));
     }
 }

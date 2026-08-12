@@ -1,9 +1,9 @@
 package com.bimlab.asset.service;
 
 
-import com.bimlab.asset.model.status.VendorStatus;
+import com.bimlab.asset.entity.status.VendorStatus;
 import com.bimlab.asset.dto.request.VendorRequest;
-import com.bimlab.asset.model.Vendor;
+import com.bimlab.asset.entity.Vendor;
 import com.bimlab.asset.repository.VendorRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -65,12 +65,13 @@ class VendorServiceTest {
     }
 
     @Test
-    void deleteVendor_callsRepoDelete() {
+    void deactivateVendor_marksVendorInactive() {
         Vendor existing = Vendor.builder().id(1L).name("X").status(VendorStatus.ACTIVE).build();
         when(vendors.findById(1L)).thenReturn(Optional.of(existing));
 
-        service.deleteVendor(1L);
+        service.deactiveVendor(1L);
 
-        verify(vendors).delete(existing);
+        assertEquals(VendorStatus.INACTIVE, existing.getStatus());
+        verify(vendors).save(existing);
     }
 }

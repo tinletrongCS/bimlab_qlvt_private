@@ -13,7 +13,7 @@ import com.bimlab.asset.dto.response.AssetImportValidationResponse;
 import com.bimlab.asset.dto.response.AssetResponse;
 import com.bimlab.asset.dto.response.DepreciationSnapshot;
 import com.bimlab.asset.mapper.AssetMapper;
-import com.bimlab.asset.model.AssetItem;
+import com.bimlab.asset.entity.AssetItem;
 import com.bimlab.asset.security.AssetAccessService;
 import com.bimlab.asset.security.Permission;
 import com.bimlab.asset.service.AssetService;

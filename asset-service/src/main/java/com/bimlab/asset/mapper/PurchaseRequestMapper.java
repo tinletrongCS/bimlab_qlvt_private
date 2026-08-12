@@ -1,7 +1,7 @@
 package com.bimlab.asset.mapper;
 
 import com.bimlab.asset.dto.response.PurchaseRequestResponse;
-import com.bimlab.asset.model.PurchaseRequest;
+import com.bimlab.asset.entity.PurchaseRequest;
 import org.springframework.stereotype.Component;
 
 @Component

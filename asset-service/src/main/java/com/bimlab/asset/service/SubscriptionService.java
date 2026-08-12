@@ -1,9 +1,9 @@
 package com.bimlab.asset.service;
 
 import com.bimlab.asset.dto.request.SubscriptionRequest;
-import com.bimlab.asset.model.Subscription;
-import com.bimlab.asset.model.status.StatusParser;
-import com.bimlab.asset.model.status.SubscriptionStatus;
+import com.bimlab.asset.entity.Subscription;
+import com.bimlab.asset.entity.status.StatusParser;
+import com.bimlab.asset.entity.status.SubscriptionStatus;
 import com.bimlab.asset.repository.SubscriptionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;

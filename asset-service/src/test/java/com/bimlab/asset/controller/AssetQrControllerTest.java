@@ -4,7 +4,7 @@ import com.bimlab.asset.dto.request.AssetQrIssueRequest;
 import com.bimlab.asset.dto.response.AssetQrHistoryResponse;
 import com.bimlab.asset.dto.response.AssetQrIssueResponse;
 import com.bimlab.asset.dto.response.AssetQrPublicResponse;
-import com.bimlab.asset.model.AssetItem;
+import com.bimlab.asset.entity.AssetItem;
 import com.bimlab.asset.security.AssetAccessService;
 import com.bimlab.asset.security.AssetQrAccessPolicy;
 import com.bimlab.asset.service.AssetQrService;

@@ -8,7 +8,7 @@ import com.bimlab.asset.dto.request.PurchaseRequestRequest;
 import com.bimlab.asset.dto.request.StatusUpdateRequest;
 import com.bimlab.asset.dto.response.PurchaseRequestResponse;
 import com.bimlab.asset.mapper.PurchaseRequestMapper;
-import com.bimlab.asset.model.PurchaseRequest;
+import com.bimlab.asset.entity.PurchaseRequest;
 import com.bimlab.asset.security.AssetAccessService;
 import com.bimlab.asset.security.Permission;
 import com.bimlab.asset.service.PurchaseRequestService;

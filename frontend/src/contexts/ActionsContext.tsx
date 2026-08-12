@@ -139,7 +139,11 @@ export function ActionsProvider({ children }: { children: ReactNode }) {
 
   const deleteResource = useCallback(
     async (type: DeleteResource, id: number) => {
-      if (!window.confirm("Xóa dữ liệu này?")) return;
+      const confirmation =
+        type === "vendors"
+          ? "Ngưng hoạt động nhà cung cấp này? Các liên kết tài sản và hợp đồng vẫn được giữ lại."
+          : "Xóa dữ liệu này?";
+      if (!window.confirm(confirmation)) return;
       setSubmitting(true);
       setError("");
       try {

@@ -31,7 +31,9 @@ public class VendorController {
     // Legacy GET without /paged remains compatible and returns List<Vendor>.
     @GetMapping("/paged")
     @PreAuthorize("hasAnyAuthority('asset_access','asset_view_self','asset_view_team','asset_view_all','asset_manage','asset_finance_manage')")
-    public Page<VendorResponse> listPaged(@PageableDefault(size = 20) Pageable pageable) {
+    public Page<VendorResponse> listPaged(
+            @PageableDefault(size = 20, sort = "name") Pageable pageable
+    ) {
         return service.listVendorsPaged(pageable).map(mapper::toResponse);
     }
 
@@ -58,6 +60,6 @@ public class VendorController {
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAnyAuthority('vendor_manage','asset_manage')")
     public void delete(@PathVariable Long id) {
-        service.deleteVendor(id);
+        service.deactiveVendor(id);
     }
 }

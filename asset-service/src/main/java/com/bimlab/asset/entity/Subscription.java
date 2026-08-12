@@ -1,0 +1,81 @@
+package com.bimlab.asset.entity;
+
+import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.bimlab.asset.entity.status.SubscriptionStatus;
+import lombok.*;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
+@Entity
+@Table(name = "subscriptions", schema = "asset", indexes = {
+        @Index(name = "idx_subscriptions_asset_id", columnList = "asset_id"),
+        @Index(name = "idx_subscriptions_vendor_id", columnList = "vendor_id"),
+        @Index(name = "idx_subscriptions_software_name", columnList = "software_name"),
+        @Index(name = "idx_subscriptions_renewal_date", columnList = "renewal_date"),
+        @Index(name = "idx_subscriptions_status", columnList = "status")
+})
+@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+public class Subscription {
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "asset_id")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    private AssetItem asset;
+
+    @Column(name = "software_name", nullable = false, length = 180)
+    private String softwareName;
+
+    @Column(name = "plan_name", length = 120)
+    private String planName;
+
+    @Column(name = "license_key", length = 500)
+    private String licenseKey;
+
+    @Column(name = "owner_employee_id")
+    private Long ownerEmployeeId;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "vendor_id")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    private Vendor vendor;
+    @Column(nullable = false)
+    private Integer totalSeats;
+    @Column(nullable = false)
+    private Integer usedSeats;
+    @Column(precision = 18, scale = 2)
+    private BigDecimal cost;
+    @Column(length = 20)
+    private String billingCycle;
+    @Column(name = "start_date")
+    private LocalDate startDate;
+    @Column(name = "renewal_date")
+    private LocalDate renewalDate;
+    @Enumerated(EnumType.STRING)
+    @Column(length = 30, nullable = false)
+    private SubscriptionStatus status;
+    @Column(length = 500)
+    private String notes;
+    @Column(name = "created_at", nullable = false)
+    private LocalDateTime createdAt;
+    @Column(name = "updated_at", nullable = false)
+    private LocalDateTime updatedAt;
+
+    @PrePersist
+    void prePersist() {
+        LocalDateTime now = LocalDateTime.now();
+        createdAt = now;
+        updatedAt = now;
+        if (status == null) status = SubscriptionStatus.ACTIVE;
+        if (totalSeats == null) totalSeats = 0;
+        if (usedSeats == null) usedSeats = 0;
+    }
+
+    @PreUpdate
+    void preUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
+}

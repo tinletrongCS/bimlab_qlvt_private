@@ -1,11 +1,11 @@
 package com.bimlab.asset.service;
 
 
-import com.bimlab.asset.model.status.VendorStatus;
-import com.bimlab.asset.model.status.ContractStatus;
+import com.bimlab.asset.entity.status.VendorStatus;
+import com.bimlab.asset.entity.status.ContractStatus;
 import com.bimlab.asset.dto.request.ContractRequest;
-import com.bimlab.asset.model.Contract;
-import com.bimlab.asset.model.Vendor;
+import com.bimlab.asset.entity.Contract;
+import com.bimlab.asset.entity.Vendor;
 import com.bimlab.asset.repository.ContractRepository;
 import com.bimlab.asset.storage.MinioService;
 import org.junit.jupiter.api.Test;

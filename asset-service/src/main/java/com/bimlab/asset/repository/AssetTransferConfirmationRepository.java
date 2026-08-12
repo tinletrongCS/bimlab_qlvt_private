@@ -4,7 +4,7 @@ import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import com.bimlab.asset.model.AssetTransferConfirmation;
+import com.bimlab.asset.entity.AssetTransferConfirmation;
 
 public interface AssetTransferConfirmationRepository
         extends JpaRepository<AssetTransferConfirmation, Long> {

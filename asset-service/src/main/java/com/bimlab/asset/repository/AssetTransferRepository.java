@@ -1,6 +1,6 @@
 package com.bimlab.asset.repository;
 
-import com.bimlab.asset.model.AssetTransfer;
+import com.bimlab.asset.entity.AssetTransfer;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 

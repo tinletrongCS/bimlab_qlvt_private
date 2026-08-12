@@ -2,8 +2,8 @@ package com.bimlab.asset.controller;
 
 import com.bimlab.asset.config.TestSecurityConfig;
 import com.bimlab.asset.mapper.AssetMapper;
-import com.bimlab.asset.model.AssetItem;
-import com.bimlab.asset.model.status.AssetStatus;
+import com.bimlab.asset.entity.AssetItem;
+import com.bimlab.asset.entity.status.AssetStatus;
 import com.bimlab.asset.security.AssetAccessService;
 import com.bimlab.asset.service.AssetService;
 import org.junit.jupiter.api.Test;

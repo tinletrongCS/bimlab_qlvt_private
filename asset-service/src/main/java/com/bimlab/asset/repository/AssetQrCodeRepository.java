@@ -1,6 +1,6 @@
 package com.bimlab.asset.repository;
 
-import com.bimlab.asset.model.AssetQrCode;
+import com.bimlab.asset.entity.AssetQrCode;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

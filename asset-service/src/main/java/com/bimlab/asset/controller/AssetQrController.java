@@ -4,7 +4,7 @@ import com.bimlab.asset.dto.request.AssetQrIssueRequest;
 import com.bimlab.asset.dto.response.AssetQrHistoryResponse;
 import com.bimlab.asset.dto.response.AssetQrIssueResponse;
 import com.bimlab.asset.dto.response.AssetQrPublicResponse;
-import com.bimlab.asset.model.AssetItem;
+import com.bimlab.asset.entity.AssetItem;
 import com.bimlab.asset.security.AssetAccessService;
 import com.bimlab.asset.security.AssetQrAccessPolicy;
 import com.bimlab.asset.security.Permission;
@@ -20,7 +20,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 

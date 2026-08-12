@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.bimlab.asset.dto.response.AuditLogResponse;
-import com.bimlab.asset.model.AssetItem;
+import com.bimlab.asset.entity.AssetItem;
 import com.bimlab.asset.security.AssetAccessService;
 import com.bimlab.asset.security.Permission;
 import com.bimlab.asset.service.AssetService;
