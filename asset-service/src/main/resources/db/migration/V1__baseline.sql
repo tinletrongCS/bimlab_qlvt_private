@@ -1,0 +1,16 @@
+-- BIMLab Phase A · Flyway baseline placeholder
+-- =========================================================================
+-- This migration is intentionally empty. The corresponding Spring config
+-- has `spring.flyway.baseline-on-migrate: true` + `baseline-version: 1`,
+-- which tells Flyway:
+--   * if the schema already exists (production database), mark it as V1
+--     without running any SQL — schema stays exactly as Hibernate built
+--     it.
+--   * if the schema does not exist (fresh dev DB), Hibernate ddl-auto
+--     still creates tables (we kept ddl-auto=update for the transition
+--     window).
+-- Future schema changes MUST land as V2_*.sql, V3_*.sql, etc. — never
+-- as silent Hibernate auto-DDL changes. Once operator confirms the
+-- baseline matches prod, flip ddl-auto from `update` to `validate`.
+-- =========================================================================
+SELECT 1;

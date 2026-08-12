@@ -1,0 +1,96 @@
+spring:
+  application:
+    name: asset-service
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 21MB
+  datasource:
+    url: jdbc:postgresql://localhost:5432/bimlab?currentSchema=asset
+    driver-class-name: org.postgresql.Driver
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+    hikari:
+      max-lifetime: ${SPRING_DATASOURCE_HIKARI_MAX_LIFETIME:120000}
+      idle-timeout: ${SPRING_DATASOURCE_HIKARI_IDLE_TIMEOUT:60000}
+      minimum-idle: ${SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE:1}
+      maximum-pool-size: ${SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE:5}
+      keepalive-time: ${SPRING_DATASOURCE_HIKARI_KEEPALIVE_TIME:30000}
+      validation-timeout: ${SPRING_DATASOURCE_HIKARI_VALIDATION_TIMEOUT:5000}
+      connection-test-query: SELECT 1
+  jpa:
+    hibernate:
+      # SEC-449b4a: env-overridable so prod pins `validate` (set
+      # SPRING_JPA_HIBERNATE_DDL_AUTO=validate in the prod compose) while
+      # existing-DB/dev deploys keep `update` during the Flyway transition.
+      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:update}
+    open-in-view: false
+    properties:
+      hibernate:
+        default_schema: asset
+        hbm2ddl:
+          create_namespaces: true
+
+  # Phase A · PA.5: Flyway as future schema-change channel. Currently
+  # in transition: ddl-auto stays `update` so existing-DB deploys remain
+  # safe; baseline-on-migrate marks current schema as V1 and the next
+  # migration (V2_*.sql) takes effect. Once schema parity confirmed in
+  # prod, flip ddl-auto from `update` to `validate`.
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    baseline-version: "1"
+    schemas: asset
+
+server:
+  port: 8086
+  error:
+    # F3: never leak exception messages via Spring default /error endpoint.
+    # GlobalExceptionHandler returns explicit safe Vietnamese messages.
+    include-message: never
+    include-binding-errors: never
+    include-stacktrace: never
+
+app:
+  auth-service:
+    url: ${AUTH_SERVICE_URL:http://localhost:8081}
+  # PA-B (Keycloak SSO): key gọi auth-service /internal/roles/{role}/permissions. Từ env, không hardcode.
+  internal-api-key: ${APP_INTERNAL_API_KEY:}
+
+asset:
+  qr:
+    public-page-url: ${ASSET_QR_PUBLIC_PAGE_URL:https://qlvt.bimlab.com.vn/asset-qr.html}
+    # Chỉ mạng nội bộ được xem QR không cần đăng nhập.
+    internal-cidrs: ${ASSET_QR_INTERNAL_CIDRS:127.0.0.1/32,::1/128}
+    # Duyệt chuỗi X-Forwarded-For từ phải sang trái để bỏ qua các reverse proxy tin cậy.
+    trusted-proxy-cidrs: ${ASSET_QR_TRUSTED_PROXY_CIDRS:127.0.0.1/32,::1/128,172.16.0.0/12}
+
+auth:
+  keycloak:
+    issuer: ${AUTH_KEYCLOAK_ISSUER:}
+    jwk-set-uri: ${AUTH_KEYCLOAK_JWK_SET_URI:}
+    audience: ${AUTH_KEYCLOAK_AUDIENCE:asset-service}
+    allowed-clients: ${AUTH_KEYCLOAK_ALLOWED_CLIENTS:qlvt}
+    clock-skew-seconds: ${AUTH_KEYCLOAK_CLOCK_SKEW_SECONDS:30}
+
+# Q7: MinIO object storage for contract attachments
+minio:
+  endpoint: ${MINIO_ENDPOINT:http://localhost:9000}
+  access-key: ${MINIO_ACCESS_KEY:}
+  secret-key: ${MINIO_SECRET_KEY:}
+  bucket: ${MINIO_BUCKET:qlvt-assets}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+# STEP-5 observability: include correlationId in every log line (MDC set by CorrelationIdMdcFilter).
+logging:
+  pattern:
+    level: "%5p [${spring.application.name:asset-service},%X{correlationId:-}]"

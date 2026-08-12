@@ -1,0 +1,640 @@
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import App from "../App";
+import * as api from "../services/api";
+import { chooseSearchableOption } from "./searchableSelect";
+
+const categoryExcelMocks = vi.hoisted(() => ({
+  download: vi.fn().mockResolvedValue(undefined),
+  parse: vi.fn().mockResolvedValue([
+    { rowNumber: 2, group: "Danh mục", code: "TB", name: "Thiết bị", parentCode: "" },
+    { rowNumber: 3, group: "Danh mục", code: "MON", name: "Màn hình", parentCode: "TB" },
+  ]),
+}));
+
+vi.mock("../lib/categoryExcel", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../lib/categoryExcel")>()),
+  downloadCategoryImportTemplate: categoryExcelMocks.download,
+  parseCategoryReferenceSheet: categoryExcelMocks.parse,
+}));
+
+const { asset, categories, categoryTree, employee, permissions, vendor } = vi.hoisted(() => {
+  const permissions = [
+    "asset_access",
+    "asset_manage",
+    "vendor_manage",
+    "subscription_manage",
+    "purchase_request_create",
+    "purchase_request_approve",
+    "contract_manage",
+    "maintenance_manage",
+    "asset_report_view",
+  ] as const;
+
+  const vendor = {
+    id: 1,
+    name: "Công ty Thiết bị BIM",
+    taxCode: "0101001001",
+    contactName: "Nguyễn Vendor",
+    email: "vendor@bimlab.test",
+    phone: "0900000001",
+    website: "vendor.bimlab.test",
+    status: "ACTIVE",
+  };
+
+  const asset = {
+    id: 1,
+    assetCode: "TS-001",
+    name: "Laptop Dell Precision",
+    category: "Thiết bị",
+    serialNumber: "SN001",
+    source: "PURCHASE",
+    vendor,
+    assignedEmployeeId: 1,
+    departmentId: 1,
+    siteId: 1,
+    projectId: 1,
+    purchaseCost: 35_000_000,
+    originalCost: 35_000_000,
+    bookValue: 30_000_000,
+    residualValue: 5_000_000,
+    status: "ASSIGNED",
+  };
+
+  const categories = [
+    {
+      id: 1,
+      code: "TB",
+      name: "Thiết bị",
+      assetClass: "FIXED_ASSET",
+      parentId: null,
+      description: "Nhóm thiết bị",
+      active: true,
+    },
+    {
+      id: 2,
+      code: "LAP",
+      name: "Laptop",
+      assetClass: "FIXED_ASSET",
+      parentId: 1,
+      description: "Máy tính xách tay",
+      active: true,
+    },
+  ];
+
+  const categoryTree = [
+    {
+      ...categories[0],
+      children: [{ ...categories[1], children: [] }],
+    },
+  ];
+
+  const employee = {
+    id: 1,
+    fullName: "Nguyễn Văn A",
+    employeeCode: "E001",
+    departmentId: 1,
+    departmentName: "BIM",
+    positionName: "HR",
+  };
+
+  return { asset, categories, categoryTree, employee, permissions, vendor };
+});
+
+vi.mock("../auth/oidc", () => ({
+  consumeLoginReturnUrl: vi.fn(() => null),
+  getAccessToken: () => "test-token",
+  handleOidcCallback: vi.fn().mockResolvedValue(true),
+  isOidcCallback: vi.fn(() => false),
+  keycloakLogin: vi.fn().mockResolvedValue(undefined),
+  keycloakLogout: vi.fn().mockResolvedValue(undefined),
+  onSessionLost: vi.fn(),
+  trySilentLogin: vi.fn().mockResolvedValue(true),
+}));
+
+vi.mock("../services/api", () => ({
+  loadAssetChangeHistory: vi.fn().mockResolvedValue([]),
+  loadCurrentUser: vi.fn().mockResolvedValue({
+    id: 1,
+    username: "admin",
+    role: "ADMIN",
+    fullName: "Admin BIMLab",
+    permissions: [...permissions],
+  }),
+  loadDashboard: vi.fn().mockResolvedValue({
+    assets: 1,
+    subscriptions: 1,
+    vendors: 1,
+    purchaseRequests: 1,
+    contracts: 1,
+  }),
+  loadUtilization: vi.fn().mockResolvedValue({
+    totalAssets: 1,
+    assignedAssets: 1,
+    idleAssets: 0,
+    maintenanceAssets: 0,
+    disposedAssets: 0,
+    utilizationRate: 100,
+    totalPurchaseValue: 35_000_000,
+    totalIdleValue: 0,
+    byStatus: { ASSIGNED: 1 },
+    byCategory: { "Thiết bị": 1 },
+  }),
+  loadVendors: vi.fn().mockResolvedValue([vendor]),
+  loadAssets: vi.fn().mockResolvedValue([asset]),
+  loadSubscriptions: vi.fn().mockResolvedValue([
+    {
+      id: 1,
+      softwareName: "Autodesk BIM",
+      planName: "Team",
+      vendor,
+      totalSeats: 10,
+      usedSeats: 4,
+      cost: 12_000_000,
+      renewalDate: "2026-12-31",
+      status: "ACTIVE",
+    },
+  ]),
+  loadPurchaseRequests: vi.fn().mockResolvedValue([
+    {
+      id: 1,
+      requestType: "ASSET",
+      title: "Mua laptop dựng hình",
+      estimatedCost: 35_000_000,
+      neededDate: "2026-08-01",
+      status: "PENDING",
+    },
+  ]),
+  loadContracts: vi.fn().mockResolvedValue([
+    {
+      id: 1,
+      contractNumber: "HD-001",
+      title: "Hợp đồng laptop",
+      vendor,
+      signDate: "2026-07-01",
+      effectiveTo: "2027-07-01",
+      contractValue: 35_000_000,
+      status: "ACTIVE",
+    },
+  ]),
+  loadMaintenanceRecords: vi.fn().mockResolvedValue([
+    {
+      id: 1,
+      asset,
+      maintenanceType: "Định kỳ",
+      maintenanceDate: "2026-07-15",
+      cost: 500_000,
+      vendor,
+      nextMaintenanceDate: "2026-10-15",
+      status: "SCHEDULED",
+    },
+  ]),
+  loadTransfers: vi.fn().mockResolvedValue([
+    {
+      id: 1,
+      transferCode: "PBG-0001",
+      title: "Bàn giao laptop dự án",
+      transferType: "ASSIGN",
+      status: "PENDING_APPROVAL",
+      toEmployeeId: 1,
+      toDepartmentId: 1,
+      toSiteId: 1,
+      transferDate: "2026-07-20",
+      plannedHandoverAt: "2026-07-20T09:00:00",
+      createdAt: "2026-07-18T14:25:30",
+      reason: "Bàn giao dự án",
+      requestedBy: "admin",
+      requestedEmployeeId: 1,
+      confirmations: [
+        {
+          id: 1,
+          confirmerEmployeeId: 1,
+          confirmerName: "Nguyễn Văn A",
+          status: "PENDING",
+        },
+      ],
+      documents: [
+        {
+          fileName: "bien-ban-ban-giao.pdf",
+          objectKey: "transfer-documents/bien-ban-ban-giao.pdf",
+          downloadUrl: "https://files.test/bien-ban-ban-giao.pdf",
+        },
+        {
+          id: 2,
+          fileName: "tep-cu-khong-co-object-key.pdf",
+        },
+        {
+          fileName: "tep-thieu-thong-tin.pdf",
+        },
+      ],
+      lines: [
+        {
+          id: 1,
+          assetId: 1,
+          assetCode: "TS-001",
+          assetName: "Laptop Dell Precision",
+          fromEmployeeId: 2,
+          fromDepartmentId: 2,
+          fromSiteId: 2,
+          toEmployeeId: 1,
+          toDepartmentId: 1,
+          toSiteId: 1,
+          lineStatus: "PENDING",
+        },
+      ],
+    },
+  ]),
+  loadEmployees: vi.fn().mockResolvedValue([
+    employee,
+    {
+      id: 2,
+      fullName: "Nguyễn Văn B",
+      employeeCode: "E002",
+      departmentId: 2,
+      departmentName: "Kết cấu",
+      positionName: "Nhân viên",
+    },
+  ]),
+  loadDepartments: vi.fn().mockResolvedValue([
+    { id: 1, name: "BIM" },
+    { id: 2, name: "Kết cấu" },
+  ]),
+  loadWorkSites: vi.fn().mockResolvedValue([
+    { id: 1, name: "Văn phòng", active: true },
+    { id: 2, name: "PCC", active: true },
+  ]),
+  loadProjects: vi.fn().mockResolvedValue([{ id: 1, name: "Dự án Alpha", code: "ALPHA" }]),
+  loadAssetCategories: vi.fn().mockResolvedValue(categories),
+  loadAssetCategoryTree: vi.fn().mockResolvedValue(categoryTree),
+  loadAssetBookings: vi.fn().mockResolvedValue([
+    {
+      id: 1,
+      assetId: 1,
+      assetCode: "ROOM-01",
+      assetName: "Phòng họp Apollo",
+      bookingCode: "BK-001",
+      title: "Họp điều phối",
+      startTime: "2026-07-20T02:00:00.000Z",
+      endTime: "2026-07-20T03:00:00.000Z",
+      status: "CONFIRMED",
+      autoRelease: true,
+    },
+  ]),
+  checkAssetBookingAvailability: vi.fn().mockResolvedValue({ available: true }),
+  createAssetBooking: vi.fn().mockResolvedValue({}),
+  checkInAssetBooking: vi.fn().mockResolvedValue({}),
+  checkOutAssetBooking: vi.fn().mockResolvedValue({}),
+  cancelAssetBooking: vi.fn().mockResolvedValue({}),
+  createVendor: vi.fn().mockResolvedValue(vendor),
+  updateVendor: vi.fn().mockResolvedValue(vendor),
+  deleteVendor: vi.fn().mockResolvedValue(undefined),
+  createAsset: vi.fn().mockResolvedValue(asset),
+  updateAsset: vi.fn().mockResolvedValue(asset),
+  deleteAsset: vi.fn().mockResolvedValue(undefined),
+  validateAssetImport: vi.fn().mockResolvedValue({ rows: [] }),
+  commitAssetImport: vi.fn().mockResolvedValue({ rows: [] }),
+  createAssetCategory: vi.fn().mockResolvedValue(categories[0]),
+  updateAssetCategory: vi.fn().mockResolvedValue(categories[0]),
+  deleteAssetCategory: vi.fn().mockResolvedValue(undefined),
+  validateAssetCategoryImport: vi.fn().mockResolvedValue({ rows: [] }),
+  commitAssetCategoryImport: vi.fn().mockResolvedValue({ rows: [] }),
+  loadDepreciation: vi.fn().mockResolvedValue({
+    assetId: 1,
+    method: "STRAIGHT_LINE",
+    purchaseCost: 35_000_000,
+    residualValue: 5_000_000,
+    annualDepreciation: 6_000_000,
+    accumulatedDepreciation: 5_000_000,
+    bookValue: 30_000_000,
+    yearsElapsed: 1,
+  }),
+  disposeAsset: vi.fn().mockResolvedValue(asset),
+  createSubscription: vi.fn().mockResolvedValue({}),
+  updateSubscription: vi.fn().mockResolvedValue({}),
+  deleteSubscription: vi.fn().mockResolvedValue(undefined),
+  createPurchaseRequest: vi.fn().mockResolvedValue({}),
+  updatePurchaseRequest: vi.fn().mockResolvedValue({}),
+  updatePurchaseRequestStatus: vi.fn().mockResolvedValue({}),
+  deletePurchaseRequest: vi.fn().mockResolvedValue(undefined),
+  createContract: vi.fn().mockResolvedValue({}),
+  updateContract: vi.fn().mockResolvedValue({}),
+  updateContractStatus: vi.fn().mockResolvedValue({}),
+  deleteContract: vi.fn().mockResolvedValue(undefined),
+  createMaintenanceRecord: vi.fn().mockResolvedValue({}),
+  updateMaintenanceRecord: vi.fn().mockResolvedValue({}),
+  deleteMaintenanceRecord: vi.fn().mockResolvedValue(undefined),
+  loadWarrantyExpiring: vi.fn().mockResolvedValue([]),
+  createTransfer: vi.fn().mockResolvedValue({}),
+  uploadTransferDocument: vi.fn().mockResolvedValue({ fileKey: "transfer-documents/test.pdf" }),
+  downloadTransferDocument: vi
+    .fn()
+    .mockResolvedValue(new Blob(["pdf"], { type: "application/pdf" })),
+  approveTransfer: vi.fn().mockResolvedValue({}),
+  rejectTransfer: vi.fn().mockResolvedValue({}),
+  cancelTransfer: vi.fn().mockResolvedValue({}),
+  deleteTransfer: vi.fn().mockResolvedValue(undefined),
+}));
+
+async function renderRoute(path: string, text: string | RegExp) {
+  window.history.pushState({}, "", path);
+  render(<App />);
+  expect(await screen.findAllByText(text)).not.toHaveLength(0);
+}
+
+describe("QLVT pages", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    window.localStorage.clear();
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+  });
+
+  it.each([
+    ["/dashboard", "Hệ thống quản lý tài sản"],
+    ["/vendors", "Công ty Thiết bị BIM"],
+    ["/subscriptions", "Autodesk BIM"],
+    ["/requests", "Mua laptop dựng hình"],
+    ["/contracts", "HD-001"],
+    ["/maintenance", /TS-001 · Laptop Dell Precision/],
+    ["/transfers", "Bàn giao dự án"],
+    ["/asset-categories", "Thiết bị"],
+    ["/help", "Hướng dẫn sử dụng"],
+  ])("renders %s", async (path, text) => {
+    await renderRoute(path, text);
+  });
+
+  it("lists upcoming bookings on the dashboard", async () => {
+    await renderRoute("/dashboard", "Hệ thống quản lý tài sản");
+    expect(await screen.findByText("Họp điều phối")).toBeVisible();
+    expect(screen.getByText(/20-07 · /)).toBeVisible();
+  });
+
+  it("creates and deletes a vendor from the vendors route", async () => {
+    const user = userEvent.setup();
+    await renderRoute("/vendors", "Công ty Thiết bị BIM");
+
+    expect(screen.getByRole("link", { name: "vendor.bimlab.test" })).toHaveAttribute(
+      "href",
+      "https://vendor.bimlab.test",
+    );
+    const search = screen.getByPlaceholderText(/Tìm theo tên, mã số thuế/i);
+    await user.type(search, "không tồn tại");
+    expect(screen.getByText("Không tìm thấy nhà cung cấp")).toBeVisible();
+    await user.clear(search);
+
+    await user.click(screen.getByRole("button", { name: /Thêm nhà cung cấp/i }));
+    expect(await screen.findByRole("heading", { name: "Thêm nhà cung cấp" })).toBeVisible();
+    await user.clear(screen.getByLabelText(/Tên nhà cung cấp/i));
+    await user.type(screen.getByLabelText(/Tên nhà cung cấp/i), "Công ty Máy trạm BIM");
+    await user.type(screen.getByLabelText(/Email/i), "workstation@bimlab.test");
+    await user.click(screen.getByRole("button", { name: "Lưu" }));
+
+    await waitFor(() =>
+      expect(api.createVendor).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: "Công ty Máy trạm BIM",
+          email: "workstation@bimlab.test",
+        }),
+      ),
+    );
+
+    await user.click(screen.getByRole("button", { name: /Ngưng/i }));
+    await waitFor(() => expect(api.deleteVendor).toHaveBeenCalledWith(1));
+  });
+
+  it("approves a purchase request from the requests route", async () => {
+    const user = userEvent.setup();
+    await renderRoute("/requests", "Mua laptop dựng hình");
+
+    await user.click(screen.getByRole("button", { name: "Duyệt" }));
+
+    await waitFor(() =>
+      expect(api.updatePurchaseRequestStatus).toHaveBeenCalledWith(1, "APPROVED"),
+    );
+  });
+
+  it("updates a contract from the contracts route", async () => {
+    const user = userEvent.setup();
+    await renderRoute("/contracts", "HD-001");
+
+    await user.click(screen.getByRole("button", { name: /Sửa/i }));
+    const title = await screen.findByRole("heading", { name: "Cập nhật hợp đồng" });
+    const modal = title.closest("form") as HTMLFormElement;
+    const titleInput = within(modal).getByDisplayValue("Hợp đồng laptop");
+    await user.clear(titleInput);
+    await user.type(titleInput, "Hợp đồng laptop điều chỉnh");
+    fireEvent.change(within(modal).getByLabelText(/Trạng thái/i), { target: { value: "ACTIVE" } });
+    await user.click(within(modal).getByRole("button", { name: "Lưu" }));
+
+    await waitFor(() =>
+      expect(api.updateContract).toHaveBeenCalledWith(
+        1,
+        expect.objectContaining({
+          title: "Hợp đồng laptop điều chỉnh",
+          status: "ACTIVE",
+        }),
+      ),
+    );
+  });
+
+  it("creates a transfer request with approvers", async () => {
+    const user = userEvent.setup();
+    vi.mocked(api.loadTransfers).mockResolvedValueOnce([]);
+    await renderRoute("/transfers", "Danh sách phiếu");
+
+    await user.click(screen.getByRole("button", { name: "Tạo phiếu" }));
+    expect(await screen.findByText("Danh sách tài sản bàn giao/thu hồi")).toBeVisible();
+    const siteSelect = screen.getByRole("combobox", { name: "Chi nhánh" });
+    const departmentSelect = screen.getByRole("combobox", { name: "Phòng ban nhận" });
+    const employeeSelect = screen.getByRole("combobox", { name: "Nhân viên nhận" });
+    expect(siteSelect).toHaveValue("BIMLAB");
+    expect(departmentSelect).toBeEnabled();
+    expect(employeeSelect).toBeDisabled();
+    chooseSearchableOption(siteSelect, /Văn phòng/);
+    chooseSearchableOption(departmentSelect, /^BIM$/);
+    chooseSearchableOption(employeeSelect, /Nguyễn Văn A/);
+
+    await user.click(screen.getByLabelText("Chỉ định người xét duyệt"));
+    chooseSearchableOption(screen.getByPlaceholderText("Thêm người duyệt..."), /Nguyễn Văn A/);
+    expect(screen.getByText("Nguyễn Văn A · HR")).toBeVisible();
+    const assetSelector = screen.getByPlaceholderText("Chọn tài sản để thêm");
+    expect(assetSelector).toHaveValue("");
+    chooseSearchableOption(assetSelector, /TS-001/);
+    expect(
+      assetSelector.closest(".searchable-select-container")?.querySelector('option[value="1"]'),
+    ).toHaveTextContent(/✓ TS-001 .* \(đã chọn\)/);
+    await waitFor(() => {
+      expect(siteSelect).toHaveValue("Văn phòng");
+      expect(departmentSelect).toHaveValue("BIM");
+      expect(employeeSelect).toHaveValue("Nguyễn Văn A");
+    });
+    await user.click(screen.getByRole("button", { name: "Gửi phiếu bàn giao" }));
+
+    await waitFor(() =>
+      expect(api.createTransfer).toHaveBeenCalledWith(
+        expect.objectContaining({
+          approverEmployeeIds: [1],
+          lines: [{ assetId: 1 }],
+        }),
+      ),
+    );
+  });
+
+  it("filters and decides assigned pending transfers", async () => {
+    const user = userEvent.setup();
+    const previewWindow = { close: vi.fn(), location: { href: "" } };
+    const openWindow = vi.spyOn(window, "open").mockReturnValue(previewWindow as unknown as Window);
+    const createObjectUrl = vi.fn(() => "blob:transfer-document");
+    Object.defineProperty(URL, "createObjectURL", {
+      configurable: true,
+      value: createObjectUrl,
+    });
+    Object.defineProperty(URL, "revokeObjectURL", {
+      configurable: true,
+      value: vi.fn(),
+    });
+    await renderRoute("/transfers", "Bàn giao dự án");
+
+    const pendingPanel = screen.getByText("Phiếu cần xét duyệt").closest("section");
+    expect(pendingPanel).not.toBeNull();
+    const pending = within(pendingPanel as HTMLElement);
+    expect(pending.getByText("Bàn giao laptop dự án")).toBeVisible();
+    await user.click(pending.getByRole("button", { name: "Xem chi tiết" }));
+    const detailModal = screen.getByText("Chi tiết phiếu bàn giao").closest(".crud-modal");
+    expect(detailModal).not.toBeNull();
+    expect(within(detailModal as HTMLElement).getByText("Người xử lý")).toBeVisible();
+    expect(within(detailModal as HTMLElement).getAllByText("Chờ duyệt")).toHaveLength(2);
+    const transferTable = screen.getByRole("table", { name: "Danh sách tài sản luân chuyển" });
+    expect(within(transferTable).getByText("Nhân viên: Nguyễn Văn B")).toBeVisible();
+    expect(within(transferTable).getByText("Nhân viên: Nguyễn Văn A")).toBeVisible();
+    await user.click(screen.getByRole("button", { name: "bien-ban-ban-giao.pdf" }));
+    await waitFor(() =>
+      expect(api.downloadTransferDocument).toHaveBeenCalledWith(
+        "transfer-documents/bien-ban-ban-giao.pdf",
+      ),
+    );
+    expect(previewWindow.location.href).toBe("blob:transfer-document");
+
+    openWindow.mockReturnValueOnce(null);
+    await user.click(screen.getByRole("button", { name: "bien-ban-ban-giao.pdf" }));
+    await waitFor(() => expect(api.downloadTransferDocument).toHaveBeenCalledTimes(2));
+    expect(openWindow).toHaveBeenCalledWith(
+      "blob:transfer-document",
+      "_blank",
+      "noopener,noreferrer",
+    );
+
+    vi.mocked(api.downloadTransferDocument).mockRejectedValueOnce(new Error("MinIO down"));
+    openWindow.mockReturnValueOnce(previewWindow as unknown as Window);
+    await user.click(screen.getByRole("button", { name: "bien-ban-ban-giao.pdf" }));
+    await waitFor(() => expect(previewWindow.close).toHaveBeenCalled());
+    openWindow.mockRestore();
+    await user.click(screen.getByRole("button", { name: "Đóng" }));
+
+    const pendingTypeSelect = pending.getByPlaceholderText("Tất cả phân loại");
+    chooseSearchableOption(pendingTypeSelect, "Thu hồi");
+    expect(pending.getByText("Không có phiếu nào đang chờ bạn xét duyệt.")).toBeVisible();
+    chooseSearchableOption(pendingTypeSelect, "Bàn giao");
+
+    const search = pending.getByPlaceholderText("Tìm mã phiếu, tiêu đề hoặc lý do...");
+    await user.type(search, "không tồn tại");
+    expect(pending.getByText("Không có phiếu nào đang chờ bạn xét duyệt.")).toBeVisible();
+    await user.clear(search);
+    await user.type(search, "PBG-0001");
+    expect(pending.getByText("PBG-0001")).toHaveClass("search-match");
+
+    const reason = pending.getByLabelText("Lý do xử lý PBG-0001");
+    await user.click(pending.getByRole("button", { name: "Phê duyệt" }));
+    await waitFor(() => expect(api.approveTransfer).toHaveBeenCalledWith(1, undefined));
+
+    await user.type(reason, "Thiếu hồ sơ");
+    await user.click(pending.getByRole("button", { name: "Từ chối" }));
+    await waitFor(() => expect(api.rejectTransfer).toHaveBeenCalledWith(1, "Thiếu hồ sơ"));
+
+    await user.clear(reason);
+    await user.type(reason, "Người tạo hủy phiếu");
+    await user.click(pending.getByRole("button", { name: "Hủy phiếu" }));
+    await waitFor(() => expect(api.cancelTransfer).toHaveBeenCalledWith(1, "Người tạo hủy phiếu"));
+  });
+
+  it("manages category hierarchy and completes an import", async () => {
+    const user = userEvent.setup();
+    vi.mocked(api.validateAssetCategoryImport).mockResolvedValueOnce({
+      uploadStatus: "VALID",
+      totalRows: 2,
+      validRows: 2,
+      errorRows: 0,
+      warningRows: 1,
+      rows: [
+        {
+          rowNumber: 2,
+          status: "VALID",
+          code: "TB",
+          name: "Thiết bị",
+          parentCode: "",
+          action: "UPDATE",
+          errors: [],
+          warnings: [],
+        },
+        {
+          rowNumber: 3,
+          status: "VALID",
+          code: "MON",
+          name: "Màn hình",
+          parentCode: "TB",
+          action: "CREATE",
+          errors: [],
+          warnings: [{ field: "code", code: "CHECK", message: "Kiểm tra mã" }],
+        },
+      ],
+    } as any);
+    vi.mocked(api.commitAssetCategoryImport).mockResolvedValueOnce({
+      uploadStatus: "SUCCESS",
+      importedRows: 1,
+      updatedRows: 0,
+      skippedRows: 0,
+      errorRows: 0,
+      rows: [],
+    } as any);
+    await renderRoute("/asset-categories", "Thiết bị");
+
+    await user.type(screen.getByLabelText("Tìm danh mục"), "Laptop");
+    await user.click(screen.getByRole("button", { name: "Xóa nội dung tìm kiếm" }));
+    fireEvent.change(screen.getByLabelText("Loại danh mục"), { target: { value: "FIXED_ASSET" } });
+    fireEvent.change(screen.getByLabelText("Trạng thái"), { target: { value: "ACTIVE" } });
+
+    await user.clear(screen.getByLabelText("Tên danh mục"));
+    await user.type(screen.getByLabelText("Tên danh mục"), "Màn hình");
+    await user.type(screen.getByLabelText("Mã danh mục"), "MON");
+    await user.type(screen.getByLabelText("Mô tả"), "Màn hình văn phòng");
+    await user.click(screen.getByRole("button", { name: "Tạo danh mục" }));
+    await waitFor(() => expect(api.createAssetCategory).toHaveBeenCalled());
+
+    await user.click(screen.getAllByTitle("Thêm danh mục con")[0]);
+    expect(screen.getByText("Tạo danh mục con của")).toBeVisible();
+    await user.type(screen.getByLabelText("Tên danh mục"), "Máy trạm");
+    await user.type(screen.getByLabelText("Mã danh mục"), "WS");
+
+    await user.click(screen.getAllByTitle("Xóa")[0]);
+    await waitFor(() => expect(api.deleteAssetCategory).toHaveBeenCalled());
+
+    await user.click(screen.getByRole("button", { name: /In danh mục/i }));
+    await waitFor(() => expect(categoryExcelMocks.download).toHaveBeenCalled());
+
+    await user.click(screen.getByRole("button", { name: /Nhập danh mục/i }));
+    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+    await user.upload(fileInput, new File(["xlsx"], "categories.xlsx"));
+    await waitFor(() => expect(categoryExcelMocks.parse).toHaveBeenCalled());
+    await user.click(screen.getByRole("button", { name: "Kiểm tra dữ liệu" }));
+    await waitFor(() => expect(api.validateAssetCategoryImport).toHaveBeenCalled());
+    await user.click(screen.getByRole("button", { name: /Cảnh báo/i }));
+    await user.click(screen.getByRole("button", { name: /Lỗi/i }));
+    await user.click(screen.getByRole("button", { name: /Hợp lệ/i }));
+    await user.click(screen.getByRole("button", { name: /Tất cả/i }));
+    await user.click(screen.getByRole("button", { name: "Phân cấp cha con" }));
+    await user.click(screen.getAllByRole("button", { name: /Thiết bị/ }).at(-1) as HTMLElement);
+    await user.click(screen.getByRole("button", { name: "Danh sách dòng" }));
+    await user.click(screen.getByRole("button", { name: "Xác nhận nhập" }));
+    await waitFor(() => expect(api.commitAssetCategoryImport).toHaveBeenCalled());
+  });
+});

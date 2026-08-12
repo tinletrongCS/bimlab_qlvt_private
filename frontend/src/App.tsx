@@ -1,0 +1,134 @@
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { ProtectedRoute } from "./auth/ProtectedRoute";
+import { ActionsProvider } from "./contexts/ActionsContext";
+import { AppDataProvider } from "./contexts/AppDataContext";
+import { AuthProvider } from "./contexts/AuthContext";
+import { AppShell } from "./layout/AppShell";
+import { AssetCategoriesPage } from "./pages/AssetCategoriesPage";
+import { AssetsPage } from "./pages/AssetsPage";
+import { BookingPage } from "./pages/BookingPage";
+import { ContractsPage } from "./pages/ContractsPage";
+import { DashboardPage } from "./pages/DashboardPage";
+import { HelpPage } from "./pages/HelpPage";
+import { LoginPage } from "./pages/LoginPage";
+import { MaintenancePage } from "./pages/MaintenancePage";
+import { PurchaseRequestsPage } from "./pages/PurchaseRequestsPage";
+import { SubscriptionsPage } from "./pages/SubscriptionsPage";
+import { TransfersPage } from "./pages/TransfersPage";
+import { VendorsPage } from "./pages/VendorsPage";
+
+function App() {
+  return (
+    <BrowserRouter>
+      <AuthProvider>
+        <AppDataProvider>
+          <ActionsProvider>
+            <Routes>
+              <Route path="/login" element={<LoginPage />} />
+              <Route
+                element={
+                  <ProtectedRoute>
+                    <AppShell />
+                  </ProtectedRoute>
+                }
+              >
+                <Route
+                  path="/dashboard"
+                  element={
+                    <ProtectedRoute permission="asset_report_view">
+                      <DashboardPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/assets"
+                  element={
+                    <ProtectedRoute permission="asset_access">
+                      <AssetsPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/asset-categories"
+                  element={
+                    <ProtectedRoute permission="asset_manage">
+                      <AssetCategoriesPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/subscriptions"
+                  element={
+                    <ProtectedRoute permission="subscription_manage">
+                      <SubscriptionsPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/vendors"
+                  element={
+                    <ProtectedRoute permission="vendor_manage">
+                      <VendorsPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/requests"
+                  element={
+                    <ProtectedRoute permission="purchase_request_create">
+                      <PurchaseRequestsPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/contracts"
+                  element={
+                    <ProtectedRoute permission="contract_manage">
+                      <ContractsPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/maintenance"
+                  element={
+                    <ProtectedRoute permission="maintenance_manage">
+                      <MaintenancePage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/booking"
+                  element={
+                    <ProtectedRoute permission="asset_manage">
+                      <BookingPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/transfers"
+                  element={
+                    <ProtectedRoute
+                      permission={[
+                        "asset_transfers_view",
+                        "asset_transfers_manage",
+                        "asset_transfers_approve",
+                        "asset_manage",
+                      ]}
+                    >
+                      <TransfersPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route path="/help" element={<HelpPage />} />
+                <Route path="/" element={<Navigate to="/dashboard" replace />} />
+              </Route>
+              <Route path="*" element={<Navigate to="/dashboard" replace />} />
+            </Routes>
+          </ActionsProvider>
+        </AppDataProvider>
+      </AuthProvider>
+    </BrowserRouter>
+  );
+}
+
+export default App;

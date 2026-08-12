@@ -1,0 +1,44 @@
+# Environment
+.env
+.env.*
+!.env.example
+
+# Build artifacts
+**/target/
+**/node_modules/
+**/dist/
+**/coverage/
+**/__pycache__/
+*.pyc
+**/tsconfig.tsbuildinfo
+
+# Keys / certs (never commit)
+*.pem
+*.key
+*.crt
+*.p12
+*.jks
+
+# JVM crash dumps
+hs_err_pid*.log
+replay_pid*.log
+core.*
+
+# IDE / OS
+.idea/
+.vscode/
+*.iml
+.DS_Store
+
+# Local-only Claude Code artifacts
+CLAUDE.md
+**/CLAUDE.md
+.claude/
+
+# Agent / IDE tooling — giữ local, không đẩy lên GitLab (gỡ tracking 2026-06-25)
+.github/
+.claude/
+CLAUDE.md
+**/CLAUDE.md
+AGENTS.md
+**/AGENTS.md

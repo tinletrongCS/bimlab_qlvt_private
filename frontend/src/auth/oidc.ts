@@ -1,0 +1,227 @@
+// Pin bảo mật:
+//  - Access token + refresh token lưu trong sessionStorage của phiên trình duyệt → reload không mất phiên,
+//    vẫn không dùng localStorage dài hạn.
+//  - State handshake PKCE (code_verifier + state) sống qua redirect → sessionStorage (mặc định, ngắn hạn).
+//  - Refresh token rotation qua automaticSilentRenew (oidc-client-ts dùng refresh_token, KHÔNG iframe
+//    → tránh chặn third-party-cookie). Logout = signoutRedirect (end-session SLO của Keycloak).
+import {
+  type User,
+  UserManager,
+  type UserManagerSettings,
+  WebStorageStateStore,
+} from "oidc-client-ts";
+import { installPkceDigestFallback } from "./oidcCrypto";
+
+let accessToken: string | null = null;
+const LOGIN_RETURN_URL_KEY = "qlvt:oidc:return-url";
+const LOGIN_RETURN_URL_PARAM = "returnTo";
+const LOGIN_RETURN_URL_COOKIE = "qlvt_oidc_return_url";
+export interface OidcCallbackResult {
+  authenticated: boolean;
+  returnUrl: string | null;
+}
+
+let callbackPromise: Promise<OidcCallbackResult> | null = null;
+let consumedLoginReturnUrl: string | null | undefined;
+
+/** Lý do mất phiên: "signed-out" = SLO từ app khác (check-session iframe); "expired" = hết hạn/renew fail. */
+export type SessionLostReason = "expired" | "signed-out";
+let sessionLostHandler: ((reason: SessionLostReason) => void) | null = null;
+
+/** Token hiện tại để axios gắn Authorization: Bearer. null nếu chưa/không còn đăng nhập. */
+export function getAccessToken(): string | null {
+  return accessToken;
+}
+
+function safeLoginReturnUrl(value: unknown): string | null {
+  return typeof value === "string" && value.startsWith("/") && !value.startsWith("//")
+    ? value
+    : null;
+}
+
+function cookieLoginReturnUrl(): string | null {
+  const prefix = `${LOGIN_RETURN_URL_COOKIE}=`;
+  const cookie = document.cookie.split("; ").find((item) => item.startsWith(prefix));
+  if (!cookie) return null;
+  try {
+    return safeLoginReturnUrl(decodeURIComponent(cookie.slice(prefix.length)));
+  } catch {
+    return null;
+  }
+}
+
+function pendingLoginReturnUrl(): string | null {
+  return (
+    safeLoginReturnUrl(window.sessionStorage.getItem(LOGIN_RETURN_URL_KEY)) ??
+    safeLoginReturnUrl(new URLSearchParams(window.location.search).get(LOGIN_RETURN_URL_PARAM)) ??
+    cookieLoginReturnUrl()
+  );
+}
+
+export function consumeLoginReturnUrl(): string | null {
+  if (consumedLoginReturnUrl !== undefined) return consumedLoginReturnUrl;
+  const returnUrl = pendingLoginReturnUrl();
+  window.sessionStorage.removeItem(LOGIN_RETURN_URL_KEY);
+  // biome-ignore lint/suspicious/noDocumentCookie: QR login must support mobile browsers without Cookie Store API.
+  document.cookie = `${LOGIN_RETURN_URL_COOKIE}=; Path=/; Max-Age=0; SameSite=Lax`;
+  consumedLoginReturnUrl = returnUrl;
+  return consumedLoginReturnUrl;
+}
+
+/** Đăng ký callback khi mất phiên (refresh thất bại / token hết hạn / đăng xuất từ app khác). */
+export function onSessionLost(handler: (reason: SessionLostReason) => void): void {
+  sessionLostHandler = handler;
+}
+
+function buildSettings(): UserManagerSettings {
+  const origin = window.location.origin;
+  return {
+    authority: import.meta.env.VITE_KEYCLOAK_AUTHORITY ?? "http://localhost:8081/realms/bimlab",
+    client_id: import.meta.env.VITE_KEYCLOAK_CLIENT_ID ?? "qlvt",
+    redirect_uri: import.meta.env.VITE_KEYCLOAK_REDIRECT_URI ?? `${origin}/`,
+    post_logout_redirect_uri: `${origin}/login`,
+    response_type: "code",
+    // Chỉ cần "openid" -- user info + permissions lấy từ /api/asset/me (KHÔNG dùng OIDC profile/userinfo).
+    scope: "openid",
+    // Access/refresh token theo phiên trình duyệt; state (PKCE) cũng dùng sessionStorage.
+    userStore: new WebStorageStateStore({ store: window.sessionStorage }),
+    // Tự gia hạn access token (5') bằng refresh token TRƯỚC khi hết hạn 60s.
+    automaticSilentRenew: true,
+    accessTokenExpiringNotificationTimeInSeconds: 60,
+    // OIDC Session Management: nhúng check-session iframe của Keycloak, phát hiện
+    // session SSO đổi (logout SLO từ app khác: HRM/CDS/…) trong ~2s → userSignedOut
+    // → báo UI ngay thay vì đợi token hết hạn user mới biết. sso.bimlab.com.vn cùng
+    // site (bimlab.com.vn) với app nên cookie trong iframe không bị chặn third-party.
+    monitorSession: true,
+  };
+}
+
+let manager: UserManager | null = null;
+function userManager(): UserManager {
+  if (!manager) {
+    installPkceDigestFallback();
+    manager = new UserManager(buildSettings());
+    // Silent-renew thành công → cập nhật token in-memory (api.ts đọc qua getAccessToken).
+    manager.events.addUserLoaded((user) => {
+      adopt(user);
+    });
+    // Refresh thất bại / hết hạn không gia hạn được → mất phiên → báo AuthContext logout cục bộ.
+    manager.events.addSilentRenewError(() => loseSession("expired"));
+    manager.events.addAccessTokenExpired(() => loseSession("expired"));
+    // SLO từ app khác trong hệ SSO (monitorSession phát hiện session Keycloak đổi):
+    // dọn user khỏi oidc-client (dừng silent renew) rồi báo UI với lý do "signed-out".
+    manager.events.addUserSignedOut(() => {
+      void userManager()
+        .removeUser()
+        .catch(() => {});
+      loseSession("signed-out");
+    });
+  }
+  return manager;
+}
+
+function adopt(user: User | null): boolean {
+  accessToken = user?.access_token ?? null;
+  return Boolean(accessToken);
+}
+
+function loseSession(reason: SessionLostReason): void {
+  accessToken = null;
+  sessionLostHandler?.(reason);
+}
+
+/** URL hiện tại có phải callback từ Keycloak (?code=&state=) không. */
+export function isOidcCallback(): boolean {
+  const params = new URLSearchParams(window.location.search);
+  return params.has("state") && (params.has("code") || params.has("error"));
+}
+
+/** Xử lý callback: đổi code→token (PKCE), giữ token in-memory, dọn ?code&state khỏi URL. */
+export function handleOidcCallback(): Promise<OidcCallbackResult> {
+  callbackPromise ??= processOidcCallback();
+  return callbackPromise;
+}
+
+async function processOidcCallback(): Promise<OidcCallbackResult> {
+  try {
+    const user = await userManager().signinRedirectCallback();
+    const returnUrl =
+      safeLoginReturnUrl((user?.state as { returnUrl?: unknown } | undefined)?.returnUrl) ??
+      consumeLoginReturnUrl();
+    return { authenticated: adopt(user), returnUrl };
+  } finally {
+    const clean = new URL(window.location.href);
+    for (const key of [
+      "code",
+      "state",
+      "session_state",
+      "iss",
+      "error",
+      "error_description",
+      "error_uri",
+    ]) {
+      clean.searchParams.delete(key);
+    }
+    window.history.replaceState(
+      {},
+      document.title,
+      `${clean.pathname}${clean.search}${clean.hash}`,
+    );
+  }
+}
+
+/**
+ * Hoàn tất callback trong IFRAME silent-renew của oidc-client-ts (prompt=none): relay ?code/&error
+ * về tab cha (postMessage) rồi DỪNG -- KHÔNG render app. Nếu thiếu, iframe render full SPA, không báo
+ * về cha → signinSilent() ở cha timeout ~10s → mất phiên. Chỉ gọi khi ở iframe (self!==top + ?state&code|error).
+ */
+export async function completeSilentRenewCallback(): Promise<void> {
+  try {
+    await userManager().signinSilentCallback();
+  } catch {
+    // Tab cha tự xử lý timeout/lỗi -- không làm gì thêm trong iframe.
+  }
+}
+
+/** Khôi phục phiên khi reload từ sessionStorage; chỉ refresh silent khi đã có user cũ. */
+export async function trySilentLogin(): Promise<boolean> {
+  try {
+    const existingUser = await userManager().getUser();
+    if (!existingUser) {
+      return false;
+    }
+    if (existingUser && !existingUser.expired) {
+      return adopt(existingUser);
+    }
+    const user = await userManager().signinSilent();
+    return adopt(user);
+  } catch {
+    return false;
+  }
+}
+
+/** Bắt đầu đăng nhập: redirect sang trang login Keycloak. Trang sẽ điều hướng đi (không trả về). */
+export async function keycloakLogin(): Promise<void> {
+  const returnUrl = pendingLoginReturnUrl();
+  await userManager().signinRedirect({
+    state: returnUrl ? { returnUrl } : undefined,
+  });
+}
+
+/**
+ * Đăng xuất ĐẦY ĐỦ: gọi end-session endpoint của Keycloak (kết thúc session SSO)
+ * + redirect về post_logout_redirect_uri (/login). id_token_hint lấy tự động từ user đã lưu.
+ * Fallback: nếu signoutRedirect lỗi → dọn cục bộ.
+ */
+export async function keycloakLogout(): Promise<void> {
+  accessToken = null;
+  try {
+    await userManager().signoutRedirect();
+  } catch {
+    try {
+      await userManager().removeUser();
+    } catch {
+      // ignore
+    }
+  }
+}

@@ -1,0 +1,103 @@
+package com.bimlab.asset.controller;
+
+import com.bimlab.asset.dto.request.AssetTransferDecisionRequest;
+import com.bimlab.asset.dto.request.AssetTransferHeaderRequest;
+import com.bimlab.asset.dto.response.FileUploadResponse;
+import com.bimlab.asset.dto.response.AssetTransferHeaderResponse;
+import com.bimlab.asset.service.AssetTransferService;
+import com.bimlab.asset.storage.MinioService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.InputStream;
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/asset/transfer")
+@RequiredArgsConstructor
+public class AssetTransferController {
+    private final AssetTransferService service;
+    private final MinioService minioService;
+
+
+    @GetMapping
+    @PreAuthorize("hasAnyAuthority('asset_transfers_view','asset_transfers_manage','asset_transfers_approve','asset_manage')")
+    public List<AssetTransferHeaderResponse> listHeaders() {
+        return service.listTransferHeaders();
+    }
+
+    @GetMapping("/paged")
+    @PreAuthorize("hasAnyAuthority('asset_transfers_view','asset_transfers_manage','asset_transfers_approve','asset_manage')")
+    public Page<AssetTransferHeaderResponse> listPaged(@PageableDefault(size = 20) Pageable pageable) {
+        return service.listTransferHeadersPaged(pageable);
+    }
+
+    @GetMapping("/{id}")
+    @PreAuthorize("hasAnyAuthority('asset_transfers_view','asset_transfers_manage','asset_transfers_approve','asset_manage')")
+    public AssetTransferHeaderResponse getHeader(@PathVariable Long id) {
+        return service.getTransferHeader(id);
+    }
+
+    @PostMapping
+    @PreAuthorize("hasAnyAuthority('asset_transfers_manage','asset_manage')")
+    public AssetTransferHeaderResponse createPendingApproval(@Valid @RequestBody AssetTransferHeaderRequest req) {
+        return service.createTransferPendingApproval(req);
+    }
+
+    @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasAnyAuthority('asset_transfers_manage','asset_manage')")
+    public FileUploadResponse uploadDocument(@RequestParam("file") MultipartFile file) {
+        String key = minioService.upload(file, "transfer-documents");
+        return new FileUploadResponse(key, minioService.getPresignedUrl(key));
+    }
+
+    @GetMapping("/files/view")
+    @PreAuthorize("hasAnyAuthority('asset_transfers_view','asset_transfers_manage','asset_transfers_approve','asset_manage')")
+    public ResponseEntity<InputStreamResource> viewDocument(@RequestParam("key") String key) {
+        InputStream stream = minioService.getObjectStream(key);
+        if (stream == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CACHE_CONTROL, "no-store")
+                .header(HttpHeaders.CONTENT_TYPE, minioService.getContentType(key))
+                .body(new InputStreamResource(stream));
+    }
+
+    @PostMapping("/{id}/approve")
+    @PreAuthorize("hasAnyAuthority('asset_transfers_view','asset_transfers_approve','asset_manage')")
+    public AssetTransferHeaderResponse approve(
+            @PathVariable Long id,
+            @Valid @RequestBody(required = false) AssetTransferDecisionRequest req
+    ) {
+        return service.approveTransferHeader(id, req);
+    }
+
+    @PostMapping("/{id}/reject")
+    @PreAuthorize("hasAnyAuthority('asset_transfers_view','asset_transfers_approve','asset_manage')")
+    public AssetTransferHeaderResponse reject(
+            @PathVariable Long id,
+            @Valid @RequestBody AssetTransferDecisionRequest req
+    ) {
+        return service.rejectTransferHeader(id, req);
+    }
+
+    @PostMapping("/{id}/cancel")
+    @PreAuthorize("hasAnyAuthority('asset_transfers_view','asset_transfers_manage','asset_manage')")
+    public AssetTransferHeaderResponse cancel(
+            @PathVariable Long id,
+            @Valid @RequestBody AssetTransferDecisionRequest req
+    ) {
+        return service.cancelTransferHeader(id, req);
+    }
+}
