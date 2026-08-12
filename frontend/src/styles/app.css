@@ -14883,41 +14883,37 @@ button,
   align-items: center !important;
 }
 
-#root .vendor-list-head > span {
+#root .vendor-list-head-tools {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+}
+
+#root .vendor-list-head-tools > span {
   color: #52677a !important;
   font-size: 12px !important;
 }
 
-#root .vendor-name-cell,
-#root .vendor-contact-cell,
-#root .vendor-bank-cell {
-  display: grid;
-  min-width: 0;
-  gap: 2px;
+#root .vendor-list-panel .table-wrap tbody td {
+  padding-bottom: 8px !important;
+  padding-top: 8px !important;
+  vertical-align: top;
 }
 
-#root .vendor-name-cell strong,
-#root .vendor-contact-cell strong,
-#root .vendor-bank-cell strong {
-  overflow: hidden;
+#root .vendor-primary-cell {
   color: #25384f;
   font-size: 12px;
   font-weight: 600;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
-#root .vendor-name-cell a,
-#root .vendor-contact-cell span,
-#root .vendor-bank-cell span {
+#root .vendor-list-panel td:not(.vendor-col-address):not(.vendor-col-actions),
+#root .vendor-list-panel td:not(.vendor-col-address):not(.vendor-col-actions) > * {
   overflow: hidden;
-  color: #667085;
-  font-size: 11px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-#root .vendor-name-cell a {
+#root .vendor-col-website a {
   color: #15507f;
   text-decoration: underline;
   text-underline-offset: 2px;
@@ -14928,36 +14924,100 @@ button,
   overflow: hidden;
   line-height: 1.35;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 4;
 }
 
 #root .vendor-col-name {
-  width: 20%;
+  width: 210px;
 }
 
-#root .vendor-col-tax {
-  width: 12%;
+#root .vendor-col-taxCode {
+  width: 130px;
 }
 
-#root .vendor-col-contact {
-  width: 18%;
+#root .vendor-col-contactName {
+  width: 150px;
+}
+
+#root .vendor-col-email {
+  width: 190px;
+}
+
+#root .vendor-col-phone {
+  width: 125px;
 }
 
 #root .vendor-col-address {
-  width: 22%;
+  width: 300px;
 }
 
-#root .vendor-col-bank {
-  width: 13%;
+#root .vendor-col-website {
+  width: 180px;
+}
+
+#root .vendor-col-bankName,
+#root .vendor-col-bankAccountNumber {
+  width: 150px;
 }
 
 #root .vendor-col-status {
-  width: 8%;
+  width: 120px;
 }
 
 #root .vendor-col-actions {
   text-align: center;
   width: 64px;
+}
+
+#root .vendor-page .overflow-actions-trigger {
+  color: #52606d !important;
+}
+
+#root .vendor-page .overflow-actions-trigger:hover,
+#root .vendor-page .overflow-actions-trigger:focus-visible {
+  color: #1f2937 !important;
+}
+
+#root .vendor-detail-modal {
+  background: #ffffff;
+  border: 1px solid #d7dde5;
+  display: flex;
+  flex-direction: column;
+  max-height: 90vh;
+  overflow: hidden;
+  width: min(760px, 100%);
+}
+
+#root .vendor-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  overflow-y: auto;
+  padding: 12px 24px;
+}
+
+#root .vendor-detail-grid > div {
+  border-bottom: 1px solid #e9edf2;
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  padding: 10px 12px;
+}
+
+#root .vendor-detail-grid > div.wide {
+  grid-column: 1 / -1;
+}
+
+#root .vendor-detail-grid span {
+  color: #667085;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+#root .vendor-detail-grid strong {
+  color: #25384f;
+  font-size: 12px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
 }
 
 #root .crud-modal-vendor {
@@ -15052,6 +15112,20 @@ button,
   }
 
   #root .vendor-form-name {
+    grid-column: auto;
+  }
+
+  #root .vendor-list-head-tools {
+    align-items: flex-end;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  #root .vendor-detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  #root .vendor-detail-grid > div.wide {
     grid-column: auto;
   }
 }

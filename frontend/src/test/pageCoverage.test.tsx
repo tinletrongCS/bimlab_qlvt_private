@@ -382,6 +382,12 @@ describe("QLVT pages", () => {
     expect(screen.getByText("Không tìm thấy nhà cung cấp")).toBeVisible();
     await user.clear(search);
 
+    await user.click(screen.getByRole("button", { name: /Cấu hình cột/i }));
+    expect(screen.getByRole("checkbox", { name: /Nhà cung cấp/i })).toBeDisabled();
+    expect(screen.getByRole("checkbox", { name: /Mã số thuế/i })).toBeDisabled();
+    expect(screen.getByRole("checkbox", { name: /Địa chỉ/i })).toBeDisabled();
+    await user.click(screen.getByRole("button", { name: "Áp dụng" }));
+
     await user.click(screen.getByRole("button", { name: /Thêm nhà cung cấp/i }));
     expect(await screen.findByRole("heading", { name: "Thêm nhà cung cấp" })).toBeVisible();
     await user.clear(screen.getByLabelText(/Tên nhà cung cấp/i));
@@ -398,6 +404,13 @@ describe("QLVT pages", () => {
         }),
       ),
     );
+
+    await user.click(screen.getByRole("button", { name: /Mở thao tác cho Công ty Thiết bị BIM/i }));
+    await user.click(screen.getByRole("menuitem", { name: "Xem chi tiết" }));
+    const detail = screen.getByRole("dialog", { name: "Chi tiết nhà cung cấp" });
+    expect(within(detail).getAllByText("Công ty Thiết bị BIM")).toHaveLength(2);
+    expect(within(detail).getByText("Mã số thuế")).toBeVisible();
+    await user.click(within(detail).getAllByRole("button", { name: "Đóng" }).at(-1)!);
 
     await user.click(screen.getByRole("button", { name: /Mở thao tác cho Công ty Thiết bị BIM/i }));
     await user.click(screen.getByRole("menuitem", { name: "Ngưng hoạt động" }));
