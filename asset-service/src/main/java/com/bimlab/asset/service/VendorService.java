@@ -66,9 +66,9 @@ public class VendorService {
         Vendor vendor = this.getVendor(id);
 
         // Check mã số thuế trùng
-        String taxCode = req.taxCode() == null ? null : req.taxCode();
+        String taxCode = trimToNull(req.taxCode());
         // mã số thuế đã được sử dụng
-        if (taxCode != null && !taxCode.isEmpty() && vendorRepository.existsByTaxCodeIgnoreCaseAndIdNot(taxCode, id)) {
+        if (taxCode != null && vendorRepository.existsByTaxCodeIgnoreCaseAndIdNot(taxCode, id)) {
             throw new IllegalArgumentException("Mã số thuế đã được sử dụng");
         }
         VendorStatus status = StatusParser.parseOrNull(VendorStatus.class, req.status());

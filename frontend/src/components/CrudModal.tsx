@@ -9,6 +9,7 @@ interface CrudModalProps {
   onClose: () => void;
   onSubmit: (event: FormEvent) => void;
   wide?: boolean;
+  className?: string;
 }
 
 export function CrudModal({
@@ -19,6 +20,7 @@ export function CrudModal({
   onClose,
   onSubmit,
   wide = false,
+  className = "",
 }: CrudModalProps) {
   const isUpdate = title.toLowerCase().startsWith("cập nhật");
   const HeaderIcon = isUpdate ? FiEdit2 : FiPlus;
@@ -26,7 +28,7 @@ export function CrudModal({
   return (
     <div className="modal-backdrop" onMouseDown={onClose}>
       <form
-        className={`crud-modal${wide ? " crud-modal-wide" : ""}`}
+        className={`crud-modal${wide ? " crud-modal-wide" : ""} ${className}`.trim()}
         onSubmit={onSubmit}
         onMouseDown={(event) => event.stopPropagation()}
       >

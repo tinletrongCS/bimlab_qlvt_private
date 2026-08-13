@@ -6,10 +6,12 @@ import {
   type ReactNode,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import toast from "react-hot-toast";
 import {
+  FiBold,
   FiChevronLeft,
   FiChevronRight,
   FiChevronsLeft,
@@ -22,6 +24,7 @@ import {
   FiRotateCcw,
   FiSearch,
   FiTrash2,
+  FiUnderline,
   FiUpload,
   FiX,
 } from "react-icons/fi";
@@ -89,12 +92,322 @@ interface AssetTableColumnDefinition extends AssetTableColumnConfig {
   align?: "right" | "center";
 }
 
+const CALENDAR_YEAR_OPTIONS = [
+  { value: "", label: "Chưa chọn năm" },
+  ...Array.from({ length: 2100 - 1970 + 1 }, (_, index) => {
+    const year = String(1970 + index);
+    return { value: year, label: year };
+  }),
+];
+
 function escapeHtml(value: string) {
   return value
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;");
+}
+
+const RICH_TEXT_PATTERN = /<(?:strong|b|em|i|u|span|font|br|div|p)\b/i;
+const RICH_TEXT_COLORS = [
+  { label: "Xám", value: "#475569", rgb: "rgb(71,85,105)" },
+  { label: "Đen", value: "#111827", rgb: "rgb(17,24,39)" },
+  { label: "Đỏ", value: "#b91c1c", rgb: "rgb(185,28,28)" },
+  { label: "Cam", value: "#c2410c", rgb: "rgb(194,65,12)" },
+  { label: "Xanh lá", value: "#15803d", rgb: "rgb(21,128,61)" },
+  { label: "Xanh dương", value: "#1d4ed8", rgb: "rgb(29,78,216)" },
+] as const;
+
+function normalizeRichTextColor(value: string) {
+  const normalized = value.toLowerCase().replaceAll(" ", "");
+  return (
+    RICH_TEXT_COLORS.find((color) => color.value === normalized || color.rgb === normalized)
+      ?.value || ""
+  );
+}
+
+function sanitizeRichText(value: string) {
+  const body = new DOMParser().parseFromString(value, "text/html").body;
+
+  const renderNode = (node: Node): string => {
+    if (node.nodeType === Node.TEXT_NODE) return escapeHtml(node.textContent || "");
+    if (!(node instanceof HTMLElement)) return "";
+
+    const tags: Record<string, string> = {
+      B: "strong",
+      STRONG: "strong",
+      I: "em",
+      EM: "em",
+      U: "u",
+      SPAN: "span",
+      FONT: "span",
+      BR: "br",
+      DIV: "div",
+      P: "p",
+    };
+    const tag = tags[node.tagName];
+    const content = Array.from(node.childNodes).map(renderNode).join("");
+    if (!tag) return content;
+    if (tag === "br") return "<br>";
+
+    const rawColor = node.getAttribute("color") || node.style.color;
+    const color = tag === "span" ? normalizeRichTextColor(rawColor) : "";
+    return `<${tag}${color ? ` style="color: ${color}"` : ""}>${content}</${tag}>`;
+  };
+
+  return Array.from(body.childNodes).map(renderNode).join("");
+}
+
+function richTextEditorHtml(value: string) {
+  return RICH_TEXT_PATTERN.test(value)
+    ? sanitizeRichText(value)
+    : escapeHtml(value).replace(/\r?\n/g, "<br>");
+}
+
+function richTextStorageValue(value: string) {
+  return RICH_TEXT_PATTERN.test(value) ? sanitizeRichText(value) : value;
+}
+
+function RichTextEditor({
+  label,
+  value,
+  onChange,
+  disabled,
+  minHeight,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  disabled?: boolean;
+  minHeight?: number;
+}) {
+  const editorRef = useRef<HTMLDivElement>(null);
+  const selectionRef = useRef<Range | null>(null);
+  const [activeFormats, setActiveFormats] = useState({
+    bold: false,
+    underline: false,
+  });
+  const [activeColor, setActiveColor] = useState<string>(RICH_TEXT_COLORS[0].value);
+
+  useEffect(() => {
+    const editor = editorRef.current;
+    if (!editor || document.activeElement === editor) return;
+    const next = richTextEditorHtml(value);
+    if (editor.innerHTML !== next) editor.innerHTML = next;
+  }, [value]);
+
+  useEffect(() => {
+    const captureSelection = () => {
+      const editor = editorRef.current;
+      const selection = window.getSelection();
+      if (editor && selection?.rangeCount && editor.contains(selection.anchorNode)) {
+        selectionRef.current = selection.getRangeAt(0).cloneRange();
+      }
+    };
+    document.addEventListener("selectionchange", captureSelection);
+    return () => document.removeEventListener("selectionchange", captureSelection);
+  }, []);
+
+  const refreshToolbarState = () => {
+    const editor = editorRef.current;
+    const selection = window.getSelection();
+    if (!editor || !selection?.rangeCount || !editor.contains(selection.anchorNode)) return;
+    setActiveFormats({
+      bold: document.queryCommandState("bold"),
+      underline: document.queryCommandState("underline"),
+    });
+    setActiveColor(
+      normalizeRichTextColor(String(document.queryCommandValue("foreColor"))) ||
+        RICH_TEXT_COLORS[0].value,
+    );
+  };
+
+  const rememberSelection = () => {
+    const editor = editorRef.current;
+    const selection = window.getSelection();
+    if (editor && selection?.rangeCount && editor.contains(selection.anchorNode)) {
+      selectionRef.current = selection.getRangeAt(0).cloneRange();
+      refreshToolbarState();
+    }
+  };
+
+  const emitValue = () => {
+    const editor = editorRef.current;
+    if (!editor) return;
+    const text = editor.textContent?.replace(/\u00a0/g, " ").trim() || "";
+    if (!text) {
+      onChange("");
+      return;
+    }
+    const html = sanitizeRichText(editor.innerHTML);
+    onChange(RICH_TEXT_PATTERN.test(html) ? html : `<p>${html}</p>`);
+  };
+
+  const wrapSelectedText = (
+    range: Range,
+    command: "bold" | "underline" | "foreColor",
+    color?: string,
+  ) => {
+    const tagName = command === "bold" ? "strong" : command === "underline" ? "u" : "span";
+    const wrapper = document.createElement(tagName);
+    if (command === "foreColor" && color) wrapper.style.color = color;
+    wrapper.append(range.extractContents());
+    range.insertNode(wrapper);
+    range.selectNodeContents(wrapper);
+  };
+
+  const selectedFormatElement = (range: Range, command: "bold" | "underline" | "foreColor") => {
+    if (command === "foreColor") return null;
+    const selector = command === "bold" ? "strong, b" : "u";
+    const closest = (node: Node) => {
+      const element = node instanceof HTMLElement ? node : node.parentElement;
+      if (!element || element === editorRef.current) return null;
+      return element.matches(selector) ? element : element.closest<HTMLElement>(selector);
+    };
+    const start = closest(range.startContainer);
+    const end = closest(range.endContainer);
+    return start && start === end && editorRef.current?.contains(start) ? start : null;
+  };
+
+  const unwrapSelectedText = (range: Range, wrapper: HTMLElement) => {
+    const parent = wrapper.parentNode;
+    const first = wrapper.firstChild;
+    const last = wrapper.lastChild;
+    if (!parent || !first || !last) return false;
+    while (wrapper.firstChild) parent.insertBefore(wrapper.firstChild, wrapper);
+    wrapper.remove();
+    range.setStartBefore(first);
+    range.setEndAfter(last);
+    return true;
+  };
+
+  const format = (command: "bold" | "underline" | "foreColor", color?: string) => {
+    if (disabled) return;
+    const editor = editorRef.current;
+    if (!editor) return;
+    const savedRange = selectionRef.current?.cloneRange();
+    editor.focus({ preventScroll: true });
+    const selection = window.getSelection();
+    if (savedRange && selection && editor.contains(savedRange.commonAncestorContainer)) {
+      selection.removeAllRanges();
+      selection.addRange(savedRange);
+    }
+    const activeRange = selection?.rangeCount ? selection.getRangeAt(0) : null;
+    const formatElementBefore = activeRange ? selectedFormatElement(activeRange, command) : null;
+    const htmlBefore = editor.innerHTML;
+    const wasActive =
+      Boolean(formatElementBefore) ||
+      (command !== "foreColor" && document.queryCommandState(command));
+    document.execCommand("styleWithCSS", false, "false");
+    const commandHandled = document.execCommand(command, false, color);
+
+    if (
+      editor.innerHTML === htmlBefore &&
+      wasActive &&
+      formatElementBefore &&
+      selection &&
+      activeRange &&
+      unwrapSelectedText(activeRange, formatElementBefore)
+    ) {
+      selection.removeAllRanges();
+      selection.addRange(activeRange);
+    } else if (
+      (!commandHandled || editor.innerHTML === htmlBefore) &&
+      !wasActive &&
+      selection &&
+      activeRange &&
+      !activeRange.collapsed &&
+      editor.contains(activeRange.commonAncestorContainer)
+    ) {
+      wrapSelectedText(activeRange, command, color);
+      selection.removeAllRanges();
+      selection.addRange(activeRange);
+    }
+    if (selection?.rangeCount) selectionRef.current = selection.getRangeAt(0).cloneRange();
+    refreshToolbarState();
+    emitValue();
+  };
+
+  return (
+    <div className="asset-detail-wide-field asset-rich-text-field">
+      <span>{label}</span>
+      <div className="asset-rich-text-editor" data-disabled={disabled || undefined}>
+        <div className="asset-rich-text-toolbar" role="toolbar" aria-label={`Định dạng ${label}`}>
+          <button
+            type="button"
+            aria-label={`In đậm ${label}`}
+            aria-pressed={activeFormats.bold}
+            className={activeFormats.bold ? "is-active" : undefined}
+            title="In đậm"
+            onMouseDown={(event) => {
+              event.preventDefault();
+              format("bold");
+            }}
+            onClick={(event) => event.detail === 0 && format("bold")}
+            disabled={disabled}
+          >
+            <FiBold />
+          </button>
+          <button
+            type="button"
+            aria-label={`Gạch chân ${label}`}
+            aria-pressed={activeFormats.underline}
+            className={activeFormats.underline ? "is-active" : undefined}
+            title="Gạch chân"
+            onMouseDown={(event) => {
+              event.preventDefault();
+              format("underline");
+            }}
+            onClick={(event) => event.detail === 0 && format("underline")}
+            disabled={disabled}
+          >
+            <FiUnderline />
+          </button>
+          <div className="asset-rich-text-colors" role="group" aria-label={`Màu chữ ${label}`}>
+            <span>Màu chữ</span>
+            {RICH_TEXT_COLORS.map((color) => (
+              <button
+                type="button"
+                key={color.value}
+                className={`asset-rich-text-swatch${activeColor === color.value ? " is-active" : ""}`}
+                aria-label={`${color.label} - ${label}`}
+                aria-pressed={activeColor === color.value}
+                title={color.label}
+                style={{ "--asset-swatch-color": color.value } as CSSProperties}
+                onMouseDown={(event) => {
+                  event.preventDefault();
+                  format("foreColor", color.value);
+                }}
+                onClick={(event) => event.detail === 0 && format("foreColor", color.value)}
+                disabled={disabled}
+              />
+            ))}
+          </div>
+        </div>
+        <div
+          ref={editorRef}
+          className="asset-rich-text-content"
+          role="textbox"
+          aria-label={label}
+          aria-multiline="true"
+          tabIndex={disabled ? -1 : 0}
+          contentEditable={!disabled}
+          suppressContentEditableWarning
+          style={{ minHeight }}
+          onInput={emitValue}
+          onFocus={refreshToolbarState}
+          onMouseUp={rememberSelection}
+          onKeyUp={rememberSelection}
+          onBlur={rememberSelection}
+          onPaste={(event) => {
+            event.preventDefault();
+            document.execCommand("insertText", false, event.clipboardData.getData("text/plain"));
+            emitValue();
+          }}
+        />
+      </div>
+    </div>
+  );
 }
 
 async function renderQrPrint(printWindow: Window, codes: AssetQrCode[]) {
@@ -1188,7 +1501,6 @@ export function AssetsPage() {
     setUseDateTo("");
     setValueFilter("ALL");
     setAssetPage(1);
-    setQuery("");
   };
 
   const selectedCategoryNodes = useMemo(
@@ -1575,7 +1887,11 @@ export function AssetsPage() {
     if (!selectedAsset || !assetDraft) return;
     setAssetSaving(true);
     try {
-      await updateAsset(selectedAsset.id, assetDraft);
+      await updateAsset(selectedAsset.id, {
+        ...assetDraft,
+        technicalDescription: richTextStorageValue(assetDraft.technicalDescription || ""),
+        notes: richTextStorageValue(assetDraft.notes || ""),
+      });
       toast.success("Đã cập nhật tài sản.");
       await reloadAssetList();
       setSelectedAsset(null);
@@ -2750,13 +3066,11 @@ export function AssetsPage() {
               <div className="asset-detail-hero">
                 <div>
                   <span>Mã tài sản</span>
-                  <strong style={{ color: "#2563eb", fontWeight: 700, fontSize: "14px" }}>
-                    {selectedAsset.assetCode}
-                  </strong>
+                  <strong>{selectedAsset.assetCode}</strong>
                 </div>
                 <div>
                   <span>Danh mục</span>
-                  <strong style={{ color: "#2563eb", fontWeight: 700, fontSize: "14px" }}>
+                  <strong>
                     {selectedAsset.assetCategory?.name ||
                       selectedAsset.category ||
                       "Chưa phân loại"}
@@ -2764,9 +3078,7 @@ export function AssetsPage() {
                 </div>
                 <div>
                   <span>Phân loại</span>
-                  <strong style={{ color: "#2563eb", fontWeight: 700, fontSize: "14px" }}>
-                    {classLabel(selectedAsset.assetClass)}
-                  </strong>
+                  <strong>{classLabel(selectedAsset.assetClass)}</strong>
                 </div>
                 <div>
                   <span>Trạng thái</span>
@@ -2778,7 +3090,7 @@ export function AssetsPage() {
                 <section className="asset-detail-section">
                   <h3>Định danh và phân loại</h3>
                   <div className="asset-detail-fields">
-                    <label>
+                    <label className="asset-detail-field-span-2">
                       <span>Tên tài sản</span>
                       <input
                         value={assetDraft.name}
@@ -2854,7 +3166,7 @@ export function AssetsPage() {
                         <option value="LOST">Mất</option>
                       </SearchableSelect>
                     </label>
-                    <label>
+                    <label className="asset-detail-field-span-2">
                       <span>Nguồn hình thành</span>
                       <input
                         value={assetDraft.source || ""}
@@ -3131,13 +3443,16 @@ export function AssetsPage() {
                     </label>
                     <label>
                       <span>Phương pháp khấu hao</span>
-                      <input
+                      <SearchableSelect
                         value={assetDraft.depreciationMethod || ""}
-                        onChange={(event) =>
-                          updateAssetDraft("depreciationMethod", event.target.value)
-                        }
+                        onChange={(value) => updateAssetDraft("depreciationMethod", value)}
                         disabled={!canManage || assetSaving}
-                      />
+                      >
+                        <option value="">Chưa chọn</option>
+                        <option value="NONE">Không khấu hao</option>
+                        <option value="STRAIGHT_LINE">Tuyến tính</option>
+                        <option value="DECLINING_BALANCE">Số dư giảm dần</option>
+                      </SearchableSelect>
                     </label>
                     <label>
                       <span>Số tháng sử dụng</span>
@@ -3188,23 +3503,25 @@ export function AssetsPage() {
                     </label>
                     <label>
                       <span>Năm sản xuất</span>
-                      <input
-                        type="number"
-                        value={assetDraft.manufactureYear ?? ""}
-                        onChange={(event) =>
-                          updateAssetDraft("manufactureYear", optionalNumber(event.target.value))
+                      <SearchableSelect
+                        value={String(assetDraft.manufactureYear ?? "")}
+                        options={CALENDAR_YEAR_OPTIONS}
+                        onChange={(value) =>
+                          updateAssetDraft("manufactureYear", optionalNumber(value))
                         }
+                        placeholder="Chưa chọn năm"
                         disabled={!canManage || assetSaving}
                       />
                     </label>
                     <label>
                       <span>Năm lắp đặt/cài đặt</span>
-                      <input
-                        type="number"
-                        value={assetDraft.installationYear ?? ""}
-                        onChange={(event) =>
-                          updateAssetDraft("installationYear", optionalNumber(event.target.value))
+                      <SearchableSelect
+                        value={String(assetDraft.installationYear ?? "")}
+                        options={CALENDAR_YEAR_OPTIONS}
+                        onChange={(value) =>
+                          updateAssetDraft("installationYear", optionalNumber(value))
                         }
+                        placeholder="Chưa chọn năm"
                         disabled={!canManage || assetSaving}
                       />
                     </label>
@@ -3239,17 +3556,13 @@ export function AssetsPage() {
                       />
                     </label>
                   </div>
-                  <label className="asset-detail-wide-field">
-                    <span>Mô tả kỹ thuật</span>
-                    <textarea
-                      value={assetDraft.technicalDescription || ""}
-                      onChange={(event) =>
-                        updateAssetDraft("technicalDescription", event.target.value)
-                      }
-                      disabled={!canManage || assetSaving}
-                      rows={4}
-                    />
-                  </label>
+                  <RichTextEditor
+                    label="Mô tả kỹ thuật"
+                    value={assetDraft.technicalDescription || ""}
+                    onChange={(value) => updateAssetDraft("technicalDescription", value)}
+                    disabled={!canManage || assetSaving}
+                    minHeight={168}
+                  />
                 </section>
 
                 <section className="asset-detail-section">
@@ -3299,7 +3612,7 @@ export function AssetsPage() {
                         </span>
                       </div>
                     </label>
-                    <label>
+                    <label className="asset-detail-field-span-2">
                       <span>Lý do thanh lý</span>
                       <input
                         type="text"
@@ -3338,11 +3651,12 @@ export function AssetsPage() {
 
                 <section className="asset-detail-section asset-detail-section-wide">
                   <h3>Ghi chú</h3>
-                  <textarea
+                  <RichTextEditor
+                    label="Nội dung ghi chú"
                     value={assetDraft.notes || ""}
-                    onChange={(event) => updateAssetDraft("notes", event.target.value)}
+                    onChange={(value) => updateAssetDraft("notes", value)}
                     disabled={!canManage || assetSaving}
-                    rows={4}
+                    minHeight={112}
                   />
                 </section>
               </div>

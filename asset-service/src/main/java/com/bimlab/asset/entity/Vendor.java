@@ -21,8 +21,8 @@ public class Vendor {
     private Long id;
     @Column(nullable = false, length = 180)
     private String name;
-    @Column(name = "tax_code", unique = true, length = 80)
     // Mã số thuế
+    @Column(name = "tax_code", unique = true, length = 80)
     private String taxCode;
     @Column(name = "contact_name", length = 120)
     private String contactName;

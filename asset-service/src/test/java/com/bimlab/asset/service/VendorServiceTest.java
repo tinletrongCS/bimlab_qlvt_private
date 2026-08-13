@@ -15,6 +15,7 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
@@ -46,6 +47,18 @@ class VendorServiceTest {
         assertEquals("FPT", saved.getName());
         assertEquals("0100109106", saved.getTaxCode());
         assertEquals(VendorStatus.ACTIVE, saved.getStatus());
+        verify(vendors).save(any(Vendor.class));
+    }
+
+    @Test
+    void createVendor_allowsMissingTaxCode() {
+        when(vendors.save(any(Vendor.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        Vendor saved = service.createVendor(new VendorRequest(
+                "Nhà cung cấp cá nhân", null, null, null, null, null, "ACTIVE"
+        ));
+
+        assertNull(saved.getTaxCode());
         verify(vendors).save(any(Vendor.class));
     }
 
