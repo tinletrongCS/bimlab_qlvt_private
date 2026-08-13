@@ -13,12 +13,17 @@ import {
 } from "react-icons/fi";
 import { NavLink } from "react-router-dom";
 
+interface GuideStep {
+  text: string;
+  images?: string[];
+}
+
 interface GuideItem {
   id: string;
   title: string;
   icon?: ReactNode;
   description: string;
-  steps: string[];
+  steps: (string | GuideStep)[];
   details?: string[];
   links?: Array<{ to: string; label: string }>;
   children?: GuideItem[];
@@ -59,9 +64,25 @@ const GUIDE_TREE: GuideItem[] = [
         title: "Import Excel danh sách tài sản",
         description: "Nhập nhiều tài sản từ file Excel theo mẫu hệ thống.",
         steps: [
-          "Vào Tài sản > Danh sách, bấm Tải mẫu Excel để lấy file mẫu.",
-          "Điền dữ liệu theo đúng cột và mã tham chiếu trong file.",
-          "Tải file lên, bấm Kiểm tra dữ liệu, sau đó mới import các dòng hợp lệ.",
+          {
+            text: "Bước 1: Tải file Excel mẫu bằng cách vào màn hình Tài sản > Danh sách và chọn 'Tải mẫu Excel'.",
+            images: ["/guide/asset-import-step1.png"],
+          },
+          {
+            text: "Bước 2: Điền dữ liệu tài sản vào file Excel mẫu theo đúng các cột và mã tham chiếu tương ứng.",
+            images: ["/guide/asset-import-step2.png"],
+          },
+          {
+            text: "Bước 3: Thực hiện tải file dữ liệu lên, tiến hành kiểm tra và hoàn tất import theo chuỗi thao tác bên dưới.",
+            images: [
+              "/guide/asset-import-step3-1.jpg",
+              "/guide/asset-import-step3-2.jpg",
+              "/guide/asset-import-step3-3.jpg",
+              "/guide/asset-import-step3-4.jpg",
+              "/guide/asset-import-step3-5.jpg",
+              "/guide/asset-import-step3-error.jpg",
+            ],
+          },
         ],
         links: [{ to: "/assets", label: "Mở danh sách tài sản" }],
       },
@@ -202,7 +223,8 @@ function normalizeGuideText(value: string) {
 
 function guideMatches(item: GuideItem, query: string) {
   if (!query) return true;
-  return [item.title, item.description, ...item.steps, ...(item.details || [])].some((value) =>
+  const stepTexts = item.steps.map((step) => (typeof step === "string" ? step : step.text));
+  return [item.title, item.description, ...stepTexts, ...(item.details || [])].some((value) =>
     normalizeGuideText(value).includes(query),
   );
 }
@@ -222,6 +244,8 @@ export function HelpPage() {
   const allGuides = useMemo(() => flattenGuides(GUIDE_TREE), []);
   const [activeId, setActiveId] = useState("overview");
   const [guideSearch, setGuideSearch] = useState("");
+  const [activeImage, setActiveImage] = useState<string | null>(null);
+
   const normalizedGuideSearch = normalizeGuideText(guideSearch.trim());
   const visibleGuideTree = useMemo(
     () => filterGuideTree(GUIDE_TREE, normalizedGuideSearch),
@@ -307,11 +331,42 @@ export function HelpPage() {
               <p>{activeGuide.description}</p>
             </div>
           </div>
-          <ol>
-            {activeGuide.steps.map((step) => (
-              <li key={step}>{step}</li>
-            ))}
+
+          <ol className="help-steps-list">
+            {activeGuide.steps.map((stepItem, index) => {
+              const isObject = typeof stepItem !== "string";
+              const text = isObject ? stepItem.text : stepItem;
+              const images = isObject ? stepItem.images : undefined;
+
+              return (
+                <li key={index} className="help-step-item">
+                  <div className="help-step-text">{text}</div>
+                  {images && images.length > 0 && (
+                    <div className="help-step-images">
+                      {images.map((imgSrc, imgIdx) => (
+                        <div
+                          key={imgIdx}
+                          className="help-image-card"
+                          onClick={() => setActiveImage(imgSrc)}
+                          title="Bấm để xem ảnh phóng to"
+                        >
+                          <img
+                            src={imgSrc}
+                            alt={`Minh họa ${activeGuide.title} - Bước ${index + 1} - Ảnh ${imgIdx + 1}`}
+                            loading="lazy"
+                          />
+                          <div className="help-image-overlay">
+                            <span>Phóng to ảnh</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </li>
+              );
+            })}
           </ol>
+
           <section className="help-detail-section">
             <h3>Chi tiết cần lưu ý</h3>
             <ul>
@@ -343,6 +398,22 @@ export function HelpPage() {
           )}
         </article>
       </div>
+
+      {activeImage && (
+        <div className="help-lightbox-backdrop" onClick={() => setActiveImage(null)}>
+          <div className="help-lightbox-content" onClick={(e) => e.stopPropagation()}>
+            <button
+              type="button"
+              className="help-lightbox-close"
+              onClick={() => setActiveImage(null)}
+              aria-label="Đóng xem ảnh"
+            >
+              <FiX />
+            </button>
+            <img src={activeImage} alt="Phóng to ảnh hướng dẫn" />
+          </div>
+        </div>
+      )}
     </section>
   );
 }
