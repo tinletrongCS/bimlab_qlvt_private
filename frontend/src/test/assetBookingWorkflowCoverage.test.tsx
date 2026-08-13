@@ -274,6 +274,11 @@ describe("QLVT asset and booking workflow coverage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     window.localStorage.clear();
+    Object.defineProperties(document, {
+      execCommand: { configurable: true, value: vi.fn(() => true) },
+      queryCommandState: { configurable: true, value: vi.fn(() => false) },
+      queryCommandValue: { configurable: true, value: vi.fn(() => "rgb(71, 85, 105)") },
+    });
     vi.spyOn(window, "confirm").mockReturnValue(true);
     vi.spyOn(window, "requestAnimationFrame").mockImplementation((callback) => {
       callback(0);
@@ -352,6 +357,16 @@ describe("QLVT asset and booking workflow coverage", () => {
     expect(screen.getAllByText("TS-001 · Laptop Dell Precision").length).toBeGreaterThan(0);
     const detailModal = screen.getByText("Định danh và phân loại").closest(".asset-detail-modal");
     expect(detailModal).not.toBeNull();
+    expect(
+      within(detailModal as HTMLElement).getByRole("button", { name: "In đậm Mô tả kỹ thuật" }),
+    ).toBeVisible();
+    expect(
+      within(detailModal as HTMLElement).getByRole("button", { name: "Đỏ - Mô tả kỹ thuật" }),
+    ).toBeVisible();
+    expect(detailModal?.querySelector('input[type="color"]')).not.toBeInTheDocument();
+    expect(
+      within(detailModal as HTMLElement).getByLabelText("Phương pháp khấu hao"),
+    ).toHaveDisplayValue("Tuyến tính");
     await user.click(within(detailModal as HTMLElement).getByRole("tab", { name: /Lịch sử/i }));
     expect(await within(detailModal as HTMLElement).findByText("31/07/2026")).toBeVisible();
     expect(
@@ -367,13 +382,46 @@ describe("QLVT asset and booking workflow coverage", () => {
     await user.click(within(detailModal as HTMLElement).getByRole("button", { name: /Quay lại/i }));
     const nameInput = within(detailModal as HTMLElement).getByDisplayValue("Laptop Dell Precision");
     fireEvent.change(nameInput, { target: { value: "Laptop Dell Precision 7780" } });
+    chooseSearchableOption(
+      within(detailModal as HTMLElement).getByLabelText("Năm sản xuất"),
+      "2026",
+    );
+    const technicalDescription = within(detailModal as HTMLElement).getByRole("textbox", {
+      name: "Mô tả kỹ thuật",
+    });
+    technicalDescription.textContent = "Core i9";
+    const selectedText = document.createRange();
+    selectedText.selectNodeContents(technicalDescription);
+    window.getSelection()?.removeAllRanges();
+    window.getSelection()?.addRange(selectedText);
+    document.dispatchEvent(new Event("selectionchange"));
+    fireEvent.mouseDown(
+      within(detailModal as HTMLElement).getByRole("button", {
+        name: "In đậm Mô tả kỹ thuật",
+      }),
+    );
+    expect(technicalDescription.innerHTML).toBe("<strong>Core i9</strong>");
+    expect(window.getSelection()?.toString()).toBe("Core i9");
+    fireEvent.mouseDown(
+      within(detailModal as HTMLElement).getByRole("button", {
+        name: "In đậm Mô tả kỹ thuật",
+      }),
+    );
+    expect(technicalDescription.innerHTML).toBe("Core i9");
+    expect(window.getSelection()?.toString()).toBe("Core i9");
+    technicalDescription.innerHTML = '<strong>Core i9</strong><img src="x" onerror="alert(1)">';
+    fireEvent.input(technicalDescription);
     await user.click(
       within(detailModal as HTMLElement).getByRole("button", { name: "Lưu thay đổi" }),
     );
     await waitFor(() =>
       expect(mocks.updateAsset).toHaveBeenCalledWith(
         1,
-        expect.objectContaining({ name: "Laptop Dell Precision 7780" }),
+        expect.objectContaining({
+          name: "Laptop Dell Precision 7780",
+          manufactureYear: 2026,
+          technicalDescription: "<strong>Core i9</strong>",
+        }),
       ),
     );
 
@@ -429,7 +477,7 @@ describe("QLVT asset and booking workflow coverage", () => {
     );
   });
 
-  it("opens asset QR and resets active filters", async () => {
+  it("opens asset QR and resets filters without clearing search", async () => {
     const user = userEvent.setup();
     render(<AssetsPage />);
     await screen.findByRole("heading", { name: "Danh sách tài sản" });
@@ -449,7 +497,7 @@ describe("QLVT asset and booking workflow coverage", () => {
     chooseSearchableOption(screen.getByLabelText(/Giá trị/i), "10 - 50 triệu");
     await user.click(screen.getByRole("button", { name: "Tất cả" }));
     expect(screen.getByPlaceholderText("Tìm theo mã, tên, serial, nhà cung cấp...")).toHaveValue(
-      "",
+      "Dell",
     );
     expect(screen.getByLabelText(/Trạng thái/i)).toHaveValue("Tất cả trạng thái");
     expect(screen.getByLabelText(/Giá trị/i)).toHaveValue("Tất cả giá trị");

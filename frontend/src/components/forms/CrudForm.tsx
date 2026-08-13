@@ -256,7 +256,7 @@ function CrudFormInner({
   return (
     <CrudModal
       title={`${titlePrefix} ${modalLabel(modal.type)}`}
-      subtitle="Nhập thông tin theo nghiệp vụ QLVT"
+      subtitle=""
       submitting={submitting}
       onClose={onClose}
       onSubmit={submit}

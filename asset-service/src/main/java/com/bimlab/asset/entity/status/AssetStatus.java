@@ -6,10 +6,10 @@ package com.bimlab.asset.entity.status;
  * so DB rows stay human-readable and existing data does not require migration.
  */
 public enum AssetStatus {
-    IN_STOCK,
-    ASSIGNED,
-    MAINTENANCE,
-    LOST,
-    DISPOSED,
+    IN_STOCK, // trong kho
+    ASSIGNED, // đã cấp phát
+    MAINTENANCE, // đã bảo trì
+    LOST, // mất mát
+    DISPOSED, // thanh lý
     PENDING
 }
