@@ -15362,7 +15362,10 @@ button,
   box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
   background: #f8fafc;
   cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
 }
 
 #root .help-step-image-box:hover {
