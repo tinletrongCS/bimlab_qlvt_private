@@ -10,15 +10,22 @@ import {
   FiSearch,
   FiTool,
   FiX,
+  FiZoomIn,
 } from "react-icons/fi";
 import { NavLink } from "react-router-dom";
 
-interface GuideItem {
+export interface GuideStepItem {
+  text: string;
+  image?: string;
+  imageCaption?: string;
+}
+
+export interface GuideItem {
   id: string;
   title: string;
   icon?: ReactNode;
   description: string;
-  steps: string[];
+  steps: Array<string | GuideStepItem>;
   details?: string[];
   links?: Array<{ to: string; label: string }>;
   children?: GuideItem[];
@@ -55,13 +62,73 @@ const GUIDE_TREE: GuideItem[] = [
         links: [{ to: "/assets", label: "Mở danh sách tài sản" }],
       },
       {
-        id: "asset-import",
-        title: "Import Excel danh sách tài sản",
-        description: "Nhập nhiều tài sản từ file Excel theo mẫu hệ thống.",
+        id: "asset-import-danhmuc",
+        title: "Import Excel danh sách danh mục",
+        description: "Nhập nhiều danh mục từ file Excel theo mẫu hệ thống với 4 bước trực quan bên dưới.",
         steps: [
-          "Vào Tài sản > Danh sách, bấm Tải mẫu Excel để lấy file mẫu.",
-          "Điền dữ liệu theo đúng cột và mã tham chiếu trong file.",
-          "Tải file lên, bấm Kiểm tra dữ liệu, sau đó mới import các dòng hợp lệ.",
+          {
+            text: "Bước 1: Vào mục 'Tài sản > Danh mục' và bấm nút 'Nhập danh mục' trên thanh công cụ chính.",
+            image: "/image-dm/image-dm-1.png",
+            imageCaption: "Màn hình Danh mục tài sản: Vị trí nút 'Nhập danh mục'",
+          },
+          {
+            text: "Bước 2: Trong hộp thoại 'Tải danh mục tài sản', bấm 'Chọn file Excel' và chọn tệp Excel dữ liệu danh mục.",
+            image: "/image-dm/image-dm-2.png",
+            imageCaption: "Hộp thoại nhập danh mục: Thao tác chọn file Excel từ máy tính",
+          },
+          {
+            text: "Bước 3: Bấm nút 'Kiểm tra dữ liệu' để hệ thống bắt đầu thẩm định tệp Excel danh mục.",
+            image: "/image-dm/image-dm-3.png",
+            imageCaption: "Kiểm tra dữ liệu: Vị trí nút 'Kiểm tra dữ liệu'",
+          },
+          {
+            text: "Bước 4: Xem kết quả kiểm tra dữ liệu theo các trạng thái Hợp lệ, Lỗi và Cảnh báo.",
+            image: "/image-dm/image-dm-4.png",
+            imageCaption: "Xem lại kết quả kiểm tra dữ liệu.",
+          },
+          {
+            text: "Bước 5: Chuyển sang tab 'Phân cấp cha con' (Tree view) để xem trực quan cấu trúc phân cấp danh mục trước khi bấm 'Xác nhận nhập'.",
+            image: "/image-dm/image-dm-5.jpg",
+            imageCaption: "Tab Phân cấp cha con: Xem cấu trúc cây danh mục và bấm 'Xác nhận nhập'. Các dòng hợp lệ sẽ được nhập, các dòng lỗi sẽ bị loại bỏ.",
+          },
+        ],
+        details: [
+          "File Excel cần có sheet tên 'DanhMuc_ThamChieu' giống file mẫu danh mục.",
+          "Chế độ nhập dữ liệu mặc định là 'Chỉ nhập những dòng hợp lệ' - hệ thống sẽ loại bỏ các dòng bị lỗi và cho phép nhập phần còn lại.",
+          "Bạn có thể kiểm tra phần lỗi/cảnh báo trên từng dòng trước khi xác nhận nhập danh mục.",
+        ],
+        links: [{ to: "/asset-categories", label: "Mở danh mục tài sản" }],
+      },
+      {
+        id: "asset-import-taisan",
+        title: "Import Excel danh sách tài sản",
+        description: "Nhập nhiều tài sản từ file Excel theo mẫu hệ thống với 4 bước trực quan bên dưới.",
+        steps: [
+          {
+            text: "Bước 1: Vào mục 'Tài sản > Danh sách' và bấm nút 'Nhập tài sản' trên thanh công cụ chính.",
+            image: "/image-hd/image-1.jpg",
+            imageCaption: "Màn hình Danh sách tài sản: Vị trí nút 'Nhập tài sản'",
+          },
+          {
+            text: "Bước 2: Trong hộp thoại 'Tải danh sách tài sản', bấm 'Chọn file Excel' và chọn tệp Excel dữ liệu (ví dụ: import_main.xlsx).",
+            image: "/image-hd/image-2.jpg",
+            imageCaption: "Hộp thoại nhập file: Thao tác chọn file Excel từ máy tính",
+          },
+          {
+            text: "Bước 3: Bấm nút 'Kiểm tra dữ liệu' ở góc dưới bên phải để hệ thống bắt đầu thẩm định tệp Excel.",
+            image: "/image-hd/image-3.jpg",
+            imageCaption: "Kiểm tra dữ liệu: Vị trí nút 'Kiểm tra dữ liệu'",
+          },
+          {
+            text: "Bước 4: Xem kết quả phân tích (dòng Hợp lệ, Lỗi, Cảnh báo) ở chế độ Bảng và bấm nút 'Import' để hoàn tất nhập các dòng hợp lệ.",
+            image: "/image-hd/image-4.jpg",
+            imageCaption: "Xem lại kết quả kiểm tra dữ liệu và nhấn nút 'Import'",
+          },
+        ],
+        details: [
+          "File mẫu Excel cần có sheet tên 'HoSoTaiSan_import' hoặc theo định dạng mẫu tải về từ hệ thống.",
+          "Chế độ nhập dữ liệu mặc định là 'Chỉ nhập những dòng hợp lệ' - hệ thống sẽ loại bỏ các dòng bị lỗi và cho phép nhập phần còn lại.",
+          "Bạn có thể tải kết quả kiểm tra dạng CSV để xem chi tiết các lỗi trên từng dòng nếu có.",
         ],
         links: [{ to: "/assets", label: "Mở danh sách tài sản" }],
       },
@@ -202,7 +269,10 @@ function normalizeGuideText(value: string) {
 
 function guideMatches(item: GuideItem, query: string) {
   if (!query) return true;
-  return [item.title, item.description, ...item.steps, ...(item.details || [])].some((value) =>
+  const stepTexts = item.steps.map((step) =>
+    typeof step === "string" ? step : `${step.text} ${step.imageCaption || ""}`,
+  );
+  return [item.title, item.description, ...stepTexts, ...(item.details || [])].some((value) =>
     normalizeGuideText(value).includes(query),
   );
 }
@@ -222,6 +292,7 @@ export function HelpPage() {
   const allGuides = useMemo(() => flattenGuides(GUIDE_TREE), []);
   const [activeId, setActiveId] = useState("overview");
   const [guideSearch, setGuideSearch] = useState("");
+  const [lightboxImg, setLightboxImg] = useState<{ src: string; caption?: string } | null>(null);
   const normalizedGuideSearch = normalizeGuideText(guideSearch.trim());
   const visibleGuideTree = useMemo(
     () => filterGuideTree(GUIDE_TREE, normalizedGuideSearch),
@@ -307,11 +378,36 @@ export function HelpPage() {
               <p>{activeGuide.description}</p>
             </div>
           </div>
-          <ol>
-            {activeGuide.steps.map((step) => (
-              <li key={step}>{step}</li>
-            ))}
+          <ol className="help-step-list">
+            {activeGuide.steps.map((step, idx) => {
+              const isObj = typeof step !== "string";
+              const stepText = isObj ? step.text : step;
+              const stepImage = isObj ? step.image : undefined;
+              const stepCaption = isObj ? step.imageCaption : undefined;
+
+              return (
+                <li key={idx} className="help-step-item">
+                  <div className="help-step-text">{stepText}</div>
+                  {stepImage && (
+                    <div className="help-step-image-wrap">
+                      <div
+                        className="help-step-image-box"
+                        onClick={() => setLightboxImg({ src: stepImage, caption: stepCaption })}
+                        title="Click để phóng to ảnh"
+                      >
+                        <img src={stepImage} alt={stepCaption || stepText} />
+                        <div className="help-step-image-overlay">
+                          <FiZoomIn /> Phóng to hình ảnh
+                        </div>
+                      </div>
+                      {stepCaption && <span className="help-step-caption">{stepCaption}</span>}
+                    </div>
+                  )}
+                </li>
+              );
+            })}
           </ol>
+
           <section className="help-detail-section">
             <h3>Chi tiết cần lưu ý</h3>
             <ul>
@@ -320,6 +416,7 @@ export function HelpPage() {
               ))}
             </ul>
           </section>
+
           {activeGuide.children && activeGuide.children.length > 0 && (
             <section className="help-detail-section">
               <h3>Các mục con liên quan</h3>
@@ -332,6 +429,7 @@ export function HelpPage() {
               </div>
             </section>
           )}
+
           {activeGuide.links && (
             <div className="help-links">
               {activeGuide.links.map((link) => (
@@ -343,6 +441,23 @@ export function HelpPage() {
           )}
         </article>
       </div>
+
+      {lightboxImg && (
+        <div className="modal-backdrop help-lightbox-backdrop" onClick={() => setLightboxImg(null)}>
+          <div className="help-lightbox-content" onClick={(event) => event.stopPropagation()}>
+            <button
+              type="button"
+              className="icon-button help-lightbox-close"
+              onClick={() => setLightboxImg(null)}
+              aria-label="Đóng phóng to ảnh"
+            >
+              <FiX />
+            </button>
+            <img src={lightboxImg.src} alt={lightboxImg.caption || "Hình hướng dẫn"} />
+            {lightboxImg.caption && <p className="help-lightbox-caption">{lightboxImg.caption}</p>}
+          </div>
+        </div>
+      )}
     </section>
   );
 }
