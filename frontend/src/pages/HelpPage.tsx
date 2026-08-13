@@ -10,20 +10,22 @@ import {
   FiSearch,
   FiTool,
   FiX,
+  FiZoomIn,
 } from "react-icons/fi";
 import { NavLink } from "react-router-dom";
 
-interface GuideStep {
+export interface GuideStepItem {
   text: string;
-  images?: string[];
+  image?: string;
+  imageCaption?: string;
 }
 
-interface GuideItem {
+export interface GuideItem {
   id: string;
   title: string;
   icon?: ReactNode;
   description: string;
-  steps: (string | GuideStep)[];
+  steps: Array<string | GuideStepItem>;
   details?: string[];
   links?: Array<{ to: string; label: string }>;
   children?: GuideItem[];
@@ -60,29 +62,73 @@ const GUIDE_TREE: GuideItem[] = [
         links: [{ to: "/assets", label: "Mở danh sách tài sản" }],
       },
       {
-        id: "asset-import",
-        title: "Import Excel danh sách tài sản",
-        description: "Nhập nhiều tài sản từ file Excel theo mẫu hệ thống.",
+        id: "asset-import-danhmuc",
+        title: "Import Excel danh sách danh mục",
+        description: "Nhập nhiều danh mục từ file Excel theo mẫu hệ thống với 4 bước trực quan bên dưới.",
         steps: [
           {
-            text: "Bước 1: Tải file Excel mẫu bằng cách vào màn hình Tài sản > Danh sách và chọn 'Tải mẫu Excel'.",
-            images: ["/guide/asset-import-step1.png"],
+            text: "Bước 1: Vào mục 'Tài sản > Danh mục' và bấm nút 'Nhập danh mục' trên thanh công cụ chính.",
+            image: "/image-dm/image-dm-1.png",
+            imageCaption: "Màn hình Danh mục tài sản: Vị trí nút 'Nhập danh mục'",
           },
           {
-            text: "Bước 2: Điền dữ liệu tài sản vào file Excel mẫu theo đúng các cột và mã tham chiếu tương ứng.",
-            images: ["/guide/asset-import-step2.png"],
+            text: "Bước 2: Trong hộp thoại 'Tải danh mục tài sản', bấm 'Chọn file Excel' và chọn tệp Excel dữ liệu danh mục.",
+            image: "/image-dm/image-dm-2.png",
+            imageCaption: "Hộp thoại nhập danh mục: Thao tác chọn file Excel từ máy tính",
           },
           {
-            text: "Bước 3: Thực hiện tải file dữ liệu lên, tiến hành kiểm tra và hoàn tất import theo chuỗi thao tác bên dưới.",
-            images: [
-              "/guide/asset-import-step3-1.jpg",
-              "/guide/asset-import-step3-2.jpg",
-              "/guide/asset-import-step3-3.jpg",
-              "/guide/asset-import-step3-4.jpg",
-              "/guide/asset-import-step3-5.jpg",
-              "/guide/asset-import-step3-error.jpg",
-            ],
+            text: "Bước 3: Bấm nút 'Kiểm tra dữ liệu' để hệ thống bắt đầu thẩm định tệp Excel danh mục.",
+            image: "/image-dm/image-dm-3.png",
+            imageCaption: "Kiểm tra dữ liệu: Vị trí nút 'Kiểm tra dữ liệu'",
           },
+          {
+            text: "Bước 4: Xem kết quả kiểm tra dữ liệu theo các trạng thái Hợp lệ, Lỗi và Cảnh báo.",
+            image: "/image-dm/image-dm-4.png",
+            imageCaption: "Xem lại kết quả kiểm tra dữ liệu.",
+          },
+          {
+            text: "Bước 5: Chuyển sang tab 'Phân cấp cha con' (Tree view) để xem trực quan cấu trúc phân cấp danh mục trước khi bấm 'Xác nhận nhập'.",
+            image: "/image-dm/image-dm-5.jpg",
+            imageCaption: "Tab Phân cấp cha con: Xem cấu trúc cây danh mục và bấm 'Xác nhận nhập'. Các dòng hợp lệ sẽ được nhập, các dòng lỗi sẽ bị loại bỏ.",
+          },
+        ],
+        details: [
+          "File Excel cần có sheet tên 'DanhMuc_ThamChieu' giống file mẫu danh mục.",
+          "Chế độ nhập dữ liệu mặc định là 'Chỉ nhập những dòng hợp lệ' - hệ thống sẽ loại bỏ các dòng bị lỗi và cho phép nhập phần còn lại.",
+          "Bạn có thể kiểm tra phần lỗi/cảnh báo trên từng dòng trước khi xác nhận nhập danh mục.",
+        ],
+        links: [{ to: "/asset-categories", label: "Mở danh mục tài sản" }],
+      },
+      {
+        id: "asset-import-taisan",
+        title: "Import Excel danh sách tài sản",
+        description: "Nhập nhiều tài sản từ file Excel theo mẫu hệ thống với 4 bước trực quan bên dưới.",
+        steps: [
+          {
+            text: "Bước 1: Vào mục 'Tài sản > Danh sách' và bấm nút 'Nhập tài sản' trên thanh công cụ chính.",
+            image: "/image-hd/image-1.jpg",
+            imageCaption: "Màn hình Danh sách tài sản: Vị trí nút 'Nhập tài sản'",
+          },
+          {
+            text: "Bước 2: Trong hộp thoại 'Tải danh sách tài sản', bấm 'Chọn file Excel' và chọn tệp Excel dữ liệu (ví dụ: import_main.xlsx).",
+            image: "/image-hd/image-2.jpg",
+            imageCaption: "Hộp thoại nhập file: Thao tác chọn file Excel từ máy tính",
+          },
+          {
+            text: "Bước 3: Bấm nút 'Kiểm tra dữ liệu' ở góc dưới bên phải để hệ thống bắt đầu thẩm định tệp Excel.",
+            image: "/image-hd/image-3.jpg",
+            imageCaption: "Kiểm tra dữ liệu: Vị trí nút 'Kiểm tra dữ liệu'",
+          },
+          {
+            text: "Bước 4: Xem kết quả phân tích (dòng Hợp lệ, Lỗi, Cảnh báo) ở chế độ Bảng và bấm nút 'Import' để hoàn tất nhập các dòng hợp lệ.",
+            image: "/image-hd/image-4.jpg",
+            imageCaption: "Xem lại kết quả kiểm tra dữ liệu và nhấn nút 'Import'",
+          },
+        ],
+        details: [
+          "File mẫu Excel cần có sheet tên 'HoSoTaiSan_import' hoặc theo định dạng mẫu tải về từ hệ thống.",
+          "Chế độ nhập dữ liệu mặc định là 'Chỉ nhập những dòng hợp lệ' - hệ thống sẽ loại bỏ các dòng bị lỗi và cho phép nhập phần còn lại.",
+          "Bạn có thể tải kết quả kiểm tra dạng CSV để xem chi tiết các lỗi trên từng dòng nếu có.",
         ],
         links: [{ to: "/assets", label: "Mở danh sách tài sản" }],
       },
@@ -223,7 +269,9 @@ function normalizeGuideText(value: string) {
 
 function guideMatches(item: GuideItem, query: string) {
   if (!query) return true;
-  const stepTexts = item.steps.map((step) => (typeof step === "string" ? step : step.text));
+  const stepTexts = item.steps.map((step) =>
+    typeof step === "string" ? step : `${step.text} ${step.imageCaption || ""}`,
+  );
   return [item.title, item.description, ...stepTexts, ...(item.details || [])].some((value) =>
     normalizeGuideText(value).includes(query),
   );
@@ -244,8 +292,7 @@ export function HelpPage() {
   const allGuides = useMemo(() => flattenGuides(GUIDE_TREE), []);
   const [activeId, setActiveId] = useState("overview");
   const [guideSearch, setGuideSearch] = useState("");
-  const [activeImage, setActiveImage] = useState<string | null>(null);
-
+  const [lightboxImg, setLightboxImg] = useState<{ src: string; caption?: string } | null>(null);
   const normalizedGuideSearch = normalizeGuideText(guideSearch.trim());
   const visibleGuideTree = useMemo(
     () => filterGuideTree(GUIDE_TREE, normalizedGuideSearch),
@@ -331,35 +378,29 @@ export function HelpPage() {
               <p>{activeGuide.description}</p>
             </div>
           </div>
-
-          <ol className="help-steps-list">
-            {activeGuide.steps.map((stepItem, index) => {
-              const isObject = typeof stepItem !== "string";
-              const text = isObject ? stepItem.text : stepItem;
-              const images = isObject ? stepItem.images : undefined;
+          <ol className="help-step-list">
+            {activeGuide.steps.map((step, idx) => {
+              const isObj = typeof step !== "string";
+              const stepText = isObj ? step.text : step;
+              const stepImage = isObj ? step.image : undefined;
+              const stepCaption = isObj ? step.imageCaption : undefined;
 
               return (
-                <li key={index} className="help-step-item">
-                  <div className="help-step-text">{text}</div>
-                  {images && images.length > 0 && (
-                    <div className="help-step-images">
-                      {images.map((imgSrc, imgIdx) => (
-                        <div
-                          key={imgIdx}
-                          className="help-image-card"
-                          onClick={() => setActiveImage(imgSrc)}
-                          title="Bấm để xem ảnh phóng to"
-                        >
-                          <img
-                            src={imgSrc}
-                            alt={`Minh họa ${activeGuide.title} - Bước ${index + 1} - Ảnh ${imgIdx + 1}`}
-                            loading="lazy"
-                          />
-                          <div className="help-image-overlay">
-                            <span>Phóng to ảnh</span>
-                          </div>
+                <li key={idx} className="help-step-item">
+                  <div className="help-step-text">{stepText}</div>
+                  {stepImage && (
+                    <div className="help-step-image-wrap">
+                      <div
+                        className="help-step-image-box"
+                        onClick={() => setLightboxImg({ src: stepImage, caption: stepCaption })}
+                        title="Click để phóng to ảnh"
+                      >
+                        <img src={stepImage} alt={stepCaption || stepText} />
+                        <div className="help-step-image-overlay">
+                          <FiZoomIn /> Phóng to hình ảnh
                         </div>
-                      ))}
+                      </div>
+                      {stepCaption && <span className="help-step-caption">{stepCaption}</span>}
                     </div>
                   )}
                 </li>
@@ -375,6 +416,7 @@ export function HelpPage() {
               ))}
             </ul>
           </section>
+
           {activeGuide.children && activeGuide.children.length > 0 && (
             <section className="help-detail-section">
               <h3>Các mục con liên quan</h3>
@@ -387,6 +429,7 @@ export function HelpPage() {
               </div>
             </section>
           )}
+
           {activeGuide.links && (
             <div className="help-links">
               {activeGuide.links.map((link) => (
@@ -399,18 +442,19 @@ export function HelpPage() {
         </article>
       </div>
 
-      {activeImage && (
-        <div className="help-lightbox-backdrop" onClick={() => setActiveImage(null)}>
-          <div className="help-lightbox-content" onClick={(e) => e.stopPropagation()}>
+      {lightboxImg && (
+        <div className="modal-backdrop help-lightbox-backdrop" onClick={() => setLightboxImg(null)}>
+          <div className="help-lightbox-content" onClick={(event) => event.stopPropagation()}>
             <button
               type="button"
-              className="help-lightbox-close"
-              onClick={() => setActiveImage(null)}
-              aria-label="Đóng xem ảnh"
+              className="icon-button help-lightbox-close"
+              onClick={() => setLightboxImg(null)}
+              aria-label="Đóng phóng to ảnh"
             >
               <FiX />
             </button>
-            <img src={activeImage} alt="Phóng to ảnh hướng dẫn" />
+            <img src={lightboxImg.src} alt={lightboxImg.caption || "Hình hướng dẫn"} />
+            {lightboxImg.caption && <p className="help-lightbox-caption">{lightboxImg.caption}</p>}
           </div>
         </div>
       )}
