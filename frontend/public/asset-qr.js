@@ -25,6 +25,18 @@ const formatDate = (value) => (value ? dateFormat.format(new Date(`${value}T00:0
 const formatDateTime = (value) => (value ? dateTimeFormat.format(new Date(value)) : "—");
 const reference = (label, id) => (id ? `${label} #${id}` : "Chưa gán");
 
+function richTextToPlainText(value) {
+  if (!value) return value;
+  const body = new DOMParser().parseFromString(String(value), "text/html").body;
+  body.querySelectorAll("br").forEach((node) => {
+    node.replaceWith("\n");
+  });
+  body.querySelectorAll("p, div").forEach((node) => {
+    node.append("\n");
+  });
+  return (body.textContent || "").trim();
+}
+
 function fillFacts(id, facts) {
   const container = document.getElementById(id);
   container.replaceChildren(
@@ -169,7 +181,7 @@ function renderAsset(asset) {
     ["Phân loại", assetClassLabels[asset.assetClass] || asset.assetClass],
     ["Số serial", asset.serialNumber],
     ["Dự án", reference("Dự án", asset.projectId)],
-    ["Mô tả kỹ thuật", asset.technicalDescription],
+    ["Mô tả kỹ thuật", richTextToPlainText(asset.technicalDescription)],
     ["Mã tài sản", asset.assetCode],
   ]);
   fillFacts("purchase-facts", [
