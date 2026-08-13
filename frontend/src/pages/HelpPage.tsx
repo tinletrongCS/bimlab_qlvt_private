@@ -64,7 +64,8 @@ const GUIDE_TREE: GuideItem[] = [
       {
         id: "asset-import-danhmuc",
         title: "Import Excel danh sách danh mục",
-        description: "Nhập nhiều danh mục từ file Excel theo mẫu hệ thống với 4 bước trực quan bên dưới.",
+        description:
+          "Nhập nhiều danh mục từ file Excel theo mẫu hệ thống với 4 bước trực quan bên dưới.",
         steps: [
           {
             text: "Bước 1: Vào mục 'Tài sản > Danh mục' và bấm nút 'Nhập danh mục' trên thanh công cụ chính.",
@@ -89,7 +90,8 @@ const GUIDE_TREE: GuideItem[] = [
           {
             text: "Bước 5: Chuyển sang tab 'Phân cấp cha con' (Tree view) để xem trực quan cấu trúc phân cấp danh mục trước khi bấm 'Xác nhận nhập'.",
             image: "/image-dm/image-dm-5.jpg",
-            imageCaption: "Tab Phân cấp cha con: Xem cấu trúc cây danh mục và bấm 'Xác nhận nhập'. Các dòng hợp lệ sẽ được nhập, các dòng lỗi sẽ bị loại bỏ.",
+            imageCaption:
+              "Tab Phân cấp cha con: Xem cấu trúc cây danh mục và bấm 'Xác nhận nhập'. Các dòng hợp lệ sẽ được nhập, các dòng lỗi sẽ bị loại bỏ.",
           },
         ],
         details: [
@@ -102,7 +104,8 @@ const GUIDE_TREE: GuideItem[] = [
       {
         id: "asset-import-taisan",
         title: "Import Excel danh sách tài sản",
-        description: "Nhập nhiều tài sản từ file Excel theo mẫu hệ thống với 4 bước trực quan bên dưới.",
+        description:
+          "Nhập nhiều tài sản từ file Excel theo mẫu hệ thống với 4 bước trực quan bên dưới.",
         steps: [
           {
             text: "Bước 1: Vào mục 'Tài sản > Danh sách' và bấm nút 'Nhập tài sản' trên thanh công cụ chính.",
