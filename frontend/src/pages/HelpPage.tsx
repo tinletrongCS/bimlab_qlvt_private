@@ -226,7 +226,8 @@ const GUIDE_TREE: GuideItem[] = [
           {
             text: "Cách xem chi tiết: Dùng ô 'Tìm danh mục' để tìm theo tên, mã hoặc mô tả. Khi chọn một node trên sơ đồ, thông tin danh mục sẽ hiện ở khung cập nhật bên phải để xem.",
             image: "/guide/image-Category/image-cate-dia-2.png",
-            imageCaption: "Tìm kiếm danh mục, chọn node trên sơ đồ và xem thông tin ở khung cập nhật.",
+            imageCaption:
+              "Tìm kiếm danh mục, chọn node trên sơ đồ và xem thông tin ở khung cập nhật.",
           },
         ],
         details: [
@@ -406,8 +407,8 @@ function guideMatches(item: GuideItem, query: string) {
       ),
       ...(tab.details || []),
     ]) || [];
-  return [item.title, item.description, ...stepTexts, ...tabTexts, ...(item.details || [])].some((value) =>
-    normalizeGuideText(value).includes(query),
+  return [item.title, item.description, ...stepTexts, ...tabTexts, ...(item.details || [])].some(
+    (value) => normalizeGuideText(value).includes(query),
   );
 }
 
