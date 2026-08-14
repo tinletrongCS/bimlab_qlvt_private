@@ -8,5 +8,8 @@ public record VendorResponse(
         String email,
         String phone,
         String address,
+        String website,
+        String bankName,
+        String bankAccountNumber,
         String status
 ) {}

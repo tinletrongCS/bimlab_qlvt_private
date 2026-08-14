@@ -1,29 +1,29 @@
 package com.bimlab.asset.repository;
 
-import com.bimlab.asset.model.AssetCatalogItem;
-import com.bimlab.asset.model.AssetCategory;
-import com.bimlab.asset.model.AssetDocument;
-import com.bimlab.asset.model.AssetItem;
-import com.bimlab.asset.model.AssetQrCode;
-import com.bimlab.asset.model.AssetTransfer;
-import com.bimlab.asset.model.AssetValueSnapshot;
-import com.bimlab.asset.model.Contract;
-import com.bimlab.asset.model.MaintenanceRecord;
-import com.bimlab.asset.model.PurchaseRequest;
-import com.bimlab.asset.model.Subscription;
-import com.bimlab.asset.model.Vendor;
-import com.bimlab.asset.model.status.AssetClass;
-import com.bimlab.asset.model.status.AssetDocumentType;
-import com.bimlab.asset.model.status.AssetStatus;
-import com.bimlab.asset.model.status.CatalogType;
-import com.bimlab.asset.model.status.ContractStatus;
-import com.bimlab.asset.model.status.FixedAssetType;
-import com.bimlab.asset.model.status.MaintenanceStatus;
-import com.bimlab.asset.model.status.PurchaseRequestStatus;
-import com.bimlab.asset.model.status.QrCodeStatus;
-import com.bimlab.asset.model.status.SubscriptionStatus;
-import com.bimlab.asset.model.status.ValueSnapshotSource;
-import com.bimlab.asset.model.status.VendorStatus;
+import com.bimlab.asset.entity.AssetCatalogItem;
+import com.bimlab.asset.entity.AssetCategory;
+import com.bimlab.asset.entity.AssetDocument;
+import com.bimlab.asset.entity.AssetItem;
+import com.bimlab.asset.entity.AssetQrCode;
+import com.bimlab.asset.entity.AssetTransfer;
+import com.bimlab.asset.entity.AssetValueSnapshot;
+import com.bimlab.asset.entity.Contract;
+import com.bimlab.asset.entity.MaintenanceRecord;
+import com.bimlab.asset.entity.PurchaseRequest;
+import com.bimlab.asset.entity.Subscription;
+import com.bimlab.asset.entity.Vendor;
+import com.bimlab.asset.entity.status.AssetClass;
+import com.bimlab.asset.entity.status.AssetDocumentType;
+import com.bimlab.asset.entity.status.AssetStatus;
+import com.bimlab.asset.entity.status.CatalogType;
+import com.bimlab.asset.entity.status.ContractStatus;
+import com.bimlab.asset.entity.status.FixedAssetType;
+import com.bimlab.asset.entity.status.MaintenanceStatus;
+import com.bimlab.asset.entity.status.PurchaseRequestStatus;
+import com.bimlab.asset.entity.status.QrCodeStatus;
+import com.bimlab.asset.entity.status.SubscriptionStatus;
+import com.bimlab.asset.entity.status.ValueSnapshotSource;
+import com.bimlab.asset.entity.status.VendorStatus;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
@@ -38,10 +38,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/**
- * Q8: end-to-end persistence smoke for every repository against H2. Verifies
- * entity mapping (incl. Q5 enums) + Spring Data pagination + relation linking.
- */
 @DataJpaTest
 @ActiveProfiles("test")
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)

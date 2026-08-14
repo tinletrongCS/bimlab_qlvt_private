@@ -9,6 +9,8 @@ COPY src ./src
 RUN mvn package -DskipTests -q
 
 FROM eclipse-temurin:17-jre-jammy
+# Gio VN dong bo HRM: LocalDateTime.now() tung ghi UTC (lech -7h voi now(BUSINESS_ZONE)).
+ENV TZ=Asia/Ho_Chi_Minh
 RUN apt-get update \
  && apt-get install -y --no-install-recommends curl \
  && rm -rf /var/lib/apt/lists/*
@@ -20,4 +22,4 @@ USER appuser
 EXPOSE 8086
 HEALTHCHECK --interval=15s --timeout=5s --retries=5 --start-period=30s \
   CMD curl -sf http://localhost:8086/actuator/health || exit 1
-ENTRYPOINT ["java","-XX:+UseContainerSupport","-XX:MaxRAMPercentage=75.0","-jar","app.jar"]
+ENTRYPOINT ["java","-XX:+UseContainerSupport","-XX:MaxRAMPercentage=75.0","-Duser.timezone=Asia/Ho_Chi_Minh","-jar","app.jar"]

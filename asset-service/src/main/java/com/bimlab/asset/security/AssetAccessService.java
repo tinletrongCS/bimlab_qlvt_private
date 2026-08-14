@@ -61,6 +61,15 @@ public class AssetAccessService {
         return null;
     }
 
+    /** Username từ JWT principal — đóng dấu audit (createdBy/cancelledBy/updatedBy) phía server, không tin client. */
+    public String getCurrentUsername() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null) return null;
+        Object principal = authentication.getPrincipal();
+        if (principal instanceof AssetPrincipal p) return p.username();
+        return authentication.getName();
+    }
+
     public boolean hasAnyPermission(Permission... permissions) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated()) return false;

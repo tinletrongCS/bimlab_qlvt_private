@@ -1,11 +1,11 @@
 package com.bimlab.asset.service;
 
 
-import com.bimlab.asset.model.status.VendorStatus;
-import com.bimlab.asset.model.status.ContractStatus;
+import com.bimlab.asset.entity.status.VendorStatus;
+import com.bimlab.asset.entity.status.ContractStatus;
 import com.bimlab.asset.dto.request.ContractRequest;
-import com.bimlab.asset.model.Contract;
-import com.bimlab.asset.model.Vendor;
+import com.bimlab.asset.entity.Contract;
+import com.bimlab.asset.entity.Vendor;
 import com.bimlab.asset.repository.ContractRepository;
 import com.bimlab.asset.storage.MinioService;
 import org.junit.jupiter.api.Test;
@@ -28,11 +28,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-/**
- * Q2: targets {@link ContractService}. Cross-domain Vendor and
- * PurchaseRequest lookups route through their respective service mocks.
- * Q7: adds MinioService mock for attachment lifecycle.
- */
 @ExtendWith(MockitoExtension.class)
 class ContractServiceTest {
 
@@ -109,7 +104,6 @@ class ContractServiceTest {
         assertEquals(ContractStatus.ACTIVE, updated.getStatus());
     }
 
-    // Q7: MinIO lifecycle tests
 
     @Test
     void updateContract_deletesOldObjectKey_whenChanged() {

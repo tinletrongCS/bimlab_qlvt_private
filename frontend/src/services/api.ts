@@ -1,15 +1,26 @@
 import axios from "axios";
 import { getAccessToken } from "../auth/oidc";
 import type {
-  AssetItem,
+  AssetBooking,
+  AssetBookingAvailability,
+  AssetBookingCancelPayload,
+  AssetBookingCheckoutPayload,
+  AssetBookingPayload,
+  AssetCategory,
+  AssetCategoryImportCommitPayload,
+  AssetCategoryImportCommitResponse,
+  AssetCategoryImportRowPayload,
+  AssetCategoryImportValidationResponse,
+  AssetCategoryPayload,
+  AssetCategoryTree,
+  AssetChangeLog,
   AssetImportCommitPayload,
   AssetImportCommitResponse,
   AssetImportRowPayload,
   AssetImportValidationResponse,
-  AssetCategory,
-  AssetCategoryPayload,
-  AssetCategoryTree,
+  AssetItem,
   AssetPayload,
+  AssetQrCode,
   AssetTransfer,
   AssetTransferPayload,
   AuthUser,
@@ -20,6 +31,7 @@ import type {
   DepreciationSnapshot,
   DisposeAssetPayload,
   EmployeeLite,
+  FileUploadResponse,
   MaintenanceRecord,
   MaintenanceRecordPayload,
   Permission,
@@ -137,6 +149,24 @@ export async function deleteAsset(id: number): Promise<void> {
   await api.delete(`/asset/assets/${id}`);
 }
 
+export async function loadAssetChangeHistory(assetId: number): Promise<AssetChangeLog[]> {
+  const response = await api.get<{ content: AssetChangeLog[] }>(
+    `/asset/logs/assets/${assetId}/changes`,
+    { params: { size: 100 } },
+  );
+  return response.data.content;
+}
+
+export async function issueAssetQrCodes(assetIds: number[]): Promise<AssetQrCode[]> {
+  const response = await api.post<AssetQrCode[]>("/asset/qr/issue", { assetIds });
+  const pageUrl = `${window.location.origin}/asset-qr.html`;
+  const separator = pageUrl.includes("?") ? "&" : "?";
+  return response.data.map((item) => ({
+    ...item,
+    publicUrl: `${pageUrl}${separator}token=${encodeURIComponent(item.token)}`,
+  }));
+}
+
 export async function validateAssetImport(
   rows: AssetImportRowPayload[],
 ): Promise<AssetImportValidationResponse> {
@@ -163,9 +193,7 @@ export async function loadAssetCategoryTree(): Promise<AssetCategoryTree[]> {
   return response.data;
 }
 
-export async function createAssetCategory(
-  payload: AssetCategoryPayload,
-): Promise<AssetCategory> {
+export async function createAssetCategory(payload: AssetCategoryPayload): Promise<AssetCategory> {
   const response = await api.post<AssetCategory>("/asset/categories", payload);
   return response.data;
 }
@@ -180,6 +208,26 @@ export async function updateAssetCategory(
 
 export async function deleteAssetCategory(id: number): Promise<void> {
   await api.delete(`/asset/categories/${id}`);
+}
+
+export async function validateAssetCategoryImport(
+  rows: AssetCategoryImportRowPayload[],
+): Promise<AssetCategoryImportValidationResponse> {
+  const response = await api.post<AssetCategoryImportValidationResponse>(
+    "/asset/categories/import/validate",
+    { rows },
+  );
+  return response.data;
+}
+
+export async function commitAssetCategoryImport(
+  payload: AssetCategoryImportCommitPayload,
+): Promise<AssetCategoryImportCommitResponse> {
+  const response = await api.post<AssetCategoryImportCommitResponse>(
+    "/asset/categories/import",
+    payload,
+  );
+  return response.data;
 }
 
 export async function loadDepreciation(id: number): Promise<DepreciationSnapshot> {
@@ -304,17 +352,96 @@ export async function loadWarrantyExpiring(days: number = 30): Promise<AssetItem
 }
 
 export async function loadTransfers(): Promise<AssetTransfer[]> {
-  const response = await api.get<AssetTransfer[]>("/asset/transfers");
+  const response = await api.get<AssetTransfer[]>("/asset/transfer");
   return response.data;
 }
 
 export async function createTransfer(payload: AssetTransferPayload): Promise<AssetTransfer> {
-  const response = await api.post<AssetTransfer>("/asset/transfers", payload);
+  const response = await api.post<AssetTransfer>("/asset/transfer", payload);
+  return response.data;
+}
+
+export async function uploadTransferDocument(file: File): Promise<FileUploadResponse> {
+  const formData = new FormData();
+  formData.append("file", file);
+  const response = await api.post<FileUploadResponse>("/asset/transfer/upload", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return response.data;
+}
+
+export async function downloadTransferDocument(objectKey: string): Promise<Blob> {
+  const response = await api.get<Blob>("/asset/transfer/files/view", {
+    params: { key: objectKey },
+    responseType: "blob",
+  });
+  return response.data;
+}
+
+export async function approveTransfer(id: number, reason?: string): Promise<AssetTransfer> {
+  const response = await api.post<AssetTransfer>(`/asset/transfer/${id}/approve`, { reason });
+  return response.data;
+}
+
+export async function rejectTransfer(id: number, reason: string): Promise<AssetTransfer> {
+  const response = await api.post<AssetTransfer>(`/asset/transfer/${id}/reject`, { reason });
+  return response.data;
+}
+
+export async function cancelTransfer(id: number, reason: string): Promise<AssetTransfer> {
+  const response = await api.post<AssetTransfer>(`/asset/transfer/${id}/cancel`, { reason });
   return response.data;
 }
 
 export async function deleteTransfer(id: number): Promise<void> {
-  await api.delete(`/asset/transfers/${id}`);
+  await cancelTransfer(id, "Hủy phiếu từ giao diện");
+}
+
+export async function loadAssetBookings(params?: {
+  assetId?: number;
+  status?: string;
+  fromTime?: string;
+  toTime?: string;
+}): Promise<AssetBooking[]> {
+  const response = await api.get<AssetBooking[]>("/asset/bookings", { params });
+  return response.data;
+}
+
+export async function checkAssetBookingAvailability(params: {
+  assetCode: string;
+  startTime: string;
+  endTime: string;
+}): Promise<AssetBookingAvailability> {
+  const response = await api.get<AssetBookingAvailability>("/asset/bookings/availability", {
+    params,
+  });
+  return response.data;
+}
+
+export async function createAssetBooking(payload: AssetBookingPayload): Promise<AssetBooking> {
+  const response = await api.post<AssetBooking>("/asset/bookings", payload);
+  return response.data;
+}
+
+export async function checkInAssetBooking(id: number): Promise<AssetBooking> {
+  const response = await api.post<AssetBooking>(`/asset/bookings/${id}/check-in`);
+  return response.data;
+}
+
+export async function checkOutAssetBooking(
+  id: number,
+  payload: AssetBookingCheckoutPayload,
+): Promise<AssetBooking> {
+  const response = await api.post<AssetBooking>(`/asset/bookings/${id}/check-out`, payload);
+  return response.data;
+}
+
+export async function cancelAssetBooking(
+  id: number,
+  payload: AssetBookingCancelPayload,
+): Promise<AssetBooking> {
+  const response = await api.post<AssetBooking>(`/asset/bookings/${id}/cancel`, payload);
+  return response.data;
 }
 
 export async function loadEmployees(): Promise<EmployeeLite[]> {

@@ -1,9 +1,9 @@
 package com.bimlab.asset.service;
 
 
-import com.bimlab.asset.model.status.VendorStatus;
+import com.bimlab.asset.entity.status.VendorStatus;
 import com.bimlab.asset.dto.request.VendorRequest;
-import com.bimlab.asset.model.Vendor;
+import com.bimlab.asset.entity.Vendor;
 import com.bimlab.asset.repository.VendorRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -15,16 +15,12 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-/**
- * Q2 R5: Vendor CRUD was zero-coverage before the split. These smoke tests
- * lock the public surface so the resolver consumed by Subscription /
- * Contract / Maintenance / Asset cannot silently regress.
- */
 @ExtendWith(MockitoExtension.class)
 class VendorServiceTest {
 
@@ -55,6 +51,18 @@ class VendorServiceTest {
     }
 
     @Test
+    void createVendor_allowsMissingTaxCode() {
+        when(vendors.save(any(Vendor.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        Vendor saved = service.createVendor(new VendorRequest(
+                "Nhà cung cấp cá nhân", null, null, null, null, null, "ACTIVE"
+        ));
+
+        assertNull(saved.getTaxCode());
+        verify(vendors).save(any(Vendor.class));
+    }
+
+    @Test
     void updateVendor_overwritesMutableFields() {
         Vendor existing = Vendor.builder().id(1L).name("Old").status(VendorStatus.ACTIVE).build();
         when(vendors.findById(1L)).thenReturn(Optional.of(existing));
@@ -70,12 +78,13 @@ class VendorServiceTest {
     }
 
     @Test
-    void deleteVendor_callsRepoDelete() {
+    void deactivateVendor_marksVendorInactive() {
         Vendor existing = Vendor.builder().id(1L).name("X").status(VendorStatus.ACTIVE).build();
         when(vendors.findById(1L)).thenReturn(Optional.of(existing));
 
-        service.deleteVendor(1L);
+        service.deactiveVendor(1L);
 
-        verify(vendors).delete(existing);
+        assertEquals(VendorStatus.INACTIVE, existing.getStatus());
+        verify(vendors).save(existing);
     }
 }

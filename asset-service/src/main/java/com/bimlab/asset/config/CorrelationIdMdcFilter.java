@@ -14,7 +14,7 @@ import java.io.IOException;
 import java.util.UUID;
 
 /**
- * STEP-5 observability: propagate X-Correlation-Id across services.
+ * Propagate X-Correlation-Id across services.
  * Reads inbound header (set by api-gateway CorrelationIdFilter) or mints a UUID,
  * pushes to MDC ({@code correlationId}) for structured logs, echoes on response.
  * Mirrors HRM CorrelationIdMdcFilter — same header/MDC key for cross-repo trace.

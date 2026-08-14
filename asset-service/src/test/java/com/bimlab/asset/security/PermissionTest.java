@@ -1,13 +1,12 @@
 package com.bimlab.asset.security;
 
-import org.junit.jupiter.api.Test;
-
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.Test;
 
 /**
  * Locks the canonical authority-string for every {@link Permission} value and
@@ -25,19 +24,35 @@ class PermissionTest {
         assertEquals("asset_view_all", Permission.ASSET_VIEW_ALL.code());
         assertEquals("asset_manage", Permission.ASSET_MANAGE.code());
         assertEquals("asset_finance_manage", Permission.ASSET_FINANCE_MANAGE.code());
+        assertEquals("asset_finance_view", Permission.ASSET_FINANCE_VIEW.code());
         assertEquals("asset_report_view", Permission.ASSET_REPORT_VIEW.code());
+        assertEquals("asset_transfers_view", Permission.ASSET_TRANSFERS_VIEW.code());
+        assertEquals("asset_transfers_manage", Permission.ASSET_TRANSFERS_MANAGE.code());
+        assertEquals("asset_transfers_approve", Permission.ASSET_TRANSFERS_APPROVE.code());
         assertEquals("vendor_manage", Permission.VENDOR_MANAGE.code());
         assertEquals("subscription_manage", Permission.SUBSCRIPTION_MANAGE.code());
         assertEquals("purchase_request_create", Permission.PURCHASE_REQUEST_CREATE.code());
         assertEquals("purchase_request_approve", Permission.PURCHASE_REQUEST_APPROVE.code());
         assertEquals("contract_manage", Permission.CONTRACT_MANAGE.code());
         assertEquals("maintenance_manage", Permission.MAINTENANCE_MANAGE.code());
+        assertEquals("log_definition_view", Permission.LOG_DEFINITION_VIEW.code());
+        assertEquals("log_definition_manage", Permission.LOG_DEFINITION_MANAGE.code());
     }
 
     @Test
     void allValuesCovered_noStrayEnumEntries() {
         // Lock total count so adding a value without updating tests fails loudly.
-        assertEquals(13, Permission.values().length);
+        assertEquals(19, Permission.values().length);
+    }
+
+    @Test
+    void financeViewers_locksMaskingScope() {
+        Set<Permission> set = Permission.Sets.FINANCE_VIEWERS;
+        assertEquals(3, set.size());
+        assertTrue(set.contains(Permission.ASSET_FINANCE_VIEW));
+        assertTrue(set.contains(Permission.ASSET_FINANCE_MANAGE));
+        // asset_manage nhập/sửa trường tiền tệ nên phải thấy tài chính.
+        assertTrue(set.contains(Permission.ASSET_MANAGE));
     }
 
     @Test
@@ -51,8 +66,18 @@ class PermissionTest {
     }
 
     @Test
-    void transferAdmin_aliasesAssetAdmin() {
-        assertEquals(Permission.Sets.ASSET_ADMIN, Permission.Sets.TRANSFER_ADMIN);
+    void transferPermissions_haveDedicatedScopes() {
+        Set<Permission> viewers = Permission.Sets.TRANSFER_VIEWERS;
+        assertTrue(viewers.contains(Permission.ASSET_TRANSFERS_VIEW));
+        assertTrue(viewers.contains(Permission.ASSET_TRANSFERS_MANAGE));
+        assertTrue(viewers.contains(Permission.ASSET_TRANSFERS_APPROVE));
+        assertTrue(viewers.contains(Permission.ASSET_MANAGE));
+
+        Set<Permission> admins = Permission.Sets.TRANSFER_ADMIN;
+        assertFalse(admins.contains(Permission.ASSET_TRANSFERS_VIEW));
+        assertTrue(admins.contains(Permission.ASSET_TRANSFERS_MANAGE));
+        assertTrue(admins.contains(Permission.ASSET_TRANSFERS_APPROVE));
+        assertTrue(admins.contains(Permission.ASSET_MANAGE));
     }
 
     @Test

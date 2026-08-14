@@ -1,0 +1,883 @@
+~[spring-boot-3.4.5.jar:3.4.5]
+09:54:08  	at org.springframework.boot.test.context.SpringBootContextLoader$ContextLoaderHook.run(SpringBootContextLoader.java:563) ~[spring-boot-test-3.4.5.jar:3.4.5]
+09:54:08  	at org.springframework.boot.test.context.SpringBootContextLoader.loadContext(SpringBootContextLoader.java:144) ~[spring-boot-test-3.4.5.jar:3.4.5]
+09:54:08  	at org.springframework.boot.test.context.SpringBootContextLoader.loadContext(SpringBootContextLoader.java:110) ~[spring-boot-test-3.4.5.jar:3.4.5]
+09:54:08  	at org.springframework.test.context.cache.DefaultCacheAwareContextLoaderDelegate.loadContextInternal(DefaultCacheAwareContextLoaderDelegate.java:225) ~[spring-test-6.2.6.jar:6.2.6]
+09:54:08  	at org.springframework.test.context.cache.DefaultCacheAwareContextLoaderDelegate.loadContext(DefaultCacheAwareContextLoaderDelegate.java:152) ~[spring-test-6.2.6.jar:6.2.6]
+09:54:08  	at org.springframework.test.context.support.DefaultTestContext.getApplicationContext(DefaultTestContext.java:130) ~[spring-test-6.2.6.jar:6.2.6]
+09:54:08  	at org.springframework.test.context.support.DependencyInjectionTestExecutionListener.injectDependencies(DependencyInjectionTestExecutionListener.java:155) ~[spring-test-6.2.6.jar:6.2.6]
+09:54:08  	at org.springframework.test.context.support.DependencyInjectionTestExecutionListener.prepareTestInstance(DependencyInjectionTestExecutionListener.java:111) ~[spring-test-6.2.6.jar:6.2.6]
+09:54:08  	at org.springframework.test.context.TestContextManager.prepareTestInstance(TestContextManager.java:260) ~[spring-test-6.2.6.jar:6.2.6]
+09:54:08  	at org.springframework.test.context.junit.jupiter.SpringExtension.postProcessTestInstance(SpringExtension.java:159) ~[spring-test-6.2.6.jar:6.2.6]
+09:54:08  	at org.junit.jupiter.engine.descriptor.ClassBasedTestDescriptor.lambda$invokeTestInstancePostProcessors$11(ClassBasedTestDescriptor.java:378) ~[junit-jupiter-engine-5.11.4.jar:5.11.4]
+09:54:08  	at org.junit.jupiter.engine.descriptor.ClassBasedTestDescriptor.executeAndMaskThrowable(ClassBasedTestDescriptor.java:383) ~[junit-jupiter-engine-5.11.4.jar:5.11.4]
+09:54:08  	at org.junit.jupiter.engine.descriptor.ClassBasedTestDescriptor.lambda$invokeTestInstancePostProcessors$12(ClassBasedTestDescriptor.java:378) ~[junit-jupiter-engine-5.11.4.jar:5.11.4]
+09:54:08  	at java.base/java.util.stream.ForEachOps$ForEachOp$OfRef.accept(ForEachOps.java:183) ~[na:na]
+09:54:08  	at java.base/java.util.stream.ReferencePipeline$3$1.accept(ReferencePipeline.java:197) ~[na:na]
+09:54:08  	at java.base/java.util.stream.ReferencePipeline$2$1.accept(ReferencePipeline.java:179) ~[na:na]
+09:54:08  	at java.base/java.util.stream.ReferencePipeline$3$1.accept(ReferencePipeline.java:197) ~[na:na]
+09:54:08  	at java.base/java.util.ArrayList$ArrayListSpliterator.forEachRemaining(ArrayList.java:1625) ~[na:na]
+09:54:08  	at java.base/java.util.stream.AbstractPipeline.copyInto(AbstractPipeline.java:509) ~[na:na]
+09:54:08  	at java.base/java.util.stream.AbstractPipeline.wrapAndCopyInto(AbstractPipeline.java:499) ~[na:na]
+09:54:08  	at java.base/java.util.stream.ForEachOps$ForEachOp.evaluateSequential(ForEachOps.java:150) ~[na:na]
+09:54:08  	at java.base/java.util.stream.ForEachOps$ForEachOp$OfRef.evaluateSequential(ForEachOps.java:173) ~[na:na]
+09:54:08  	at java.base/java.util.stream.AbstractPipeline.evaluate(AbstractPipeline.java:234) ~[na:na]
+09:54:08  	at java.base/java.util.stream.ReferencePipeline.forEach(ReferencePipeline.java:596) ~[na:na]
+09:54:08  	at org.junit.jupiter.engine.descriptor.ClassBasedTestDescriptor.invokeTestInstancePostProcessors(ClassBasedTestDescriptor.java:377) ~[junit-jupiter-engine-5.11.4.jar:5.11.4]
+09:54:08  	at org.junit.jupiter.engine.descriptor.ClassBasedTestDescriptor.lambda$instantiateAndPostProcessTestInstance$7(ClassBasedTestDescriptor.java:290) ~[junit-jupiter-engine-5.11.4.jar:5.11.4]
+09:54:08  	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.11.4.jar:1.11.4]
+09:54:08  	at org.junit.jupiter.engine.descriptor.ClassBasedTestDescriptor.instantiateAndPostProcessTestInstance(ClassBasedTestDescriptor.java:289) ~[junit-jupiter-engine-5.11.4.jar:5.11.4]
+09:54:08  	at org.junit.jupiter.engine.descriptor.ClassBasedTestDescriptor.lambda$testInstancesProvider$5(ClassBasedTestDescriptor.java:279) ~[junit-jupiter-engine-5.11.4.jar:5.11.4]
+09:54:08  	at java.base/java.util.Optional.orElseGet(Optional.java:364) ~[na:na]
+09:54:08  	at org.junit.jupiter.engine.descriptor.ClassBasedTestDescriptor.lambda$testInstancesProvider$6(ClassBasedTestDescriptor.java:278) ~[junit-jupiter-engine-5.11.4.jar:5.11.4]
+09:54:08  	at org.junit.jupiter.engine.execution.TestInstancesProvider.getTestInstances(TestInstancesProvider.java:31) ~[junit-jupiter-engine-5.11.4.jar:5.11.4]
+09:54:08  	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.lambda$prepare$1(TestMethodTestDescriptor.java:105) ~[junit-jupiter-engine-5.11.4.jar:5.11.4]
+09:54:08  	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.11.4.jar:1.11.4]
+09:54:08  	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.prepare(TestMethodTestDescriptor.java:104) ~[junit-jupiter-engine-5.11.4.jar:5.11.4]
+09:54:08  	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.prepare(TestMethodTestDescriptor.java:68) ~[junit-jupiter-engine-5.11.4.jar:5.11.4]
+09:54:08  	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$prepare$2(NodeTestTask.java:128) ~[junit-platform-engine-1.11.4.jar:1.11.4]
+09:54:08  	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.11.4.jar:1.11.4]
+09:54:08  	at org.junit.platform.engine.support.hierarchical.NodeTestTask.prepare(NodeTestTask.java:128) ~[junit-platform-engine-1.11.4.jar:1.11.4]
+09:54:08  	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:95) ~[junit-platform-engine-1.11.4.jar:1.11.4]
+09:54:08  	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511) ~[na:na]
+09:54:08  	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.invokeAll(SameThreadHierarchicalTestExecutorService.java:41) ~[junit-platform-engine-1.11.4.jar:1.11.4]
+09:54:08  	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:160) ~[junit-platform-engine-1.11.4.jar:1.11.4]
+09:54:08  	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.11.4.jar:1.11.4]
+09:54:08  	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:146) ~[junit-platform-engine-1.11.4.jar:1.11.4]
+09:54:08  	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137) ~[junit-platform-engine-1.11.4.jar:1.11.4]
+09:54:08  	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:144) ~[junit-platform-engine-1.11.4.jar:1.11.4]
+09:54:08  	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.11.4.jar:1.11.4]
+09:54:08  	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:143) ~[junit-platform-engine-1.11.4.jar:1.11.4]
+09:54:08  	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:100) ~[junit-platform-engine-1.11.4.jar:1.11.4]
+09:54:08  	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511) ~[na:na]
+09:54:08  	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.invokeAll(SameThreadHierarchicalTestExecutorService.java:41) ~[junit-platform-engine-1.11.4.jar:1.11.4]
+09:54:08  	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:160) ~[junit-platform-engine-1.11.4.jar:1.11.4]
+09:54:08  	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.11.4.jar:1.11.4]
+09:54:08  	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:146) ~[junit-platform-engine-1.11.4.jar:1.11.4]
+09:54:08  	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137) ~[junit-platform-engine-1.11.4.jar:1.11.4]
+09:54:08  	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:144) ~[junit-platform-engine-1.11.4.jar:1.11.4]
+09:54:08  	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.11.4.jar:1.11.4]
+09:54:08  	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:143) ~[junit-platform-engine-1.11.4.jar:1.11.4]
+09:54:08  	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:100) ~[junit-platform-engine-1.11.4.jar:1.11.4]
+09:54:08  	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.submit(SameThreadHierarchicalTestExecutorService.java:35) ~[junit-platform-engine-1.11.4.jar:1.11.4]
+09:54:08  	at org.junit.platform.engine.support.hierarchical.HierarchicalTestExecutor.execute(HierarchicalTestExecutor.java:57) ~[junit-platform-engine-1.11.4.jar:1.11.4]
+09:54:08  	at org.junit.platform.engine.support.hierarchical.HierarchicalTestEngine.execute(HierarchicalTestEngine.java:54) ~[junit-platform-engine-1.11.4.jar:1.11.4]
+09:54:08  	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:198) ~[junit-platform-launcher-1.11.4.jar:1.11.4]
+09:54:08  	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:169) ~[junit-platform-launcher-1.11.4.jar:1.11.4]
+09:54:08  	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:93) ~[junit-platform-launcher-1.11.4.jar:1.11.4]
+09:54:08  	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.lambda$execute$0(EngineExecutionOrchestrator.java:58) ~[junit-platform-launcher-1.11.4.jar:1.11.4]
+09:54:08  	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.withInterceptedStreams(EngineExecutionOrchestrator.java:141) ~[junit-platform-launcher-1.11.4.jar:1.11.4]
+09:54:08  	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:57) ~[junit-platform-launcher-1.11.4.jar:1.11.4]
+09:54:08  	at org.junit.platform.launcher.core.DefaultLauncher.execute(DefaultLauncher.java:103) ~[junit-platform-launcher-1.11.4.jar:1.11.4]
+09:54:08  	at org.junit.platform.launcher.core.DefaultLauncher.execute(DefaultLauncher.java:85) ~[junit-platform-launcher-1.11.4.jar:1.11.4]
+09:54:08  	at org.junit.platform.launcher.core.DelegatingLauncher.execute(DelegatingLauncher.java:47) ~[junit-platform-launcher-1.11.4.jar:1.11.4]
+09:54:08  	at org.apache.maven.surefire.junitplatform.LazyLauncher.execute(LazyLauncher.java:56) ~[surefire-junit-platform-3.5.3.jar:3.5.3]
+09:54:08  	at org.apache.maven.surefire.junitplatform.JUnitPlatformProvider.execute(JUnitPlatformProvider.java:194) ~[surefire-junit-platform-3.5.3.jar:3.5.3]
+09:54:08  	at org.apache.maven.surefire.junitplatform.JUnitPlatformProvider.invokeAllTests(JUnitPlatformProvider.java:150) ~[surefire-junit-platform-3.5.3.jar:3.5.3]
+09:54:08  	at org.apache.maven.surefire.junitplatform.JUnitPlatformProvider.invoke(JUnitPlatformProvider.java:124) ~[surefire-junit-platform-3.5.3.jar:3.5.3]
+09:54:08  	at org.apache.maven.surefire.booter.ForkedBooter.runSuitesInProcess(ForkedBooter.java:385) ~[surefire-booter-3.5.3.jar:3.5.3]
+09:54:08  	at org.apache.maven.surefire.booter.ForkedBooter.execute(ForkedBooter.java:162) ~[surefire-booter-3.5.3.jar:3.5.3]
+09:54:08  	at org.apache.maven.surefire.booter.ForkedBooter.run(ForkedBooter.java:507) ~[surefire-booter-3.5.3.jar:3.5.3]
+09:54:08  	at org.apache.maven.surefire.booter.ForkedBooter.main(ForkedBooter.java:495) ~[surefire-booter-3.5.3.jar:3.5.3]
+09:54:08  Caused by: org.h2.jdbc.JdbcSQLSyntaxErrorException: Schema "ASSET" already exists; SQL statement:
+09:54:08  create schema asset [90078-232]
+09:54:08  	at org.h2.message.DbException.getJdbcSQLException(DbException.java:644) ~[h2-2.3.232.jar:2.3.232]
+09:54:08  	at org.h2.message.DbException.getJdbcSQLException(DbException.java:489) ~[h2-2.3.232.jar:2.3.232]
+09:54:08  	at org.h2.message.DbException.get(DbException.java:223) ~[h2-2.3.232.jar:2.3.232]
+09:54:08  	at org.h2.message.DbException.get(DbException.java:199) ~[h2-2.3.232.jar:2.3.232]
+09:54:08  	at org.h2.command.ddl.CreateSchema.update(CreateSchema.java:48) ~[h2-2.3.232.jar:2.3.232]
+09:54:08  	at org.h2.command.CommandContainer.update(CommandContainer.java:139) ~[h2-2.3.232.jar:2.3.232]
+09:54:08  	at org.h2.command.Command.executeUpdate(Command.java:304) ~[h2-2.3.232.jar:2.3.232]
+09:54:08  	at org.h2.command.Command.executeUpdate(Command.java:248) ~[h2-2.3.232.jar:2.3.232]
+09:54:08  	at org.h2.jdbc.JdbcStatement.executeInternal(JdbcStatement.java:262) ~[h2-2.3.232.jar:2.3.232]
+09:54:08  	at org.h2.jdbc.JdbcStatement.execute(JdbcStatement.java:231) ~[h2-2.3.232.jar:2.3.232]
+09:54:08  	at com.zaxxer.hikari.pool.ProxyStatement.execute(ProxyStatement.java:94) ~[HikariCP-5.1.0.jar:na]
+09:54:08  	at com.zaxxer.hikari.pool.HikariProxyStatement.execute(HikariProxyStatement.java) ~[HikariCP-5.1.0.jar:na]
+09:54:08  	at org.hibernate.tool.schema.internal.exec.GenerationTargetToDatabase.accept(GenerationTargetToDatabase.java:80) ~[hibernate-core-6.6.13.Final.jar:6.6.13.Final]
+09:54:08  	... 118 common frames omitted
+09:54:08  
+09:54:08  Hibernate: create table asset.asset_booking_sessions (auto_release boolean not null, asset_id bigint not null, cancelled_at timestamp(6), checked_in_at timestamp(6), checked_out_at timestamp(6), created_at timestamp(6) not null, department_id bigint, end_time timestamp(6) not null, id bigint generated by default as identity, project_id bigint, requested_by_employee_id bigint, site_id bigint, start_time timestamp(6) not null, updated_at timestamp(6) not null, booking_code varchar(80) not null unique, approved_by varchar(200), cancelled_by varchar(200), created_by varchar(200), updated_by varchar(200), cancel_reason varchar(1000), notes varchar(1000), purpose varchar(1000), title varchar(255) not null, status enum ('CANCELLED','COMPLETED','CONFIRMED','DRAFT','EXPIRED','IN_USE','PENDING_APPROVAL','REJECTED') not null, primary key (id))
+09:54:08  Hibernate: create table asset.asset_catalog_items (cost_value numeric(18,2), fixed_value numeric(18,2), internal_value numeric(18,2), is_active boolean not null, standard_value numeric(18,2), category_id bigint, created_at timestamp(6) not null, id bigint generated by default as identity, updated_at timestamp(6) not null, unit varchar(40), item_code varchar(80) not null unique, inventory_group varchar(120), technical_spec varchar(1000), name varchar(255) not null, catalog_type enum ('ASSET','MATERIAL','PRODUCT_REFERENCE','TOOL') not null, primary key (id))
+09:54:08  Hibernate: create table asset.asset_categories (is_active boolean not null, created_at timestamp(6) not null, id bigint generated by default as identity, parent_id bigint, updated_at timestamp(6) not null, code varchar(60) not null unique, name varchar(180) not null, description varchar(500), asset_class enum ('FIXED_ASSET','TOOL_EQUIPMENT') not null, primary key (id))
+09:54:08  Hibernate: create table asset.asset_code_sequences (category_id bigint not null, created_at timestamp(6) not null, current_number bigint not null, updated_at timestamp(6) not null, primary key (category_id))
+09:54:08  Hibernate: create table asset.asset_documents (asset_id bigint not null, created_at timestamp(6) not null, id bigint generated by default as identity, size_bytes bigint, content_type varchar(120), uploaded_by varchar(200), object_key varchar(500) not null unique, file_name varchar(255) not null, document_type enum ('DISPOSAL','HANDOVER','IMAGE','INVOICE','MAINTENANCE','OTHER','WARRANTY') not null, primary key (id))
+09:54:08  Hibernate: create table asset.asset_qr_codes (asset_id bigint not null, created_at timestamp(6) not null, id bigint generated by default as identity, printed_at timestamp(6), qr_token varchar(120) unique, printed_by varchar(200), qr_payload varchar(1000) not null, status enum ('ACTIVE','REVOKED') not null, primary key (id))
+09:54:08  Hibernate: create table asset.asset_transfer_confirmations (confirmed_at timestamp(6), confirmer_employee_id bigint, created_at timestamp(6) not null, id bigint generated by default as identity, signature_document_id bigint, transfer_header_id bigint not null, updated_at timestamp(6) not null, signature_method varchar(30), status varchar(30) not null, confirmation_role varchar(40) not null, confirmer_username varchar(120), confirmer_name varchar(200), note varchar(1000), primary key (id))
+09:54:08  Hibernate: create table asset.asset_transfer_documents (created_at timestamp(6) not null, id bigint generated by default as identity, size_bytes bigint, transfer_header_id bigint not null, document_status varchar(30) not null, document_type varchar(40) not null, content_type varchar(120), uploaded_by varchar(200), object_key varchar(500) not null, file_name varchar(255) not null, primary key (id))
+09:54:08  Hibernate: create table asset.asset_transfer_headers (transfer_date date, cancelled_at timestamp(6), created_at timestamp(6) not null, from_department_id bigint, from_employee_id bigint, from_project_id bigint, from_site_id bigint, id bigint generated by default as identity, planned_handover_at timestamp(6), requested_employee_id bigint, to_department_id bigint, to_employee_id bigint, to_project_id bigint, to_site_id bigint, updated_at timestamp(6) not null, status varchar(30) not null, transfer_type varchar(30), transfer_code varchar(60), approved_by varchar(200), cancelled_by varchar(200), requested_by varchar(200), title varchar(200), cancel_reason varchar(500), note varchar(1000), reason varchar(1000), primary key (id))
+09:54:08  Hibernate: create table asset.asset_transfers (book_value_at_transfer numeric(18,2), line_no integer, transfer_date date not null, asset_id bigint not null, created_at timestamp(6) not null, from_department_id bigint, from_employee_id bigint, from_project_id bigint, from_site_id bigint, handover_document_id bigint, id bigint generated by default as identity, to_department_id bigint, to_employee_id bigint, to_project_id bigint, to_site_id bigint, transfer_header_id bigint, line_status varchar(30) not null, status_after varchar(30), status_before varchar(30), transfer_type varchar(30) not null, approved_by varchar(200), performed_by varchar(200), condition_after varchar(500), condition_before varchar(500), handover_document_url varchar(500), reason varchar(1000), receiver_note varchar(1000), primary key (id))
+09:54:08  Hibernate: create table asset.asset_value_snapshots (accumulated_depreciation numeric(18,2) not null, book_value numeric(18,2) not null, original_cost numeric(18,2) not null, period_depreciation numeric(18,2) not null, snapshot_date date not null, asset_id bigint not null, created_at timestamp(6) not null, id bigint generated by default as identity, notes varchar(500), source enum ('IMPORT','MANUAL_ADJUSTMENT','SYSTEM_CALCULATION') not null, primary key (id), constraint uk_asset_value_snapshots_asset_date_source unique (asset_id, snapshot_date, source))
+09:54:08  Hibernate: create table asset.assets (accumulated_depreciation numeric(18,2) not null, book_value numeric(18,2), capacity numeric(18,4), depreciation_rate numeric(8,4), depreciation_start_date date, disposal_date date, disposal_price numeric(18,2), installation_year integer, manufacture_year integer, original_cost numeric(18,2), purchase_cost numeric(18,2), purchase_date date, real_capacity numeric(18,4), residual_value numeric(18,2), use_date date, useful_life_months integer, useful_life_years integer, warranty_until date, assigned_employee_id bigint, catalog_item_id bigint, category_id bigint, created_at timestamp(6) not null, department_id bigint, id bigint generated by default as identity, parent_asset_id bigint, project_id bigint, site_id bigint, updated_at timestamp(6) not null, vendor_id bigint, country_code varchar(10), capacity_unit varchar(40), depreciation_method varchar(40), asset_code varchar(80) not null unique, category varchar(80), serial_number varchar(120), source varchar(120), disposal_reason varchar(500), notes varchar(1000), technical_description varchar(2000), name varchar(255) not null, asset_class enum ('FIXED_ASSET','TOOL_EQUIPMENT') not null, fixed_asset_type enum ('INTANGIBLE','TANGIBLE'), status enum ('ASSIGNED','DISPOSED','IN_STOCK','LOST','MAINTENANCE','PENDING') not null, tool_usage_type enum ('MULTI_USE','SINGLE_USE'), primary key (id))
+09:54:08  Hibernate: create table asset.audit_logs (actor_employee_id bigint, entity_id bigint, id bigint generated by default as identity, occurred_at timestamp(6) not null, severity varchar(20) not null, action varchar(50) not null, actor_role varchar(50), module varchar(50) not null, ip_address varchar(64), entity_type varchar(80) not null, actor_username varchar(100), entity_code varchar(100), request_id varchar(100), summary TEXT not null, user_agent TEXT, after_data jsonb, before_data jsonb, changed_fields jsonb, primary key (id))
+09:54:08  Hibernate: create table asset.contracts (contract_value numeric(18,2), effective_from date, effective_to date, sign_date date, asset_id bigint, created_at timestamp(6) not null, document_id bigint, id bigint generated by default as identity, purchase_request_id bigint, updated_at timestamp(6) not null, vendor_id bigint, currency varchar(10), contract_number varchar(80) not null unique, title varchar(200) not null, attachment_object_key varchar(500), attachment_url varchar(500), notes varchar(1000), payment_terms text, status enum ('ACTIVE','DRAFT','EXPIRED','TERMINATED') not null, primary key (id))
+09:54:08  Hibernate: create table asset.maintenance_records (cost numeric(18,2), downtime_hours numeric(10,2), maintenance_date date not null, meter_reading numeric(18,2), next_maintenance_date date, asset_id bigint not null, created_at timestamp(6) not null, id bigint generated by default as identity, updated_at timestamp(6) not null, vendor_id bigint, maintenance_type varchar(30) not null, performed_by varchar(200), condition_after varchar(500), description varchar(1000), status enum ('CANCELLED','COMPLETED','IN_PROGRESS','SCHEDULED') not null, primary key (id))
+09:54:08  Hibernate: create table asset.purchase_requests (estimated_cost numeric(18,2), needed_date date, created_at timestamp(6) not null, department_id bigint, id bigint generated by default as identity, project_id bigint, requester_employee_id bigint, site_id bigint, updated_at timestamp(6) not null, request_type varchar(40) not null, title varchar(180) not null, notes varchar(500), reason text, status enum ('APPROVED','CANCELLED','DRAFT','PENDING','REJECTED') not null, primary key (id))
+09:54:08  Hibernate: create table asset.subscriptions (cost numeric(18,2), renewal_date date, start_date date, total_seats integer not null, used_seats integer not null, asset_id bigint, created_at timestamp(6) not null, id bigint generated by default as identity, owner_employee_id bigint, updated_at timestamp(6) not null, vendor_id bigint, billing_cycle varchar(20), plan_name varchar(120), software_name varchar(180) not null, license_key varchar(500), notes varchar(500), status enum ('ACTIVE','CANCELLED','EXPIRED') not null, primary key (id))
+09:54:08  Hibernate: create table asset.vendors (created_at timestamp(6) not null, id bigint generated by default as identity, updated_at timestamp(6) not null, phone varchar(40), tax_code varchar(80) unique, contact_name varchar(120), email varchar(120), name varchar(180) not null, address varchar(500), status enum ('ACTIVE','INACTIVE') not null, primary key (id))
+09:54:08  Hibernate: create index asset.idx_asset_booking_sessions_asset_id on asset.asset_booking_sessions (asset_id)
+09:54:08  Hibernate: create index asset.idx_asset_booking_sessions_time on asset.asset_booking_sessions (start_time, end_time)
+09:54:08  Hibernate: create index asset.idx_asset_booking_sessions_status on asset.asset_booking_sessions (status)
+09:54:08  Hibernate: create index asset.idx_asset_booking_sessions_requested_by on asset.asset_booking_sessions (requested_by_employee_id)
+09:54:08  Hibernate: create index asset.idx_asset_booking_sessions_department on asset.asset_booking_sessions (department_id)
+09:54:08  Hibernate: create index asset.idx_asset_booking_sessions_site on asset.asset_booking_sessions (site_id)
+09:54:08  Hibernate: create index asset.idx_asset_catalog_items_category_id on asset.asset_catalog_items (category_id)
+09:54:08  Hibernate: create index asset.idx_asset_catalog_items_catalog_type on asset.asset_catalog_items (catalog_type)
+09:54:08  Hibernate: create index asset.idx_asset_catalog_items_name on asset.asset_catalog_items (name)
+09:54:08  Hibernate: create index asset.idx_asset_catalog_items_is_active on asset.asset_catalog_items (is_active)
+09:54:08  Hibernate: create index asset.idx_asset_categories_parent_id on asset.asset_categories (parent_id)
+09:54:08  Hibernate: create index asset.idx_asset_categories_asset_class on asset.asset_categories (asset_class)
+09:54:08  Hibernate: create index asset.idx_asset_categories_is_active on asset.asset_categories (is_active)
+09:54:08  Hibernate: create index asset.idx_asset_documents_asset_id on asset.asset_documents (asset_id)
+09:54:08  Hibernate: create index asset.idx_asset_documents_document_type on asset.asset_documents (document_type)
+09:54:08  Hibernate: create index asset.idx_asset_documents_created_at on asset.asset_documents (created_at)
+09:54:08  Hibernate: create index asset.idx_asset_qr_codes_asset_id on asset.asset_qr_codes (asset_id)
+09:54:08  Hibernate: create index asset.idx_asset_qr_codes_status on asset.asset_qr_codes (status)
+09:54:08  Hibernate: create index asset.idx_asset_qr_codes_qr_token on asset.asset_qr_codes (qr_token)
+09:54:08  Hibernate: create index asset.idx_asset_transfers_asset_id on asset.asset_transfers (asset_id)
+09:54:08  Hibernate: create index asset.idx_asset_transfers_transfer_date on asset.asset_transfers (transfer_date)
+09:54:08  Hibernate: create index asset.idx_asset_transfers_from_employee_id on asset.asset_transfers (from_employee_id)
+09:54:08  Hibernate: create index asset.idx_asset_transfers_to_employee_id on asset.asset_transfers (to_employee_id)
+09:54:08  Hibernate: create index asset.idx_asset_transfers_from_department_id on asset.asset_transfers (from_department_id)
+09:54:08  Hibernate: create index asset.idx_asset_transfers_to_department_id on asset.asset_transfers (to_department_id)
+09:54:08  Hibernate: create index asset.idx_asset_value_snapshots_asset_id on asset.asset_value_snapshots (asset_id)
+09:54:08  Hibernate: create index asset.idx_asset_value_snapshots_snapshot_date on asset.asset_value_snapshots (snapshot_date)
+09:54:08  Hibernate: create index asset.idx_asset_value_snapshots_source on asset.asset_value_snapshots (source)
+09:54:08  Hibernate: create index asset.idx_assets_asset_code on asset.assets (asset_code)
+09:54:08  Hibernate: create index asset.idx_assets_catalog_item_id on asset.assets (catalog_item_id)
+09:54:08  Hibernate: create index asset.idx_assets_category_id on asset.assets (category_id)
+09:54:08  Hibernate: create index asset.idx_assets_parent_asset_id on asset.assets (parent_asset_id)
+09:54:08  Hibernate: create index asset.idx_assets_asset_class on asset.assets (asset_class)
+09:54:08  Hibernate: create index asset.idx_assets_status on asset.assets (status)
+09:54:08  Hibernate: create index asset.idx_assets_assigned_employee_id on asset.assets (assigned_employee_id)
+09:54:08  Hibernate: create index asset.idx_assets_department_id on asset.assets (department_id)
+09:54:08  Hibernate: create index asset.idx_assets_site_id on asset.assets (site_id)
+09:54:08  Hibernate: create index asset.idx_assets_project_id on asset.assets (project_id)
+09:54:08  Hibernate: create index asset.idx_assets_vendor_id on asset.assets (vendor_id)
+09:54:08  Hibernate: create index asset.idx_audit_logs_occurred_at on asset.audit_logs (occurred_at)
+09:54:08  Hibernate: create index asset.idx_audit_logs_entity on asset.audit_logs (entity_type, entity_id, occurred_at)
+09:54:08  Hibernate: create index asset.idx_audit_logs_entity_code on asset.audit_logs (entity_code, occurred_at)
+09:54:08  Hibernate: create index asset.idx_audit_logs_actor on asset.audit_logs (actor_employee_id, occurred_at)
+09:54:08  Hibernate: create index asset.idx_audit_logs_module_action on asset.audit_logs (module, action, occurred_at)
+09:54:08  Hibernate: create index asset.idx_contracts_contract_number on asset.contracts (contract_number)
+09:54:08  Hibernate: create index asset.idx_contracts_status on asset.contracts (status)
+09:54:08  Hibernate: create index asset.idx_contracts_vendor_id on asset.contracts (vendor_id)
+09:54:08  Hibernate: create index asset.idx_contracts_purchase_request_id on asset.contracts (purchase_request_id)
+09:54:08  Hibernate: create index asset.idx_contracts_asset_id on asset.contracts (asset_id)
+09:54:08  Hibernate: create index asset.idx_maintenance_records_asset_id on asset.maintenance_records (asset_id)
+09:54:08  Hibernate: create index asset.idx_maintenance_records_vendor_id on asset.maintenance_records (vendor_id)
+09:54:08  Hibernate: create index asset.idx_maintenance_records_maintenance_date on asset.maintenance_records (maintenance_date)
+09:54:08  Hibernate: create index asset.idx_maintenance_records_next_maintenance_date on asset.maintenance_records (next_maintenance_date)
+09:54:08  Hibernate: create index asset.idx_maintenance_records_status on asset.maintenance_records (status)
+09:54:08  Hibernate: create index asset.idx_purchase_requests_status on asset.purchase_requests (status)
+09:54:08  Hibernate: create index asset.idx_purchase_requests_requester_employee_id on asset.purchase_requests (requester_employee_id)
+09:54:08  Hibernate: create index asset.idx_purchase_requests_department_id on asset.purchase_requests (department_id)
+09:54:08  Hibernate: create index asset.idx_purchase_requests_site_id on asset.purchase_requests (site_id)
+09:54:08  Hibernate: create index asset.idx_purchase_requests_project_id on asset.purchase_requests (project_id)
+09:54:08  Hibernate: create index asset.idx_subscriptions_asset_id on asset.subscriptions (asset_id)
+09:54:08  Hibernate: create index asset.idx_subscriptions_vendor_id on asset.subscriptions (vendor_id)
+09:54:08  Hibernate: create index asset.idx_subscriptions_software_name on asset.subscriptions (software_name)
+09:54:08  Hibernate: create index asset.idx_subscriptions_renewal_date on asset.subscriptions (renewal_date)
+09:54:08  Hibernate: create index asset.idx_subscriptions_status on asset.subscriptions (status)
+09:54:08  Hibernate: create index asset.idx_vendors_name on asset.vendors (name)
+09:54:08  Hibernate: create index asset.idx_vendors_status on asset.vendors (status)
+09:54:08  Hibernate: alter table if exists asset.asset_booking_sessions add constraint FK48m3prmql99t175sna6dw0fu foreign key (asset_id) references asset.assets
+09:54:08  Hibernate: alter table if exists asset.asset_catalog_items add constraint FKgt9uaxbu6ul7ssfqhlkox05w6 foreign key (category_id) references asset.asset_categories
+09:54:08  Hibernate: alter table if exists asset.asset_categories add constraint FKabho66l8ugkrdh0reene5aroq foreign key (parent_id) references asset.asset_categories
+09:54:08  Hibernate: alter table if exists asset.asset_documents add constraint FK3n62486jj2dg8j65l1rmqhrc3 foreign key (asset_id) references asset.assets
+09:54:08  Hibernate: alter table if exists asset.asset_qr_codes add constraint FKk550xkqkivc7l8jk5j66j2jwf foreign key (asset_id) references asset.assets
+09:54:08  Hibernate: alter table if exists asset.asset_transfer_confirmations add constraint FK9ph79uuugk9fm3qcgic9q6a96 foreign key (transfer_header_id) references asset.asset_transfer_headers
+09:54:08  Hibernate: alter table if exists asset.asset_transfer_documents add constraint FK4vao16u4ihig6wpp20wh8soq9 foreign key (transfer_header_id) references asset.asset_transfer_headers
+09:54:08  Hibernate: alter table if exists asset.asset_transfers add constraint FKdwv2g7tatmkpsotvlgqa5yi1y foreign key (asset_id) references asset.assets
+09:54:08  Hibernate: alter table if exists asset.asset_transfers add constraint FK8gmppgtsgr5dfkfeqru6wq63n foreign key (handover_document_id) references asset.asset_documents
+09:54:08  Hibernate: alter table if exists asset.asset_transfers add constraint FKdy0o9icct4wej22y2xf2dvnde foreign key (transfer_header_id) references asset.asset_transfer_headers
+09:54:08  Hibernate: alter table if exists asset.asset_value_snapshots add constraint FK652idrpl1d3amuan8gfdtooog foreign key (asset_id) references asset.assets
+09:54:08  Hibernate: alter table if exists asset.assets add constraint FKcwxkksxvxtrvv0sjtu5cgflep foreign key (category_id) references asset.asset_categories
+09:54:08  Hibernate: alter table if exists asset.assets add constraint FKofsueihdju5ok52r6osr1hvuh foreign key (catalog_item_id) references asset.asset_catalog_items
+09:54:08  Hibernate: alter table if exists asset.assets add constraint FK6j4qblfnyj98xcsba3wblr6b3 foreign key (parent_asset_id) references asset.assets
+09:54:08  Hibernate: alter table if exists asset.assets add constraint FKmxkdbqw5qai7o3kcwsllg1u1q foreign key (vendor_id) references asset.vendors
+09:54:08  Hibernate: alter table if exists asset.contracts add constraint FKjvom059ywi0sl9cde5cog6waa foreign key (asset_id) references asset.assets
+09:54:08  Hibernate: alter table if exists asset.contracts add constraint FKa0nsr2qjkdvmfveebq06pdbt1 foreign key (document_id) references asset.asset_documents
+09:54:08  Hibernate: alter table if exists asset.contracts add constraint FKe83sstjm9llxrfhq9p4wx2l9j foreign key (purchase_request_id) references asset.purchase_requests
+09:54:08  Hibernate: alter table if exists asset.contracts add constraint FK7btrf285yn8cvvjndcnex8p6h foreign key (vendor_id) references asset.vendors
+09:54:08  Hibernate: alter table if exists asset.maintenance_records add constraint FK124fjg43i0s5luwopsoq78k9h foreign key (asset_id) references asset.assets
+09:54:08  Hibernate: alter table if exists asset.maintenance_records add constraint FKcr7mxr6ywqmwmu63upibrd5r6 foreign key (vendor_id) references asset.vendors
+09:54:08  Hibernate: alter table if exists asset.subscriptions add constraint FKoi00ynngap8epsbq0hcgv3064 foreign key (asset_id) references asset.assets
+09:54:08  Hibernate: alter table if exists asset.subscriptions add constraint FKavsec60l6maarncgtqk6exaxj foreign key (vendor_id) references asset.vendors
+09:54:08  2026-07-20T02:54:08.592Z  INFO [asset-service,] 60 --- [asset-service] [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+09:54:09  2026-07-20T02:54:08.991Z  INFO [asset-service,] 60 --- [asset-service] [           main] o.s.d.j.r.query.QueryEnhancerFactory     : Hibernate is in classpath; If applicable, HQL parser will be used.
+09:54:09  2026-07-20T02:54:09.444Z  INFO [asset-service,] 60 --- [asset-service] [           main] c.b.a.r.VendorRepositoryDataJpaTest      : Started VendorRepositoryDataJpaTest in 4.35 seconds (process running for 5.763)
+09:54:09  OpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+09:54:10  Hibernate: insert into asset.vendors (address,contact_name,created_at,email,name,phone,status,tax_code,updated_at,id) values (?,?,?,?,?,?,?,?,?,default)
+09:54:10  Hibernate: insert into asset.vendors (address,contact_name,created_at,email,name,phone,status,tax_code,updated_at,id) values (?,?,?,?,?,?,?,?,?,default)
+09:54:10  [INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 5.078 s -- in com.bimlab.asset.repository.VendorRepositoryDataJpaTest
+09:54:10  [INFO] Running com.bimlab.asset.repository.AllRepositoriesDataJpaTest
+09:54:10  2026-07-20T02:54:09.885Z  INFO [asset-service,] 60 --- [asset-service] [           main] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.bimlab.asset.repository.AllRepositoriesDataJpaTest]: AllRepositoriesDataJpaTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+09:54:10  2026-07-20T02:54:09.890Z  INFO [asset-service,] 60 --- [asset-service] [           main] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.bimlab.asset.AssetServiceApplication for test class com.bimlab.asset.repository.AllRepositoriesDataJpaTest
+09:54:10  Hibernate: insert into asset.assets (accumulated_depreciation,category_id,asset_class,asset_code,assigned_employee_id,book_value,capacity,capacity_unit,catalog_item_id,category,country_code,created_at,department_id,depreciation_method,depreciation_rate,depreciation_start_date,disposal_date,disposal_price,disposal_reason,fixed_asset_type,installation_year,manufacture_year,name,notes,original_cost,parent_asset_id,project_id,purchase_cost,purchase_date,real_capacity,residual_value,serial_number,site_id,source,status,technical_description,tool_usage_type,updated_at,use_date,useful_life_months,useful_life_years,vendor_id,warranty_until,id) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,default)
+09:54:10  Hibernate: insert into asset.assets (accumulated_depreciation,category_id,asset_class,asset_code,assigned_employee_id,book_value,capacity,capacity_unit,catalog_item_id,category,country_code,created_at,department_id,depreciation_method,depreciation_rate,depreciation_start_date,disposal_date,disposal_price,disposal_reason,fixed_asset_type,installation_year,manufacture_year,name,notes,original_cost,parent_asset_id,project_id,purchase_cost,purchase_date,real_capacity,residual_value,serial_number,site_id,source,status,technical_description,tool_usage_type,updated_at,use_date,useful_life_months,useful_life_years,vendor_id,warranty_until,id) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,default)
+09:54:10  Hibernate: select ai1_0.id,ai1_0.accumulated_depreciation,ai1_0.category_id,ai1_0.asset_class,ai1_0.asset_code,ai1_0.assigned_employee_id,ai1_0.book_value,ai1_0.capacity,ai1_0.capacity_unit,ai1_0.catalog_item_id,ai1_0.category,ai1_0.country_code,ai1_0.created_at,ai1_0.department_id,ai1_0.depreciation_method,ai1_0.depreciation_rate,ai1_0.depreciation_start_date,ai1_0.disposal_date,ai1_0.disposal_price,ai1_0.disposal_reason,ai1_0.fixed_asset_type,ai1_0.installation_year,ai1_0.manufacture_year,ai1_0.name,ai1_0.notes,ai1_0.original_cost,ai1_0.parent_asset_id,ai1_0.project_id,ai1_0.purchase_cost,ai1_0.purchase_date,ai1_0.real_capacity,ai1_0.residual_value,ai1_0.serial_number,ai1_0.site_id,ai1_0.source,ai1_0.status,ai1_0.technical_description,ai1_0.tool_usage_type,ai1_0.updated_at,ai1_0.use_date,ai1_0.useful_life_months,ai1_0.useful_life_years,ai1_0.vendor_id,ai1_0.warranty_until from asset.assets ai1_0 offset ? rows fetch first ? rows only
+09:54:10  Hibernate: select count(ai1_0.id) from asset.assets ai1_0
+09:54:10  Hibernate: insert into asset.vendors (address,contact_name,created_at,email,name,phone,status,tax_code,updated_at,id) values (?,?,?,?,?,?,?,?,?,default)
+09:54:10  Hibernate: insert into asset.subscriptions (asset_id,billing_cycle,cost,created_at,license_key,notes,owner_employee_id,plan_name,renewal_date,software_name,start_date,status,total_seats,updated_at,used_seats,vendor_id,id) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,default)
+09:54:10  Hibernate: select s1_0.id,s1_0.asset_id,s1_0.billing_cycle,s1_0.cost,s1_0.created_at,s1_0.license_key,s1_0.notes,s1_0.owner_employee_id,s1_0.plan_name,s1_0.renewal_date,s1_0.software_name,s1_0.start_date,s1_0.status,s1_0.total_seats,s1_0.updated_at,s1_0.used_seats,s1_0.vendor_id from asset.subscriptions s1_0 offset ? rows fetch first ? rows only
+09:54:10  Hibernate: insert into asset.assets (accumulated_depreciation,category_id,asset_class,asset_code,assigned_employee_id,book_value,capacity,capacity_unit,catalog_item_id,category,country_code,created_at,department_id,depreciation_method,depreciation_rate,depreciation_start_date,disposal_date,disposal_price,disposal_reason,fixed_asset_type,installation_year,manufacture_year,name,notes,original_cost,parent_asset_id,project_id,purchase_cost,purchase_date,real_capacity,residual_value,serial_number,site_id,source,status,technical_description,tool_usage_type,updated_at,use_date,useful_life_months,useful_life_years,vendor_id,warranty_until,id) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,default)
+09:54:10  Hibernate: insert into asset.maintenance_records (asset_id,condition_after,cost,created_at,description,downtime_hours,maintenance_date,maintenance_type,meter_reading,next_maintenance_date,performed_by,status,updated_at,vendor_id,id) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,default)
+09:54:10  Hibernate: insert into asset.maintenance_records (asset_id,condition_after,cost,created_at,description,downtime_hours,maintenance_date,maintenance_type,meter_reading,next_maintenance_date,performed_by,status,updated_at,vendor_id,id) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,default)
+09:54:10  Hibernate: select mr1_0.id,mr1_0.asset_id,mr1_0.condition_after,mr1_0.cost,mr1_0.created_at,mr1_0.description,mr1_0.downtime_hours,mr1_0.maintenance_date,mr1_0.maintenance_type,mr1_0.meter_reading,mr1_0.next_maintenance_date,mr1_0.performed_by,mr1_0.status,mr1_0.updated_at,mr1_0.vendor_id from asset.maintenance_records mr1_0 join asset.assets a1_0 on a1_0.id=mr1_0.asset_id where a1_0.id=? order by mr1_0.maintenance_date desc
+09:54:10  Hibernate: insert into asset.vendors (address,contact_name,created_at,email,name,phone,status,tax_code,updated_at,id) values (?,?,?,?,?,?,?,?,?,default)
+09:54:10  Hibernate: insert into asset.vendors (address,contact_name,created_at,email,name,phone,status,tax_code,updated_at,id) values (?,?,?,?,?,?,?,?,?,default)
+09:54:10  Hibernate: insert into asset.vendors (address,contact_name,created_at,email,name,phone,status,tax_code,updated_at,id) values (?,?,?,?,?,?,?,?,?,default)
+09:54:10  Hibernate: select v1_0.id,v1_0.address,v1_0.contact_name,v1_0.created_at,v1_0.email,v1_0.name,v1_0.phone,v1_0.status,v1_0.tax_code,v1_0.updated_at from asset.vendors v1_0 offset ? rows fetch first ? rows only
+09:54:10  Hibernate: select count(v1_0.id) from asset.vendors v1_0
+09:54:10  Hibernate: insert into asset.asset_categories (is_active,asset_class,code,created_at,description,name,parent_id,updated_at,id) values (?,?,?,?,?,?,?,?,default)
+09:54:10  Hibernate: insert into asset.asset_catalog_items (is_active,catalog_type,category_id,cost_value,created_at,fixed_value,internal_value,inventory_group,item_code,name,standard_value,technical_spec,unit,updated_at,id) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,default)
+09:54:10  Hibernate: insert into asset.assets (accumulated_depreciation,category_id,asset_class,asset_code,assigned_employee_id,book_value,capacity,capacity_unit,catalog_item_id,category,country_code,created_at,department_id,depreciation_method,depreciation_rate,depreciation_start_date,disposal_date,disposal_price,disposal_reason,fixed_asset_type,installation_year,manufacture_year,name,notes,original_cost,parent_asset_id,project_id,purchase_cost,purchase_date,real_capacity,residual_value,serial_number,site_id,source,status,technical_description,tool_usage_type,updated_at,use_date,useful_life_months,useful_life_years,vendor_id,warranty_until,id) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,default)
+09:54:10  Hibernate: insert into asset.asset_value_snapshots (accumulated_depreciation,asset_id,book_value,created_at,notes,original_cost,period_depreciation,snapshot_date,source,id) values (?,?,?,?,?,?,?,?,?,default)
+09:54:10  Hibernate: insert into asset.asset_documents (asset_id,content_type,created_at,document_type,file_name,object_key,size_bytes,uploaded_by,id) values (?,?,?,?,?,?,?,?,default)
+09:54:10  Hibernate: insert into asset.asset_qr_codes (asset_id,created_at,printed_at,printed_by,qr_payload,qr_token,status,id) values (?,?,?,?,?,?,?,default)
+09:54:10  Hibernate: select ai1_0.id,ai1_0.accumulated_depreciation,ai1_0.category_id,ai1_0.asset_class,ai1_0.asset_code,ai1_0.assigned_employee_id,ai1_0.book_value,ai1_0.capacity,ai1_0.capacity_unit,ai1_0.catalog_item_id,ai1_0.category,ai1_0.country_code,ai1_0.created_at,ai1_0.department_id,ai1_0.depreciation_method,ai1_0.depreciation_rate,ai1_0.depreciation_start_date,ai1_0.disposal_date,ai1_0.disposal_price,ai1_0.disposal_reason,ai1_0.fixed_asset_type,ai1_0.installation_year,ai1_0.manufacture_year,ai1_0.name,ai1_0.notes,ai1_0.original_cost,ai1_0.parent_asset_id,ai1_0.project_id,ai1_0.purchase_cost,ai1_0.purchase_date,ai1_0.real_capacity,ai1_0.residual_value,ai1_0.serial_number,ai1_0.site_id,ai1_0.source,ai1_0.status,ai1_0.technical_description,ai1_0.tool_usage_type,ai1_0.updated_at,ai1_0.use_date,ai1_0.useful_life_months,ai1_0.useful_life_years,ai1_0.vendor_id,ai1_0.warranty_until from asset.assets ai1_0 where ai1_0.asset_code=?
+09:54:10  Hibernate: select avs1_0.id,avs1_0.accumulated_depreciation,avs1_0.asset_id,avs1_0.book_value,avs1_0.created_at,avs1_0.notes,avs1_0.original_cost,avs1_0.period_depreciation,avs1_0.snapshot_date,avs1_0.source from asset.asset_value_snapshots avs1_0 join asset.assets a1_0 on a1_0.id=avs1_0.asset_id where a1_0.id=? order by avs1_0.snapshot_date desc
+09:54:10  Hibernate: select ad1_0.id,ad1_0.asset_id,ad1_0.content_type,ad1_0.created_at,ad1_0.document_type,ad1_0.file_name,ad1_0.object_key,ad1_0.size_bytes,ad1_0.uploaded_by from asset.asset_documents ad1_0 where ad1_0.object_key=?
+09:54:10  Hibernate: select aqc1_0.id,aqc1_0.asset_id,aqc1_0.created_at,aqc1_0.printed_at,aqc1_0.printed_by,aqc1_0.qr_payload,aqc1_0.qr_token,aqc1_0.status from asset.asset_qr_codes aqc1_0 where aqc1_0.qr_token=?
+09:54:10  Hibernate: insert into asset.assets (accumulated_depreciation,category_id,asset_class,asset_code,assigned_employee_id,book_value,capacity,capacity_unit,catalog_item_id,category,country_code,created_at,department_id,depreciation_method,depreciation_rate,depreciation_start_date,disposal_date,disposal_price,disposal_reason,fixed_asset_type,installation_year,manufacture_year,name,notes,original_cost,parent_asset_id,project_id,purchase_cost,purchase_date,real_capacity,residual_value,serial_number,site_id,source,status,technical_description,tool_usage_type,updated_at,use_date,useful_life_months,useful_life_years,vendor_id,warranty_until,id) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,default)
+09:54:10  Hibernate: insert into asset.asset_transfers (approved_by,asset_id,book_value_at_transfer,condition_after,condition_before,created_at,from_department_id,from_employee_id,from_project_id,from_site_id,handover_document_id,handover_document_url,line_no,line_status,performed_by,reason,receiver_note,status_after,status_before,to_department_id,to_employee_id,to_project_id,to_site_id,transfer_date,transfer_header_id,transfer_type,id) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,default)
+09:54:10  Hibernate: insert into asset.asset_transfers (approved_by,asset_id,book_value_at_transfer,condition_after,condition_before,created_at,from_department_id,from_employee_id,from_project_id,from_site_id,handover_document_id,handover_document_url,line_no,line_status,performed_by,reason,receiver_note,status_after,status_before,to_department_id,to_employee_id,to_project_id,to_site_id,transfer_date,transfer_header_id,transfer_type,id) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,default)
+09:54:10  Hibernate: select at1_0.id,at1_0.approved_by,at1_0.asset_id,at1_0.book_value_at_transfer,at1_0.condition_after,at1_0.condition_before,at1_0.created_at,at1_0.from_department_id,at1_0.from_employee_id,at1_0.from_project_id,at1_0.from_site_id,at1_0.handover_document_id,at1_0.handover_document_url,at1_0.line_no,at1_0.line_status,at1_0.performed_by,at1_0.reason,at1_0.receiver_note,at1_0.status_after,at1_0.status_before,at1_0.to_department_id,at1_0.to_employee_id,at1_0.to_project_id,at1_0.to_site_id,at1_0.transfer_date,at1_0.transfer_header_id,at1_0.transfer_type from asset.asset_transfers at1_0 order by at1_0.transfer_date desc,at1_0.id desc
+09:54:10  Hibernate: select at1_0.id,at1_0.approved_by,at1_0.asset_id,at1_0.book_value_at_transfer,at1_0.condition_after,at1_0.condition_before,at1_0.created_at,at1_0.from_department_id,at1_0.from_employee_id,at1_0.from_project_id,at1_0.from_site_id,at1_0.handover_document_id,at1_0.handover_document_url,at1_0.line_no,at1_0.line_status,at1_0.performed_by,at1_0.reason,at1_0.receiver_note,at1_0.status_after,at1_0.status_before,at1_0.to_department_id,at1_0.to_employee_id,at1_0.to_project_id,at1_0.to_site_id,at1_0.transfer_date,at1_0.transfer_header_id,at1_0.transfer_type from asset.asset_transfers at1_0 join asset.assets a1_0 on a1_0.id=at1_0.asset_id where a1_0.id=? order by at1_0.transfer_date desc
+09:54:10  Hibernate: insert into asset.vendors (address,contact_name,created_at,email,name,phone,status,tax_code,updated_at,id) values (?,?,?,?,?,?,?,?,?,default)
+09:54:10  Hibernate: insert into asset.contracts (asset_id,attachment_object_key,attachment_url,contract_number,contract_value,created_at,currency,document_id,effective_from,effective_to,notes,payment_terms,purchase_request_id,sign_date,status,title,updated_at,vendor_id,id) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,default)
+09:54:10  Hibernate: select c1_0.id from asset.contracts c1_0 where c1_0.contract_number=? fetch first ? rows only
+09:54:10  Hibernate: select c1_0.id from asset.contracts c1_0 where c1_0.contract_number=? fetch first ? rows only
+09:54:10  Hibernate: insert into asset.purchase_requests (created_at,department_id,estimated_cost,needed_date,notes,project_id,reason,request_type,requester_employee_id,site_id,status,title,updated_at,id) values (?,?,?,?,?,?,?,?,?,?,?,?,?,default)
+09:54:10  [INFO] Tests run: 8, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.199 s -- in com.bimlab.asset.repository.AllRepositoriesDataJpaTest
+09:54:10  [INFO] Running com.bimlab.asset.controller.VendorControllerWebMvcTest
+09:54:10  2026-07-20T02:54:10.094Z  INFO [asset-service,] 60 --- [asset-service] [           main] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.bimlab.asset.controller.VendorControllerWebMvcTest]: VendorControllerWebMvcTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+09:54:10  2026-07-20T02:54:10.113Z  INFO [asset-service,] 60 --- [asset-service] [           main] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.bimlab.asset.AssetServiceApplication for test class com.bimlab.asset.controller.VendorControllerWebMvcTest
+09:54:10  2026-07-20T02:54:10.119Z  INFO [asset-service,] 60 --- [asset-service] [           main] o.s.b.d.r.RestartApplicationListener     : Restart disabled due to context in which it is running
+09:54:10  
+09:54:10    .   ____          _            __ _ _
+09:54:10   /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+09:54:10  ( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+09:54:10   \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+09:54:10    '  |____| .__|_| |_|_| |_\__, | / / / /
+09:54:10   =========|_|==============|___/=/_/_/_/
+09:54:10  
+09:54:10   :: Spring Boot ::                (v3.4.5)
+09:54:10  
+09:54:10  2026-07-20T02:54:10.144Z  INFO [asset-service,] 60 --- [asset-service] [           main] c.b.a.c.VendorControllerWebMvcTest       : Starting VendorControllerWebMvcTest using Java 17.0.15 with PID 60 (started by root in /var/jenkins_home/workspace/bimlab_qlvt_test/asset-service)
+09:54:10  2026-07-20T02:54:10.145Z  INFO [asset-service,] 60 --- [asset-service] [           main] c.b.a.c.VendorControllerWebMvcTest       : No active profile set, falling back to 1 default profile: "default"
+09:54:11  2026-07-20T02:54:11.702Z  INFO [asset-service,] 60 --- [asset-service] [           main] o.s.b.t.m.w.SpringBootMockServletContext : Initializing Spring TestDispatcherServlet ''
+09:54:11  2026-07-20T02:54:11.702Z  INFO [asset-service,] 60 --- [asset-service] [           main] o.s.t.web.servlet.TestDispatcherServlet  : Initializing Servlet ''
+09:54:11  2026-07-20T02:54:11.703Z  INFO [asset-service,] 60 --- [asset-service] [           main] o.s.t.web.servlet.TestDispatcherServlet  : Completed initialization in 1 ms
+09:54:11  2026-07-20T02:54:11.723Z  INFO [asset-service,] 60 --- [asset-service] [           main] c.b.a.c.VendorControllerWebMvcTest       : Started VendorControllerWebMvcTest in 1.603 seconds (process running for 8.042)
+09:54:12  2026-07-20T02:54:11.872Z  WARN [asset-service,] 60 --- [asset-service] [           main] ration$PageModule$WarningLoggingModifier : Serializing PageImpl instances as-is is not supported, meaning that there is no guarantee about the stability of the resulting JSON structure!
+09:54:12  	For a stable JSON structure, please use Spring Data's PagedModel (globally via @EnableSpringDataWebSupport(pageSerializationMode = VIA_DTO))
+09:54:12  	or Spring HATEOAS and Spring Data's PagedResourcesAssembler as documented in https://docs.spring.io/spring-data/commons/reference/repositories/core-extensions.html#core.web.pageables.
+09:54:12  
+09:54:12  2026-07-20T02:54:11.990Z  INFO [asset-service,] 60 --- [asset-service] [           main] c.b.asset.config.GlobalExceptionHandler  : 403 forbidden: Access Denied
+09:54:12  2026-07-20T02:54:12.099Z  INFO [asset-service,] 60 --- [asset-service] [           main] c.b.asset.config.GlobalExceptionHandler  : 403 forbidden: Access Denied
+09:54:12  [INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.042 s -- in com.bimlab.asset.controller.VendorControllerWebMvcTest
+09:54:12  [INFO] Running com.bimlab.asset.controller.AssetTransferControllerWebMvcTest
+09:54:12  2026-07-20T02:54:12.144Z  INFO [asset-service,] 60 --- [asset-service] [           main] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.bimlab.asset.controller.AssetTransferControllerWebMvcTest]: AssetTransferControllerWebMvcTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+09:54:12  2026-07-20T02:54:12.154Z  INFO [asset-service,] 60 --- [asset-service] [           main] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.bimlab.asset.AssetServiceApplication for test class com.bimlab.asset.controller.AssetTransferControllerWebMvcTest
+09:54:12  2026-07-20T02:54:12.156Z  INFO [asset-service,] 60 --- [asset-service] [           main] o.s.b.d.r.RestartApplicationListener     : Restart disabled due to context in which it is running
+09:54:12  
+09:54:12    .   ____          _            __ _ _
+09:54:12   /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+09:54:12  ( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+09:54:12   \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+09:54:12    '  |____| .__|_| |_|_| |_\__, | / / / /
+09:54:12   =========|_|==============|___/=/_/_/_/
+09:54:12  
+09:54:12   :: Spring Boot ::                (v3.4.5)
+09:54:12  
+09:54:12  2026-07-20T02:54:12.181Z  INFO [asset-service,] 60 --- [asset-service] [           main] .b.a.c.AssetTransferControllerWebMvcTest : Starting AssetTransferControllerWebMvcTest using Java 17.0.15 with PID 60 (started by root in /var/jenkins_home/workspace/bimlab_qlvt_test/asset-service)
+09:54:12  2026-07-20T02:54:12.181Z  INFO [asset-service,] 60 --- [asset-service] [           main] .b.a.c.AssetTransferControllerWebMvcTest : No active profile set, falling back to 1 default profile: "default"
+09:54:12  2026-07-20T02:54:12.691Z  INFO [asset-service,] 60 --- [asset-service] [           main] o.s.b.t.m.w.SpringBootMockServletContext : Initializing Spring TestDispatcherServlet ''
+09:54:12  2026-07-20T02:54:12.691Z  INFO [asset-service,] 60 --- [asset-service] [           main] o.s.t.web.servlet.TestDispatcherServlet  : Initializing Servlet ''
+09:54:12  2026-07-20T02:54:12.692Z  INFO [asset-service,] 60 --- [asset-service] [           main] o.s.t.web.servlet.TestDispatcherServlet  : Completed initialization in 1 ms
+09:54:12  2026-07-20T02:54:12.701Z  INFO [asset-service,] 60 --- [asset-service] [           main] .b.a.c.AssetTransferControllerWebMvcTest : Started AssetTransferControllerWebMvcTest in 0.545 seconds (process running for 9.02)
+09:54:12  [INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.614 s -- in com.bimlab.asset.controller.AssetTransferControllerWebMvcTest
+09:54:12  [INFO] Running com.bimlab.asset.controller.PurchaseRequestControllerWebMvcTest
+09:54:12  2026-07-20T02:54:12.759Z  INFO [asset-service,] 60 --- [asset-service] [           main] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.bimlab.asset.controller.PurchaseRequestControllerWebMvcTest]: PurchaseRequestControllerWebMvcTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+09:54:12  2026-07-20T02:54:12.764Z  INFO [asset-service,] 60 --- [asset-service] [           main] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.bimlab.asset.AssetServiceApplication for test class com.bimlab.asset.controller.PurchaseRequestControllerWebMvcTest
+09:54:12  2026-07-20T02:54:12.769Z  INFO [asset-service,] 60 --- [asset-service] [           main] o.s.b.d.r.RestartApplicationListener     : Restart disabled due to context in which it is running
+09:54:12  
+09:54:12    .   ____          _            __ _ _
+09:54:12   /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+09:54:12  ( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+09:54:12   \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+09:54:12    '  |____| .__|_| |_|_| |_\__, | / / / /
+09:54:12   =========|_|==============|___/=/_/_/_/
+09:54:12  
+09:54:12   :: Spring Boot ::                (v3.4.5)
+09:54:12  
+09:54:12  2026-07-20T02:54:12.788Z  INFO [asset-service,] 60 --- [asset-service] [           main] .a.c.PurchaseRequestControllerWebMvcTest : Starting PurchaseRequestControllerWebMvcTest using Java 17.0.15 with PID 60 (started by root in /var/jenkins_home/workspace/bimlab_qlvt_test/asset-service)
+09:54:12  2026-07-20T02:54:12.788Z  INFO [asset-service,] 60 --- [asset-service] [           main] .a.c.PurchaseRequestControllerWebMvcTest : No active profile set, falling back to 1 default profile: "default"
+09:54:13  2026-07-20T02:54:13.081Z  INFO [asset-service,] 60 --- [asset-service] [           main] o.s.b.t.m.w.SpringBootMockServletContext : Initializing Spring TestDispatcherServlet ''
+09:54:13  2026-07-20T02:54:13.082Z  INFO [asset-service,] 60 --- [asset-service] [           main] o.s.t.web.servlet.TestDispatcherServlet  : Initializing Servlet ''
+09:54:13  2026-07-20T02:54:13.083Z  INFO [asset-service,] 60 --- [asset-service] [           main] o.s.t.web.servlet.TestDispatcherServlet  : Completed initialization in 1 ms
+09:54:13  2026-07-20T02:54:13.089Z  INFO [asset-service,] 60 --- [asset-service] [           main] .a.c.PurchaseRequestControllerWebMvcTest : Started PurchaseRequestControllerWebMvcTest in 0.32 seconds (process running for 9.409)
+09:54:13  2026-07-20T02:54:13.107Z  WARN [asset-service,] 60 --- [asset-service] [           main] ration$PageModule$WarningLoggingModifier : Serializing PageImpl instances as-is is not supported, meaning that there is no guarantee about the stability of the resulting JSON structure!
+09:54:13  	For a stable JSON structure, please use Spring Data's PagedModel (globally via @EnableSpringDataWebSupport(pageSerializationMode = VIA_DTO))
+09:54:13  	or Spring HATEOAS and Spring Data's PagedResourcesAssembler as documented in https://docs.spring.io/spring-data/commons/reference/repositories/core-extensions.html#core.web.pageables.
+09:54:13  
+09:54:13  [INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.357 s -- in com.bimlab.asset.controller.PurchaseRequestControllerWebMvcTest
+09:54:13  [INFO] Running com.bimlab.asset.controller.ContractControllerWebMvcTest
+09:54:13  2026-07-20T02:54:13.121Z  INFO [asset-service,] 60 --- [asset-service] [           main] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.bimlab.asset.controller.ContractControllerWebMvcTest]: ContractControllerWebMvcTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+09:54:13  2026-07-20T02:54:13.127Z  INFO [asset-service,] 60 --- [asset-service] [           main] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.bimlab.asset.AssetServiceApplication for test class com.bimlab.asset.controller.ContractControllerWebMvcTest
+09:54:13  2026-07-20T02:54:13.129Z  INFO [asset-service,] 60 --- [asset-service] [           main] o.s.b.d.r.RestartApplicationListener     : Restart disabled due to context in which it is running
+09:54:13  
+09:54:13    .   ____          _            __ _ _
+09:54:13   /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+09:54:13  ( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+09:54:13   \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+09:54:13    '  |____| .__|_| |_|_| |_\__, | / / / /
+09:54:13   =========|_|==============|___/=/_/_/_/
+09:54:13  
+09:54:13   :: Spring Boot ::                (v3.4.5)
+09:54:13  
+09:54:13  2026-07-20T02:54:13.142Z  INFO [asset-service,] 60 --- [asset-service] [           main] c.b.a.c.ContractControllerWebMvcTest     : Starting ContractControllerWebMvcTest using Java 17.0.15 with PID 60 (started by root in /var/jenkins_home/workspace/bimlab_qlvt_test/asset-service)
+09:54:13  2026-07-20T02:54:13.143Z  INFO [asset-service,] 60 --- [asset-service] [           main] c.b.a.c.ContractControllerWebMvcTest     : No active profile set, falling back to 1 default profile: "default"
+09:54:13  2026-07-20T02:54:13.407Z  INFO [asset-service,] 60 --- [asset-service] [           main] o.s.b.t.m.w.SpringBootMockServletContext : Initializing Spring TestDispatcherServlet ''
+09:54:13  2026-07-20T02:54:13.408Z  INFO [asset-service,] 60 --- [asset-service] [           main] o.s.t.web.servlet.TestDispatcherServlet  : Initializing Servlet ''
+09:54:13  2026-07-20T02:54:13.410Z  INFO [asset-service,] 60 --- [asset-service] [           main] o.s.t.web.servlet.TestDispatcherServlet  : Completed initialization in 2 ms
+09:54:13  2026-07-20T02:54:13.418Z  INFO [asset-service,] 60 --- [asset-service] [           main] c.b.a.c.ContractControllerWebMvcTest     : Started ContractControllerWebMvcTest in 0.288 seconds (process running for 9.737)
+09:54:13  2026-07-20T02:54:13.434Z  INFO [asset-service,] 60 --- [asset-service] [           main] c.b.asset.config.GlobalExceptionHandler  : 403 forbidden: Access Denied
+09:54:13  2026-07-20T02:54:13.447Z  WARN [asset-service,] 60 --- [asset-service] [           main] ration$PageModule$WarningLoggingModifier : Serializing PageImpl instances as-is is not supported, meaning that there is no guarantee about the stability of the resulting JSON structure!
+09:54:13  	For a stable JSON structure, please use Spring Data's PagedModel (globally via @EnableSpringDataWebSupport(pageSerializationMode = VIA_DTO))
+09:54:13  	or Spring HATEOAS and Spring Data's PagedResourcesAssembler as documented in https://docs.spring.io/spring-data/commons/reference/repositories/core-extensions.html#core.web.pageables.
+09:54:13  
+09:54:13  [INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.347 s -- in com.bimlab.asset.controller.ContractControllerWebMvcTest
+09:54:13  [INFO] Running com.bimlab.asset.controller.PagedEndpointWiringTest
+09:54:13  [INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.006 s -- in com.bimlab.asset.controller.PagedEndpointWiringTest
+09:54:13  [INFO] Running com.bimlab.asset.controller.AuditLogControllerWebMvcTest
+09:54:13  2026-07-20T02:54:13.476Z  INFO [asset-service,] 60 --- [asset-service] [           main] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.bimlab.asset.controller.AuditLogControllerWebMvcTest]: AuditLogControllerWebMvcTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+09:54:13  2026-07-20T02:54:13.482Z  INFO [asset-service,] 60 --- [asset-service] [           main] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.bimlab.asset.AssetServiceApplication for test class com.bimlab.asset.controller.AuditLogControllerWebMvcTest
+09:54:13  2026-07-20T02:54:13.485Z  INFO [asset-service,] 60 --- [asset-service] [           main] o.s.b.d.r.RestartApplicationListener     : Restart disabled due to context in which it is running
+09:54:13  
+09:54:13    .   ____          _            __ _ _
+09:54:13   /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+09:54:13  ( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+09:54:13   \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+09:54:13    '  |____| .__|_| |_|_| |_\__, | / / / /
+09:54:13   =========|_|==============|___/=/_/_/_/
+09:54:13  
+09:54:13   :: Spring Boot ::                (v3.4.5)
+09:54:13  
+09:54:13  2026-07-20T02:54:13.508Z  INFO [asset-service,] 60 --- [asset-service] [           main] c.b.a.c.AuditLogControllerWebMvcTest     : Starting AuditLogControllerWebMvcTest using Java 17.0.15 with PID 60 (started by root in /var/jenkins_home/workspace/bimlab_qlvt_test/asset-service)
+09:54:13  2026-07-20T02:54:13.508Z  INFO [asset-service,] 60 --- [asset-service] [           main] c.b.a.c.AuditLogControllerWebMvcTest     : No active profile set, falling back to 1 default profile: "default"
+09:54:13  2026-07-20T02:54:13.735Z  INFO [asset-service,] 60 --- [asset-service] [           main] o.s.b.t.m.w.SpringBootMockServletContext : Initializing Spring TestDispatcherServlet ''
+09:54:13  2026-07-20T02:54:13.735Z  INFO [asset-service,] 60 --- [asset-service] [           main] o.s.t.web.servlet.TestDispatcherServlet  : Initializing Servlet ''
+09:54:13  2026-07-20T02:54:13.735Z  INFO [asset-service,] 60 --- [asset-service] [           main] o.s.t.web.servlet.TestDispatcherServlet  : Completed initialization in 0 ms
+09:54:13  2026-07-20T02:54:13.741Z  INFO [asset-service,] 60 --- [asset-service] [           main] c.b.a.c.AuditLogControllerWebMvcTest     : Started AuditLogControllerWebMvcTest in 0.256 seconds (process running for 10.06)
+09:54:13  2026-07-20T02:54:13.749Z  WARN [asset-service,] 60 --- [asset-service] [           main] ration$PageModule$WarningLoggingModifier : Serializing PageImpl instances as-is is not supported, meaning that there is no guarantee about the stability of the resulting JSON structure!
+09:54:13  	For a stable JSON structure, please use Spring Data's PagedModel (globally via @EnableSpringDataWebSupport(pageSerializationMode = VIA_DTO))
+09:54:13  	or Spring HATEOAS and Spring Data's PagedResourcesAssembler as documented in https://docs.spring.io/spring-data/commons/reference/repositories/core-extensions.html#core.web.pageables.
+09:54:13  
+09:54:13  [INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.289 s -- in com.bimlab.asset.controller.AuditLogControllerWebMvcTest
+09:54:13  [INFO] Running com.bimlab.asset.controller.AssetControllerWebMvcTest
+09:54:14  2026-07-20T02:54:13.765Z  INFO [asset-service,] 60 --- [asset-service] [           main] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.bimlab.asset.controller.AssetControllerWebMvcTest]: AssetControllerWebMvcTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+09:54:14  2026-07-20T02:54:13.769Z  INFO [asset-service,] 60 --- [asset-service] [           main] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.bimlab.asset.AssetServiceApplication for test class com.bimlab.asset.controller.AssetControllerWebMvcTest
+09:54:14  2026-07-20T02:54:13.771Z  INFO [asset-service,] 60 --- [asset-service] [           main] o.s.b.d.r.RestartApplicationListener     : Restart disabled due to context in which it is running
+09:54:14  
+09:54:14    .   ____          _            __ _ _
+09:54:14   /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+09:54:14  ( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+09:54:14   \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+09:54:14    '  |____| .__|_| |_|_| |_\__, | / / / /
+09:54:14   =========|_|==============|___/=/_/_/_/
+09:54:14  
+09:54:14   :: Spring Boot ::                (v3.4.5)
+09:54:14  
+09:54:14  2026-07-20T02:54:13.782Z  INFO [asset-service,] 60 --- [asset-service] [           main] c.b.a.c.AssetControllerWebMvcTest        : Starting AssetControllerWebMvcTest using Java 17.0.15 with PID 60 (started by root in /var/jenkins_home/workspace/bimlab_qlvt_test/asset-service)
+09:54:14  2026-07-20T02:54:13.782Z  INFO [asset-service,] 60 --- [asset-service] [           main] c.b.a.c.AssetControllerWebMvcTest        : No active profile set, falling back to 1 default profile: "default"
+09:54:14  2026-07-20T02:54:13.986Z  INFO [asset-service,] 60 --- [asset-service] [           main] o.s.b.t.m.w.SpringBootMockServletContext : Initializing Spring TestDispatcherServlet ''
+09:54:14  2026-07-20T02:54:13.987Z  INFO [asset-service,] 60 --- [asset-service] [           main] o.s.t.web.servlet.TestDispatcherServlet  : Initializing Servlet ''
+09:54:14  2026-07-20T02:54:13.987Z  INFO [asset-service,] 60 --- [asset-service] [           main] o.s.t.web.servlet.TestDispatcherServlet  : Completed initialization in 0 ms
+09:54:14  2026-07-20T02:54:13.994Z  INFO [asset-service,] 60 --- [asset-service] [           main] c.b.a.c.AssetControllerWebMvcTest        : Started AssetControllerWebMvcTest in 0.222 seconds (process running for 10.313)
+09:54:14  2026-07-20T02:54:14.001Z  INFO [asset-service,] 60 --- [asset-service] [           main] c.b.asset.config.GlobalExceptionHandler  : 403 forbidden: Access Denied
+09:54:14  2026-07-20T02:54:14.041Z  WARN [asset-service,] 60 --- [asset-service] [           main] ration$PageModule$WarningLoggingModifier : Serializing PageImpl instances as-is is not supported, meaning that there is no guarantee about the stability of the resulting JSON structure!
+09:54:14  	For a stable JSON structure, please use Spring Data's PagedModel (globally via @EnableSpringDataWebSupport(pageSerializationMode = VIA_DTO))
+09:54:14  	or Spring HATEOAS and Spring Data's PagedResourcesAssembler as documented in https://docs.spring.io/spring-data/commons/reference/repositories/core-extensions.html#core.web.pageables.
+09:54:14  
+09:54:14  [INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.282 s -- in com.bimlab.asset.controller.AssetControllerWebMvcTest
+09:54:14  [INFO] Running com.bimlab.asset.controller.SubscriptionControllerWebMvcTest
+09:54:14  2026-07-20T02:54:14.048Z  INFO [asset-service,] 60 --- [asset-service] [           main] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.bimlab.asset.controller.SubscriptionControllerWebMvcTest]: SubscriptionControllerWebMvcTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+09:54:14  2026-07-20T02:54:14.052Z  INFO [asset-service,] 60 --- [asset-service] [           main] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.bimlab.asset.AssetServiceApplication for test class com.bimlab.asset.controller.SubscriptionControllerWebMvcTest
+09:54:14  2026-07-20T02:54:14.055Z  INFO [asset-service,] 60 --- [asset-service] [           main] o.s.b.d.r.RestartApplicationListener     : Restart disabled due to context in which it is running
+09:54:14  
+09:54:14    .   ____          _            __ _ _
+09:54:14   /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+09:54:14  ( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+09:54:14   \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+09:54:14    '  |____| .__|_| |_|_| |_\__, | / / / /
+09:54:14   =========|_|==============|___/=/_/_/_/
+09:54:14  
+09:54:14   :: Spring Boot ::                (v3.4.5)
+09:54:14  
+09:54:14  2026-07-20T02:54:14.075Z  INFO [asset-service,] 60 --- [asset-service] [           main] c.b.a.c.SubscriptionControllerWebMvcTest : Starting SubscriptionControllerWebMvcTest using Java 17.0.15 with PID 60 (started by root in /var/jenkins_home/workspace/bimlab_qlvt_test/asset-service)
+09:54:14  2026-07-20T02:54:14.075Z  INFO [asset-service,] 60 --- [asset-service] [           main] c.b.a.c.SubscriptionControllerWebMvcTest : No active profile set, falling back to 1 default profile: "default"
+09:54:14  2026-07-20T02:54:14.274Z  INFO [asset-service,] 60 --- [asset-service] [           main] o.s.b.t.m.w.SpringBootMockServletContext : Initializing Spring TestDispatcherServlet ''
+09:54:14  2026-07-20T02:54:14.274Z  INFO [asset-service,] 60 --- [asset-service] [           main] o.s.t.web.servlet.TestDispatcherServlet  : Initializing Servlet ''
+09:54:14  2026-07-20T02:54:14.274Z  INFO [asset-service,] 60 --- [asset-service] [           main] o.s.t.web.servlet.TestDispatcherServlet  : Completed initialization in 0 ms
+09:54:14  2026-07-20T02:54:14.279Z  INFO [asset-service,] 60 --- [asset-service] [           main] c.b.a.c.SubscriptionControllerWebMvcTest : Started SubscriptionControllerWebMvcTest in 0.225 seconds (process running for 10.598)
+09:54:14  2026-07-20T02:54:14.286Z  WARN [asset-service,] 60 --- [asset-service] [           main] ration$PageModule$WarningLoggingModifier : Serializing PageImpl instances as-is is not supported, meaning that there is no guarantee about the stability of the resulting JSON structure!
+09:54:14  	For a stable JSON structure, please use Spring Data's PagedModel (globally via @EnableSpringDataWebSupport(pageSerializationMode = VIA_DTO))
+09:54:14  	or Spring HATEOAS and Spring Data's PagedResourcesAssembler as documented in https://docs.spring.io/spring-data/commons/reference/repositories/core-extensions.html#core.web.pageables.
+09:54:14  
+09:54:14  [INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.249 s -- in com.bimlab.asset.controller.SubscriptionControllerWebMvcTest
+09:54:14  [INFO] Running com.bimlab.asset.controller.MaintenanceControllerWebMvcTest
+09:54:14  2026-07-20T02:54:14.300Z  INFO [asset-service,] 60 --- [asset-service] [           main] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.bimlab.asset.controller.MaintenanceControllerWebMvcTest]: MaintenanceControllerWebMvcTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+09:54:14  2026-07-20T02:54:14.302Z  INFO [asset-service,] 60 --- [asset-service] [           main] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.bimlab.asset.AssetServiceApplication for test class com.bimlab.asset.controller.MaintenanceControllerWebMvcTest
+09:54:14  2026-07-20T02:54:14.304Z  INFO [asset-service,] 60 --- [asset-service] [           main] o.s.b.d.r.RestartApplicationListener     : Restart disabled due to context in which it is running
+09:54:14  
+09:54:14    .   ____          _            __ _ _
+09:54:14   /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+09:54:14  ( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+09:54:14   \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+09:54:14    '  |____| .__|_| |_|_| |_\__, | / / / /
+09:54:14   =========|_|==============|___/=/_/_/_/
+09:54:14  
+09:54:14   :: Spring Boot ::                (v3.4.5)
+09:54:14  
+09:54:14  2026-07-20T02:54:14.316Z  INFO [asset-service,] 60 --- [asset-service] [           main] c.b.a.c.MaintenanceControllerWebMvcTest  : Starting MaintenanceControllerWebMvcTest using Java 17.0.15 with PID 60 (started by root in /var/jenkins_home/workspace/bimlab_qlvt_test/asset-service)
+09:54:14  2026-07-20T02:54:14.316Z  INFO [asset-service,] 60 --- [asset-service] [           main] c.b.a.c.MaintenanceControllerWebMvcTest  : No active profile set, falling back to 1 default profile: "default"
+09:54:14  2026-07-20T02:54:14.501Z  INFO [asset-service,] 60 --- [asset-service] [           main] o.s.b.t.m.w.SpringBootMockServletContext : Initializing Spring TestDispatcherServlet ''
+09:54:14  2026-07-20T02:54:14.502Z  INFO [asset-service,] 60 --- [asset-service] [           main] o.s.t.web.servlet.TestDispatcherServlet  : Initializing Servlet ''
+09:54:14  2026-07-20T02:54:14.502Z  INFO [asset-service,] 60 --- [asset-service] [           main] o.s.t.web.servlet.TestDispatcherServlet  : Completed initialization in 0 ms
+09:54:14  2026-07-20T02:54:14.508Z  INFO [asset-service,] 60 --- [asset-service] [           main] c.b.a.c.MaintenanceControllerWebMvcTest  : Started MaintenanceControllerWebMvcTest in 0.203 seconds (process running for 10.827)
+09:54:14  2026-07-20T02:54:14.534Z  WARN [asset-service,] 60 --- [asset-service] [           main] ration$PageModule$WarningLoggingModifier : Serializing PageImpl instances as-is is not supported, meaning that there is no guarantee about the stability of the resulting JSON structure!
+09:54:14  	For a stable JSON structure, please use Spring Data's PagedModel (globally via @EnableSpringDataWebSupport(pageSerializationMode = VIA_DTO))
+09:54:14  	or Spring HATEOAS and Spring Data's PagedResourcesAssembler as documented in https://docs.spring.io/spring-data/commons/reference/repositories/core-extensions.html#core.web.pageables.
+09:54:14  
+09:54:14  [INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.241 s -- in com.bimlab.asset.controller.MaintenanceControllerWebMvcTest
+09:54:14  [INFO] Running com.bimlab.asset.controller.ContractUploadControllerTest
+09:54:14  [INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.001 s -- in com.bimlab.asset.controller.ContractUploadControllerTest
+09:54:14  [INFO] Running com.bimlab.asset.controller.MeControllerWebMvcTest
+09:54:14  2026-07-20T02:54:14.544Z  INFO [asset-service,] 60 --- [asset-service] [           main] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.bimlab.asset.controller.MeControllerWebMvcTest]: MeControllerWebMvcTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+09:54:14  2026-07-20T02:54:14.550Z  INFO [asset-service,] 60 --- [asset-service] [           main] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.bimlab.asset.AssetServiceApplication for test class com.bimlab.asset.controller.MeControllerWebMvcTest
+09:54:14  2026-07-20T02:54:14.552Z  INFO [asset-service,] 60 --- [asset-service] [           main] o.s.b.d.r.RestartApplicationListener     : Restart disabled due to context in which it is running
+09:54:14  
+09:54:14    .   ____          _            __ _ _
+09:54:14   /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+09:54:14  ( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+09:54:14   \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+09:54:14    '  |____| .__|_| |_|_| |_\__, | / / / /
+09:54:14   =========|_|==============|___/=/_/_/_/
+09:54:14  
+09:54:14   :: Spring Boot ::                (v3.4.5)
+09:54:14  
+09:54:14  2026-07-20T02:54:14.571Z  INFO [asset-service,] 60 --- [asset-service] [           main] c.b.a.controller.MeControllerWebMvcTest  : Starting MeControllerWebMvcTest using Java 17.0.15 with PID 60 (started by root in /var/jenkins_home/workspace/bimlab_qlvt_test/asset-service)
+09:54:14  2026-07-20T02:54:14.571Z  INFO [asset-service,] 60 --- [asset-service] [           main] c.b.a.controller.MeControllerWebMvcTest  : No active profile set, falling back to 1 default profile: "default"
+09:54:14  2026-07-20T02:54:14.723Z  INFO [asset-service,] 60 --- [asset-service] [           main] o.s.b.t.m.w.SpringBootMockServletContext : Initializing Spring TestDispatcherServlet ''
+09:54:14  2026-07-20T02:54:14.723Z  INFO [asset-service,] 60 --- [asset-service] [           main] o.s.t.web.servlet.TestDispatcherServlet  : Initializing Servlet ''
+09:54:14  2026-07-20T02:54:14.724Z  INFO [asset-service,] 60 --- [asset-service] [           main] o.s.t.web.servlet.TestDispatcherServlet  : Completed initialization in 1 ms
+09:54:14  2026-07-20T02:54:14.728Z  INFO [asset-service,] 60 --- [asset-service] [           main] c.b.a.controller.MeControllerWebMvcTest  : Started MeControllerWebMvcTest in 0.176 seconds (process running for 11.048)
+09:54:14  [INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.214 s -- in com.bimlab.asset.controller.MeControllerWebMvcTest
+09:54:14  [INFO] Running com.bimlab.asset.config.GlobalExceptionHandlerTest
+09:54:14  2026-07-20T02:54:14.757Z  INFO [asset-service,] 60 --- [asset-service] [           main] c.b.asset.config.GlobalExceptionHandler  : 409 conflict: Cannot delete asset id=99: maintenance_records.fk_maint_asset still references it
+09:54:14  2026-07-20T02:54:14.758Z  INFO [asset-service,] 60 --- [asset-service] [           main] c.b.asset.config.GlobalExceptionHandler  : 400 bad request: Số hợp đồng đã tồn tại: HD-2026-001 (asset.contracts unique constraint uk_contract_number)
+09:54:14  2026-07-20T02:54:14.758Z  INFO [asset-service,] 60 --- [asset-service] [           main] c.b.asset.config.GlobalExceptionHandler  : 403 forbidden: Chỉ asset_manage mới được phép sửa siteId=10 departmentId=20
+09:54:14  2026-07-20T02:54:14.759Z  INFO [asset-service,] 60 --- [asset-service] [           main] c.b.asset.config.GlobalExceptionHandler  : 404 not found: PurchaseRequest id=42 in schema asset.purchase_requests not present
+09:54:14  [INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.002 s -- in com.bimlab.asset.config.GlobalExceptionHandlerTest
+09:54:14  [INFO] Running com.bimlab.asset.config.MethodSecurityBootSmokeTest
+09:54:15  2026-07-20T02:54:14.761Z  INFO [asset-service,] 60 --- [asset-service] [           main] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.bimlab.asset.config.MethodSecurityBootSmokeTest]: MethodSecurityBootSmokeTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+09:54:15  2026-07-20T02:54:14.765Z  INFO [asset-service,] 60 --- [asset-service] [           main] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.bimlab.asset.AssetServiceApplication for test class com.bimlab.asset.config.MethodSecurityBootSmokeTest
+09:54:15  2026-07-20T02:54:14.768Z  INFO [asset-service,] 60 --- [asset-service] [           main] o.s.b.d.r.RestartApplicationListener     : Restart disabled due to context in which it is running
+09:54:15  
+09:54:15    .   ____          _            __ _ _
+09:54:15   /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+09:54:15  ( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+09:54:15   \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+09:54:15    '  |____| .__|_| |_|_| |_\__, | / / / /
+09:54:15   =========|_|==============|___/=/_/_/_/
+09:54:15  
+09:54:15   :: Spring Boot ::                (v3.4.5)
+09:54:15  
+09:54:15  2026-07-20T02:54:14.779Z  INFO [asset-service,] 60 --- [asset-service] [           main] c.b.a.c.MethodSecurityBootSmokeTest      : Starting MethodSecurityBootSmokeTest using Java 17.0.15 with PID 60 (started by root in /var/jenkins_home/workspace/bimlab_qlvt_test/asset-service)
+09:54:15  2026-07-20T02:54:14.779Z  INFO [asset-service,] 60 --- [asset-service] [           main] c.b.a.c.MethodSecurityBootSmokeTest      : The following 1 profile is active: "test"
+09:54:15  2026-07-20T02:54:15.126Z  INFO [asset-service,] 60 --- [asset-service] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+09:54:15  2026-07-20T02:54:15.138Z  INFO [asset-service,] 60 --- [asset-service] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 11 ms. Found 18 JPA repository interfaces.
+09:54:15  2026-07-20T02:54:15.509Z  INFO [asset-service,] 60 --- [asset-service] [           main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+09:54:15  2026-07-20T02:54:15.510Z  INFO [asset-service,] 60 --- [asset-service] [           main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+09:54:15  2026-07-20T02:54:15.518Z  INFO [asset-service,] 60 --- [asset-service] [           main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+09:54:15  2026-07-20T02:54:15.519Z  INFO [asset-service,] 60 --- [asset-service] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-2 - Starting...
+09:54:15  2026-07-20T02:54:15.520Z  INFO [asset-service,] 60 --- [asset-service] [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-2 - Added connection conn1: url=jdbc:h2:mem:asset-test user=SA
+09:54:15  2026-07-20T02:54:15.520Z  INFO [asset-service,] 60 --- [asset-service] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-2 - Start completed.
+09:54:15  2026-07-20T02:54:15.521Z  WARN [asset-service,] 60 --- [asset-service] [           main] org.hibernate.orm.deprecation            : HHH90000025: H2Dialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+09:54:15  2026-07-20T02:54:15.522Z  INFO [asset-service,] 60 --- [asset-service] [           main] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+09:54:15  	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-2)']
+09:54:15  	Database driver: undefined/unknown
+09:54:15  	Database version: 2.3.232
+09:54:15  	Autocommit mode: undefined/unknown
+09:54:15  	Isolation level: undefined/unknown
+09:54:15  	Minimum pool size: undefined/unknown
+09:54:15  	Maximum pool size: undefined/unknown
+09:54:15  2026-07-20T02:54:15.700Z  INFO [asset-service,] 60 --- [asset-service] [           main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+09:54:15  2026-07-20T02:54:15.716Z  WARN [asset-service,] 60 --- [asset-service] [           main] o.h.t.s.i.ExceptionHandlerLoggedImpl     : GenerationTarget encountered exception accepting command : Error executing DDL "drop schema asset" via JDBC [Schema "ASSET" not found;]
+09:54:15  
+09:54:15  org.hibernate.tool.schema.spi.CommandAcceptanceException: Error executing DDL "drop schema asset" via JDBC [Schema "ASSET" not found;]
+09:54:15  	at org.hibernate.tool.schema.internal.exec.GenerationTargetToDatabase.accept(GenerationTargetToDatabase.java:94) ~[hibernate-core-6.6.13.Final.jar:6.6.13.Final]
+09:54:15  	at org.hibernate.tool.schema.internal.Helper.applySqlString(Helper.java:233) ~[hibernate-core-6.6.13.Final.jar:6.6.13.Final]
+09:54:15  	at org.hibernate.tool.schema.internal.Helper.applySqlStrings(Helper.java:217) ~[hibernate-core-6.6.13.Final.jar:6.6.13.Final]
+09:54:15  	at org.hibernate.tool.schema.internal.SchemaDropperImpl.dropSchemasAndCatalogs(SchemaDropperImpl.java:440) ~[hibernate-core-6.6.13.Final.jar:6.6.13.Final]
+09:54:15  	at org.hibernate.tool.schema.internal.SchemaDropperImpl.dropFromMetadata(SchemaDropperImpl.java:229) ~[hibernate-core-6.6.13.Final.jar:6.6.13.Final]
+09:54:15  	at org.hibernate.tool.schema.internal.SchemaDropperImpl.performDrop(SchemaDropperImpl.java:186) ~[hibernate-core-6.6.13.Final.jar:6.6.13.Final]
+09:54:15  	at org.hibernate.tool.schema.internal.SchemaDropperImpl.doDrop(SchemaDropperImpl.java:156) ~[hibernate-core-6.6.13.Final.jar:6.6.13.Final]
+09:54:15  	at org.hibernate.tool.schema.internal.SchemaDropperImpl.doDrop(SchemaDropperImpl.java:116) ~[hibernate-core-6.6.13.Final.jar:6.6.13.Final]
+09:54:15  	at org.hibernate.tool.schema.spi.SchemaManagementToolCoordinator.performDatabaseAction(SchemaManagementToolCoordinator.java:238) ~[hibernate-core-6.6.13.Final.jar:6.6.13.Final]
+09:54:15  	at org.hibernate.tool.schema.spi.SchemaManagementToolCoordinator.lambda$process$5(SchemaManagementToolCoordinator.java:144) ~[hibernate-core-6.6.13.Final.jar:6.6.13.Final]
+09:54:15  	at java.base/java.util.HashMap.forEach(HashMap.java:1421) ~[na:na]
+09:54:15  	at org.hibernate.tool.schema.spi.SchemaManagementToolCoordinator.process(SchemaManagementToolCoordinator.java:141) ~[hibernate-core-6.6.13.Final.jar:6.6.13.Final]
+09:54:15  	at org.hibernate.boot.internal.SessionFactoryObserverForSchemaExport.sessionFactoryCreated(SessionFactoryObserverForSchemaExport.java:37) ~[hibernate-core-6.6.13.Final.jar:6.6.13.Final]
+09:54:15  	at org.hibernate.internal.SessionFactoryObserverChain.sessionFactoryCreated(SessionFactoryObserverChain.java:35) ~[hibernate-core-6.6.13.Final.jar:6.6.13.Final]
+09:54:15  	at org.hibernate.internal.SessionFactoryImpl.<init>(SessionFactoryImpl.java:324) ~[hibernate-core-6.6.13.Final.jar:6.6.13.Final]
+09:54:15  	at org.hibernate.boot.internal.SessionFactoryBuilderImpl.build(SessionFactoryBuilderImpl.java:463) ~[hibernate-core-6.6.13.Final.jar:6.6.13.Final]
+09:54:15  	at org.hibernate.jpa.boot.internal.EntityManagerFactoryBuilderImpl.build(EntityManagerFactoryBuilderImpl.java:1517) ~[hibernate-core-6.6.13.Final.jar:6.6.13.Final]
+09:54:15  	at org.springframework.orm.jpa.vendor.SpringHibernateJpaPersistenceProvider.createContainerEntityManagerFactory(SpringHibernateJpaPersistenceProvider.java:66) ~[spring-orm-6.2.6.jar:6.2.6]
+09:54:15  	at org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean.createNativeEntityManagerFactory(LocalContainerEntityManagerFactoryBean.java:390) ~[spring-orm-6.2.6.jar:6.2.6]
+09:54:15  	at org.springframework.orm.jpa.AbstractEntityManagerFactoryBean.buildNativeEntityManagerFactory(AbstractEntityManagerFactoryBean.java:419) ~[spring-orm-6.2.6.jar:6.2.6]
+09:54:15  	at org.springframework.orm.jpa.AbstractEntityManagerFactoryBean.afterPropertiesSet(AbstractEntityManagerFactoryBean.java:400) ~[spring-orm-6.2.6.jar:6.2.6]
+09:54:15  	at org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean.afterPropertiesSet(LocalContainerEntityManagerFactoryBean.java:366) ~[spring-orm-6.2.6.jar:6.2.6]
+09:54:15  	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.invokeInitMethods(AbstractAutowireCapableBeanFactory.java:1865) ~[spring-beans-6.2.6.jar:6.2.6]
+09:54:15  	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.initializeBean(AbstractAutowireCapableBeanFactory.java:1814) ~[spring-beans-6.2.6.jar:6.2.6]
+09:54:15  	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:607) ~[spring-beans-6.2.6.jar:6.2.6]
+09:54:15  	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:529) ~[spring-beans-6.2.6.jar:6.2.6]
+09:54:15  	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:339) ~[spring-beans-6.2.6.jar:6.2.6]
+09:54:15  	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:371) ~[spring-beans-6.2.6.jar:6.2.6]
+09:54:15  	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:337) ~[spring-beans-6.2.6.jar:6.2.6]
+09:54:15  	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:207) ~[spring-beans-6.2.6.jar:6.2.6]
+09:54:15  	at org.springframework.context.support.AbstractApplicationContext.finishBeanFactoryInitialization(AbstractApplicationContext.java:970) ~[spring-context-6.2.6.jar:6.2.6]
+09:54:15  	at org.springframework.context.support.AbstractApplicationContext.refresh(AbstractApplicationContext.java:627) ~[spring-context-6.2.6.jar:6.2.6]
+09:54:15  	at org.springframework.boot.SpringApplication.refresh(SpringApplication.java:753) ~[spring-boot-3.4.5.jar:3.4.5]
+09:54:15  	at org.springframework.boot.SpringApplication.refreshContext(SpringApplication.java:439) ~[spring-boot-3.4.5.jar:3.4.5]
+09:54:15  	at org.springframework.boot.SpringApplication.run(SpringApplication.java:318) ~[spring-boot-3.4.5.jar:3.4.5]
+09:54:15  	at org.springframework.boot.test.context.SpringBootContextLoader.lambda$loadContext$3(SpringBootContextLoader.java:144) ~[spring-boot-test-3.4.5.jar:3.4.5]
+09:54:15  	at org.springframework.util.function.ThrowingSupplier.get(ThrowingSupplier.java:58) ~[spring-core-6.2.6.jar:6.2.6]
+09:54:15  	at org.springframework.util.function.ThrowingSupplier.get(ThrowingSupplier.java:46) ~[spring-core-6.2.6.jar:6.2.6]
+09:54:15  	at org.springframework.boot.SpringApplication.withHook(SpringApplication.java:1462) ~[spring-boot-3.4.5.jar:3.4.5]
+09:54:15  	at org.springframework.boot.test.context.SpringBootContextLoader$ContextLoaderHook.run(SpringBootContextLoader.java:563) ~[spring-boot-test-3.4.5.jar:3.4.5]
+09:54:15  	at org.springframework.boot.test.context.SpringBootContextLoader.loadContext(SpringBootContextLoader.java:144) ~[spring-boot-test-3.4.5.jar:3.4.5]
+09:54:15  	at org.springframework.boot.test.context.SpringBootContextLoader.loadContext(SpringBootContextLoader.java:110) ~[spring-boot-test-3.4.5.jar:3.4.5]
+09:54:15  	at org.springframework.test.context.cache.DefaultCacheAwareContextLoaderDelegate.loadContextInternal(DefaultCacheAwareContextLoaderDelegate.java:225) ~[spring-test-6.2.6.jar:6.2.6]
+09:54:15  	at org.springframework.test.context.cache.DefaultCacheAwareContextLoaderDelegate.loadContext(DefaultCacheAwareContextLoaderDelegate.java:152) ~[spring-test-6.2.6.jar:6.2.6]
+09:54:15  	at org.springframework.test.context.support.DefaultTestContext.getApplicationContext(DefaultTestContext.java:130) ~[spring-test-6.2.6.jar:6.2.6]
+09:54:15  	at org.springframework.test.context.web.ServletTestExecutionListener.setUpRequestContextIfNecessary(ServletTestExecutionListener.java:200) ~[spring-test-6.2.6.jar:6.2.6]
+09:54:15  	at org.springframework.test.context.web.ServletTestExecutionListener.prepareTestInstance(ServletTestExecutionListener.java:139) ~[spring-test-6.2.6.jar:6.2.6]
+09:54:15  	at org.springframework.test.context.TestContextManager.prepareTestInstance(TestContextManager.java:260) ~[spring-test-6.2.6.jar:6.2.6]
+09:54:15  	at org.springframework.test.context.junit.jupiter.SpringExtension.postProcessTestInstance(SpringExtension.java:159) ~[spring-test-6.2.6.jar:6.2.6]
+09:54:15  	at org.junit.jupiter.engine.descriptor.ClassBasedTestDescriptor.lambda$invokeTestInstancePostProcessors$11(ClassBasedTestDescriptor.java:378) ~[junit-jupiter-engine-5.11.4.jar:5.11.4]
+09:54:15  	at org.junit.jupiter.engine.descriptor.ClassBasedTestDescriptor.executeAndMaskThrowable(ClassBasedTestDescriptor.java:383) ~[junit-jupiter-engine-5.11.4.jar:5.11.4]
+09:54:15  	at org.junit.jupiter.engine.descriptor.ClassBasedTestDescriptor.lambda$invokeTestInstancePostProcessors$12(ClassBasedTestDescriptor.java:378) ~[junit-jupiter-engine-5.11.4.jar:5.11.4]
+09:54:15  	at java.base/java.util.stream.ForEachOps$ForEachOp$OfRef.accept(ForEachOps.java:183) ~[na:na]
+09:54:15  	at java.base/java.util.stream.ReferencePipeline$3$1.accept(ReferencePipeline.java:197) ~[na:na]
+09:54:15  	at java.base/java.util.stream.ReferencePipeline$2$1.accept(ReferencePipeline.java:179) ~[na:na]
+09:54:15  	at java.base/java.util.stream.ReferencePipeline$3$1.accept(ReferencePipeline.java:197) ~[na:na]
+09:54:15  	at java.base/java.util.ArrayList$ArrayListSpliterator.forEachRemaining(ArrayList.java:1625) ~[na:na]
+09:54:15  	at java.base/java.util.stream.AbstractPipeline.copyInto(AbstractPipeline.java:509) ~[na:na]
+09:54:15  	at java.base/java.util.stream.AbstractPipeline.wrapAndCopyInto(AbstractPipeline.java:499) ~[na:na]
+09:54:15  	at java.base/java.util.stream.ForEachOps$ForEachOp.evaluateSequential(ForEachOps.java:150) ~[na:na]
+09:54:15  	at java.base/java.util.stream.ForEachOps$ForEachOp$OfRef.evaluateSequential(ForEachOps.java:173) ~[na:na]
+09:54:15  	at java.base/java.util.stream.AbstractPipeline.evaluate(AbstractPipeline.java:234) ~[na:na]
+09:54:15  	at java.base/java.util.stream.ReferencePipeline.forEach(ReferencePipeline.java:596) ~[na:na]
+09:54:15  	at org.junit.jupiter.engine.descriptor.ClassBasedTestDescriptor.invokeTestInstancePostProcessors(ClassBasedTestDescriptor.java:377) ~[junit-jupiter-engine-5.11.4.jar:5.11.4]
+09:54:15  	at org.junit.jupiter.engine.descriptor.ClassBasedTestDescriptor.lambda$instantiateAndPostProcessTestInstance$7(ClassBasedTestDescriptor.java:290) ~[junit-jupiter-engine-5.11.4.jar:5.11.4]
+09:54:15  	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.11.4.jar:1.11.4]
+09:54:15  	at org.junit.jupiter.engine.descriptor.ClassBasedTestDescriptor.instantiateAndPostProcessTestInstance(ClassBasedTestDescriptor.java:289) ~[junit-jupiter-engine-5.11.4.jar:5.11.4]
+09:54:15  	at org.junit.jupiter.engine.descriptor.ClassBasedTestDescriptor.lambda$testInstancesProvider$5(ClassBasedTestDescriptor.java:279) ~[junit-jupiter-engine-5.11.4.jar:5.11.4]
+09:54:15  	at java.base/java.util.Optional.orElseGet(Optional.java:364) ~[na:na]
+09:54:15  	at org.junit.jupiter.engine.descriptor.ClassBasedTestDescriptor.lambda$testInstancesProvider$6(ClassBasedTestDescriptor.java:278) ~[junit-jupiter-engine-5.11.4.jar:5.11.4]
+09:54:15  	at org.junit.jupiter.engine.execution.TestInstancesProvider.getTestInstances(TestInstancesProvider.java:31) ~[junit-jupiter-engine-5.11.4.jar:5.11.4]
+09:54:15  	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.lambda$prepare$1(TestMethodTestDescriptor.java:105) ~[junit-jupiter-engine-5.11.4.jar:5.11.4]
+09:54:15  	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.11.4.jar:1.11.4]
+09:54:15  	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.prepare(TestMethodTestDescriptor.java:104) ~[junit-jupiter-engine-5.11.4.jar:5.11.4]
+09:54:15  	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.prepare(TestMethodTestDescriptor.java:68) ~[junit-jupiter-engine-5.11.4.jar:5.11.4]
+09:54:15  	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$prepare$2(NodeTestTask.java:128) ~[junit-platform-engine-1.11.4.jar:1.11.4]
+09:54:15  	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.11.4.jar:1.11.4]
+09:54:15  	at org.junit.platform.engine.support.hierarchical.NodeTestTask.prepare(NodeTestTask.java:128) ~[junit-platform-engine-1.11.4.jar:1.11.4]
+09:54:15  	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:95) ~[junit-platform-engine-1.11.4.jar:1.11.4]
+09:54:15  	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511) ~[na:na]
+09:54:15  	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.invokeAll(SameThreadHierarchicalTestExecutorService.java:41) ~[junit-platform-engine-1.11.4.jar:1.11.4]
+09:54:15  	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:160) ~[junit-platform-engine-1.11.4.jar:1.11.4]
+09:54:15  	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.11.4.jar:1.11.4]
+09:54:15  	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:146) ~[junit-platform-engine-1.11.4.jar:1.11.4]
+09:54:15  	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137) ~[junit-platform-engine-1.11.4.jar:1.11.4]
+09:54:15  	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:144) ~[junit-platform-engine-1.11.4.jar:1.11.4]
+09:54:15  	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.11.4.jar:1.11.4]
+09:54:15  	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:143) ~[junit-platform-engine-1.11.4.jar:1.11.4]
+09:54:15  	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:100) ~[junit-platform-engine-1.11.4.jar:1.11.4]
+09:54:15  	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511) ~[na:na]
+09:54:15  	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.invokeAll(SameThreadHierarchicalTestExecutorService.java:41) ~[junit-platform-engine-1.11.4.jar:1.11.4]
+09:54:15  	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:160) ~[junit-platform-engine-1.11.4.jar:1.11.4]
+09:54:15  	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.11.4.jar:1.11.4]
+09:54:15  	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:146) ~[junit-platform-engine-1.11.4.jar:1.11.4]
+09:54:15  	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137) ~[junit-platform-engine-1.11.4.jar:1.11.4]
+09:54:15  	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:144) ~[junit-platform-engine-1.11.4.jar:1.11.4]
+09:54:15  	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.11.4.jar:1.11.4]
+09:54:15  	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:143) ~[junit-platform-engine-1.11.4.jar:1.11.4]
+09:54:15  	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:100) ~[junit-platform-engine-1.11.4.jar:1.11.4]
+09:54:15  	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.submit(SameThreadHierarchicalTestExecutorService.java:35) ~[junit-platform-engine-1.11.4.jar:1.11.4]
+09:54:15  	at org.junit.platform.engine.support.hierarchical.HierarchicalTestExecutor.execute(HierarchicalTestExecutor.java:57) ~[junit-platform-engine-1.11.4.jar:1.11.4]
+09:54:15  	at org.junit.platform.engine.support.hierarchical.HierarchicalTestEngine.execute(HierarchicalTestEngine.java:54) ~[junit-platform-engine-1.11.4.jar:1.11.4]
+09:54:15  	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:198) ~[junit-platform-launcher-1.11.4.jar:1.11.4]
+09:54:15  	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:169) ~[junit-platform-launcher-1.11.4.jar:1.11.4]
+09:54:15  	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:93) ~[junit-platform-launcher-1.11.4.jar:1.11.4]
+09:54:15  	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.lambda$execute$0(EngineExecutionOrchestrator.java:58) ~[junit-platform-launcher-1.11.4.jar:1.11.4]
+09:54:15  	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.withInterceptedStreams(EngineExecutionOrchestrator.java:141) ~[junit-platform-launcher-1.11.4.jar:1.11.4]
+09:54:15  	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:57) ~[junit-platform-launcher-1.11.4.jar:1.11.4]
+09:54:15  	at org.junit.platform.launcher.core.DefaultLauncher.execute(DefaultLauncher.java:103) ~[junit-platform-launcher-1.11.4.jar:1.11.4]
+09:54:15  	at org.junit.platform.launcher.core.DefaultLauncher.execute(DefaultLauncher.java:85) ~[junit-platform-launcher-1.11.4.jar:1.11.4]
+09:54:15  	at org.junit.platform.launcher.core.DelegatingLauncher.execute(DelegatingLauncher.java:47) ~[junit-platform-launcher-1.11.4.jar:1.11.4]
+09:54:15  	at org.apache.maven.surefire.junitplatform.LazyLauncher.execute(LazyLauncher.java:56) ~[surefire-junit-platform-3.5.3.jar:3.5.3]
+09:54:15  	at org.apache.maven.surefire.junitplatform.JUnitPlatformProvider.execute(JUnitPlatformProvider.java:194) ~[surefire-junit-platform-3.5.3.jar:3.5.3]
+09:54:15  	at org.apache.maven.surefire.junitplatform.JUnitPlatformProvider.invokeAllTests(JUnitPlatformProvider.java:150) ~[surefire-junit-platform-3.5.3.jar:3.5.3]
+09:54:15  	at org.apache.maven.surefire.junitplatform.JUnitPlatformProvider.invoke(JUnitPlatformProvider.java:124) ~[surefire-junit-platform-3.5.3.jar:3.5.3]
+09:54:15  	at org.apache.maven.surefire.booter.ForkedBooter.runSuitesInProcess(ForkedBooter.java:385) ~[surefire-booter-3.5.3.jar:3.5.3]
+09:54:15  	at org.apache.maven.surefire.booter.ForkedBooter.execute(ForkedBooter.java:162) ~[surefire-booter-3.5.3.jar:3.5.3]
+09:54:15  	at org.apache.maven.surefire.booter.ForkedBooter.run(ForkedBooter.java:507) ~[surefire-booter-3.5.3.jar:3.5.3]
+09:54:15  	at org.apache.maven.surefire.booter.ForkedBooter.main(ForkedBooter.java:495) ~[surefire-booter-3.5.3.jar:3.5.3]
+09:54:15  Caused by: org.h2.jdbc.JdbcSQLSyntaxErrorException: Schema "ASSET" not found; SQL statement:
+09:54:15  drop schema asset [90079-232]
+09:54:15  	at org.h2.message.DbException.getJdbcSQLException(DbException.java:644) ~[h2-2.3.232.jar:2.3.232]
+09:54:15  	at org.h2.message.DbException.getJdbcSQLException(DbException.java:489) ~[h2-2.3.232.jar:2.3.232]
+09:54:15  	at org.h2.message.DbException.get(DbException.java:223) ~[h2-2.3.232.jar:2.3.232]
+09:54:15  	at org.h2.message.DbException.get(DbException.java:199) ~[h2-2.3.232.jar:2.3.232]
+09:54:15  	at org.h2.command.ddl.DropSchema.update(DropSchema.java:44) ~[h2-2.3.232.jar:2.3.232]
+09:54:15  	at org.h2.command.CommandContainer.update(CommandContainer.java:139) ~[h2-2.3.232.jar:2.3.232]
+09:54:15  	at org.h2.command.Command.executeUpdate(Command.java:304) ~[h2-2.3.232.jar:2.3.232]
+09:54:15  	at org.h2.command.Command.executeUpdate(Command.java:248) ~[h2-2.3.232.jar:2.3.232]
+09:54:15  	at org.h2.jdbc.JdbcStatement.executeInternal(JdbcStatement.java:262) ~[h2-2.3.232.jar:2.3.232]
+09:54:15  	at org.h2.jdbc.JdbcStatement.execute(JdbcStatement.java:231) ~[h2-2.3.232.jar:2.3.232]
+09:54:15  	at com.zaxxer.hikari.pool.ProxyStatement.execute(ProxyStatement.java:94) ~[HikariCP-5.1.0.jar:na]
+09:54:15  	at com.zaxxer.hikari.pool.HikariProxyStatement.execute(HikariProxyStatement.java) ~[HikariCP-5.1.0.jar:na]
+09:54:15  	at org.hibernate.tool.schema.internal.exec.GenerationTargetToDatabase.accept(GenerationTargetToDatabase.java:80) ~[hibernate-core-6.6.13.Final.jar:6.6.13.Final]
+09:54:15  	... 118 common frames omitted
+09:54:15  
+09:54:15  2026-07-20T02:54:15.718Z  WARN [asset-service,] 60 --- [asset-service] [           main] o.h.t.s.i.ExceptionHandlerLoggedImpl     : GenerationTarget encountered exception accepting command : Error executing DDL "create schema asset" via JDBC [Schema "ASSET" already exists;]
+09:54:15  
+09:54:15  org.hibernate.tool.schema.spi.CommandAcceptanceException: Error executing DDL "create schema asset" via JDBC [Schema "ASSET" already exists;]
+09:54:15  	at org.hibernate.tool.schema.internal.exec.GenerationTargetToDatabase.accept(GenerationTargetToDatabase.java:94) ~[hibernate-core-6.6.13.Final.jar:6.6.13.Final]
+09:54:15  	at org.hibernate.tool.schema.internal.Helper.applySqlString(Helper.java:233) ~[hibernate-core-6.6.13.Final.jar:6.6.13.Final]
+09:54:15  	at org.hibernate.tool.schema.internal.Helper.applySqlStrings(Helper.java:217) ~[hibernate-core-6.6.13.Final.jar:6.6.13.Final]
+09:54:15  	at org.hibernate.tool.schema.internal.SchemaCreatorImpl.createSchemasAndCatalogs(SchemaCreatorImpl.java:560) ~[hibernate-core-6.6.13.Final.jar:6.6.13.Final]
+09:54:15  	at org.hibernate.tool.schema.internal.SchemaCreatorImpl.createFromMetadata(SchemaCreatorImpl.java:235) ~[hibernate-core-6.6.13.Final.jar:6.6.13.Final]
+09:54:15  	at org.hibernate.tool.schema.internal.SchemaCreatorImpl.performCreation(SchemaCreatorImpl.java:174) ~[hibernate-core-6.6.13.Final.jar:6.6.13.Final]
+09:54:15  	at org.hibernate.tool.schema.internal.SchemaCreatorImpl.doCreation(SchemaCreatorImpl.java:144) ~[hibernate-core-6.6.13.Final.jar:6.6.13.Final]
+09:54:15  	at org.hibernate.tool.schema.internal.SchemaCreatorImpl.doCreation(SchemaCreatorImpl.java:120) ~[hibernate-core-6.6.13.Final.jar:6.6.13.Final]
+09:54:15  	at org.hibernate.tool.schema.spi.SchemaManagementToolCoordinator.performDatabaseAction(SchemaManagementToolCoordinator.java:250) ~[hibernate-core-6.6.13.Final.jar:6.6.13.Final]
+09:54:15  	at org.hibernate.tool.schema.spi.SchemaManagementToolCoordinator.lambda$process$5(SchemaManagementToolCoordinator.java:144) ~[hibernate-core-6.6.13.Final.jar:6.6.13.Final]
+09:54:15  	at java.base/java.util.HashMap.forEach(HashMap.java:1421) ~[na:na]
+09:54:15  	at org.hibernate.tool.schema.spi.SchemaManagementToolCoordinator.process(SchemaManagementToolCoordinator.java:141) ~[hibernate-core-6.6.13.Final.jar:6.6.13.Final]
+09:54:15  	at org.hibernate.boot.internal.SessionFactoryObserverForSchemaExport.sessionFactoryCreated(SessionFactoryObserverForSchemaExport.java:37) ~[hibernate-core-6.6.13.Final.jar:6.6.13.Final]
+09:54:15  	at org.hibernate.internal.SessionFactoryObserverChain.sessionFactoryCreated(SessionFactoryObserverChain.java:35) ~[hibernate-core-6.6.13.Final.jar:6.6.13.Final]
+09:54:15  	at org.hibernate.internal.SessionFactoryImpl.<init>(SessionFactoryImpl.java:324) ~[hibernate-core-6.6.13.Final.jar:6.6.13.Final]
+09:54:15  	at org.hibernate.boot.internal.SessionFactoryBuilderImpl.build(SessionFactoryBuilderImpl.java:463) ~[hibernate-core-6.6.13.Final.jar:6.6.13.Final]
+09:54:15  	at org.hibernate.jpa.boot.internal.EntityManagerFactoryBuilderImpl.build(EntityManagerFactoryBuilderImpl.java:1517) ~[hibernate-core-6.6.13.Final.jar:6.6.13.Final]
+09:54:15  	at org.springframework.orm.jpa.vendor.SpringHibernateJpaPersistenceProvider.createContainerEntityManagerFactory(SpringHibernateJpaPersistenceProvider.java:66) ~[spring-orm-6.2.6.jar:6.2.6]
+09:54:15  	at org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean.createNativeEntityManagerFactory(LocalContainerEntityManagerFactoryBean.java:390) ~[spring-orm-6.2.6.jar:6.2.6]
+09:54:15  	at org.springframework.orm.jpa.AbstractEntityManagerFactoryBean.buildNativeEntityManagerFactory(AbstractEntityManagerFactoryBean.java:419) ~[spring-orm-6.2.6.jar:6.2.6]
+09:54:15  	at org.springframework.orm.jpa.AbstractEntityManagerFactoryBean.afterPropertiesSet(AbstractEntityManagerFactoryBean.java:400) ~[spring-orm-6.2.6.jar:6.2.6]
+09:54:15  	at org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean.afterPropertiesSet(LocalContainerEntityManagerFactoryBean.java:366) ~[spring-orm-6.2.6.jar:6.2.6]
+09:54:15  	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.invokeInitMethods(AbstractAutowireCapableBeanFactory.java:1865) ~[spring-beans-6.2.6.jar:6.2.6]
+09:54:15  	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.initializeBean(AbstractAutowireCapableBeanFactory.java:1814) ~[spring-beans-6.2.6.jar:6.2.6]
+09:54:15  	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:607) ~[spring-beans-6.2.6.jar:6.2.6]
+09:54:15  	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:529) ~[spring-beans-6.2.6.jar:6.2.6]
+09:54:15  	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:339) ~[spring-beans-6.2.6.jar:6.2.6]
+09:54:15  	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:371) ~[spring-beans-6.2.6.jar:6.2.6]
+09:54:15  	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:337) ~[spring-beans-6.2.6.jar:6.2.6]
+09:54:15  	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:207) ~[spring-beans-6.2.6.jar:6.2.6]
+09:54:15  	at org.springframework.context.support.AbstractApplicationContext.finishBeanFactoryInitialization(AbstractApplicationContext.java:970) ~[spring-context-6.2.6.jar:6.2.6]
+09:54:15  	at org.springframework.context.support.AbstractApplicationContext.refresh(AbstractApplicationContext.java:627) ~[spring-context-6.2.6.jar:6.2.6]
+09:54:15  	at org.springframework.boot.SpringApplication.refresh(SpringApplication.java:753) ~[spring-boot-3.4.5.jar:3.4.5]
+09:54:15  	at org.springframework.boot.SpringApplication.refreshContext(SpringApplication.java:439) ~[spring-boot-3.4.5.jar:3.4.5]
+09:54:15  	at org.springframework.boot.SpringApplication.run(SpringApplication.java:318) ~[spring-boot-3.4.5.jar:3.4.5]
+09:54:15  	at org.springframework.boot.test.context.SpringBootContextLoader.lambda$loadContext$3(SpringBootContextLoader.java:144) ~[spring-boot-test-3.4.5.jar:3.4.5]
+09:54:15  	at org.springframework.util.function.ThrowingSupplier.get(ThrowingSupplier.java:58) ~[spring-core-6.2.6.jar:6.2.6]
+09:54:15  	at org.springframework.util.function.ThrowingSupplier.get(ThrowingSupplier.java:46) ~[spring-core-6.2.6.jar:6.2.6]
+09:54:15  	at org.springframework.boot.SpringApplication.withHook(SpringApplication.java:1462) ~[spring-boot-3.4.5.jar:3.4.5]
+09:54:15  	at org.springframework.boot.test.context.SpringBootContextLoader$ContextLoaderHook.run(SpringBootContextLoader.java:563) ~[spring-boot-test-3.4.5.jar:3.4.5]
+09:54:15  	at org.springframework.boot.test.context.SpringBootContextLoader.loadContext(SpringBootContextLoader.java:144) ~[spring-boot-test-3.4.5.jar:3.4.5]
+09:54:15  	at org.springframework.boot.test.context.SpringBootContextLoader.loadContext(SpringBootContextLoader.java:110) ~[spring-boot-test-3.4.5.jar:3.4.5]
+09:54:15  	at org.springframework.test.context.cache.DefaultCacheAwareContextLoaderDelegate.loadContextInternal(DefaultCacheAwareContextLoaderDelegate.java:225) ~[spring-test-6.2.6.jar:6.2.6]
+09:54:15  	at org.springframework.test.context.cache.DefaultCacheAwareContextLoaderDelegate.loadContext(DefaultCacheAwareContextLoaderDelegate.java:152) ~[spring-test-6.2.6.jar:6.2.6]
+09:54:15  	at org.springframework.test.context.support.DefaultTestContext.getApplicationContext(DefaultTestContext.java:130) ~[spring-test-6.2.6.jar:6.2.6]
+09:54:15  	at org.springframework.test.context.web.ServletTestExecutionListener.setUpRequestContextIfNecessary(ServletTestExecutionListener.java:200) ~[spring-test-6.2.6.jar:6.2.6]
+09:54:15  	at org.springframework.test.context.web.ServletTestExecutionListener.prepareTestInstance(ServletTestExecutionListener.java:139) ~[spring-test-6.2.6.jar:6.2.6]
+09:54:15  	at org.springframework.test.context.TestContextManager.prepareTestInstance(TestContextManager.java:260) ~[spring-test-6.2.6.jar:6.2.6]
+09:54:15  	at org.springframework.test.context.junit.jupiter.SpringExtension.postProcessTestInstance(SpringExtension.java:159) ~[spring-test-6.2.6.jar:6.2.6]
+09:54:15  	at org.junit.jupiter.engine.descriptor.ClassBasedTestDescriptor.lambda$invokeTestInstancePostProcessors$11(ClassBasedTestDescriptor.java:378) ~[junit-jupiter-engine-5.11.4.jar:5.11.4]
+09:54:15  	at org.junit.jupiter.engine.descriptor.ClassBasedTestDescriptor.executeAndMaskThrowable(ClassBasedTestDescriptor.java:383) ~[junit-jupiter-engine-5.11.4.jar:5.11.4]
+09:54:15  	at org.junit.jupiter.engine.descriptor.ClassBasedTestDescriptor.lambda$invokeTestInstancePostProcessors$12(ClassBasedTestDescriptor.java:378) ~[junit-jupiter-engine-5.11.4.jar:5.11.4]
+09:54:15  	at java.base/java.util.stream.ForEachOps$ForEachOp$OfRef.accept(ForEachOps.java:183) ~[na:na]
+09:54:15  	at java.base/java.util.stream.ReferencePipeline$3$1.accept(ReferencePipeline.java:197) ~[na:na]
+09:54:15  	at java.base/java.util.stream.ReferencePipeline$2$1.accept(ReferencePipeline.java:179) ~[na:na]
+09:54:15  	at java.base/java.util.stream.ReferencePipeline$3$1.accept(ReferencePipeline.java:197) ~[na:na]
+09:54:15  	at java.base/java.util.ArrayList$ArrayListSpliterator.forEachRemaining(ArrayList.java:1625) ~[na:na]
+09:54:15  	at java.base/java.util.stream.AbstractPipeline.copyInto(AbstractPipeline.java:509) ~[na:na]
+09:54:15  	at java.base/java.util.stream.AbstractPipeline.wrapAndCopyInto(AbstractPipeline.java:499) ~[na:na]
+09:54:15  	at java.base/java.util.stream.ForEachOps$ForEachOp.evaluateSequential(ForEachOps.java:150) ~[na:na]
+09:54:15  	at java.base/java.util.stream.ForEachOps$ForEachOp$OfRef.evaluateSequential(ForEachOps.java:173) ~[na:na]
+09:54:15  	at java.base/java.util.stream.AbstractPipeline.evaluate(AbstractPipeline.java:234) ~[na:na]
+09:54:15  	at java.base/java.util.stream.ReferencePipeline.forEach(ReferencePipeline.java:596) ~[na:na]
+09:54:15  	at org.junit.jupiter.engine.descriptor.ClassBasedTestDescriptor.invokeTestInstancePostProcessors(ClassBasedTestDescriptor.java:377) ~[junit-jupiter-engine-5.11.4.jar:5.11.4]
+09:54:15  	at org.junit.jupiter.engine.descriptor.ClassBasedTestDescriptor.lambda$instantiateAndPostProcessTestInstance$7(ClassBasedTestDescriptor.java:290) ~[junit-jupiter-engine-5.11.4.jar:5.11.4]
+09:54:15  	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.11.4.jar:1.11.4]
+09:54:15  	at org.junit.jupiter.engine.descriptor.ClassBasedTestDescriptor.instantiateAndPostProcessTestInstance(ClassBasedTestDescriptor.java:289) ~[junit-jupiter-engine-5.11.4.jar:5.11.4]
+09:54:15  	at org.junit.jupiter.engine.descriptor.ClassBasedTestDescriptor.lambda$testInstancesProvider$5(ClassBasedTestDescriptor.java:279) ~[junit-jupiter-engine-5.11.4.jar:5.11.4]
+09:54:15  	at java.base/java.util.Optional.orElseGet(Optional.java:364) ~[na:na]
+09:54:15  	at org.junit.jupiter.engine.descriptor.ClassBasedTestDescriptor.lambda$testInstancesProvider$6(ClassBasedTestDescriptor.java:278) ~[junit-jupiter-engine-5.11.4.jar:5.11.4]
+09:54:15  	at org.junit.jupiter.engine.execution.TestInstancesProvider.getTestInstances(TestInstancesProvider.java:31) ~[junit-jupiter-engine-5.11.4.jar:5.11.4]
+09:54:15  	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.lambda$prepare$1(TestMethodTestDescriptor.java:105) ~[junit-jupiter-engine-5.11.4.jar:5.11.4]
+09:54:15  	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.11.4.jar:1.11.4]
+09:54:15  	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.prepare(TestMethodTestDescriptor.java:104) ~[junit-jupiter-engine-5.11.4.jar:5.11.4]
+09:54:15  	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.prepare(TestMethodTestDescriptor.java:68) ~[junit-jupiter-engine-5.11.4.jar:5.11.4]
+09:54:15  	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$prepare$2(NodeTestTask.java:128) ~[junit-platform-engine-1.11.4.jar:1.11.4]
+09:54:15  	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.11.4.jar:1.11.4]
+09:54:15  	at org.junit.platform.engine.support.hierarchical.NodeTestTask.prepare(NodeTestTask.java:128) ~[junit-platform-engine-1.11.4.jar:1.11.4]
+09:54:15  	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:95) ~[junit-platform-engine-1.11.4.jar:1.11.4]
+09:54:15  	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511) ~[na:na]
+09:54:15  	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.invokeAll(SameThreadHierarchicalTestExecutorService.java:41) ~[junit-platform-engine-1.11.4.jar:1.11.4]
+09:54:15  	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:160) ~[junit-platform-engine-1.11.4.jar:1.11.4]
+09:54:15  	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.11.4.jar:1.11.4]
+09:54:15  	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:146) ~[junit-platform-engine-1.11.4.jar:1.11.4]
+09:54:15  	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137) ~[junit-platform-engine-1.11.4.jar:1.11.4]
+09:54:15  	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:144) ~[junit-platform-engine-1.11.4.jar:1.11.4]
+09:54:15  	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.11.4.jar:1.11.4]
+09:54:15  	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:143) ~[junit-platform-engine-1.11.4.jar:1.11.4]
+09:54:15  	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:100) ~[junit-platform-engine-1.11.4.jar:1.11.4]
+09:54:15  	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511) ~[na:na]
+09:54:15  	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.invokeAll(SameThreadHierarchicalTestExecutorService.java:41) ~[junit-platform-engine-1.11.4.jar:1.11.4]
+09:54:15  	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:160) ~[junit-platform-engine-1.11.4.jar:1.11.4]
+09:54:15  	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.11.4.jar:1.11.4]
+09:54:15  	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:146) ~[junit-platform-engine-1.11.4.jar:1.11.4]
+09:54:15  	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137) ~[junit-platform-engine-1.11.4.jar:1.11.4]
+09:54:15  	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:144) ~[junit-platform-engine-1.11.4.jar:1.11.4]
+09:54:15  	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.11.4.jar:1.11.4]
+09:54:15  	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:143) ~[junit-platform-engine-1.11.4.jar:1.11.4]
+09:54:15  	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:100) ~[junit-platform-engine-1.11.4.jar:1.11.4]
+09:54:15  	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.submit(SameThreadHierarchicalTestExecutorService.java:35) ~[junit-platform-engine-1.11.4.jar:1.11.4]
+09:54:15  	at org.junit.platform.engine.support.hierarchical.HierarchicalTestExecutor.execute(HierarchicalTestExecutor.java:57) ~[junit-platform-engine-1.11.4.jar:1.11.4]
+09:54:15  	at org.junit.platform.engine.support.hierarchical.HierarchicalTestEngine.execute(HierarchicalTestEngine.java:54) ~[junit-platform-engine-1.11.4.jar:1.11.4]
+09:54:15  	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:198) ~[junit-platform-launcher-1.11.4.jar:1.11.4]
+09:54:15  	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:169) ~[junit-platform-launcher-1.11.4.jar:1.11.4]
+09:54:15  	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:93) ~[junit-platform-launcher-1.11.4.jar:1.11.4]
+09:54:15  	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.lambda$execute$0(EngineExecutionOrchestrator.java:58) ~[junit-platform-launcher-1.11.4.jar:1.11.4]
+09:54:15  	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.withInterceptedStreams(EngineExecutionOrchestrator.java:141) ~[junit-platform-launcher-1.11.4.jar:1.11.4]
+09:54:15  	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:57) ~[junit-platform-launcher-1.11.4.jar:1.11.4]
+09:54:15  	at org.junit.platform.launcher.core.DefaultLauncher.execute(DefaultLauncher.java:103) ~[junit-platform-launcher-1.11.4.jar:1.11.4]
+09:54:15  	at org.junit.platform.launcher.core.DefaultLauncher.execute(DefaultLauncher.java:85) ~[junit-platform-launcher-1.11.4.jar:1.11.4]
+09:54:15  	at org.junit.platform.launcher.core.DelegatingLauncher.execute(DelegatingLauncher.java:47) ~[junit-platform-launcher-1.11.4.jar:1.11.4]
+09:54:15  	at org.apache.maven.surefire.junitplatform.LazyLauncher.execute(LazyLauncher.java:56) ~[surefire-junit-platform-3.5.3.jar:3.5.3]
+09:54:15  	at org.apache.maven.surefire.junitplatform.JUnitPlatformProvider.execute(JUnitPlatformProvider.java:194) ~[surefire-junit-platform-3.5.3.jar:3.5.3]
+09:54:15  	at org.apache.maven.surefire.junitplatform.JUnitPlatformProvider.invokeAllTests(JUnitPlatformProvider.java:150) ~[surefire-junit-platform-3.5.3.jar:3.5.3]
+09:54:15  	at org.apache.maven.surefire.junitplatform.JUnitPlatformProvider.invoke(JUnitPlatformProvider.java:124) ~[surefire-junit-platform-3.5.3.jar:3.5.3]
+09:54:15  	at org.apache.maven.surefire.booter.ForkedBooter.runSuitesInProcess(ForkedBooter.java:385) ~[surefire-booter-3.5.3.jar:3.5.3]
+09:54:15  	at org.apache.maven.surefire.booter.ForkedBooter.execute(ForkedBooter.java:162) ~[surefire-booter-3.5.3.jar:3.5.3]
+09:54:15  	at org.apache.maven.surefire.booter.ForkedBooter.run(ForkedBooter.java:507) ~[surefire-booter-3.5.3.jar:3.5.3]
+09:54:15  	at org.apache.maven.surefire.booter.ForkedBooter.main(ForkedBooter.java:495) ~[surefire-booter-3.5.3.jar:3.5.3]
+09:54:15  Caused by: org.h2.jdbc.JdbcSQLSyntaxErrorException: Schema "ASSET" already exists; SQL statement:
+09:54:15  create schema asset [90078-232]
+09:54:15  	at org.h2.message.DbException.getJdbcSQLException(DbException.java:644) ~[h2-2.3.232.jar:2.3.232]
+09:54:15  	at org.h2.message.DbException.getJdbcSQLException(DbException.java:489) ~[h2-2.3.232.jar:2.3.232]
+09:54:15  	at org.h2.message.DbException.get(DbException.java:223) ~[h2-2.3.232.jar:2.3.232]
+09:54:15  	at org.h2.message.DbException.get(DbException.java:199) ~[h2-2.3.232.jar:2.3.232]
+09:54:15  	at org.h2.command.ddl.CreateSchema.update(CreateSchema.java:48) ~[h2-2.3.232.jar:2.3.232]
+09:54:15  	at org.h2.command.CommandContainer.update(CommandContainer.java:139) ~[h2-2.3.232.jar:2.3.232]
+09:54:15  	at org.h2.command.Command.executeUpdate(Command.java:304) ~[h2-2.3.232.jar:2.3.232]
+09:54:15  	at org.h2.command.Command.executeUpdate(Command.java:248) ~[h2-2.3.232.jar:2.3.232]
+09:54:15  	at org.h2.jdbc.JdbcStatement.executeInternal(JdbcStatement.java:262) ~[h2-2.3.232.jar:2.3.232]
+09:54:15  	at org.h2.jdbc.JdbcStatement.execute(JdbcStatement.java:231) ~[h2-2.3.232.jar:2.3.232]
+09:54:15  	at com.zaxxer.hikari.pool.ProxyStatement.execute(ProxyStatement.java:94) ~[HikariCP-5.1.0.jar:na]
+09:54:15  	at com.zaxxer.hikari.pool.HikariProxyStatement.execute(HikariProxyStatement.java) ~[HikariCP-5.1.0.jar:na]
+09:54:15  	at org.hibernate.tool.schema.internal.exec.GenerationTargetToDatabase.accept(GenerationTargetToDatabase.java:80) ~[hibernate-core-6.6.13.Final.jar:6.6.13.Final]
+09:54:15  	... 118 common frames omitted
+09:54:15  
+09:54:15  2026-07-20T02:54:15.771Z  INFO [asset-service,] 60 --- [asset-service] [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+09:54:17  2026-07-20T02:54:16.866Z  INFO [asset-service,] 60 --- [asset-service] [           main] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 3 endpoints beneath base path '/actuator'
+09:54:17  2026-07-20T02:54:17.288Z  INFO [asset-service,] 60 --- [asset-service] [           main] c.b.a.c.MethodSecurityBootSmokeTest      : Started MethodSecurityBootSmokeTest in 2.52 seconds (process running for 13.607)
+09:54:17  [INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.582 s -- in com.bimlab.asset.config.MethodSecurityBootSmokeTest
+09:54:17  [INFO] Running com.bimlab.asset.config.MethodSecurityWiringTest
+09:54:17  [INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.006 s -- in com.bimlab.asset.config.MethodSecurityWiringTest
+09:54:17  [INFO] Running com.bimlab.asset.config.KeycloakResourceServerConfigTest
+09:54:17  [INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.016 s -- in com.bimlab.asset.config.KeycloakResourceServerConfigTest
+09:54:17  [INFO] Running com.bimlab.asset.storage.MinioServiceTest
+09:54:17  2026-07-20T02:54:17.583Z  INFO [asset-service,] 60 --- [asset-service] [           main] com.bimlab.asset.storage.MinioService    : Uploaded file to MinIO: contracts/2026/754ca79b-21b4-4e70-9a53-96427c3aef0d_a.jpg
+09:54:17  2026-07-20T02:54:17.587Z  INFO [asset-service,] 60 --- [asset-service] [           main] com.bimlab.asset.storage.MinioService    : Uploaded file to MinIO: contracts/2026/0bb2df22-3068-4c07-bd1e-9d69bb6abab5_a.png
+09:54:17  2026-07-20T02:54:17.590Z  INFO [asset-service,] 60 --- [asset-service] [           main] com.bimlab.asset.storage.MinioService    : Uploaded file to MinIO: contracts/2026/817a7f03-3bf0-4aaf-8b7d-bc19da380ecf_a.gif
+09:54:17  2026-07-20T02:54:17.596Z  INFO [asset-service,] 60 --- [asset-service] [           main] com.bimlab.asset.storage.MinioService    : Uploaded file to MinIO: contracts/2026/e771c718-02d4-4e6d-9ca1-de52812fae13_a.webp
+09:54:17  2026-07-20T02:54:17.598Z  INFO [asset-service,] 60 --- [asset-service] [           main] com.bimlab.asset.storage.MinioService    : Uploaded file to MinIO: contracts/2026/f1805fdd-b45a-4ec5-9510-7c0c19711fb3_a.bmp
+09:54:17  2026-07-20T02:54:17.602Z  INFO [asset-service,] 60 --- [asset-service] [           main] com.bimlab.asset.storage.MinioService    : Uploaded file to MinIO: contracts/2026/aae6b0f7-400e-468d-a143-4c48f67b5fc3_a.pdf
+09:54:17  2026-07-20T02:54:17.605Z  INFO [asset-service,] 60 --- [asset-service] [           main] com.bimlab.asset.storage.MinioService    : Uploaded file to MinIO: contracts/2026/4f81d23c-5e47-4eec-b25e-7b70c2c690e1_a.doc
+09:54:17  2026-07-20T02:54:17.607Z  INFO [asset-service,] 60 --- [asset-service] [           main] com.bimlab.asset.storage.MinioService    : Uploaded file to MinIO: contracts/2026/e6c75b00-88a6-4267-81bd-0a89127b3482_a.xlsx
+09:54:17  2026-07-20T02:54:17.696Z  WARN [asset-service,] 60 --- [asset-service] [           main] com.bimlab.asset.storage.MinioService    : Failed to generate presigned URL for x.pdf: down
+09:54:17  2026-07-20T02:54:17.696Z  WARN [asset-service,] 60 --- [asset-service] [           main] com.bimlab.asset.storage.MinioService    : Failed to get object stream for x.pdf: down
+09:54:17  2026-07-20T02:54:17.696Z  WARN [asset-service,] 60 --- [asset-service] [           main] com.bimlab.asset.storage.MinioService    : Failed to delete MinIO object x.pdf: down
+09:54:18  [INFO] Tests run: 14, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.546 s -- in com.bimlab.asset.storage.MinioServiceTest
+09:54:18  [INFO] Running com.bimlab.asset.mapper.AssetMapperTest
+09:54:18  [INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.002 s -- in com.bimlab.asset.mapper.AssetMapperTest
+09:54:18  [INFO] Running com.bimlab.asset.mapper.AssetBookingMapperTest
+09:54:18  [INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.004 s -- in com.bimlab.asset.mapper.AssetBookingMapperTest
+09:54:18  [INFO] Running com.bimlab.asset.mapper.AssetMapperFinanceMaskTest
+09:54:18  [INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.001 s -- in com.bimlab.asset.mapper.AssetMapperFinanceMaskTest
+09:54:18  [INFO] Running com.bimlab.asset.service.MaintenanceServiceTest
+09:54:18  [INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.108 s -- in com.bimlab.asset.service.MaintenanceServiceTest
+09:54:18  [INFO] Running com.bimlab.asset.service.SubscriptionServiceTest
+09:54:18  [INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.064 s -- in com.bimlab.asset.service.SubscriptionServiceTest
+09:54:18  [INFO] Running com.bimlab.asset.service.AuditLogServiceTest
+09:54:18  [INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.051 s -- in com.bimlab.asset.service.AuditLogServiceTest
+09:54:18  [INFO] Running com.bimlab.asset.service.AssetBookingServiceTest
+09:54:18  [INFO] Tests run: 9, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.148 s -- in com.bimlab.asset.service.AssetBookingServiceTest
+09:54:18  [INFO] Running com.bimlab.asset.service.AssetServiceTest
+09:54:18  [INFO] Tests run: 16, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.170 s -- in com.bimlab.asset.service.AssetServiceTest
+09:54:18  [INFO] Running com.bimlab.asset.service.VendorServiceTest
+09:54:18  [INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.050 s -- in com.bimlab.asset.service.VendorServiceTest
+09:54:18  [INFO] Running com.bimlab.asset.service.PurchaseRequestServiceTest
+09:54:18  [INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.047 s -- in com.bimlab.asset.service.PurchaseRequestServiceTest
+09:54:18  [INFO] Running com.bimlab.asset.service.AssetCategoryServiceTest
+09:54:18  [INFO] Tests run: 11, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.017 s -- in com.bimlab.asset.service.AssetCategoryServiceTest
+09:54:18  [INFO] Running com.bimlab.asset.service.ContractServiceTest
+09:54:18  [INFO] Tests run: 9, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.057 s -- in com.bimlab.asset.service.ContractServiceTest
+09:54:18  [INFO] Running com.bimlab.asset.service.AssetTransferServiceTest
+09:54:19  [INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.231 s -- in com.bimlab.asset.service.AssetTransferServiceTest
+09:54:19  [INFO] Running com.bimlab.asset.client.RolePermissionClientTest
+09:54:19  2026-07-20T02:54:18.975Z  WARN [asset-service,] 60 --- [asset-service] [           main] c.b.asset.client.RolePermissionClient    : auth-service resolve role 'ADMIN' lỗi (auth down) → serve-stale từ cache
+09:54:19  2026-07-20T02:54:18.977Z  WARN [asset-service,] 60 --- [asset-service] [           main] c.b.asset.client.RolePermissionClient    : auth-service resolve role 'CUSTOM' lỗi (auth down) + chưa có cache (đã retry 2 lần) → fail-closed (rỗng)
+09:54:19  2026-07-20T02:54:18.979Z  INFO [asset-service,] 60 --- [asset-service] [           main] c.b.asset.client.RolePermissionClient    : auth-service resolve role 'ADMIN' OK sau retry
+09:54:19  2026-07-20T02:54:18.982Z  WARN [asset-service,] 60 --- [asset-service] [           main] c.b.asset.client.RolePermissionClient    : auth-service resolve role 'NEVER_CACHED' lỗi (auth down) + chưa có cache (đã retry 2 lần) → fail-closed (rỗng)
+09:54:19  2026-07-20T02:54:18.983Z  WARN [asset-service,] 60 --- [asset-service] [           main] c.b.asset.client.RolePermissionClient    : auth-service resolve role 'ADMIN' lỗi (auth-service response thiếu 'permissions' (role=ADMIN)) → serve-stale từ cache
+09:54:19  [INFO] Tests run: 7, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.095 s -- in com.bimlab.asset.client.RolePermissionClientTest
+09:54:19  [INFO] 
+09:54:19  [INFO] Results:
+09:54:19  [INFO] 
+09:54:19  [INFO] Tests run: 213, Failures: 0, Errors: 0, Skipped: 0
+09:54:19  [INFO] 
+09:54:19  [INFO] 
+09:54:19  [INFO] --- jar:3.4.2:jar (default-jar) @ asset-service ---
+09:54:19  [INFO] Building jar: /var/jenkins_home/workspace/bimlab_qlvt_test/asset-service/target/asset-service-1.0.0.jar
+09:54:19  [INFO] 
+09:54:19  [INFO] --- spring-boot:3.4.5:repackage (repackage) @ asset-service ---
+09:54:20  [INFO] Replacing main artifact /var/jenkins_home/workspace/bimlab_qlvt_test/asset-service/target/asset-service-1.0.0.jar with repackaged archive, adding nested dependencies in BOOT-INF/.
+09:54:20  [INFO] The original artifact has been renamed to /var/jenkins_home/workspace/bimlab_qlvt_test/asset-service/target/asset-service-1.0.0.jar.original
+09:54:20  [INFO] 
+09:54:20  [INFO] --- jacoco:0.8.12:report (report) @ asset-service ---
+09:54:20  [INFO] Loading execution data file /var/jenkins_home/workspace/bimlab_qlvt_test/asset-service/target/jacoco.exec
+09:54:20  [INFO] Analyzed bundle 'BIMLab Asset Service' with 142 classes
+09:54:20  [INFO] 
+09:54:20  [INFO] --- jacoco:0.8.12:check (coverage-check) @ asset-service ---
+09:54:21  [INFO] Loading execution data file /var/jenkins_home/workspace/bimlab_qlvt_test/asset-service/target/jacoco.exec
+09:54:21  [INFO] Analyzed bundle 'asset-service' with 142 classes
+09:54:21  [WARNING] Rule violated for bundle asset-service: lines covered ratio is 0.73, but expected minimum is 0.80
+09:54:21  [INFO] ------------------------------------------------------------------------
+09:54:21  [INFO] BUILD FAILURE
+09:54:21  [INFO] ------------------------------------------------------------------------
+09:54:21  [INFO] Total time:  22.362 s
+09:54:21  [INFO] Finished at: 2026-07-20T02:54:21Z
+09:54:21  [INFO] ------------------------------------------------------------------------
+09:54:21  [ERROR] Failed to execute goal org.jacoco:jacoco-maven-plugin:0.8.12:check (coverage-check) on project asset-service: Coverage checks have not been met. See log for details. -> [Help 1]
+09:54:21  [ERROR] 
+09:54:21  [ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+09:54:21  [ERROR] Re-run Maven using the -X switch to enable full debug logging.
+09:54:21  [ERROR] 
+09:54:21  [ERROR] For more information about the errors and possible solutions, please read the following articles:
+09:54:21  [ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoExecutionException

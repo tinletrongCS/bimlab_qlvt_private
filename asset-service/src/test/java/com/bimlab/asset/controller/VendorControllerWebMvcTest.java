@@ -3,8 +3,8 @@ package com.bimlab.asset.controller;
 import com.bimlab.asset.config.TestSecurityConfig;
 import com.bimlab.asset.mapper.VendorMapper;
 import com.bimlab.asset.dto.request.VendorRequest;
-import com.bimlab.asset.model.Vendor;
-import com.bimlab.asset.model.status.VendorStatus;
+import com.bimlab.asset.entity.Vendor;
+import com.bimlab.asset.entity.status.VendorStatus;
 import com.bimlab.asset.security.AssetAccessService;
 import com.bimlab.asset.service.VendorService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -14,7 +14,6 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -32,10 +31,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-/**
- * Q8: HTTP-layer contract tests for VendorController. Mirror coverage for the
- * other 6 list-bearing controllers is in their own *WebMvcTest classes.
- */
 @WebMvcTest(VendorController.class)
 @Import({TestSecurityConfig.class, VendorMapper.class})
 @AutoConfigureMockMvc(addFilters = false)
@@ -45,7 +40,7 @@ class VendorControllerWebMvcTest {
     @Autowired ObjectMapper objectMapper;
 
     @MockBean VendorService vendorService;
-    // Q1 declarative gate doesn't reference AssetAccessService here, but other
+    // This gate doesn't reference AssetAccessService, but other
     // controllers do; mocking it keeps the slice config reusable.
     @MockBean AssetAccessService assetAccessService;
 
@@ -92,7 +87,7 @@ class VendorControllerWebMvcTest {
         mockMvc.perform(get("/api/asset/vendors/paged"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].name").value("Acme Corp"))
-                .andExpect(jsonPath("$.totalElements").value(1));
+                .andExpect(jsonPath("$.page.totalElements").value(1));
     }
 
     @Test
@@ -115,10 +110,24 @@ class VendorControllerWebMvcTest {
     }
 
     @Test
+    @WithMockUser(authorities = {"vendor_manage"})
+    void create_acceptsMissingTaxCode() throws Exception {
+        when(vendorService.createVendor(any(VendorRequest.class))).thenReturn(sampleVendor());
+        String body = objectMapper.writeValueAsString(new VendorRequest(
+                "Acme Corp", null, "Alice", "alice@acme.test",
+                "0900000000", "Hà Nội", "ACTIVE"));
+
+        mockMvc.perform(post("/api/asset/vendors")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isOk());
+    }
+
+    @Test
     @WithMockUser(authorities = {"asset_view_self"})
     void create_returnsForbidden_forReadOnlyUser() throws Exception {
         String body = objectMapper.writeValueAsString(new VendorRequest(
-                "Acme", null, null, null, null, null, "ACTIVE"));
+                "Acme", "0123456789", null, null, null, null, "ACTIVE"));
         mockMvc.perform(post("/api/asset/vendors")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
@@ -130,6 +139,6 @@ class VendorControllerWebMvcTest {
     void delete_callsService() throws Exception {
         mockMvc.perform(delete("/api/asset/vendors/7"))
                 .andExpect(status().isOk());
-        verify(vendorService).deleteVendor(eq(7L));
+        verify(vendorService).deactiveVendor(eq(7L));
     }
 }

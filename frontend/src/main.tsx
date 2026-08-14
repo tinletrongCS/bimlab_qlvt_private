@@ -1,11 +1,13 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { ToastBar, Toaster, toast } from "react-hot-toast";
+import { FiAlertCircle, FiCheckCircle, FiInfo } from "react-icons/fi";
 import App from "./App";
 import "./styles/app.css";
+import "./styles/booking-overrides.css";
 
 // oidc-client-ts silent-renew (prompt=none) load lại SPA này trong IFRAME ẩn tại redirect_uri.
-// Trong iframe chỉ relay kết quả (?state + code|error) về tab cha rồi DỪNG — KHÔNG render app
+// Trong iframe chỉ relay kết quả (?state + code|error) về tab cha rồi DỪNG -- KHÔNG render app
 // (render thì iframe không postMessage về cha → cha timeout ~10s → mất phiên). Guard self!==top
 // nên tab chính KHÔNG bị ảnh hưởng; dynamic import để legacy bundle không kéo oidc-client-ts.
 const sp = new URLSearchParams(window.location.search);
@@ -28,26 +30,46 @@ if (isSilentRenewIframe) {
               maxWidth: 400,
             }}
           >
-            {({ icon, message }) => (
+            {({ message }) => (
               <div
+                className="qlvt-toast"
                 onClick={() => toast.dismiss(t.id)}
                 title="Click để đóng"
                 style={{
                   display: "flex",
                   alignItems: "center",
                   gap: "10px",
-                  background: "#fff",
-                  borderRadius: "12px",
-                  padding: "10px 14px",
-                  boxShadow: "0 4px 20px rgba(0,0,0,0.08), 0 1px 6px rgba(0,0,0,0.04)",
+                  background:
+                    t.type === "success" ? "#f0fdf4" : t.type === "error" ? "#fff1f2" : "#eff6ff",
+                  borderRadius: "4px",
+                  padding: "8px 12px",
+                  boxShadow: "none",
                   cursor: "pointer",
                   minWidth: "260px",
                   maxWidth: "380px",
-                  border: "1px solid #e5e7eb",
+                  border: `1px solid ${
+                    t.type === "success" ? "#bbf7d0" : t.type === "error" ? "#fecdd3" : "#bfdbfe"
+                  }`,
                   userSelect: "none",
                 }}
               >
-                <span style={{ flexShrink: 0 }}>{icon}</span>
+                <span
+                  style={{
+                    color:
+                      t.type === "success" ? "#15803d" : t.type === "error" ? "#be123c" : "#1d4ed8",
+                    display: "flex",
+                    flexShrink: 0,
+                    fontSize: "18px",
+                  }}
+                >
+                  {t.type === "success" ? (
+                    <FiCheckCircle />
+                  ) : t.type === "error" ? (
+                    <FiAlertCircle />
+                  ) : (
+                    <FiInfo />
+                  )}
+                </span>
                 <span
                   style={{
                     flex: 1,

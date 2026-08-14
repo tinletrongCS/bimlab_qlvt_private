@@ -1,5 +1,4 @@
 // Mirrors backend Permission enum (QLVT/asset-service/.../security/Permission.java).
-// Q1.5: removed FE-only `asset_assign` — no BE endpoint enforces it; remove drift.
 export type Permission =
   | "asset_access"
   | "asset_view_self"
@@ -13,7 +12,11 @@ export type Permission =
   | "contract_manage"
   | "maintenance_manage"
   | "asset_finance_manage"
-  | "asset_report_view";
+  | "asset_finance_view"
+  | "asset_report_view"
+  | "asset_transfers_view"
+  | "asset_transfers_manage"
+  | "asset_transfers_approve";
 
 export interface AuthUser {
   id?: number;
@@ -40,6 +43,9 @@ export interface Vendor {
   email?: string;
   phone?: string;
   address?: string;
+  website?: string;
+  bankName?: string;
+  bankAccountNumber?: string;
   status: string;
 }
 
@@ -105,6 +111,30 @@ export interface AssetItem {
   updatedAt?: string;
 }
 
+export interface AssetQrCode {
+  assetId: number;
+  assetCode: string;
+  assetName: string;
+  token: string;
+  publicUrl: string;
+}
+
+export interface AuditFieldChange {
+  before: unknown;
+  after: unknown;
+}
+
+export interface AssetChangeLog {
+  id: number;
+  occurredAt: string;
+  actorEmployeeId?: number | null;
+  actorUsername?: string;
+  actorRole?: string;
+  action: string;
+  summary?: string;
+  changedFields: Record<string, AuditFieldChange>;
+}
+
 export interface AssetCategory {
   id: number;
   code: string;
@@ -126,6 +156,53 @@ export interface AssetCategoryPayload {
   assetClass: "FIXED_ASSET" | "TOOL_EQUIPMENT" | string;
   description?: string;
   active: boolean;
+}
+
+export interface AssetCategoryImportRowPayload {
+  rowNumber: number;
+  group?: string;
+  code?: string;
+  name?: string;
+  parentCode?: string;
+}
+
+export interface AssetCategoryImportMessage {
+  field?: string;
+  code: string;
+  message: string;
+}
+
+export interface AssetCategoryImportRowResult {
+  rowNumber: number;
+  status: "PENDING" | "VALID" | "INVALID" | "WARNING" | string;
+  code: string;
+  name: string;
+  parentCode?: string;
+  action: "PENDING" | "CREATE" | "UPDATE" | "SKIP" | string;
+  errors: AssetCategoryImportMessage[];
+  warnings: AssetCategoryImportMessage[];
+}
+
+export interface AssetCategoryImportValidationResponse {
+  uploadStatus: "PENDING" | "VALID" | "HAS_ERROR" | string;
+  totalRows: number;
+  validRows: number;
+  errorRows: number;
+  warningRows: number;
+  rows: AssetCategoryImportRowResult[];
+}
+
+export interface AssetCategoryImportCommitPayload {
+  rows: AssetCategoryImportRowPayload[];
+}
+
+export interface AssetCategoryImportCommitResponse {
+  uploadStatus: "IMPORTED" | "PARTIALLY_IMPORTED" | "FAILED" | string;
+  importedRows: number;
+  updatedRows: number;
+  skippedRows: number;
+  errorRows: number;
+  rows: AssetCategoryImportRowResult[];
 }
 
 export interface AssetPayload {
@@ -167,6 +244,9 @@ export interface AssetPayload {
   capacityUnit?: string;
   realCapacity?: number | null;
   technicalDescription?: string;
+  disposalDate?: string;
+  disposalPrice?: number | null;
+  disposalReason?: string;
 }
 
 export interface AssetImportRowPayload {
@@ -315,7 +395,7 @@ export interface Contract {
   paymentTerms?: string;
   status: string;
   attachmentUrl?: string;
-  // Q7: prefer attachmentObjectKey; attachmentUrl deprecated, kept for back-compat
+  // Prefer attachmentObjectKey; attachmentUrl is retained for compatibility.
   attachmentObjectKey?: string;
   notes?: string;
   createdAt?: string;
@@ -335,7 +415,7 @@ export interface ContractPayload {
   paymentTerms?: string;
   status?: string;
   attachmentUrl?: string;
-  // Q7: prefer attachmentObjectKey; attachmentUrl deprecated, kept for back-compat
+  // Prefer attachmentObjectKey; attachmentUrl is retained for compatibility.
   attachmentObjectKey?: string;
   notes?: string;
 }
@@ -353,7 +433,9 @@ export interface EmployeeLite {
   fullName?: string;
   name?: string;
   employeeCode?: string;
+  departmentId?: number;
   departmentName?: string;
+  positionName?: string;
 }
 
 export interface DepartmentLite {
@@ -402,23 +484,85 @@ export interface MaintenanceRecordPayload {
 
 export interface AssetTransfer {
   id: number;
-  asset: AssetItem;
+  transferCode?: string;
+  title?: string;
   transferType: string;
+  status: string;
   fromEmployeeId?: number;
   toEmployeeId?: number;
   fromDepartmentId?: number;
   toDepartmentId?: number;
   fromSiteId?: number;
   toSiteId?: number;
+  fromProjectId?: number;
+  toProjectId?: number;
   transferDate: string;
-  reason?: string;
-  performedBy?: string;
-  handoverDocumentUrl?: string;
+  plannedHandoverAt?: string;
   createdAt?: string;
+  reason?: string;
+  note?: string;
+  approvedBy?: string;
+  requestedBy?: string;
+  requestedEmployeeId?: number;
+  cancelledBy?: string;
+  cancelledAt?: string;
+  cancelReason?: string;
+  confirmations?: AssetTransferConfirmation[];
+  documents?: AssetTransferDocument[];
+  lines?: AssetTransferLine[];
+}
+
+export interface AssetTransferConfirmation {
+  id: number;
+  confirmerEmployeeId?: number;
+  confirmerUsername?: string;
+  confirmerName?: string;
+  confirmationRole?: string;
+  status?: string;
+  confirmedAt?: string;
+  note?: string;
+}
+
+export interface AssetTransferDocument {
+  id?: number;
+  documentType?: string;
+  documentStatus?: string;
+  fileName: string;
+  objectKey?: string;
+  downloadUrl?: string;
+  contentType?: string;
+  sizeBytes?: number;
+}
+
+export interface FileUploadResponse {
+  fileKey: string;
+  downloadUrl?: string;
+}
+
+export interface AssetTransferLine {
+  id?: number;
+  assetId: number;
+  assetCode?: string;
+  assetName?: string;
+  lineStatus?: string;
+  fromEmployeeId?: number;
+  toEmployeeId?: number;
+  fromDepartmentId?: number;
+  toDepartmentId?: number;
+  fromSiteId?: number;
+  toSiteId?: number;
+  fromProjectId?: number;
+  toProjectId?: number;
+  statusBefore?: string;
+  statusAfter?: string;
+  conditionBefore?: string;
+  bookValueAtTransfer?: number;
+  receiverNote?: string;
 }
 
 export interface AssetTransferPayload {
-  assetId: number;
+  transferCode?: string;
+  title?: string;
   transferType: string;
   fromEmployeeId?: number | null;
   toEmployeeId?: number | null;
@@ -426,11 +570,101 @@ export interface AssetTransferPayload {
   toDepartmentId?: number | null;
   fromSiteId?: number | null;
   toSiteId?: number | null;
+  fromProjectId?: number | null;
+  toProjectId?: number | null;
   transferDate: string;
+  plannedHandoverAt?: string;
   reason?: string;
-  performedBy?: string;
-  handoverDocumentUrl?: string;
-  applyToAsset?: boolean;
+  note?: string;
+  approverEmployeeIds?: number[];
+  documents?: Array<{
+    fileName: string;
+    objectKey?: string;
+    contentType?: string;
+    sizeBytes?: number;
+  }>;
+  lines: Array<{
+    assetId: number;
+    conditionBefore?: string;
+    bookValueAtTransfer?: number;
+    receiverNote?: string;
+  }>;
+}
+
+export type AssetBookingStatus =
+  | "DRAFT"
+  | "PENDING_APPROVAL"
+  | "CONFIRMED"
+  | "IN_USE"
+  | "COMPLETED"
+  | "CANCELLED"
+  | "REJECTED"
+  | "EXPIRED"
+  | string;
+
+export interface AssetBooking {
+  id: number;
+  assetId: number;
+  assetCode?: string;
+  assetName?: string;
+  bookingCode: string;
+  title: string;
+  purpose?: string;
+  startTime: string;
+  endTime: string;
+  requestedByEmployeeId?: number;
+  departmentId?: number;
+  siteId?: number;
+  projectId?: number;
+  status: AssetBookingStatus;
+  autoRelease: boolean;
+  checkedInAt?: string;
+  checkedOutAt?: string;
+  approvedBy?: string;
+  cancelledBy?: string;
+  cancelledAt?: string;
+  cancelReason?: string;
+  notes?: string;
+  createdBy?: string;
+  updatedBy?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface AssetBookingPayload {
+  assetCode: string;
+  title: string;
+  purpose?: string;
+  startTime: string;
+  endTime: string;
+  requestedByEmployeeId?: number | null;
+  departmentId?: number | null;
+  siteId?: number | null;
+  projectId?: number | null;
+  autoRelease?: boolean;
+  notes?: string;
+  createdBy?: string;
+}
+
+export interface AssetBookingAvailability {
+  assetId: number;
+  assetCode: string;
+  startTime: string;
+  endTime: string;
+  available: boolean;
+  reason?: string;
+  conflictingBookingId?: number;
+  conflictingBookingCode?: string;
+}
+
+export interface AssetBookingCancelPayload {
+  cancelledBy: string;
+  cancelReason: string;
+}
+
+export interface AssetBookingCheckoutPayload {
+  completedBy?: string;
+  notes?: string;
 }
 
 export interface UtilizationReport {

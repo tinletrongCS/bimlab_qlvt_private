@@ -11,15 +11,15 @@ import com.bimlab.asset.dto.response.AssetImportRowResult;
 import com.bimlab.asset.dto.response.AssetImportValidationResponse;
 import com.bimlab.asset.dto.response.DepreciationSnapshot;
 import com.bimlab.asset.dto.response.UtilizationReportResponse;
-import com.bimlab.asset.model.AssetCodeSequence;
-import com.bimlab.asset.model.AssetCatalogItem;
-import com.bimlab.asset.model.AssetCategory;
-import com.bimlab.asset.model.AssetItem;
-import com.bimlab.asset.model.status.AssetClass;
-import com.bimlab.asset.model.status.AssetStatus;
-import com.bimlab.asset.model.status.FixedAssetType;
-import com.bimlab.asset.model.status.StatusParser;
-import com.bimlab.asset.model.status.ToolUsageType;
+import com.bimlab.asset.entity.AssetCodeSequence;
+import com.bimlab.asset.entity.AssetCatalogItem;
+import com.bimlab.asset.entity.AssetCategory;
+import com.bimlab.asset.entity.AssetItem;
+import com.bimlab.asset.entity.status.AssetClass;
+import com.bimlab.asset.entity.status.AssetStatus;
+import com.bimlab.asset.entity.status.FixedAssetType;
+import com.bimlab.asset.entity.status.StatusParser;
+import com.bimlab.asset.entity.status.ToolUsageType;
 import com.bimlab.asset.repository.AssetCatalogItemRepository;
 import com.bimlab.asset.repository.AssetCategoryRepository;
 import com.bimlab.asset.repository.AssetCodeSequenceRepository;
@@ -43,10 +43,6 @@ import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-/**
- * Q2: Asset domain split from the original {@code AssetManagementService}.
- * Q5: status fields are type-safe {@link AssetStatus} enums.
- */
 @Service
 @RequiredArgsConstructor
 public class AssetService {
@@ -82,6 +78,12 @@ public class AssetService {
     public AssetItem createAsset(AssetRequest req) {
         AssetItem item = new AssetItem();
         applyAsset(item, req);
+        if (isBlank(req.assetCode())) {
+            if (item.getAssetCategory() == null) {
+                throw new IllegalArgumentException("categoryId: Phải chọn danh mục tài sản để hệ thống tự sinh mã");
+            }
+            item.setAssetCode(nextAssetCode(item.getAssetCategory()));
+        }
         return assets.save(item);
     }
 
@@ -177,6 +179,9 @@ public class AssetService {
 
     @Transactional
     public AssetItem updateAsset(Long id, AssetRequest req) {
+        if (isBlank(req.assetCode())) {
+            throw new IllegalArgumentException("assetCode: Mã tài sản không được để trống");
+        }
         AssetItem item = getAssetById(id);
         applyAsset(item, req);
         return assets.save(item);
@@ -667,7 +672,7 @@ public class AssetService {
                 .map(a -> a.getPurchaseCost() == null ? BigDecimal.ZERO : a.getPurchaseCost())
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        // Q5: enum.name() keeps the JSON shape stable for FE (Map<String,Long>).
+        // enum.name() keeps JSON shape stable for FE (Map<String,Long>).
         Map<String, Long> byStatus = all.stream()
                 .collect(Collectors.groupingBy(a -> a.getStatus().name(), Collectors.counting()));
         Map<String, Long> byCategory = all.stream()

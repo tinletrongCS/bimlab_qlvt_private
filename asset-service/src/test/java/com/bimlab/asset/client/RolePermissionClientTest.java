@@ -33,6 +33,12 @@ class RolePermissionClientTest {
             long now() {
                 return clock[0];
             }
+
+            @Override
+            boolean sleepQuietly(long millis) {
+                clock[0] += millis;
+                return true;
+            }
         };
     }
 
@@ -67,7 +73,45 @@ class RolePermissionClientTest {
     void coldMiss_whenAuthErrorsNoCache_returnsEmpty() {
         when(rt.exchange(anyString(), eq(HttpMethod.GET), any(HttpEntity.class), eq(Map.class)))
                 .thenThrow(new RestClientException("auth down"));
-        assertEquals(List.of(), client().resolve("NEVER_CACHED")); // fail-closed
+        assertEquals(List.of(), client().resolve("NEVER_CACHED")); // fail-closed (sau khi retry hết)
+    }
+
+    @Test
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    void coldMiss_retryCuuBlipAuthService() {
+        // Lần đầu lỗi (auth-service đang restart), retry lần 1 thành công → có quyền, không 403 oan.
+        when(rt.exchange(anyString(), eq(HttpMethod.GET), any(HttpEntity.class), eq(Map.class)))
+                .thenThrow(new RestClientException("auth restarting"))
+                .thenReturn((ResponseEntity) ResponseEntity.ok(Map.of("permissions", List.of("asset_manage"))));
+        RolePermissionClient c = client();
+        assertEquals(List.of("asset_manage"), c.resolve("ADMIN"));
+        verify(rt, times(2)).exchange(anyString(), eq(HttpMethod.GET), any(HttpEntity.class), eq(Map.class));
+    }
+
+    @Test
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    void authoritativeEmpty_evictsStalePermissions() {
+        when(rt.exchange(anyString(), eq(HttpMethod.GET), any(HttpEntity.class), eq(Map.class)))
+                .thenReturn((ResponseEntity) ResponseEntity.ok(Map.of("permissions", List.of("asset_manage"))))
+                .thenReturn((ResponseEntity) ResponseEntity.ok(Map.of("permissions", List.of())))
+                .thenThrow(new RestClientException("auth down"));
+        RolePermissionClient c = client();
+        assertEquals(List.of("asset_manage"), c.resolve("CUSTOM"));
+        clock[0] += 70_000L;
+        assertEquals(List.of(), c.resolve("CUSTOM"));
+        assertEquals(List.of(), c.resolve("CUSTOM"));
+    }
+
+    @Test
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    void malformedResponse_servesExpiredStaleCache() {
+        when(rt.exchange(anyString(), eq(HttpMethod.GET), any(HttpEntity.class), eq(Map.class)))
+                .thenReturn((ResponseEntity) ResponseEntity.ok(Map.of("permissions", List.of("asset_manage"))))
+                .thenReturn((ResponseEntity) ResponseEntity.ok(Map.of("role", "ADMIN")));
+        RolePermissionClient c = client();
+        assertEquals(List.of("asset_manage"), c.resolve("ADMIN"));
+        clock[0] += 70_000L;
+        assertEquals(List.of("asset_manage"), c.resolve("ADMIN"));
     }
 
     @Test

@@ -1,9 +1,9 @@
 package com.bimlab.asset.service;
 
 
-import com.bimlab.asset.model.status.PurchaseRequestStatus;
+import com.bimlab.asset.entity.status.PurchaseRequestStatus;
 import com.bimlab.asset.dto.request.PurchaseRequestRequest;
-import com.bimlab.asset.model.PurchaseRequest;
+import com.bimlab.asset.entity.PurchaseRequest;
 import com.bimlab.asset.repository.PurchaseRequestRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -22,12 +22,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-/**
- * F4 (preserved through Q2): server-side stamping of requesterEmployeeId +
- * status forcing on PurchaseRequest create/update. Previously the approver
- * could rewrite the audit trail by passing requesterEmployeeId in the body,
- * and any employee could submit a PR pre-approved by passing status=APPROVED.
- */
 @ExtendWith(MockitoExtension.class)
 class PurchaseRequestServiceTest {
 

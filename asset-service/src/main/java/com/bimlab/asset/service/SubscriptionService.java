@@ -1,9 +1,9 @@
 package com.bimlab.asset.service;
 
 import com.bimlab.asset.dto.request.SubscriptionRequest;
-import com.bimlab.asset.model.Subscription;
-import com.bimlab.asset.model.status.StatusParser;
-import com.bimlab.asset.model.status.SubscriptionStatus;
+import com.bimlab.asset.entity.Subscription;
+import com.bimlab.asset.entity.status.StatusParser;
+import com.bimlab.asset.entity.status.SubscriptionStatus;
 import com.bimlab.asset.repository.SubscriptionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -14,11 +14,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.NoSuchElementException;
 
-/**
- * Q2: Subscription domain split from the original {@code AssetManagementService}.
- * Owns Subscription CRUD. Depends on {@link VendorService} for the
- * {@code vendorId → Vendor} resolution inside {@link #applySubscription}.
- */
 @Service
 @RequiredArgsConstructor
 public class SubscriptionService {

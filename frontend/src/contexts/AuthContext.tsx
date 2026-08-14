@@ -7,7 +7,9 @@ import {
   useMemo,
   useState,
 } from "react";
+import toast from "react-hot-toast";
 import {
+  consumeLoginReturnUrl,
   handleOidcCallback,
   isOidcCallback,
   keycloakLogin,
@@ -25,7 +27,7 @@ interface AuthContextValue {
   submitting: boolean;
   login: () => Promise<boolean>;
   logout: () => Promise<void>;
-  hasPermission: (permission?: Permission) => boolean;
+  hasPermission: (permission?: Permission | Permission[]) => boolean;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -39,24 +41,51 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let cancelled = false;
     async function bootstrap() {
+      let redirecting = false;
       try {
-        // PR#6: refresh token rotation thất bại / token hết hạn → mất phiên → logout UI (về /login).
-        onSessionLost(() => {
-          if (!cancelled) setUser(null);
+        // Refresh token rotation thất bại / token hết hạn → mất phiên → logout UI (về /login).
+        // Toast cho user biết lý do (đăng xuất từ app khác qua SLO, hoặc hết hạn) thay vì văng im lặng.
+        onSessionLost((reason) => {
+          if (!cancelled) {
+            setUser(null);
+            toast.error(
+              reason === "signed-out"
+                ? "Bạn đã đăng xuất khỏi hệ thống."
+                : "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.",
+              { duration: 5000, id: "session-lost" },
+            );
+          }
         });
         // Keycloak: nếu là callback → đổi code→token; nếu không → thử khôi phục phiên (prompt=none).
+        let hasSession = false;
+        let returnUrl: string | null = null;
         if (isOidcCallback()) {
-          await handleOidcCallback();
+          const callback = await handleOidcCallback();
+          hasSession = callback.authenticated;
+          returnUrl = callback.returnUrl;
         } else {
-          await trySilentLogin();
+          hasSession = await trySilentLogin();
+          returnUrl = consumeLoginReturnUrl();
         }
+
+        if (!hasSession) {
+          await keycloakLogin();
+          return;
+        }
+
+        if (returnUrl) {
+          redirecting = true;
+          window.location.replace(returnUrl);
+          return;
+        }
+
         // loadCurrentUser → /asset/me (Bearer in-memory).
         const current = await loadCurrentUser();
         if (!cancelled) setUser(current);
       } catch {
-        // No active session — fall through to login screen.
+        // No active session -- fall through to login screen.
       } finally {
-        if (!cancelled) setBootstrapping(false);
+        if (!cancelled && !redirecting) setBootstrapping(false);
       }
     }
     bootstrap();
@@ -81,20 +110,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(async () => {
     setSubmitting(true);
+    setUser(null);
     try {
       await keycloakLogout();
     } catch {
       // Token may already be expired; local logout still valid.
     } finally {
-      setUser(null);
       setSubmitting(false);
     }
   }, []);
 
   const hasPermission = useCallback(
-    (permission?: Permission) => {
+    (permission?: Permission | Permission[]) => {
       if (!permission) return true;
       if (user?.role === "ADMIN") return true;
+      if (Array.isArray(permission))
+        return permission.some((item) => user?.permissions?.includes(item));
       return Boolean(user?.permissions?.includes(permission));
     },
     [user],

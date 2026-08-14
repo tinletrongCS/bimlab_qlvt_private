@@ -1,42 +1,483 @@
-import { type ChangeEvent, type MouseEvent, useEffect, useMemo, useState } from "react";
+import QRCode from "qrcode";
+import {
+  type ChangeEvent,
+  type CSSProperties,
+  type MouseEvent,
+  type ReactNode,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import toast from "react-hot-toast";
 import {
+  FiBold,
+  FiChevronLeft,
   FiChevronRight,
+  FiChevronsLeft,
+  FiChevronsRight,
+  FiClock,
   FiDownload,
   FiEye,
   FiFileText,
   FiGrid,
+  FiRotateCcw,
   FiSearch,
   FiTrash2,
+  FiUnderline,
   FiUpload,
   FiX,
 } from "react-icons/fi";
-import { PanelHeader } from "../components/PanelHeader";
+import { SearchableSelect } from "../components/forms/SearchableSelect";
+import { OverflowActions } from "../components/OverflowActions";
 import { StatusBadge } from "../components/StatusBadge";
 import { useActions } from "../contexts/ActionsContext";
 import { useAppData } from "../contexts/AppDataContext";
 import { useAuth } from "../contexts/AuthContext";
+import { addCategoryReferenceSheet, addHierarchicalCategorySheet } from "../lib/categoryExcel";
 import { employeeLabel, money, projectLabel } from "../lib/format";
 import {
   commitAssetImport,
   deleteAsset,
+  issueAssetQrCodes,
   loadAssetCategoryTree,
+  loadAssetChangeHistory,
   updateAsset,
   validateAssetImport,
 } from "../services/api";
 import type {
   AssetCategoryTree,
+  AssetChangeLog,
   AssetImportCommitPayload,
   AssetImportRowPayload,
   AssetImportValidationResponse,
   AssetItem,
   AssetPayload,
+  AssetQrCode,
 } from "../services/types";
 
 type AssetStatusFilter = "ALL" | "IN_STOCK" | "ASSIGNED" | "MAINTENANCE" | "DISPOSED";
 type AssetValueFilter = "ALL" | "UNDER_10M" | "FROM_10M_TO_50M" | "FROM_50M_TO_200M" | "FROM_200M";
 type ImportMode = AssetImportCommitPayload["importMode"];
 type ImportPreviewFilter = "ALL" | "VALID" | "INVALID" | "WARNING";
+type AssetBulkAction = "status" | "move" | "assign" | "return" | "qr" | null;
+type AssetDetailView = "details" | "history";
+type AssetTableColumnId =
+  | "asset"
+  | "category"
+  | "serialNumber"
+  | "status"
+  | "purchaseCost"
+  | "originalCost"
+  | "bookValue"
+  | "source"
+  | "site"
+  | "department"
+  | "employee"
+  | "vendor"
+  | "project"
+  | "purchaseDate"
+  | "warrantyUntil"
+  | "categoryCode";
+
+interface AssetTableColumnConfig {
+  id: AssetTableColumnId;
+  label: string;
+  locked?: boolean;
+  defaultVisible?: boolean;
+}
+
+interface AssetTableColumnDefinition extends AssetTableColumnConfig {
+  render: (item: AssetItem) => ReactNode;
+  align?: "right" | "center";
+}
+
+const CALENDAR_YEAR_OPTIONS = [
+  { value: "", label: "Chưa chọn năm" },
+  ...Array.from({ length: 2100 - 1970 + 1 }, (_, index) => {
+    const year = String(1970 + index);
+    return { value: year, label: year };
+  }),
+];
+
+function escapeHtml(value: string) {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;");
+}
+
+const RICH_TEXT_PATTERN = /<(?:strong|b|em|i|u|span|font|br|div|p)\b/i;
+const RICH_TEXT_COLORS = [
+  { label: "Xám", value: "#475569", rgb: "rgb(71,85,105)" },
+  { label: "Đen", value: "#111827", rgb: "rgb(17,24,39)" },
+  { label: "Đỏ", value: "#b91c1c", rgb: "rgb(185,28,28)" },
+  { label: "Cam", value: "#c2410c", rgb: "rgb(194,65,12)" },
+  { label: "Xanh lá", value: "#15803d", rgb: "rgb(21,128,61)" },
+  { label: "Xanh dương", value: "#1d4ed8", rgb: "rgb(29,78,216)" },
+] as const;
+
+function normalizeRichTextColor(value: string) {
+  const normalized = value.toLowerCase().replaceAll(" ", "");
+  return (
+    RICH_TEXT_COLORS.find((color) => color.value === normalized || color.rgb === normalized)
+      ?.value || ""
+  );
+}
+
+function sanitizeRichText(value: string) {
+  const body = new DOMParser().parseFromString(value, "text/html").body;
+
+  const renderNode = (node: Node): string => {
+    if (node.nodeType === Node.TEXT_NODE) return escapeHtml(node.textContent || "");
+    if (!(node instanceof HTMLElement)) return "";
+
+    const tags: Record<string, string> = {
+      B: "strong",
+      STRONG: "strong",
+      I: "em",
+      EM: "em",
+      U: "u",
+      SPAN: "span",
+      FONT: "span",
+      BR: "br",
+      DIV: "div",
+      P: "p",
+    };
+    const tag = tags[node.tagName];
+    const content = Array.from(node.childNodes).map(renderNode).join("");
+    if (!tag) return content;
+    if (tag === "br") return "<br>";
+
+    const rawColor = node.getAttribute("color") || node.style.color;
+    const color = tag === "span" ? normalizeRichTextColor(rawColor) : "";
+    return `<${tag}${color ? ` style="color: ${color}"` : ""}>${content}</${tag}>`;
+  };
+
+  return Array.from(body.childNodes).map(renderNode).join("");
+}
+
+function richTextEditorHtml(value: string) {
+  return RICH_TEXT_PATTERN.test(value)
+    ? sanitizeRichText(value)
+    : escapeHtml(value).replace(/\r?\n/g, "<br>");
+}
+
+function richTextStorageValue(value: string) {
+  return RICH_TEXT_PATTERN.test(value) ? sanitizeRichText(value) : value;
+}
+
+function RichTextEditor({
+  label,
+  value,
+  onChange,
+  disabled,
+  minHeight,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  disabled?: boolean;
+  minHeight?: number;
+}) {
+  const editorRef = useRef<HTMLDivElement>(null);
+  const selectionRef = useRef<Range | null>(null);
+  const [activeFormats, setActiveFormats] = useState({
+    bold: false,
+    underline: false,
+  });
+  const [activeColor, setActiveColor] = useState<string>(RICH_TEXT_COLORS[0].value);
+
+  useEffect(() => {
+    const editor = editorRef.current;
+    if (!editor || document.activeElement === editor) return;
+    const next = richTextEditorHtml(value);
+    if (editor.innerHTML !== next) editor.innerHTML = next;
+  }, [value]);
+
+  useEffect(() => {
+    const captureSelection = () => {
+      const editor = editorRef.current;
+      const selection = window.getSelection();
+      if (editor && selection?.rangeCount && editor.contains(selection.anchorNode)) {
+        selectionRef.current = selection.getRangeAt(0).cloneRange();
+      }
+    };
+    document.addEventListener("selectionchange", captureSelection);
+    return () => document.removeEventListener("selectionchange", captureSelection);
+  }, []);
+
+  const refreshToolbarState = () => {
+    const editor = editorRef.current;
+    const selection = window.getSelection();
+    if (!editor || !selection?.rangeCount || !editor.contains(selection.anchorNode)) return;
+    setActiveFormats({
+      bold: document.queryCommandState("bold"),
+      underline: document.queryCommandState("underline"),
+    });
+    setActiveColor(
+      normalizeRichTextColor(String(document.queryCommandValue("foreColor"))) ||
+        RICH_TEXT_COLORS[0].value,
+    );
+  };
+
+  const rememberSelection = () => {
+    const editor = editorRef.current;
+    const selection = window.getSelection();
+    if (editor && selection?.rangeCount && editor.contains(selection.anchorNode)) {
+      selectionRef.current = selection.getRangeAt(0).cloneRange();
+      refreshToolbarState();
+    }
+  };
+
+  const emitValue = () => {
+    const editor = editorRef.current;
+    if (!editor) return;
+    const text = editor.textContent?.replace(/\u00a0/g, " ").trim() || "";
+    if (!text) {
+      onChange("");
+      return;
+    }
+    const html = sanitizeRichText(editor.innerHTML);
+    onChange(RICH_TEXT_PATTERN.test(html) ? html : `<p>${html}</p>`);
+  };
+
+  const wrapSelectedText = (
+    range: Range,
+    command: "bold" | "underline" | "foreColor",
+    color?: string,
+  ) => {
+    const tagName = command === "bold" ? "strong" : command === "underline" ? "u" : "span";
+    const wrapper = document.createElement(tagName);
+    if (command === "foreColor" && color) wrapper.style.color = color;
+    wrapper.append(range.extractContents());
+    range.insertNode(wrapper);
+    range.selectNodeContents(wrapper);
+  };
+
+  const selectedFormatElement = (range: Range, command: "bold" | "underline" | "foreColor") => {
+    if (command === "foreColor") return null;
+    const selector = command === "bold" ? "strong, b" : "u";
+    const closest = (node: Node) => {
+      const element = node instanceof HTMLElement ? node : node.parentElement;
+      if (!element || element === editorRef.current) return null;
+      return element.matches(selector) ? element : element.closest<HTMLElement>(selector);
+    };
+    const start = closest(range.startContainer);
+    const end = closest(range.endContainer);
+    return start && start === end && editorRef.current?.contains(start) ? start : null;
+  };
+
+  const unwrapSelectedText = (range: Range, wrapper: HTMLElement) => {
+    const parent = wrapper.parentNode;
+    const first = wrapper.firstChild;
+    const last = wrapper.lastChild;
+    if (!parent || !first || !last) return false;
+    while (wrapper.firstChild) parent.insertBefore(wrapper.firstChild, wrapper);
+    wrapper.remove();
+    range.setStartBefore(first);
+    range.setEndAfter(last);
+    return true;
+  };
+
+  const format = (command: "bold" | "underline" | "foreColor", color?: string) => {
+    if (disabled) return;
+    const editor = editorRef.current;
+    if (!editor) return;
+    const savedRange = selectionRef.current?.cloneRange();
+    editor.focus({ preventScroll: true });
+    const selection = window.getSelection();
+    if (savedRange && selection && editor.contains(savedRange.commonAncestorContainer)) {
+      selection.removeAllRanges();
+      selection.addRange(savedRange);
+    }
+    const activeRange = selection?.rangeCount ? selection.getRangeAt(0) : null;
+    const formatElementBefore = activeRange ? selectedFormatElement(activeRange, command) : null;
+    const htmlBefore = editor.innerHTML;
+    const wasActive =
+      Boolean(formatElementBefore) ||
+      (command !== "foreColor" && document.queryCommandState(command));
+    document.execCommand("styleWithCSS", false, "false");
+    const commandHandled = document.execCommand(command, false, color);
+
+    if (
+      editor.innerHTML === htmlBefore &&
+      wasActive &&
+      formatElementBefore &&
+      selection &&
+      activeRange &&
+      unwrapSelectedText(activeRange, formatElementBefore)
+    ) {
+      selection.removeAllRanges();
+      selection.addRange(activeRange);
+    } else if (
+      (!commandHandled || editor.innerHTML === htmlBefore) &&
+      !wasActive &&
+      selection &&
+      activeRange &&
+      !activeRange.collapsed &&
+      editor.contains(activeRange.commonAncestorContainer)
+    ) {
+      wrapSelectedText(activeRange, command, color);
+      selection.removeAllRanges();
+      selection.addRange(activeRange);
+    }
+    if (selection?.rangeCount) selectionRef.current = selection.getRangeAt(0).cloneRange();
+    refreshToolbarState();
+    emitValue();
+  };
+
+  return (
+    <div className="asset-detail-wide-field asset-rich-text-field">
+      <span>{label}</span>
+      <div className="asset-rich-text-editor" data-disabled={disabled || undefined}>
+        <div className="asset-rich-text-toolbar" role="toolbar" aria-label={`Định dạng ${label}`}>
+          <button
+            type="button"
+            aria-label={`In đậm ${label}`}
+            aria-pressed={activeFormats.bold}
+            className={activeFormats.bold ? "is-active" : undefined}
+            title="In đậm"
+            onMouseDown={(event) => {
+              event.preventDefault();
+              format("bold");
+            }}
+            onClick={(event) => event.detail === 0 && format("bold")}
+            disabled={disabled}
+          >
+            <FiBold />
+          </button>
+          <button
+            type="button"
+            aria-label={`Gạch chân ${label}`}
+            aria-pressed={activeFormats.underline}
+            className={activeFormats.underline ? "is-active" : undefined}
+            title="Gạch chân"
+            onMouseDown={(event) => {
+              event.preventDefault();
+              format("underline");
+            }}
+            onClick={(event) => event.detail === 0 && format("underline")}
+            disabled={disabled}
+          >
+            <FiUnderline />
+          </button>
+          <div className="asset-rich-text-colors" role="group" aria-label={`Màu chữ ${label}`}>
+            <span>Màu chữ</span>
+            {RICH_TEXT_COLORS.map((color) => (
+              <button
+                type="button"
+                key={color.value}
+                className={`asset-rich-text-swatch${activeColor === color.value ? " is-active" : ""}`}
+                aria-label={`${color.label} - ${label}`}
+                aria-pressed={activeColor === color.value}
+                title={color.label}
+                style={{ "--asset-swatch-color": color.value } as CSSProperties}
+                onMouseDown={(event) => {
+                  event.preventDefault();
+                  format("foreColor", color.value);
+                }}
+                onClick={(event) => event.detail === 0 && format("foreColor", color.value)}
+                disabled={disabled}
+              />
+            ))}
+          </div>
+        </div>
+        <div
+          ref={editorRef}
+          className="asset-rich-text-content"
+          role="textbox"
+          aria-label={label}
+          aria-multiline="true"
+          tabIndex={disabled ? -1 : 0}
+          contentEditable={!disabled}
+          suppressContentEditableWarning
+          style={{ minHeight }}
+          onInput={emitValue}
+          onFocus={refreshToolbarState}
+          onMouseUp={rememberSelection}
+          onKeyUp={rememberSelection}
+          onBlur={rememberSelection}
+          onPaste={(event) => {
+            event.preventDefault();
+            document.execCommand("insertText", false, event.clipboardData.getData("text/plain"));
+            emitValue();
+          }}
+        />
+      </div>
+    </div>
+  );
+}
+
+async function renderQrPrint(printWindow: Window, codes: AssetQrCode[]) {
+  const logoUrl = new URL("/light background.png", window.location.origin).href;
+  const labels = await Promise.all(
+    codes.map(async (code) => ({
+      ...code,
+      svg: await QRCode.toString(code.publicUrl, {
+        type: "svg",
+        errorCorrectionLevel: "M",
+        margin: 1,
+        width: 260,
+      }),
+    })),
+  );
+  printWindow.document.open();
+  printWindow.document.write(`<!doctype html>
+    <html lang="vi">
+      <head>
+        <meta charset="UTF-8">
+        <title>In mã QR tài sản</title>
+        <style>
+          @page { size: A4 portrait; margin: 10mm; }
+          * { box-sizing: border-box; }
+          body { margin: 0; color: #172033; font-family: Inter, Arial, "Segoe UI", sans-serif; }
+          .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: 31.5mm;
+            gap: 2mm 3mm; }
+          .label { min-width: 0; padding: 2mm; display: grid; grid-template-columns: 22mm minmax(0, 1fr);
+            align-items: center; gap: 3mm; border: 1px solid #cbd5e1; break-inside: avoid; text-align: left; }
+          .qr { grid-column: 1; grid-row: 1; width: 22mm; height: 22mm; margin: 0; }
+          .qr svg { display: block; width: 100%; height: 100%; }
+          .info { grid-column: 2; grid-row: 1; min-width: 0; height: 22mm; margin: 0; overflow: hidden;
+            display: grid; align-content: start; gap: 1mm; }
+          .logo { display: block; width: 40mm; height: auto; margin: 0; object-fit: contain; object-position: left top;
+            line-height: 0; vertical-align: top; }
+          .asset-code { color: #172033; font-size: 8pt; font-weight: 800; line-height: 1.15;
+            overflow-wrap: anywhere; word-break: break-all; }
+          .asset-name { color: #475569; font-size: 7pt; font-weight: 600; line-height: 1.2;
+            display: -webkit-box; overflow: hidden; overflow-wrap: anywhere; -webkit-box-orient: vertical;
+            -webkit-line-clamp: 2; }
+        </style>
+      </head>
+      <body>
+        <div class="grid">
+          ${labels
+            .map((code) => {
+              const codeLength = Array.from(code.assetCode).length;
+              const nameLength = Array.from(code.assetName).length;
+              const codeFontSize =
+                codeLength > 48 ? 5 : codeLength > 36 ? 5.8 : codeLength > 26 ? 6.8 : 8;
+              const nameFontSize = nameLength > 60 ? 5.8 : nameLength > 38 ? 6.3 : 7;
+              return `<article class="label">
+                 <div class="qr">${code.svg}</div>
+                 <div class="info">
+                   <img class="logo" src="${escapeHtml(logoUrl)}" alt="BIMLab">
+                   <strong class="asset-code" style="font-size:${codeFontSize}pt">${escapeHtml(code.assetCode)}</strong>
+                   <span class="asset-name" style="font-size:${nameFontSize}pt">${escapeHtml(code.assetName)}</span>
+                 </div>
+               </article>`;
+            })
+            .join("")}
+        </div>
+      </body>
+    </html>`);
+  printWindow.document.close();
+  window.setTimeout(() => {
+    printWindow.focus();
+    printWindow.print();
+  }, 150);
+}
 
 const ASSET_VALUE_FILTERS: Array<{
   value: AssetValueFilter;
@@ -50,18 +491,116 @@ const ASSET_VALUE_FILTERS: Array<{
   { value: "FROM_50M_TO_200M", label: "50 - 200 triệu", min: 50_000_000, max: 200_000_000 },
   { value: "FROM_200M", label: "Trên 200 triệu", min: 200_000_000 },
 ];
+const ASSET_MUTABLE_STATUSES = ["IN_STOCK", "ASSIGNED", "MAINTENANCE", "DISPOSED", "LOST"] as const;
+const ASSET_TABLE_STORAGE_KEY = "qlvt.assetList.tableColumns.v1";
+const ASSET_TABLE_COLUMNS: AssetTableColumnConfig[] = [
+  { id: "asset", label: "Tài sản", locked: true, defaultVisible: true },
+  { id: "category", label: "Danh mục", locked: true, defaultVisible: true },
+  { id: "categoryCode", label: "Mã danh mục", defaultVisible: false },
+  { id: "serialNumber", label: "Serial/MAC", defaultVisible: false },
+  { id: "status", label: "Trạng thái", defaultVisible: true },
+  { id: "purchaseCost", label: "Giá trị mua", defaultVisible: true },
+  { id: "originalCost", label: "Nguyên giá", defaultVisible: false },
+  { id: "bookValue", label: "Giá trị còn lại", defaultVisible: false },
+  { id: "source", label: "Nguồn hình thành", defaultVisible: false },
+  { id: "site", label: "Chi nhánh", defaultVisible: false },
+  { id: "department", label: "Phòng ban", defaultVisible: false },
+  { id: "employee", label: "Người giữ", defaultVisible: false },
+  { id: "vendor", label: "Nhà cung cấp", defaultVisible: false },
+  { id: "project", label: "Dự án", defaultVisible: false },
+  { id: "purchaseDate", label: "Ngày mua", defaultVisible: false },
+  { id: "warrantyUntil", label: "Bảo hành đến", defaultVisible: false },
+];
+const ASSET_TABLE_COLUMN_WIDTHS: Record<AssetTableColumnId, number> = {
+  asset: 190,
+  category: 150,
+  categoryCode: 150,
+  serialNumber: 160,
+  status: 118,
+  purchaseCost: 138,
+  originalCost: 138,
+  bookValue: 138,
+  source: 160,
+  site: 160,
+  department: 160,
+  employee: 160,
+  vendor: 160,
+  project: 160,
+  purchaseDate: 138,
+  warrantyUntil: 138,
+};
+const ASSET_TABLE_SELECT_WIDTH = 42;
+const ASSET_TABLE_INDEX_WIDTH = 36;
+const ASSET_TABLE_ACTIONS_WIDTH = 86;
+const ASSET_TABLE_COLUMN_IDS = ASSET_TABLE_COLUMNS.map((column) => column.id);
+const DEFAULT_ASSET_TABLE_VISIBLE_COLUMNS = ASSET_TABLE_COLUMNS.filter(
+  (column) => column.defaultVisible || column.locked,
+).map((column) => column.id);
 type SheetCell = string | number | boolean | Date | null | undefined;
 type SheetRow = SheetCell[];
 
-function statusLabel(status: AssetStatusFilter) {
-  const labels: Record<AssetStatusFilter, string> = {
+function normalizeAssetColumnOrder(order: AssetTableColumnId[]) {
+  const middleColumns = [
+    ...order.filter(
+      (id) => ASSET_TABLE_COLUMN_IDS.includes(id) && id !== "asset" && id !== "category",
+    ),
+    ...ASSET_TABLE_COLUMN_IDS.filter(
+      (id) => !order.includes(id) && id !== "asset" && id !== "category",
+    ),
+  ];
+  return ["asset", "category", ...middleColumns] as AssetTableColumnId[];
+}
+
+function readAssetColumnPreferences() {
+  if (typeof window === "undefined") {
+    return {
+      order: normalizeAssetColumnOrder(ASSET_TABLE_COLUMN_IDS),
+      visible: DEFAULT_ASSET_TABLE_VISIBLE_COLUMNS,
+    };
+  }
+
+  try {
+    const raw = window.localStorage.getItem(ASSET_TABLE_STORAGE_KEY);
+    if (!raw) {
+      return {
+        order: normalizeAssetColumnOrder(ASSET_TABLE_COLUMN_IDS),
+        visible: DEFAULT_ASSET_TABLE_VISIBLE_COLUMNS,
+      };
+    }
+    const parsed = JSON.parse(raw) as Partial<{
+      order: AssetTableColumnId[];
+      visible: AssetTableColumnId[];
+    }>;
+    const knownIds = new Set(ASSET_TABLE_COLUMN_IDS);
+    const order = [
+      ...(parsed.order || []).filter((id): id is AssetTableColumnId => knownIds.has(id)),
+      ...ASSET_TABLE_COLUMN_IDS.filter((id) => !(parsed.order || []).includes(id)),
+    ];
+    const visible = Array.from(
+      new Set([
+        ...(parsed.visible || []).filter((id): id is AssetTableColumnId => knownIds.has(id)),
+        ...ASSET_TABLE_COLUMNS.filter((column) => column.locked).map((column) => column.id),
+      ]),
+    );
+    return { order: normalizeAssetColumnOrder(order), visible };
+  } catch {
+    return {
+      order: normalizeAssetColumnOrder(ASSET_TABLE_COLUMN_IDS),
+      visible: DEFAULT_ASSET_TABLE_VISIBLE_COLUMNS,
+    };
+  }
+}
+
+function statusLabel(status: string) {
+  const labels: Record<string, string> = {
     ALL: "Tất cả trạng thái",
     IN_STOCK: "Trong kho",
     ASSIGNED: "Đã cấp phát",
     MAINTENANCE: "Bảo trì",
     DISPOSED: "Đã thanh lý",
+    LOST: "Mất/hỏng",
   };
-  return labels[status];
+  return labels[status] || status;
 }
 
 function collectCategoryIds(node: AssetCategoryTree): Set<number> {
@@ -72,6 +611,17 @@ function collectCategoryIds(node: AssetCategoryTree): Set<number> {
     });
   });
   return ids;
+}
+
+function collectCategoryCodes(node: AssetCategoryTree): Set<string> {
+  const codes = new Set<string>();
+  if (node.code) codes.add(node.code);
+  node.children.forEach((child) => {
+    collectCategoryCodes(child).forEach((code) => {
+      codes.add(code);
+    });
+  });
+  return codes;
 }
 
 function findCategoryPath(nodes: AssetCategoryTree[], path: string[]): AssetCategoryTree[] {
@@ -142,6 +692,9 @@ function buildAssetPayload(item: AssetItem): AssetPayload {
     capacityUnit: item.capacityUnit || "",
     realCapacity: item.realCapacity ?? null,
     technicalDescription: item.technicalDescription || "",
+    disposalDate: item.disposalDate || "",
+    disposalPrice: item.disposalPrice ?? null,
+    disposalReason: item.disposalReason || "",
   };
 }
 
@@ -191,90 +744,51 @@ function importStatusLabel(status?: string) {
 }
 
 function dateTimeLabel(value?: string) {
-  if (!value) return "—";
+  if (!value) return "--";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
   return date.toLocaleString("vi-VN");
 }
 
-function assetCategoryTokens(asset: AssetItem): Set<string> {
-  return new Set(
-    [
-      asset.category,
-      asset.assetCategory?.name,
-      asset.assetCategory?.code,
-      asset.assetClass,
-      asset.fixedAssetType,
-      asset.toolUsageType,
-      classLabel(asset.assetClass),
-      classLabel(asset.fixedAssetType),
-      classLabel(asset.toolUsageType),
-    ]
-      .filter(Boolean)
-      .map((value) => normalize(String(value))),
-  );
-}
+const ASSET_AUDIT_FIELD_LABELS: Record<string, string> = {
+  assignedEmployeeId: "Nhân sự đang giữ",
+  departmentId: "Phòng ban",
+  siteId: "Chi nhánh",
+  projectId: "Dự án",
+  useDate: "Ngày bắt đầu sử dụng",
+  status: "Trạng thái",
+};
 
-function categoryNodeTerms(node: AssetCategoryTree): Set<string> {
-  const name = normalize(node.name);
-  const code = normalize(node.code);
-  const source = `${name} ${code}`;
-  const terms = new Set([name, code].filter(Boolean));
+const ASSET_AUDIT_ACTION_LABELS: Record<string, string> = {
+  TRANSFER_APPROVED: "Phiếu bàn giao được phê duyệt",
+  ASSET_UPDATED: "Cập nhật thông tin tài sản",
+};
 
-  if (
-    source.includes("fixed_asset") ||
-    source.includes("tscd") ||
-    source.includes("tai san co dinh")
-  ) {
-    terms.add("fixed_asset");
-    terms.add("tai san co dinh");
-  }
-  if (
-    source.includes("tool_equipment") ||
-    source.includes("ccdc") ||
-    source.includes("cong cu dung cu")
-  ) {
-    terms.add("tool_equipment");
-    terms.add("cong cu dung cu");
-  }
-  if (source.includes("intangible") || source.includes("vo hinh")) {
-    terms.add("intangible");
-    terms.add("vo hinh");
-  } else if (source.includes("tangible") || source.includes("huu hinh")) {
-    terms.add("tangible");
-    terms.add("huu hinh");
-  }
-  if (
-    source.includes("single_use") ||
-    source.includes("dung mot lan") ||
-    source.includes("dung 1 lan")
-  ) {
-    terms.add("single_use");
-    terms.add("dung mot lan");
-  }
-  if (source.includes("multi_use") || source.includes("dung nhieu lan")) {
-    terms.add("multi_use");
-    terms.add("dung nhieu lan");
-  }
-
-  return terms;
+function dateKey(value?: string) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (!Number.isNaN(date.getTime())) return date.toISOString().slice(0, 10);
+  const normalized = value.trim();
+  return normalized.length >= 10 ? normalized.slice(0, 10) : normalized;
 }
 
 function assetMatchesCategoryNode(
   asset: AssetItem,
   node: AssetCategoryTree,
   descendantIds?: Set<number> | null,
+  descendantCodes?: Set<string> | null,
 ) {
   const assetCategoryId = asset.assetCategory?.id;
   if (assetCategoryId && descendantIds?.has(assetCategoryId)) return true;
-  const tokens = assetCategoryTokens(asset);
-  const nodeTerms = categoryNodeTerms(node);
-  return Array.from(nodeTerms).some((term) => tokens.has(term));
+
+  const assetCategoryCode = asset.category || asset.assetCategory?.code;
+  if (assetCategoryCode && descendantCodes?.has(assetCategoryCode)) return true;
+
+  return false;
 }
 
 function AssetCategoryFilterNode({
   node,
-  depth = 0,
   selectedId,
   selectedPathIds,
   expandedIds,
@@ -283,7 +797,6 @@ function AssetCategoryFilterNode({
   onToggle,
 }: {
   node: AssetCategoryTree;
-  depth?: number;
   selectedId?: number;
   selectedPathIds: Set<number>;
   expandedIds: Set<number>;
@@ -301,7 +814,6 @@ function AssetCategoryFilterNode({
         type="button"
         className="asset-category-filter-item"
         data-selected={selectedId === node.id ? "true" : undefined}
-        style={{ paddingLeft: 8 + depth * 8 }}
         onClick={() => {
           onSelect(node);
           if (hasChildren) onToggle(node.id);
@@ -325,7 +837,6 @@ function AssetCategoryFilterNode({
             <AssetCategoryFilterNode
               key={child.id}
               node={child}
-              depth={depth + 1}
               selectedId={selectedId}
               selectedPathIds={selectedPathIds}
               expandedIds={expandedIds}
@@ -336,6 +847,77 @@ function AssetCategoryFilterNode({
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+function AssetListPagination({
+  page,
+  pageSize,
+  total,
+  onPageChange,
+  onPageSizeChange,
+}: {
+  page: number;
+  pageSize: number;
+  total: number;
+  onPageChange: (page: number) => void;
+  onPageSizeChange: (pageSize: number) => void;
+}) {
+  const pageCount = Math.max(1, Math.ceil(total / pageSize));
+  const safePage = Math.min(page, pageCount);
+  const start = total === 0 ? 0 : (safePage - 1) * pageSize + 1;
+  const end = Math.min(safePage * pageSize, total);
+
+  return (
+    <div className="table-pagination asset-list-pagination">
+      <div className="table-pagination-summary">
+        Hiển thị{" "}
+        <strong>
+          {start}-{end}
+        </strong>{" "}
+        / <strong>{total}</strong> tài sản
+      </div>
+      <div className="table-pagination-controls">
+        <select
+          value={pageSize}
+          onChange={(event) => onPageSizeChange(Number(event.target.value))}
+          aria-label="Số dòng mỗi trang"
+        >
+          {[10, 20, 50, 100].map((option) => (
+            <option key={option} value={option}>
+              {option}/trang
+            </option>
+          ))}
+        </select>
+        <button type="button" onClick={() => onPageChange(1)} disabled={safePage <= 1}>
+          <FiChevronsLeft />
+        </button>
+        <button
+          type="button"
+          onClick={() => onPageChange(Math.max(1, safePage - 1))}
+          disabled={safePage <= 1}
+        >
+          <FiChevronLeft />
+        </button>
+        <span>
+          {safePage} / {pageCount}
+        </span>
+        <button
+          type="button"
+          onClick={() => onPageChange(Math.min(pageCount, safePage + 1))}
+          disabled={safePage >= pageCount}
+        >
+          <FiChevronRight />
+        </button>
+        <button
+          type="button"
+          onClick={() => onPageChange(pageCount)}
+          disabled={safePage >= pageCount}
+        >
+          <FiChevronsRight />
+        </button>
+      </div>
     </div>
   );
 }
@@ -572,7 +1154,7 @@ function downloadImportCsv(result: AssetImportValidationResponse) {
   URL.revokeObjectURL(url);
 }
 
-async function downloadAssetImportTemplate() {
+async function downloadAssetImportTemplate(categories: AssetCategoryTree[]) {
   const ExcelJS = await import("exceljs");
   const workbook = new ExcelJS.Workbook();
   workbook.creator = "BIMLab QLVT";
@@ -581,7 +1163,6 @@ async function downloadAssetImportTemplate() {
   const sheet = workbook.addWorksheet("HoSoTaiSan_import", {
     views: [{ state: "frozen", ySplit: 4 }],
   });
-  const lookup = workbook.addWorksheet("DanhMuc_ThamChieu");
 
   const fieldKeys = [
     "assets.asset_code",
@@ -743,55 +1324,8 @@ async function downloadAssetImportTemplate() {
     });
   });
 
-  lookup.columns = [
-    { header: "Nhóm", key: "group", width: 24 },
-    { header: "Mã/Giá trị nhập", key: "code", width: 28 },
-    { header: "Diễn giải", key: "label", width: 46 },
-    { header: "Danh mục cha", key: "parentCode", width: 28 },
-  ];
-  [
-    ["Phân loại", "FIXED_ASSET", "Tài sản cố định", ""],
-    ["Phân loại", "TOOL_EQUIPMENT", "Công cụ dụng cụ", ""],
-    ["Phân loại lớp con", "TANGIBLE", "Tài sản cố định hữu hình", "FIXED_ASSET"],
-    ["Phân loại lớp con", "INTANGIBLE", "Tài sản cố định vô hình", "FIXED_ASSET"],
-    ["Phân loại lớp con", "SINGLE_USE", "Công cụ dụng cụ sử dụng một lần", "TOOL_EQUIPMENT"],
-    ["Phân loại lớp con", "MULTI_USE", "Công cụ dụng cụ sử dụng nhiều lần", "TOOL_EQUIPMENT"],
-    ["Danh mục ví dụ", "IT_EQUIPMENT", "Thiết bị CNTT", "TANGIBLE"],
-    ["Danh mục ví dụ", "MONITOR", "Màn hình", "IT_EQUIPMENT"],
-    ["Danh mục ví dụ", "LAPTOP", "Laptop", "IT_EQUIPMENT"],
-    ["Danh mục ví dụ", "PRINTER", "Máy in", "IT_EQUIPMENT"],
-    ["Danh mục ví dụ", "OFFICE_EQUIPMENT", "Thiết bị văn phòng", "TANGIBLE"],
-    ["Danh mục ví dụ", "CHAIR", "Ghế", "OFFICE_EQUIPMENT"],
-    ["Danh mục ví dụ", "TABLE", "Bàn", "OFFICE_EQUIPMENT"],
-    ["Danh mục ví dụ", "SOFTWARE", "Phần mềm", "INTANGIBLE"],
-    ["Danh mục ví dụ", "LICENSE", "Bản quyền/phần mềm", "SOFTWARE"],
-    ["Trạng thái", "IN_STOCK", "Trong kho", ""],
-    ["Trạng thái", "ASSIGNED", "Đã cấp phát", ""],
-    ["Trạng thái", "MAINTENANCE", "Bảo trì", ""],
-    ["Trạng thái", "DISPOSED", "Đã thanh lý", ""],
-    ["Trạng thái", "LOST", "Mất", ""],
-    ["Trạng thái", "PENDING", "Chờ xử lý", ""],
-  ].forEach(([group, code, label, parentCode]) => {
-    lookup.addRow({ group, code, label, parentCode });
-  });
-
-  lookup.getRow(1).eachCell((cell) => {
-    cell.font = { name: "Be Vietnam Pro", size: 12, bold: true, color: { argb: "FFFFFFFF" } };
-    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF154D7C" } };
-    cell.alignment = { vertical: "middle", horizontal: "center" };
-  });
-  lookup.eachRow((row, rowNumber) => {
-    row.height = rowNumber === 1 ? 28 : 22;
-    row.eachCell((cell) => {
-      cell.font = {
-        name: "Be Vietnam Pro",
-        size: rowNumber === 1 ? 12 : 11,
-        bold: rowNumber === 1,
-        color: { argb: rowNumber === 1 ? "FFFFFFFF" : "FF111827" },
-      };
-      cell.border = { bottom: { style: "thin", color: { argb: "FFE5E7EB" } } };
-    });
-  });
+  addCategoryReferenceSheet(workbook, { categories });
+  addHierarchicalCategorySheet(workbook, categories);
 
   const buffer = await workbook.xlsx.writeBuffer();
   const blob = new Blob([buffer], {
@@ -800,14 +1334,23 @@ async function downloadAssetImportTemplate() {
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
-  link.download = "mau_import_danh_sach_tai_san_bimlab.xlsx";
+  link.download = "mau_import_danh_sach_danh_muc_tai_san_bimlab.xlsx";
   link.click();
   URL.revokeObjectURL(url);
 }
 
 export function AssetsPage() {
   const { hasPermission } = useAuth();
-  const { assets, employees, departments, workSites, projects, ensureAssets } = useAppData();
+  const {
+    assets,
+    vendors,
+    employees,
+    departments,
+    workSites,
+    projects,
+    ensureAssets,
+    ensureAssetDetailLookups,
+  } = useAppData();
   const { openModal } = useActions();
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<AssetStatusFilter>("ALL");
@@ -817,12 +1360,43 @@ export function AssetsPage() {
   );
   const [categoryTree, setCategoryTree] = useState<AssetCategoryTree[]>([]);
   const [siteFilter, setSiteFilter] = useState("ALL");
+  const [departmentFilter, setDepartmentFilter] = useState("ALL");
+  const [employeeFilter, setEmployeeFilter] = useState("ALL");
+  const [sourceFilter, setSourceFilter] = useState("ALL");
+  const [useDateFrom, setUseDateFrom] = useState("");
+  const [useDateTo, setUseDateTo] = useState("");
   const [valueFilter, setValueFilter] = useState<AssetValueFilter>("ALL");
+  const [assetPage, setAssetPage] = useState(1);
+  const [assetPageSize, setAssetPageSize] = useState(20);
   const [listRefreshing, setListRefreshing] = useState(false);
+  const [bulkActionBusy, setBulkActionBusy] = useState(false);
+  const [selectedAssetIds, setSelectedAssetIds] = useState<Set<number>>(() => new Set());
+  const [assetMultiSelectMode, setAssetMultiSelectMode] = useState(false);
+  const [assetCategoryCollapsed, setAssetCategoryCollapsed] = useState(false);
+  const [bulkPanelAction, setBulkPanelAction] = useState<AssetBulkAction>(null);
+  const [bulkStatus, setBulkStatus] = useState<(typeof ASSET_MUTABLE_STATUSES)[number]>("IN_STOCK");
+  const [bulkSiteId, setBulkSiteId] = useState("");
+  const [bulkDepartmentId, setBulkDepartmentId] = useState("");
+  const [bulkEmployeeId, setBulkEmployeeId] = useState("");
+  const [assetColumnOrder, setAssetColumnOrder] = useState<AssetTableColumnId[]>(
+    () => readAssetColumnPreferences().order,
+  );
+  const [visibleAssetColumns, setVisibleAssetColumns] = useState<AssetTableColumnId[]>(
+    () => readAssetColumnPreferences().visible,
+  );
+  const [columnConfigOpen, setColumnConfigOpen] = useState(false);
+  const [draggedAssetColumn, setDraggedAssetColumn] = useState<AssetTableColumnId | null>(null);
   const [selectedAsset, setSelectedAsset] = useState<AssetItem | null>(null);
   const [assetDraft, setAssetDraft] = useState<AssetPayload | null>(null);
   const [assetSaving, setAssetSaving] = useState(false);
+  const [assetDetailView, setAssetDetailView] = useState<AssetDetailView>("details");
+  const [assetChangeHistory, setAssetChangeHistory] = useState<AssetChangeLog[]>([]);
+  const [assetHistoryLoading, setAssetHistoryLoading] = useState(false);
+  const [assetHistoryError, setAssetHistoryError] = useState("");
   const [qrAsset, setQrAsset] = useState<AssetItem | null>(null);
+  const [qrCode, setQrCode] = useState<AssetQrCode | null>(null);
+  const [qrSvg, setQrSvg] = useState("");
+  const [qrBusy, setQrBusy] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [importCancelConfirm, setImportCancelConfirm] = useState(false);
   const [importBusy, setImportBusy] = useState(false);
@@ -847,15 +1421,25 @@ export function AssetsPage() {
       .catch(() => setCategoryTree([]));
   }, []);
 
+  useEffect(() => {
+    window.localStorage.setItem(
+      ASSET_TABLE_STORAGE_KEY,
+      JSON.stringify({
+        order: assetColumnOrder,
+        visible: visibleAssetColumns,
+      }),
+    );
+  }, [assetColumnOrder, visibleAssetColumns]);
+
   const canManage = hasPermission("asset_manage");
-  const employeeName = (id?: number) =>
+  const employeeName = (id?: number | null) =>
     id ? employeeLabel(employees.find((employee) => employee.id === id)) : "Chưa gán người dùng";
   const departmentName = (id?: number) =>
-    id ? departments.find((department) => department.id === id)?.name || `Phòng ban #${id}` : "—";
-  const siteName = (id?: number) =>
-    id ? workSites.find((site) => site.id === id)?.name || `Site #${id}` : "—";
+    id ? departments.find((department) => department.id === id)?.name || `Phòng ban #${id}` : "--";
+  const siteName = (id?: number | null) =>
+    id ? workSites.find((site) => site.id === id)?.name || `Site #${id}` : "BIMLAB";
   const projectName = (id?: number) =>
-    id ? projectLabel(projects.find((project) => project.id === id)) : "—";
+    id ? projectLabel(projects.find((project) => project.id === id)) : "--";
 
   const categoryDescendantIds = useMemo(() => {
     const idsByCategory = new Map<number, Set<number>>();
@@ -873,27 +1457,50 @@ export function AssetsPage() {
     return idsByCategory;
   }, [categoryTree]);
 
+  const categoryDescendantCodes = useMemo(() => {
+    const codesByCategory = new Map<number, Set<string>>();
+    const visit = (node: AssetCategoryTree): Set<string> => {
+      const codes = new Set<string>();
+      if (node.code) codes.add(node.code);
+      node.children.forEach((child) => {
+        visit(child).forEach((code) => {
+          codes.add(code);
+        });
+      });
+      codesByCategory.set(node.id, codes);
+      return codes;
+    };
+    categoryTree.forEach(visit);
+    return codesByCategory;
+  }, [categoryTree]);
+
   const categoryAssetCounts = useMemo(() => {
     const counts = new Map<number, number>();
     const visit = (node: AssetCategoryTree) => {
       const descendantIds = categoryDescendantIds.get(node.id) ?? collectCategoryIds(node);
+      const descendantCodes = categoryDescendantCodes.get(node.id) ?? collectCategoryCodes(node);
       const count = assets.filter((asset) =>
-        assetMatchesCategoryNode(asset, node, descendantIds),
+        assetMatchesCategoryNode(asset, node, descendantIds, descendantCodes),
       ).length;
       counts.set(node.id, count);
       node.children.forEach(visit);
     };
     categoryTree.forEach(visit);
     return counts;
-  }, [assets, categoryDescendantIds, categoryTree]);
+  }, [assets, categoryDescendantIds, categoryDescendantCodes, categoryTree]);
 
   const resetAssetFilters = () => {
     setCategoryPath([]);
     setExpandedAssetCategoryIds(new Set());
     setStatusFilter("ALL");
     setSiteFilter("ALL");
+    setDepartmentFilter("ALL");
+    setEmployeeFilter("ALL");
+    setSourceFilter("ALL");
+    setUseDateFrom("");
+    setUseDateTo("");
     setValueFilter("ALL");
-    setQuery("");
+    setAssetPage(1);
   };
 
   const selectedCategoryNodes = useMemo(
@@ -920,21 +1527,92 @@ export function AssetsPage() {
     [assets, workSites],
   );
 
+  const departmentOptions = useMemo(() => {
+    const ids = new Set<number>();
+    assets.forEach((asset) => {
+      if (siteFilter !== "ALL" && asset.siteId !== Number(siteFilter)) return;
+      if (asset.departmentId) ids.add(asset.departmentId);
+    });
+    return Array.from(ids).sort((a, b) => departmentName(a).localeCompare(departmentName(b), "vi"));
+  }, [assets, departments, siteFilter]);
+
+  const employeeOptions = useMemo(() => {
+    const ids = new Set<number>();
+    assets.forEach((asset) => {
+      if (siteFilter !== "ALL" && asset.siteId !== Number(siteFilter)) return;
+      if (departmentFilter !== "ALL" && asset.departmentId !== Number(departmentFilter)) return;
+      if (asset.assignedEmployeeId) ids.add(asset.assignedEmployeeId);
+    });
+    return Array.from(ids).sort((a, b) => employeeName(a).localeCompare(employeeName(b), "vi"));
+  }, [assets, departmentFilter, employees, siteFilter]);
+
+  const sourceOptions = useMemo(
+    () =>
+      Array.from(
+        new Set(assets.map((asset) => asset.source?.trim()).filter(Boolean) as string[]),
+      ).sort((a, b) => a.localeCompare(b, "vi")),
+    [assets],
+  );
+
+  useEffect(() => {
+    if (departmentFilter === "ALL") return;
+    if (!departmentOptions.includes(Number(departmentFilter))) {
+      setDepartmentFilter("ALL");
+      setEmployeeFilter("ALL");
+    }
+  }, [departmentFilter, departmentOptions]);
+
+  useEffect(() => {
+    if (employeeFilter === "ALL") return;
+    if (!employeeOptions.includes(Number(employeeFilter))) {
+      setEmployeeFilter("ALL");
+    }
+  }, [employeeFilter, employeeOptions]);
+
+  useEffect(() => {
+    if (useDateFrom && useDateTo && useDateFrom > useDateTo) {
+      setUseDateTo("");
+    }
+  }, [useDateFrom, useDateTo]);
+
   const filteredAssets = useMemo(() => {
-    const normalized = query.trim().toLowerCase();
+    const normalized = query
+      .trim()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase();
     const valueRange = ASSET_VALUE_FILTERS.find((item) => item.value === valueFilter);
     const selectedCategoryIds = selectedCategoryNode
       ? (categoryDescendantIds.get(selectedCategoryNode.id) ??
         collectCategoryIds(selectedCategoryNode))
       : null;
+    const selectedCategoryCodes = selectedCategoryNode
+      ? (categoryDescendantCodes.get(selectedCategoryNode.id) ??
+        collectCategoryCodes(selectedCategoryNode))
+      : null;
     return assets.filter((asset) => {
       const matchesStatus = statusFilter === "ALL" || asset.status === statusFilter;
       const assetCategoryId = asset.assetCategory?.id;
+      const assetCategoryCode = asset.category || asset.assetCategory?.code;
       const matchesCategory =
         !selectedCategoryNode ||
         (assetCategoryId && selectedCategoryIds?.has(assetCategoryId)) ||
-        assetMatchesCategoryNode(asset, selectedCategoryNode, selectedCategoryIds);
+        (assetCategoryCode && selectedCategoryCodes?.has(assetCategoryCode)) ||
+        assetMatchesCategoryNode(
+          asset,
+          selectedCategoryNode,
+          selectedCategoryIds,
+          selectedCategoryCodes,
+        );
       const matchesSite = siteFilter === "ALL" || asset.siteId === Number(siteFilter);
+      const matchesDepartment =
+        departmentFilter === "ALL" || asset.departmentId === Number(departmentFilter);
+      const matchesEmployee =
+        employeeFilter === "ALL" || asset.assignedEmployeeId === Number(employeeFilter);
+      const matchesSource = sourceFilter === "ALL" || asset.source?.trim() === sourceFilter;
+      const assetUseDate = dateKey(asset.useDate);
+      const matchesUseDateFrom = !useDateFrom || (assetUseDate && assetUseDate >= useDateFrom);
+      const matchesUseDateTo = !useDateTo || (assetUseDate && assetUseDate <= useDateTo);
       const cost = Number(asset.purchaseCost || 0);
       const matchesValue =
         valueFilter === "ALL" ||
@@ -952,22 +1630,105 @@ export function AssetsPage() {
         asset.serialNumber,
         asset.vendor?.name,
         employeeName(asset.assignedEmployeeId),
+        departmentName(asset.departmentId),
+        siteName(asset.siteId),
+        projectName(asset.projectId),
       ]
         .filter(Boolean)
         .join(" ")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
         .toLowerCase();
       const matchesQuery = !normalized || searchable.includes(normalized);
-      return matchesStatus && matchesCategory && matchesSite && matchesValue && matchesQuery;
+      return (
+        matchesStatus &&
+        matchesCategory &&
+        matchesSite &&
+        matchesDepartment &&
+        matchesEmployee &&
+        matchesSource &&
+        matchesUseDateFrom &&
+        matchesUseDateTo &&
+        matchesValue &&
+        matchesQuery
+      );
     });
   }, [
     assets,
     categoryDescendantIds,
+    categoryDescendantCodes,
+    departments,
+    employees,
+    projects,
     query,
     selectedCategoryNode,
+    departmentFilter,
+    employeeFilter,
     siteFilter,
+    sourceFilter,
     statusFilter,
+    useDateFrom,
+    useDateTo,
+    valueFilter,
+    workSites,
+  ]);
+
+  useEffect(() => {
+    setAssetPage(1);
+  }, [
+    categoryPath,
+    departmentFilter,
+    employeeFilter,
+    query,
+    siteFilter,
+    sourceFilter,
+    statusFilter,
+    useDateFrom,
+    useDateTo,
     valueFilter,
   ]);
+
+  const assetPageCount = Math.max(1, Math.ceil(filteredAssets.length / assetPageSize));
+  const safeAssetPage = Math.min(assetPage, assetPageCount);
+  const pagedAssets = useMemo(
+    () => filteredAssets.slice((safeAssetPage - 1) * assetPageSize, safeAssetPage * assetPageSize),
+    [assetPageSize, filteredAssets, safeAssetPage],
+  );
+  const selectedAssets = useMemo(
+    () => assets.filter((asset) => selectedAssetIds.has(asset.id)),
+    [assets, selectedAssetIds],
+  );
+  const pageSelectableIds = useMemo(() => pagedAssets.map((asset) => asset.id), [pagedAssets]);
+  const selectedOnPageCount = useMemo(
+    () => pageSelectableIds.filter((id) => selectedAssetIds.has(id)).length,
+    [pageSelectableIds, selectedAssetIds],
+  );
+  const allPageSelected =
+    pageSelectableIds.length > 0 && selectedOnPageCount === pageSelectableIds.length;
+  const somePageSelected = selectedOnPageCount > 0 && !allPageSelected;
+  const selectedAssetsValue = useMemo(
+    () => selectedAssets.reduce((sum, asset) => sum + Number(asset.purchaseCost || 0), 0),
+    [selectedAssets],
+  );
+
+  useEffect(() => {
+    if (assetPage > assetPageCount) setAssetPage(assetPageCount);
+  }, [assetPage, assetPageCount]);
+
+  useEffect(() => {
+    setSelectedAssetIds((current) => {
+      if (current.size === 0) return current;
+      const validIds = new Set(assets.map((asset) => asset.id));
+      const next = new Set(Array.from(current).filter((id) => validIds.has(id)));
+      return next.size === current.size ? current : next;
+    });
+  }, [assets]);
+
+  useEffect(() => {
+    if (selectedAssets.length === 0) {
+      setBulkPanelAction(null);
+    }
+  }, [selectedAssets.length]);
 
   const totalValue = useMemo(
     () => assets.reduce((sum, item) => sum + Number(item.purchaseCost || 0), 0),
@@ -978,6 +1739,42 @@ export function AssetsPage() {
     () => filteredAssets.reduce((sum, item) => sum + Number(item.purchaseCost || 0), 0),
     [filteredAssets],
   );
+
+  const assetListInsights = useMemo(() => {
+    const countMap = (values: string[]) => {
+      const map = new Map<string, number>();
+      values.forEach((value) => {
+        map.set(value, (map.get(value) || 0) + 1);
+      });
+      return Array.from(map.entries())
+        .map(([label, value]) => ({ label, value }))
+        .sort((a, b) => b.value - a.value || a.label.localeCompare(b.label, "vi"))
+        .slice(0, 5);
+    };
+
+    const valueBuckets = ASSET_VALUE_FILTERS.filter((item) => item.value !== "ALL")
+      .map((bucket) => ({
+        label: bucket.label,
+        value: filteredAssets.filter((asset) => {
+          const value = Number(asset.purchaseCost || 0);
+          if (bucket.min !== undefined && value < bucket.min) return false;
+          if (bucket.max !== undefined && value >= bucket.max) return false;
+          return true;
+        }).length,
+      }))
+      .filter((item) => item.value > 0);
+
+    return {
+      statuses: countMap(filteredAssets.map((asset) => statusLabel(asset.status))),
+      categories: countMap(
+        filteredAssets.map(
+          (asset) => asset.assetCategory?.name || asset.category || "Chưa phân loại",
+        ),
+      ),
+      values: valueBuckets,
+      sites: countMap(filteredAssets.map((asset) => siteName(asset.siteId))),
+    };
+  }, [filteredAssets, workSites]);
 
   const importPreviewRows = useMemo(() => {
     const rows = importResult?.rows ?? importRows.slice(0, 30);
@@ -995,7 +1792,7 @@ export function AssetsPage() {
   const reloadAssetList = async () => {
     setListRefreshing(true);
     try {
-      await ensureAssets(true);
+      await ensureAssets(true, true);
     } finally {
       setListRefreshing(false);
     }
@@ -1013,12 +1810,73 @@ export function AssetsPage() {
   const openAssetDetail = (item: AssetItem) => {
     setSelectedAsset(item);
     setAssetDraft(buildAssetPayload(item));
+    setAssetDetailView("details");
+    setAssetChangeHistory([]);
+    setAssetHistoryError("");
+    void ensureAssetDetailLookups();
   };
 
   const closeAssetDetail = () => {
     if (assetSaving) return;
     setSelectedAsset(null);
     setAssetDraft(null);
+    setAssetDetailView("details");
+  };
+
+  const openAssetHistory = async () => {
+    if (!selectedAsset || assetHistoryLoading) return;
+    setAssetDetailView("history");
+    setAssetHistoryLoading(true);
+    setAssetHistoryError("");
+    try {
+      setAssetChangeHistory(await loadAssetChangeHistory(selectedAsset.id));
+    } catch {
+      setAssetHistoryError("Không tải được lịch sử chỉnh sửa của tài sản.");
+    } finally {
+      setAssetHistoryLoading(false);
+    }
+  };
+
+  const assetAuditValue = (field: string, value: unknown) => {
+    if (value === null || value === undefined) {
+      return (
+        {
+          assignedEmployeeId: "Chưa gán hoặc đã thu hồi về kho",
+          departmentId: "Chưa gán phòng ban",
+          siteId: "Chưa gán chi nhánh",
+          projectId: "Chưa gán dự án",
+          useDate: "Chưa xác định ngày sử dụng",
+        }[field] || "Chưa có dữ liệu"
+      );
+    }
+    if (value === "") return "Chưa có";
+    const id = Number(value);
+    if (field === "assignedEmployeeId") return employeeName(id);
+    if (field === "departmentId") return departmentName(id);
+    if (field === "siteId") return siteName(id);
+    if (field === "projectId") return projectName(id);
+    if (field === "useDate") {
+      const parts = Array.isArray(value)
+        ? value
+        : String(value)
+            .match(/^(\d{4})-(\d{1,2})-(\d{1,2})/)
+            ?.slice(1);
+      if (parts && parts.length >= 3) {
+        return `${String(parts[2]).padStart(2, "0")}/${String(parts[1]).padStart(2, "0")}/${parts[0]}`;
+      }
+    }
+    if (field === "status") {
+      return (
+        {
+          IN_STOCK: "Trong kho",
+          ASSIGNED: "Đang sử dụng",
+          MAINTENANCE: "Bảo trì",
+          DISPOSED: "Đã thanh lý",
+        }[String(value)] || String(value)
+      );
+    }
+    if (typeof value === "object") return JSON.stringify(value);
+    return String(value);
   };
 
   const updateAssetDraft = (field: keyof AssetPayload, value: AssetPayload[keyof AssetPayload]) => {
@@ -1029,7 +1887,11 @@ export function AssetsPage() {
     if (!selectedAsset || !assetDraft) return;
     setAssetSaving(true);
     try {
-      await updateAsset(selectedAsset.id, assetDraft);
+      await updateAsset(selectedAsset.id, {
+        ...assetDraft,
+        technicalDescription: richTextStorageValue(assetDraft.technicalDescription || ""),
+        notes: richTextStorageValue(assetDraft.notes || ""),
+      });
       toast.success("Đã cập nhật tài sản.");
       await reloadAssetList();
       setSelectedAsset(null);
@@ -1047,11 +1909,386 @@ export function AssetsPage() {
     try {
       await deleteAsset(item.id);
       toast.success("Đã xóa tài sản.");
+      setSelectedAssetIds((current) => {
+        const next = new Set(current);
+        next.delete(item.id);
+        return next;
+      });
       await reloadAssetList();
     } catch {
       toast.error("Không xóa được tài sản.");
     }
   };
+
+  const toggleAssetSelected = (id: number) => {
+    setSelectedAssetIds((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleCurrentPageSelected = () => {
+    setSelectedAssetIds((current) => {
+      const next = new Set(current);
+      if (allPageSelected) {
+        pageSelectableIds.forEach((id) => {
+          next.delete(id);
+        });
+      } else {
+        pageSelectableIds.forEach((id) => {
+          next.add(id);
+        });
+      }
+      return next;
+    });
+  };
+
+  const clearSelectedAssets = () => {
+    setSelectedAssetIds(new Set());
+    setBulkPanelAction(null);
+  };
+
+  const handleBulkDeleteAssets = async () => {
+    if (selectedAssets.length === 0 || bulkActionBusy) return;
+    const confirmed = window.confirm(`Xóa ${selectedAssets.length} tài sản đã chọn?`);
+    if (!confirmed) return;
+    setBulkActionBusy(true);
+    try {
+      await Promise.all(selectedAssets.map((asset) => deleteAsset(asset.id)));
+      toast.success(`Đã xóa ${selectedAssets.length} tài sản.`);
+      clearSelectedAssets();
+      await reloadAssetList();
+    } catch {
+      toast.error("Không xóa được một số tài sản đã chọn.");
+    } finally {
+      setBulkActionBusy(false);
+    }
+  };
+
+  const openBulkPanelAction = (action: AssetBulkAction) => {
+    if (selectedAssets.length === 0) return;
+    if (action === "qr") {
+      setBulkPanelAction(null);
+      void handlePrintQrBatch();
+      return;
+    }
+    setBulkPanelAction((current) => (current === action ? null : action));
+    if (action === "move" || action === "assign") {
+      void ensureAssetDetailLookups();
+    }
+  };
+
+  const updateSelectedAssets = async (
+    buildPayload: (asset: AssetItem) => AssetPayload,
+    successMessage: string,
+  ) => {
+    if (selectedAssets.length === 0 || bulkActionBusy) return;
+    const count = selectedAssets.length;
+    setBulkActionBusy(true);
+    try {
+      await Promise.all(selectedAssets.map((asset) => updateAsset(asset.id, buildPayload(asset))));
+      toast.success(successMessage);
+      setBulkPanelAction(null);
+      await reloadAssetList();
+      setSelectedAssetIds((current) => {
+        const next = new Set(current);
+        selectedAssets.forEach((asset) => {
+          next.delete(asset.id);
+        });
+        return next;
+      });
+    } catch {
+      toast.error(`Không cập nhật được ${count} tài sản đã chọn.`);
+    } finally {
+      setBulkActionBusy(false);
+    }
+  };
+
+  const handleBulkUpdateStatus = async () => {
+    await updateSelectedAssets(
+      (asset) => ({ ...buildAssetPayload(asset), status: bulkStatus }),
+      `Đã cập nhật trạng thái ${selectedAssets.length} tài sản.`,
+    );
+  };
+
+  const handleBulkMoveAssets = async () => {
+    if (!bulkSiteId && !bulkDepartmentId && !bulkEmployeeId) {
+      toast.error("Chọn ít nhất một thông tin vị trí hoặc người giữ cần cập nhật.");
+      return;
+    }
+    await updateSelectedAssets(
+      (asset) => ({
+        ...buildAssetPayload(asset),
+        siteId: bulkSiteId ? Number(bulkSiteId) : (asset.siteId ?? null),
+        departmentId: bulkDepartmentId ? Number(bulkDepartmentId) : (asset.departmentId ?? null),
+        assignedEmployeeId: bulkEmployeeId
+          ? Number(bulkEmployeeId)
+          : (asset.assignedEmployeeId ?? null),
+      }),
+      `Đã chuyển vị trí ${selectedAssets.length} tài sản.`,
+    );
+  };
+
+  const handleBulkAssignAssets = async () => {
+    if (!bulkEmployeeId) {
+      toast.error("Chọn nhân sự nhận tài sản trước khi cấp phát.");
+      return;
+    }
+    await updateSelectedAssets(
+      (asset) => ({
+        ...buildAssetPayload(asset),
+        status: "ASSIGNED",
+        siteId: bulkSiteId ? Number(bulkSiteId) : (asset.siteId ?? null),
+        departmentId: bulkDepartmentId ? Number(bulkDepartmentId) : (asset.departmentId ?? null),
+        assignedEmployeeId: Number(bulkEmployeeId),
+      }),
+      `Đã cấp phát ${selectedAssets.length} tài sản.`,
+    );
+  };
+
+  const handleBulkReturnAssets = async () => {
+    const confirmed = window.confirm(
+      `Thu hồi ${selectedAssets.length} tài sản đã chọn về trạng thái trong kho?`,
+    );
+    if (!confirmed) return;
+    await updateSelectedAssets(
+      (asset) => ({
+        ...buildAssetPayload(asset),
+        status: "IN_STOCK",
+        assignedEmployeeId: null,
+      }),
+      `Đã thu hồi ${selectedAssets.length} tài sản.`,
+    );
+  };
+
+  const openAssetQr = async (asset: AssetItem) => {
+    setQrAsset(asset);
+    setQrCode(null);
+    setQrSvg("");
+    setQrBusy(true);
+    try {
+      const [issued] = await issueAssetQrCodes([asset.id]);
+      if (!issued) throw new Error("Không tạo được mã QR");
+      const svg = await QRCode.toString(issued.publicUrl, {
+        type: "svg",
+        errorCorrectionLevel: "M",
+        margin: 1,
+        width: 280,
+      });
+      setQrCode(issued);
+      setQrSvg(`data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`);
+    } catch {
+      setQrAsset(null);
+      toast.error("Không tạo được mã QR tài sản.");
+    } finally {
+      setQrBusy(false);
+    }
+  };
+
+  const closeAssetQr = () => {
+    setQrAsset(null);
+    setQrCode(null);
+    setQrSvg("");
+  };
+
+  const handlePrintQrBatch = async () => {
+    if (selectedAssets.length === 0 || bulkActionBusy) return;
+    const printWindow = window.open("", "bimlab-asset-qr-print", "width=920,height=760");
+    if (!printWindow) {
+      toast.error("Trình duyệt đang chặn cửa sổ in.");
+      return;
+    }
+    printWindow.document.write("<p>Đang chuẩn bị mã QR...</p>");
+    setBulkActionBusy(true);
+    try {
+      const codes = await issueAssetQrCodes(selectedAssets.map((asset) => asset.id));
+      await renderQrPrint(printWindow, codes);
+      toast.success(`Đã chuẩn bị ${codes.length} mã QR để in.`);
+    } catch {
+      printWindow.close();
+      toast.error("Không chuẩn bị được danh sách mã QR.");
+    } finally {
+      setBulkActionBusy(false);
+    }
+  };
+
+  const handlePrintCurrentQr = async () => {
+    if (!qrCode) return;
+    const printWindow = window.open("", "bimlab-asset-qr-print", "width=920,height=760");
+    if (!printWindow) {
+      toast.error("Trình duyệt đang chặn cửa sổ in.");
+      return;
+    }
+    await renderQrPrint(printWindow, [qrCode]);
+  };
+
+  const toggleAssetColumn = (id: AssetTableColumnId) => {
+    const column = ASSET_TABLE_COLUMNS.find((item) => item.id === id);
+    if (column?.locked) return;
+    setVisibleAssetColumns((current) =>
+      current.includes(id) ? current.filter((item) => item !== id) : [...current, id],
+    );
+  };
+
+  const resetAssetColumns = () => {
+    setAssetColumnOrder(normalizeAssetColumnOrder(ASSET_TABLE_COLUMN_IDS));
+    setVisibleAssetColumns(DEFAULT_ASSET_TABLE_VISIBLE_COLUMNS);
+  };
+
+  const dropAssetColumn = (targetId: AssetTableColumnId) => {
+    if (!draggedAssetColumn || draggedAssetColumn === targetId) return;
+    const draggedColumn = ASSET_TABLE_COLUMNS.find((item) => item.id === draggedAssetColumn);
+    const targetColumn = ASSET_TABLE_COLUMNS.find((item) => item.id === targetId);
+    if (draggedColumn?.locked || targetColumn?.locked) {
+      setDraggedAssetColumn(null);
+      return;
+    }
+    setAssetColumnOrder((current) => {
+      const withoutDragged = current.filter((id) => id !== draggedAssetColumn);
+      const targetIndex = withoutDragged.indexOf(targetId);
+      if (targetIndex < 0) return current;
+      return normalizeAssetColumnOrder([
+        ...withoutDragged.slice(0, targetIndex),
+        draggedAssetColumn,
+        ...withoutDragged.slice(targetIndex),
+      ]);
+    });
+    setDraggedAssetColumn(null);
+  };
+
+  const assetTableColumns: AssetTableColumnDefinition[] = [
+    {
+      id: "asset",
+      label: "Tài sản",
+      locked: true,
+      render: (item) => (
+        <div
+          className="asset-name-cell"
+          title={`${item.name} - ${item.assetCode}`}
+          style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+        >
+          <strong style={{ overflow: "hidden", textOverflow: "ellipsis", display: "block" }}>
+            {highlightSearchText(item.name, query)}
+          </strong>
+        </div>
+      ),
+    },
+    {
+      id: "category",
+      label: "Danh mục",
+      render: (item) => (
+        <div
+          className="asset-name-cell"
+          title={item.assetCategory?.name || item.category || "Chưa phân loại"}
+          style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+        >
+          <strong style={{ overflow: "hidden", textOverflow: "ellipsis", display: "block" }}>
+            {highlightSearchText(
+              item.assetCategory?.name || item.category || "Chưa phân loại",
+              query,
+            )}
+          </strong>
+        </div>
+      ),
+    },
+    {
+      id: "categoryCode",
+      label: "Mã danh mục",
+      render: (item) => highlightSearchText(item.assetCategory?.code || "--", query),
+    },
+    {
+      id: "serialNumber",
+      label: "Serial/MAC",
+      render: (item) => highlightSearchText(item.serialNumber || "--", query),
+    },
+    {
+      id: "status",
+      label: "Trạng thái",
+      render: (item) => statusLabel(item.status),
+    },
+    {
+      id: "purchaseCost",
+      label: "Giá trị mua",
+      align: "right",
+      render: (item) => money.format(Number(item.purchaseCost || 0)),
+    },
+    {
+      id: "originalCost",
+      label: "Nguyên giá",
+      align: "right",
+      render: (item) => money.format(Number(item.originalCost || 0)),
+    },
+    {
+      id: "bookValue",
+      label: "Giá trị còn lại",
+      align: "right",
+      render: (item) => money.format(Number(item.bookValue || item.residualValue || 0)),
+    },
+    {
+      id: "source",
+      label: "Nguồn hình thành",
+      render: (item) => item.source || "--",
+    },
+    {
+      id: "site",
+      label: "Chi nhánh",
+      render: (item) => siteName(item.siteId),
+    },
+    {
+      id: "department",
+      label: "Phòng ban",
+      render: (item) => departmentName(item.departmentId),
+    },
+    {
+      id: "employee",
+      label: "Người giữ",
+      render: (item) => employeeName(item.assignedEmployeeId),
+    },
+    {
+      id: "vendor",
+      label: "Nhà cung cấp",
+      render: (item) => item.vendor?.name || "--",
+    },
+    {
+      id: "project",
+      label: "Dự án",
+      render: (item) => projectName(item.projectId),
+    },
+    {
+      id: "purchaseDate",
+      label: "Ngày mua",
+      render: (item) => item.purchaseDate || "--",
+    },
+    {
+      id: "warrantyUntil",
+      label: "Bảo hành đến",
+      render: (item) => item.warrantyUntil || "--",
+    },
+  ];
+  const assetColumnById = new Map(assetTableColumns.map((column) => [column.id, column]));
+  const visibleAssetColumnSet = new Set(visibleAssetColumns);
+  const configuredAssetColumns = assetColumnOrder
+    .map((id) => assetColumnById.get(id))
+    .filter((column): column is AssetTableColumnDefinition => {
+      if (!column) return false;
+      return visibleAssetColumnSet.has(column.id) || Boolean(column.locked);
+    });
+  const assetTableMinWidth = configuredAssetColumns.reduce(
+    (total, column) => total + (ASSET_TABLE_COLUMN_WIDTHS[column.id] ?? 150),
+    ASSET_TABLE_ACTIONS_WIDTH +
+      ASSET_TABLE_INDEX_WIDTH +
+      (assetMultiSelectMode ? ASSET_TABLE_SELECT_WIDTH : 0),
+  );
+  const columnConfigOrder = [
+    ...assetColumnOrder.filter((id) =>
+      ASSET_TABLE_COLUMNS.some((column) => column.id === id && column.locked),
+    ),
+    ...assetColumnOrder.filter((id) =>
+      ASSET_TABLE_COLUMNS.some((column) => column.id === id && !column.locked),
+    ),
+  ];
 
   const closeImport = () => {
     if (importBusy) return;
@@ -1146,7 +2383,7 @@ export function AssetsPage() {
   const handleDownloadTemplate = async () => {
     const loadingToast = toast.loading("Đang tạo file mẫu Excel...");
     try {
-      await downloadAssetImportTemplate();
+      await downloadAssetImportTemplate(categoryTree);
       toast.success("Đã tải file mẫu Excel.", { id: loadingToast });
     } catch {
       toast.error("Không tạo được file mẫu Excel.", { id: loadingToast });
@@ -1162,68 +2399,96 @@ export function AssetsPage() {
     });
   };
 
-  const headerExtraActions = (
-    <>
-      <button type="button" className="asset-template-button" onClick={handleDownloadTemplate}>
-        <FiDownload /> Tải mẫu Excel
-      </button>
-      <button type="button" className="asset-import-button" onClick={() => setImportOpen(true)}>
-        <FiUpload /> Tải lên file Excel
-      </button>
-    </>
-  );
-
   return (
     <section className="asset-page panel">
-      <PanelHeader
-        title="Danh sách tài sản"
-        action={canManage}
-        onAdd={() => openModal({ type: "asset", mode: "create" })}
-        extraActions={headerExtraActions}
-      />
+      <header className="asset-page-header">
+        <div>
+          <h2>Danh sách tài sản</h2>
+        </div>
+      </header>
 
-      <div className="asset-list-layout">
-        <aside className="asset-category-sidebar">
+      <div className="asset-page-actions">
+        <button
+          type="button"
+          className="asset-add-button btn-download-green"
+          onClick={handleDownloadTemplate}
+        >
+          <FiDownload /> Tải mẫu Excel
+        </button>
+        <button
+          type="button"
+          className="asset-add-button btn-upload-blue"
+          onClick={() => setImportOpen(true)}
+        >
+          <FiUpload /> Nhập tài sản
+        </button>
+        {canManage && (
+          <button
+            type="button"
+            className="asset-add-button"
+            onClick={() => openModal({ type: "asset", mode: "create" })}
+          >
+            Thêm thủ công
+          </button>
+        )}
+      </div>
+
+      <div className={`asset-list-layout ${assetCategoryCollapsed ? "category-collapsed" : ""}`}>
+        <aside className={`asset-category-sidebar ${assetCategoryCollapsed ? "collapsed" : ""}`}>
           <div className="asset-category-sidebar-head">
-            <div>
-              <span>Danh mục</span>
-              <strong>{selectedCategoryNode?.name || "Tất cả danh mục"}</strong>
-            </div>
-            <button type="button" className="asset-category-clear" onClick={resetAssetFilters}>
-              Tất cả
-            </button>
-          </div>
-
-          <div className="asset-category-filter-list">
+            {!assetCategoryCollapsed && (
+              <div>
+                <span>Danh mục</span>
+                <strong>{selectedCategoryNode?.name || "Tất cả danh mục"}</strong>
+              </div>
+            )}
+            {!assetCategoryCollapsed && (
+              <button type="button" className="asset-category-clear" onClick={resetAssetFilters}>
+                Tất cả
+              </button>
+            )}
             <button
               type="button"
-              className="asset-category-filter-item all"
-              data-selected={!selectedCategoryNode ? "true" : undefined}
-              onClick={resetAssetFilters}
+              className="asset-category-collapse"
+              title={assetCategoryCollapsed ? "Mở bộ lọc danh mục" : "Thu bộ lọc danh mục"}
+              onClick={() => setAssetCategoryCollapsed((value) => !value)}
             >
-              <span className="asset-category-filter-spacer" />
-              <span className="asset-category-filter-copy">
-                <strong>Tất cả danh mục</strong>
-                <small>Toàn bộ tài sản</small>
-              </span>
-              <span className="asset-category-filter-count">{assets.length}</span>
+              {assetCategoryCollapsed ? <FiChevronRight /> : <FiChevronLeft />}
             </button>
-
-            {categoryTree.map((node) => (
-              <AssetCategoryFilterNode
-                key={node.id}
-                node={node}
-                selectedId={selectedCategoryNode?.id}
-                selectedPathIds={selectedCategoryPathIds}
-                expandedIds={expandedAssetCategoryIds}
-                assetCounts={categoryAssetCounts}
-                onSelect={(category) =>
-                  setCategoryPath(findCategoryIdPath(categoryTree, category.id))
-                }
-                onToggle={toggleAssetCategory}
-              />
-            ))}
           </div>
+
+          {!assetCategoryCollapsed && (
+            <div className="asset-category-filter-list">
+              <button
+                type="button"
+                className="asset-category-filter-item all"
+                data-selected={!selectedCategoryNode ? "true" : undefined}
+                onClick={resetAssetFilters}
+              >
+                <span className="asset-category-filter-spacer" />
+                <span className="asset-category-filter-copy">
+                  <strong>Tất cả danh mục</strong>
+                  <small>Toàn bộ tài sản</small>
+                </span>
+                <span className="asset-category-filter-count">{assets.length}</span>
+              </button>
+
+              {categoryTree.map((node) => (
+                <AssetCategoryFilterNode
+                  key={node.id}
+                  node={node}
+                  selectedId={selectedCategoryNode?.id}
+                  selectedPathIds={selectedCategoryPathIds}
+                  expandedIds={expandedAssetCategoryIds}
+                  assetCounts={categoryAssetCounts}
+                  onSelect={(category) =>
+                    setCategoryPath(findCategoryIdPath(categoryTree, category.id))
+                  }
+                  onToggle={toggleAssetCategory}
+                />
+              ))}
+            </div>
+          )}
         </aside>
 
         <div className="asset-results-column">
@@ -1236,134 +2501,516 @@ export function AssetsPage() {
                 placeholder="Tìm theo mã, tên, serial, nhà cung cấp..."
               />
             </label>
-            <select
-              value={statusFilter}
-              onChange={(event) => setStatusFilter(event.target.value as AssetStatusFilter)}
-            >
-              {(["ALL", "IN_STOCK", "ASSIGNED", "MAINTENANCE", "DISPOSED"] as const).map(
-                (status) => (
-                  <option key={status} value={status}>
-                    {statusLabel(status)}
+            <label className="asset-filter-field">
+              <span>Trạng thái</span>
+              <SearchableSelect
+                value={statusFilter}
+                onChange={(val: string) => setStatusFilter(val as AssetStatusFilter)}
+              >
+                {(["ALL", "IN_STOCK", "ASSIGNED", "MAINTENANCE", "DISPOSED"] as const).map(
+                  (status) => (
+                    <option key={status} value={status}>
+                      {statusLabel(status)}
+                    </option>
+                  ),
+                )}
+              </SearchableSelect>
+            </label>
+            <label className="asset-filter-field">
+              <span>Giá trị</span>
+              <SearchableSelect
+                value={valueFilter}
+                onChange={(val: string) => setValueFilter(val as AssetValueFilter)}
+              >
+                {ASSET_VALUE_FILTERS.map((item) => (
+                  <option key={item.value} value={item.value}>
+                    {item.label}
                   </option>
-                ),
-              )}
-            </select>
-            <select value={siteFilter} onChange={(event) => setSiteFilter(event.target.value)}>
-              <option value="ALL">Tất cả chi nhánh</option>
-              {siteOptions.map((siteId) => (
-                <option key={siteId} value={siteId}>
-                  {siteName(siteId)}
-                </option>
-              ))}
-            </select>
-            <select
-              value={valueFilter}
-              onChange={(event) => setValueFilter(event.target.value as AssetValueFilter)}
-            >
-              {ASSET_VALUE_FILTERS.map((item) => (
-                <option key={item.value} value={item.value}>
-                  {item.label}
-                </option>
-              ))}
-            </select>
+                ))}
+              </SearchableSelect>
+            </label>
+            <label className="asset-date-filter">
+              <span>Từ ngày sử dụng</span>
+              <input
+                type="date"
+                value={useDateFrom}
+                onChange={(event) => setUseDateFrom(event.target.value)}
+              />
+            </label>
+            <label className="asset-date-filter">
+              <span>Đến ngày sử dụng</span>
+              <input
+                type="date"
+                value={useDateTo}
+                min={useDateFrom || undefined}
+                onChange={(event) => setUseDateTo(event.target.value)}
+              />
+            </label>
           </div>
 
           <div className={`asset-list-panel ${listRefreshing ? "is-refreshing" : ""}`}>
             <div className="asset-list-head">
-              <div>
-                <strong>{filteredAssets.length} tài sản</strong>
-                <span>
-                  Tổng giá trị đang lọc: {money.format(filteredValue)}
-                  {filteredAssets.length !== assets.length
-                    ? ` / ${money.format(totalValue)} toàn bộ`
-                    : ""}
+              <div className="asset-list-summary">
+                <span className="asset-total-value-line">
+                  Tổng giá trị của tài sản đang hiển thị:{" "}
+                  <span className="asset-total-value" style={{ whiteSpace: "nowrap" }}>
+                    <span style={{ color: "#2563eb", fontWeight: 600 }}>
+                      {money.format(filteredValue)}
+                    </span>
+
+                    {filteredAssets.length !== assets.length && (
+                      <>
+                        {" / "}
+                        <span style={{ color: "#2563eb", fontWeight: 600 }}>
+                          {money.format(totalValue)}
+                        </span>{" "}
+                        toàn bộ
+                      </>
+                    )}
+                  </span>
                 </span>
               </div>
+              <div className="asset-list-head-actions">
+                <button
+                  type="button"
+                  className="asset-table-text-action asset-multi-select-toggle"
+                  data-active={assetMultiSelectMode ? "true" : undefined}
+                  onClick={() => {
+                    setAssetMultiSelectMode((enabled) => {
+                      if (enabled) clearSelectedAssets();
+                      return !enabled;
+                    });
+                  }}
+                >
+                  {assetMultiSelectMode ? "Tắt chọn nhiều" : "Chọn nhiều"}
+                </button>
+                <button
+                  type="button"
+                  className="asset-table-text-action asset-column-config-toggle"
+                  aria-expanded={columnConfigOpen}
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={() => setColumnConfigOpen((open) => !open)}
+                >
+                  Cấu hình cột
+                </button>
+              </div>
             </div>
+            {columnConfigOpen && (
+              <>
+                <button
+                  type="button"
+                  className="asset-column-backdrop"
+                  aria-label="Đóng cấu hình cột"
+                  onClick={() => setColumnConfigOpen(false)}
+                />
+                <div
+                  className="asset-column-popover"
+                  role="dialog"
+                  aria-modal="true"
+                  aria-labelledby="asset-column-config-title"
+                >
+                  <div className="asset-column-popover-head">
+                    <div>
+                      <strong id="asset-column-config-title">Cấu hình cột</strong>
+                      <span>Bật/tắt cột cần xem. Các cột cố định luôn hiển thị trong bảng.</span>
+                    </div>
+                    <button
+                      type="button"
+                      className="icon-button"
+                      onClick={() => setColumnConfigOpen(false)}
+                    >
+                      <FiX />
+                    </button>
+                  </div>
+                  <div className="asset-column-list">
+                    {columnConfigOrder.map((id) => {
+                      const column = ASSET_TABLE_COLUMNS.find((item) => item.id === id);
+                      if (!column) return null;
+                      const locked = Boolean(column.locked);
+                      const checked = visibleAssetColumnSet.has(id) || Boolean(column.locked);
+                      return (
+                        <label
+                          key={id}
+                          className={`asset-column-option ${
+                            draggedAssetColumn === id ? "is-dragging" : ""
+                          } ${locked ? "is-locked" : ""}`}
+                          draggable={!locked}
+                          onDragStart={() => {
+                            if (!locked) setDraggedAssetColumn(id);
+                          }}
+                          onDragOver={(event) => event.preventDefault()}
+                          onDrop={() => dropAssetColumn(id)}
+                          onDragEnd={() => setDraggedAssetColumn(null)}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            disabled={locked}
+                            onChange={() => toggleAssetColumn(id)}
+                          />
+                          <span>{column.label}</span>
+                          {locked && <em>Bắt buộc</em>}
+                        </label>
+                      );
+                    })}
+                  </div>
+                  <div className="asset-column-popover-actions">
+                    <button type="button" className="secondary" onClick={resetAssetColumns}>
+                      <FiRotateCcw /> Mặc định
+                    </button>
+                    <button
+                      type="button"
+                      className="primary"
+                      onClick={() => setColumnConfigOpen(false)}
+                    >
+                      Áp dụng
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
 
-            {filteredAssets.length === 0 ? (
-              <div className="empty-state">Không có tài sản phù hợp bộ lọc.</div>
-            ) : (
-              <div className="asset-table">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Tài sản</th>
-                      <th>Danh mục</th>
-                      <th>Giá trị</th>
-                      <th>Trạng thái</th>
-                      <th>Thao tác</th>
+            <div
+              className="asset-table"
+              style={{ "--qlvt-table-min-width": `${assetTableMinWidth}px` } as CSSProperties}
+            >
+              <table className={assetMultiSelectMode ? "is-multi-select" : "is-single-select"}>
+                <thead>
+                  <tr>
+                    {assetMultiSelectMode && (
+                      <th className="asset-table-select-col asset-table-sticky-select">
+                        <label
+                          className="asset-table-checkbox"
+                          title="Chọn toàn bộ dòng hiển thị trên trang hiện tại"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={allPageSelected}
+                            ref={(input) => {
+                              if (input) input.indeterminate = somePageSelected;
+                            }}
+                            onChange={toggleCurrentPageSelected}
+                          />
+                          <span />
+                        </label>
+                      </th>
+                    )}
+                    <th className="asset-table-index-col asset-table-sticky-left asset-table-sticky-index table-index-header">
+                      STT
+                    </th>
+                    {configuredAssetColumns.map((column) => (
+                      <th
+                        key={column.id}
+                        className={`asset-table-col-${column.id} ${
+                          ["asset", "category"].includes(column.id)
+                            ? `asset-table-sticky-left asset-table-sticky-${column.id}`
+                            : ""
+                        } ${column.align ? `align-${column.align}` : ""}`}
+                      >
+                        {column.label}
+                      </th>
+                    ))}
+                    <th className="asset-table-actions-col asset-table-sticky-right">Thao tác</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pagedAssets.length === 0 ? (
+                    <tr className="asset-table-empty-row">
+                      <td
+                        colSpan={configuredAssetColumns.length + 2 + (assetMultiSelectMode ? 1 : 0)}
+                      >
+                        <div className="asset-table-empty-state">
+                          Không có tài sản phù hợp bộ lọc.
+                        </div>
+                      </td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {filteredAssets.map((item) => (
-                      <tr key={item.id}>
-                        <td>
-                          <div className="asset-name-cell">
-                            <strong>{highlightSearchText(item.name, query)}</strong>
-                            <span>{highlightSearchText(item.assetCode, query)}</span>
-                          </div>
-                        </td>
-                        <td>
-                          <div className="asset-muted-stack">
-                            <strong>
-                              {highlightSearchText(
-                                item.assetCategory?.name || item.category || "Chưa phân loại",
-                                query,
-                              )}
-                            </strong>
-                            <span>
-                              {highlightSearchText(
-                                item.assetCategory?.code || "Chưa có mã danh mục",
-                                query,
-                              )}
-                            </span>
-                          </div>
-                        </td>
-                        <td>{money.format(Number(item.purchaseCost || 0))}</td>
-                        <td>
-                          <StatusBadge value={item.status} />
-                        </td>
-                        <td>
-                          <div className="asset-row-icon-actions">
-                            <button
-                              type="button"
-                              className="asset-icon-action"
-                              title="Xem và chỉnh sửa tài sản"
-                              onClick={() => openAssetDetail(item)}
+                  ) : (
+                    pagedAssets.map((item, index) => (
+                      <tr
+                        key={item.id}
+                        className={selectedAssetIds.has(item.id) ? "is-selected" : undefined}
+                      >
+                        {assetMultiSelectMode && (
+                          <td className="asset-table-select-col asset-table-sticky-select">
+                            <label
+                              className="asset-table-checkbox"
+                              title={`Chọn ${item.assetCode}`}
                             >
-                              <FiEye />
-                            </button>
-                            <button
-                              type="button"
-                              className="asset-icon-action"
-                              title="Xem mã QR tài sản"
-                              onClick={() => setQrAsset(item)}
+                              <input
+                                type="checkbox"
+                                checked={selectedAssetIds.has(item.id)}
+                                onChange={() => toggleAssetSelected(item.id)}
+                              />
+                              <span />
+                            </label>
+                          </td>
+                        )}
+                        <td className="asset-table-index-col asset-table-sticky-left asset-table-sticky-index table-index-cell">
+                          {(safeAssetPage - 1) * assetPageSize + index + 1}
+                        </td>
+                        {configuredAssetColumns.map((column) => {
+                          const content = column.render(item);
+                          const titleText =
+                            typeof content === "string"
+                              ? content
+                              : typeof content === "number"
+                                ? String(content)
+                                : undefined;
+                          return (
+                            <td
+                              key={column.id}
+                              title={titleText}
+                              className={`asset-table-col-${column.id} ${
+                                ["asset", "category"].includes(column.id)
+                                  ? `asset-table-sticky-left asset-table-sticky-${column.id}`
+                                  : ""
+                              } ${column.align ? `align-${column.align}` : ""}`}
                             >
-                              <FiGrid />
-                            </button>
-                            {canManage && (
-                              <button
-                                type="button"
-                                className="asset-icon-action danger"
-                                title="Xóa tài sản"
-                                onClick={() => void handleDeleteAsset(item)}
-                              >
-                                <FiTrash2 />
-                              </button>
-                            )}
-                          </div>
+                              {content}
+                            </td>
+                          );
+                        })}
+                        <td className="asset-table-actions-col asset-table-sticky-right">
+                          <OverflowActions
+                            label={`Mở thao tác cho ${item.assetCode}`}
+                            actions={[
+                              {
+                                label: "Xem chi tiết",
+                                onClick: () => openAssetDetail(item),
+                              },
+                              {
+                                label: "Xem QR",
+                                onClick: () => void openAssetQr(item),
+                              },
+                              ...(canManage
+                                ? [
+                                    {
+                                      label: "Xóa",
+                                      danger: true,
+                                      onClick: () => {
+                                        void handleDeleteAsset(item);
+                                      },
+                                    },
+                                  ]
+                                : []),
+                            ]}
+                          />
                         </td>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+            <AssetListPagination
+              page={safeAssetPage}
+              pageSize={assetPageSize}
+              total={filteredAssets.length}
+              onPageChange={setAssetPage}
+              onPageSizeChange={(nextPageSize) => {
+                setAssetPageSize(nextPageSize);
+                setAssetPage(1);
+              }}
+            />
             {listRefreshing && (
               <div className="asset-list-refreshing">Đang cập nhật danh sách...</div>
             )}
           </div>
+
+          {canManage && (
+            <div
+              className={`asset-selection-workspace ${
+                selectedAssets.length > 0 ? "is-active" : ""
+              }`}
+            >
+              <div className="asset-selection-head">
+                <div>
+                  <strong>
+                    {selectedAssets.length > 0
+                      ? `${selectedAssets.length} tài sản đã chọn`
+                      : "Chọn tài sản để thao tác"}
+                  </strong>
+                  <span>
+                    {selectedAssets.length > 0
+                      ? `Tổng giá trị: ${money.format(selectedAssetsValue)}`
+                      : "Tick checkbox trong bảng để mở danh sách thao tác phía dưới."}
+                  </span>
+                </div>
+                <div className="asset-selection-actions">
+                  <label className="asset-bulk-action-select">
+                    <span>Thao tác</span>
+                    <SearchableSelect
+                      value={bulkPanelAction || ""}
+                      disabled={selectedAssets.length === 0 || bulkActionBusy}
+                      onChange={(val: string) => {
+                        const action = val as Exclude<AssetBulkAction, null> | "";
+                        if (!action) {
+                          setBulkPanelAction(null);
+                          return;
+                        }
+                        openBulkPanelAction(action);
+                      }}
+                    >
+                      <option value="">Chọn thao tác</option>
+                      <option value="status">Cập nhật trạng thái</option>
+
+                      <option value="qr">In QR theo nhóm</option>
+                    </SearchableSelect>
+                  </label>
+                  <button
+                    type="button"
+                    className="danger-action"
+                    disabled={selectedAssets.length === 0 || bulkActionBusy}
+                    onClick={() => void handleBulkDeleteAssets()}
+                  >
+                    <FiTrash2 /> Xóa
+                  </button>
+                  {selectedAssets.length > 0 && (
+                    <button
+                      type="button"
+                      className="secondary"
+                      disabled={bulkActionBusy}
+                      onClick={clearSelectedAssets}
+                    >
+                      Bỏ chọn
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {selectedAssets.length > 0 && (
+                <div className="asset-selection-body">
+                  <div
+                    className="asset-selection-stack"
+                    role="list"
+                    aria-label="Danh sách tài sản đã chọn"
+                  >
+                    {selectedAssets.map((asset) => (
+                      <div className="asset-selection-card" key={asset.id}>
+                        <div>
+                          <strong>{asset.name}</strong>
+                          <span>
+                            {asset.assetCode} ·{" "}
+                            {asset.assetCategory?.name || asset.category || "Chưa phân loại"}
+                          </span>
+                        </div>
+                        <StatusBadge value={asset.status} />
+                        <button
+                          type="button"
+                          className="icon-button"
+                          title="Bỏ chọn tài sản này"
+                          onClick={() => toggleAssetSelected(asset.id)}
+                        >
+                          <FiX />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+
+                  {bulkPanelAction && (
+                    <div className={`asset-bulk-panel asset-bulk-panel-${bulkPanelAction}`}>
+                      {bulkPanelAction === "status" && (
+                        <>
+                          <div className="asset-bulk-panel-copy">
+                            <strong>Cập nhật trạng thái</strong>
+                            <span>Áp dụng cùng một trạng thái cho các tài sản đã chọn.</span>
+                          </div>
+                          <div className="asset-bulk-form-row">
+                            <label>
+                              <span>Trạng thái mới</span>
+                              <SearchableSelect
+                                value={bulkStatus}
+                                onChange={(val: string) =>
+                                  setBulkStatus(val as (typeof ASSET_MUTABLE_STATUSES)[number])
+                                }
+                              >
+                                {ASSET_MUTABLE_STATUSES.map((status) => (
+                                  <option key={status} value={status}>
+                                    {statusLabel(status)}
+                                  </option>
+                                ))}
+                              </SearchableSelect>
+                            </label>
+                            <button
+                              type="button"
+                              className="primary-action"
+                              disabled={bulkActionBusy}
+                              onClick={() => void handleBulkUpdateStatus()}
+                            >
+                              Lưu trạng thái
+                            </button>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          <section className="asset-list-insights" aria-label="Thống kê tài sản đang hiển thị">
+            <div className="asset-insights-title">
+              <div>
+                <strong>Phân tích nhanh tài sản</strong>
+                <span>Trực quan theo dữ liệu đang hiển thị trong danh sách.</span>
+              </div>
+              <small>{filteredAssets.length} tài sản</small>
+            </div>
+            {[
+              ["Theo trạng thái", assetListInsights.statuses],
+              ["Theo danh mục", assetListInsights.categories],
+              ["Theo giá trị", assetListInsights.values],
+              ["Theo chi nhánh", assetListInsights.sites],
+            ].map(([title, items]) => {
+              const insightItems = items as Array<{ label: string; value: number }>;
+              const total = insightItems.reduce((sum, item) => sum + item.value, 0);
+              let accumulated = 0;
+              const palette = ["#15507f", "#2e82b6", "#65a9cf", "#94c8df", "#d0e7f3"];
+              const segments =
+                total > 0
+                  ? insightItems
+                      .map((item, index) => {
+                        const start = accumulated;
+                        accumulated += (item.value / total) * 100;
+                        return `${palette[index % palette.length]} ${start}% ${accumulated}%`;
+                      })
+                      .join(", ")
+                  : "#e5e7eb 0 100%";
+
+              return (
+                <article className="asset-insight-card" key={title as string}>
+                  <div className="asset-insight-head">
+                    <strong>{title as string}</strong>
+                    <span>{total} mục</span>
+                  </div>
+                  {insightItems.length === 0 ? (
+                    <span className="asset-insight-empty">Chưa có dữ liệu</span>
+                  ) : (
+                    <div className="asset-insight-visual">
+                      <div
+                        className="asset-insight-donut"
+                        style={{ "--asset-donut": segments } as CSSProperties}
+                        title={insightItems
+                          .map((item) => `${item.label}: ${item.value}`)
+                          .join("\n")}
+                        aria-hidden="true"
+                      />
+                      <div className="asset-insight-bars">
+                        {insightItems.map((item, index) => (
+                          <p key={item.label}>
+                            <i style={{ background: palette[index % palette.length] }} />
+                            <span>{item.label}</span>
+                            <b>{item.value}</b>
+                          </p>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </article>
+              );
+            })}
+          </section>
         </div>
       </div>
 
@@ -1392,7 +3039,30 @@ export function AssetsPage() {
               </button>
             </div>
 
-            <div className="asset-detail-body">
+            <div className="asset-detail-tabs" role="tablist" aria-label="Nội dung tài sản">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={assetDetailView === "details"}
+                className={assetDetailView === "details" ? "is-active" : ""}
+                onClick={() => setAssetDetailView("details")}
+              >
+                <FiFileText /> Thông tin tài sản
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={assetDetailView === "history"}
+                className={assetDetailView === "history" ? "is-active" : ""}
+                onClick={() => void openAssetHistory()}
+              >
+                <FiClock /> Lịch sử chỉnh sửa
+              </button>
+            </div>
+
+            <div
+              className={`asset-detail-body ${assetDetailView === "history" ? "is-hidden" : ""}`}
+            >
               <div className="asset-detail-hero">
                 <div>
                   <span>Mã tài sản</span>
@@ -1420,7 +3090,7 @@ export function AssetsPage() {
                 <section className="asset-detail-section">
                   <h3>Định danh và phân loại</h3>
                   <div className="asset-detail-fields">
-                    <label>
+                    <label className="asset-detail-field-span-2">
                       <span>Tên tài sản</span>
                       <input
                         value={assetDraft.name}
@@ -1438,7 +3108,7 @@ export function AssetsPage() {
                     </label>
                     <label>
                       <span>Mã danh mục</span>
-                      <input value={selectedAsset.assetCategory?.code || "—"} disabled />
+                      <input value={selectedAsset.assetCategory?.code || "--"} disabled />
                     </label>
                     <label>
                       <span>Loại tài sản</span>
@@ -1484,9 +3154,9 @@ export function AssetsPage() {
                     </label>
                     <label>
                       <span>Trạng thái</span>
-                      <select
+                      <SearchableSelect
                         value={assetDraft.status || "IN_STOCK"}
-                        onChange={(event) => updateAssetDraft("status", event.target.value)}
+                        onChange={(val: string) => updateAssetDraft("status", val)}
                         disabled={!canManage || assetSaving}
                       >
                         <option value="IN_STOCK">Trong kho</option>
@@ -1494,9 +3164,9 @@ export function AssetsPage() {
                         <option value="MAINTENANCE">Bảo trì</option>
                         <option value="DISPOSED">Đã thanh lý</option>
                         <option value="LOST">Mất</option>
-                      </select>
+                      </SearchableSelect>
                     </label>
-                    <label>
+                    <label className="asset-detail-field-span-2">
                       <span>Nguồn hình thành</span>
                       <input
                         value={assetDraft.source || ""}
@@ -1506,34 +3176,63 @@ export function AssetsPage() {
                     </label>
                   </div>
                 </section>
-
                 <section className="asset-detail-section">
-                  <h3>Sử dụng, đơn vị và vị trí</h3>
-                  <div className="asset-detail-readonly-grid">
-                    <div>
-                      <span>Người/nhân sự đang giữ</span>
-                      <strong>{employeeName(selectedAsset.assignedEmployeeId)}</strong>
-                    </div>
-                    <div>
-                      <span>Đơn vị/phòng ban quản lý</span>
-                      <strong>{departmentName(selectedAsset.departmentId)}</strong>
-                    </div>
-                    <div>
-                      <span>Site/chi nhánh hiện tại</span>
-                      <strong>{siteName(selectedAsset.siteId)}</strong>
-                    </div>
-                    <div>
+                  <h3>
+                    <span>Sử dụng, đơn vị và vị trí</span>
+                    <button
+                      type="button"
+                      style={{
+                        float: "right",
+                        marginTop: "-2px",
+                        color: "#2563eb",
+                        textDecoration: "underline",
+                        background: "none",
+                        padding: 0,
+                        fontWeight: 500,
+                        fontSize: "13px",
+                        border: "none",
+                        cursor: "pointer",
+                      }}
+                      onClick={() => window.open("/transfers", "_blank")}
+                    >
+                      Bàn giao
+                    </button>
+                  </h3>
+                  <div className="asset-detail-fields">
+                    <label>
+                      <span>Site hiện tại</span>
+                      <input type="text" value={siteName(assetDraft.siteId)} disabled />
+                    </label>
+                    <label>
+                      <span>Phòng ban quản lý</span>
+                      <input
+                        type="text"
+                        value={
+                          departments.find((d) => d.id === assetDraft.departmentId)?.name || "--"
+                        }
+                        disabled
+                      />
+                    </label>
+                    <label>
+                      <span>Nhân sự đang giữ</span>
+                      <input
+                        type="text"
+                        value={employeeName(assetDraft.assignedEmployeeId)}
+                        disabled
+                      />
+                    </label>
+                    <label>
                       <span>Dự án</span>
-                      <strong>{projectName(selectedAsset.projectId)}</strong>
-                    </div>
-                    <div>
+                      <input
+                        type="text"
+                        value={projects.find((p) => p.id === assetDraft.projectId)?.name || "--"}
+                        disabled
+                      />
+                    </label>
+                    <label>
                       <span>Ngày đưa vào sử dụng</span>
-                      <strong>{selectedAsset.useDate || "—"}</strong>
-                    </div>
-                    <div>
-                      <span>Nguồn hình thành</span>
-                      <strong>{assetDraft.source || "—"}</strong>
-                    </div>
+                      <input type="date" value={selectedAsset.useDate || ""} disabled />
+                    </label>
                   </div>
                 </section>
 
@@ -1542,61 +3241,176 @@ export function AssetsPage() {
                   <div className="asset-detail-fields">
                     <label>
                       <span>Nguyên giá</span>
-                      <input
-                        type="number"
-                        value={assetDraft.originalCost ?? ""}
-                        onChange={(event) =>
-                          updateAssetDraft("originalCost", optionalNumber(event.target.value))
-                        }
-                        disabled={!canManage || assetSaving}
-                      />
+                      <div style={{ position: "relative" }}>
+                        <input
+                          type="text"
+                          inputMode="decimal"
+                          value={
+                            assetDraft.originalCost != null
+                              ? money.format(assetDraft.originalCost)
+                              : ""
+                          }
+                          onChange={(event) =>
+                            updateAssetDraft(
+                              "originalCost",
+                              optionalNumber(event.target.value.replace(/[^0-9]/g, "")),
+                            )
+                          }
+                          disabled={!canManage || assetSaving}
+                          style={{ width: "100%", paddingRight: "30px" }}
+                        />
+                        <span
+                          style={{
+                            position: "absolute",
+                            right: "10px",
+                            top: "50%",
+                            transform: "translateY(-50%)",
+                            color: "#6b7280",
+                            fontWeight: 700,
+                            fontSize: "12px",
+                          }}
+                        >
+                          đ
+                        </span>
+                      </div>
                     </label>
                     <label>
                       <span>Giá mua/ghi nhận</span>
-                      <input
-                        type="number"
-                        value={assetDraft.purchaseCost ?? ""}
-                        onChange={(event) =>
-                          updateAssetDraft("purchaseCost", optionalNumber(event.target.value))
-                        }
-                        disabled={!canManage || assetSaving}
-                      />
+                      <div style={{ position: "relative" }}>
+                        <input
+                          type="text"
+                          inputMode="decimal"
+                          value={
+                            assetDraft.purchaseCost != null
+                              ? money.format(assetDraft.purchaseCost)
+                              : ""
+                          }
+                          onChange={(event) =>
+                            updateAssetDraft(
+                              "purchaseCost",
+                              optionalNumber(event.target.value.replace(/[^0-9]/g, "")),
+                            )
+                          }
+                          disabled={!canManage || assetSaving}
+                          style={{ width: "100%", paddingRight: "30px" }}
+                        />
+                        <span
+                          style={{
+                            position: "absolute",
+                            right: "10px",
+                            top: "50%",
+                            transform: "translateY(-50%)",
+                            color: "#6b7280",
+                            fontWeight: 700,
+                            fontSize: "12px",
+                          }}
+                        >
+                          đ
+                        </span>
+                      </div>
                     </label>
                     <label>
                       <span>Hao mòn lũy kế</span>
-                      <input
-                        type="number"
-                        value={assetDraft.accumulatedDepreciation ?? ""}
-                        onChange={(event) =>
-                          updateAssetDraft(
-                            "accumulatedDepreciation",
-                            optionalNumber(event.target.value),
-                          )
-                        }
-                        disabled={!canManage || assetSaving}
-                      />
+                      <div style={{ position: "relative" }}>
+                        <input
+                          type="text"
+                          inputMode="decimal"
+                          value={
+                            assetDraft.accumulatedDepreciation != null
+                              ? money.format(assetDraft.accumulatedDepreciation)
+                              : ""
+                          }
+                          onChange={(event) =>
+                            updateAssetDraft(
+                              "accumulatedDepreciation",
+                              optionalNumber(event.target.value.replace(/[^0-9]/g, "")),
+                            )
+                          }
+                          disabled={!canManage || assetSaving}
+                          style={{ width: "100%", paddingRight: "30px" }}
+                        />
+                        <span
+                          style={{
+                            position: "absolute",
+                            right: "10px",
+                            top: "50%",
+                            transform: "translateY(-50%)",
+                            color: "#6b7280",
+                            fontWeight: 700,
+                            fontSize: "12px",
+                          }}
+                        >
+                          đ
+                        </span>
+                      </div>
                     </label>
                     <label>
                       <span>Giá trị sổ sách</span>
-                      <input
-                        type="number"
-                        value={assetDraft.bookValue ?? ""}
-                        onChange={(event) =>
-                          updateAssetDraft("bookValue", optionalNumber(event.target.value))
-                        }
-                        disabled={!canManage || assetSaving}
-                      />
+                      <div style={{ position: "relative" }}>
+                        <input
+                          type="text"
+                          inputMode="decimal"
+                          value={
+                            assetDraft.bookValue != null ? money.format(assetDraft.bookValue) : ""
+                          }
+                          onChange={(event) =>
+                            updateAssetDraft(
+                              "bookValue",
+                              optionalNumber(event.target.value.replace(/[^0-9]/g, "")),
+                            )
+                          }
+                          disabled={!canManage || assetSaving}
+                          style={{ width: "100%", paddingRight: "30px" }}
+                        />
+                        <span
+                          style={{
+                            position: "absolute",
+                            right: "10px",
+                            top: "50%",
+                            transform: "translateY(-50%)",
+                            color: "#6b7280",
+                            fontWeight: 700,
+                            fontSize: "12px",
+                          }}
+                        >
+                          đ
+                        </span>
+                      </div>
                     </label>
                     <label>
                       <span>Giá trị còn lại</span>
-                      <input
-                        type="number"
-                        value={assetDraft.residualValue ?? ""}
-                        onChange={(event) =>
-                          updateAssetDraft("residualValue", optionalNumber(event.target.value))
-                        }
-                        disabled={!canManage || assetSaving}
-                      />
+                      <div style={{ position: "relative" }}>
+                        <input
+                          type="text"
+                          inputMode="decimal"
+                          value={
+                            assetDraft.residualValue != null
+                              ? money.format(assetDraft.residualValue)
+                              : ""
+                          }
+                          onChange={(event) =>
+                            updateAssetDraft(
+                              "residualValue",
+                              optionalNumber(event.target.value.replace(/[^0-9]/g, "")),
+                            )
+                          }
+                          disabled={!canManage || assetSaving}
+                          style={{ width: "100%", paddingRight: "30px" }}
+                        />
+                        <span
+                          style={{
+                            position: "absolute",
+                            right: "10px",
+                            top: "50%",
+                            transform: "translateY(-50%)",
+                            color: "#6b7280",
+                            fontWeight: 700,
+                            fontSize: "12px",
+                          }}
+                        >
+                          đ
+                        </span>
+                      </div>
                     </label>
                     <label>
                       <span>Ngày mua</span>
@@ -1629,13 +3443,16 @@ export function AssetsPage() {
                     </label>
                     <label>
                       <span>Phương pháp khấu hao</span>
-                      <input
+                      <SearchableSelect
                         value={assetDraft.depreciationMethod || ""}
-                        onChange={(event) =>
-                          updateAssetDraft("depreciationMethod", event.target.value)
-                        }
+                        onChange={(value) => updateAssetDraft("depreciationMethod", value)}
                         disabled={!canManage || assetSaving}
-                      />
+                      >
+                        <option value="">Chưa chọn</option>
+                        <option value="NONE">Không khấu hao</option>
+                        <option value="STRAIGHT_LINE">Tuyến tính</option>
+                        <option value="DECLINING_BALANCE">Số dư giảm dần</option>
+                      </SearchableSelect>
                     </label>
                     <label>
                       <span>Số tháng sử dụng</span>
@@ -1686,23 +3503,25 @@ export function AssetsPage() {
                     </label>
                     <label>
                       <span>Năm sản xuất</span>
-                      <input
-                        type="number"
-                        value={assetDraft.manufactureYear ?? ""}
-                        onChange={(event) =>
-                          updateAssetDraft("manufactureYear", optionalNumber(event.target.value))
+                      <SearchableSelect
+                        value={String(assetDraft.manufactureYear ?? "")}
+                        options={CALENDAR_YEAR_OPTIONS}
+                        onChange={(value) =>
+                          updateAssetDraft("manufactureYear", optionalNumber(value))
                         }
+                        placeholder="Chưa chọn năm"
                         disabled={!canManage || assetSaving}
                       />
                     </label>
                     <label>
                       <span>Năm lắp đặt/cài đặt</span>
-                      <input
-                        type="number"
-                        value={assetDraft.installationYear ?? ""}
-                        onChange={(event) =>
-                          updateAssetDraft("installationYear", optionalNumber(event.target.value))
+                      <SearchableSelect
+                        value={String(assetDraft.installationYear ?? "")}
+                        options={CALENDAR_YEAR_OPTIONS}
+                        onChange={(value) =>
+                          updateAssetDraft("installationYear", optionalNumber(value))
                         }
+                        placeholder="Chưa chọn năm"
                         disabled={!canManage || assetSaving}
                       />
                     </label>
@@ -1737,64 +3556,172 @@ export function AssetsPage() {
                       />
                     </label>
                   </div>
-                  <label className="asset-detail-wide-field">
-                    <span>Mô tả kỹ thuật</span>
-                    <textarea
-                      value={assetDraft.technicalDescription || ""}
-                      onChange={(event) =>
-                        updateAssetDraft("technicalDescription", event.target.value)
-                      }
-                      disabled={!canManage || assetSaving}
-                      rows={4}
-                    />
-                  </label>
+                  <RichTextEditor
+                    label="Mô tả kỹ thuật"
+                    value={assetDraft.technicalDescription || ""}
+                    onChange={(value) => updateAssetDraft("technicalDescription", value)}
+                    disabled={!canManage || assetSaving}
+                    minHeight={168}
+                  />
                 </section>
 
                 <section className="asset-detail-section">
                   <h3>Thanh lý và hệ thống</h3>
-                  <div className="asset-detail-readonly-grid">
-                    <div>
+                  <div className="asset-detail-fields">
+                    <label>
                       <span>Ngày thanh lý</span>
-                      <strong>{selectedAsset.disposalDate || "—"}</strong>
-                    </div>
-                    <div>
+                      <input
+                        type="date"
+                        value={assetDraft.disposalDate || ""}
+                        onChange={(e) => updateAssetDraft("disposalDate", e.target.value)}
+                        disabled={!canManage || assetSaving}
+                      />
+                    </label>
+                    <label>
                       <span>Giá thanh lý</span>
-                      <strong>
-                        {selectedAsset.disposalPrice
-                          ? money.format(Number(selectedAsset.disposalPrice))
-                          : "—"}
-                      </strong>
-                    </div>
-                    <div>
+                      <div style={{ position: "relative" }}>
+                        <input
+                          type="text"
+                          inputMode="decimal"
+                          value={
+                            assetDraft.disposalPrice != null
+                              ? money.format(assetDraft.disposalPrice)
+                              : ""
+                          }
+                          onChange={(e) =>
+                            updateAssetDraft(
+                              "disposalPrice",
+                              optionalNumber(e.target.value.replace(/[^0-9]/g, "")),
+                            )
+                          }
+                          disabled={!canManage || assetSaving}
+                          style={{ width: "100%", paddingRight: "30px" }}
+                        />
+                        <span
+                          style={{
+                            position: "absolute",
+                            right: "10px",
+                            top: "50%",
+                            transform: "translateY(-50%)",
+                            color: "#6b7280",
+                            fontWeight: 700,
+                            fontSize: "12px",
+                          }}
+                        >
+                          đ
+                        </span>
+                      </div>
+                    </label>
+                    <label className="asset-detail-field-span-2">
                       <span>Lý do thanh lý</span>
-                      <strong>{selectedAsset.disposalReason || "—"}</strong>
-                    </div>
-                    <div>
+                      <input
+                        type="text"
+                        value={assetDraft.disposalReason || ""}
+                        onChange={(e) => updateAssetDraft("disposalReason", e.target.value)}
+                        disabled={!canManage || assetSaving}
+                      />
+                    </label>
+                    <label>
                       <span>Nhà cung cấp</span>
-                      <strong>{selectedAsset.vendor?.name || "Chưa có nhà cung cấp"}</strong>
-                    </div>
-                    <div>
+                      <SearchableSelect
+                        value={assetDraft.vendorId != null ? String(assetDraft.vendorId) : ""}
+                        onChange={(val: string) =>
+                          updateAssetDraft("vendorId", optionalNumber(val))
+                        }
+                        disabled={!canManage || assetSaving}
+                      >
+                        <option value="">Chưa có nhà cung cấp</option>
+                        {vendors.map((v) => (
+                          <option key={v.id} value={v.id}>
+                            {v.name}
+                          </option>
+                        ))}
+                      </SearchableSelect>
+                    </label>
+                    <label>
                       <span>Ngày tạo</span>
-                      <strong>{dateTimeLabel(selectedAsset.createdAt)}</strong>
-                    </div>
-                    <div>
+                      <input type="text" value={dateTimeLabel(selectedAsset.createdAt)} disabled />
+                    </label>
+                    <label>
                       <span>Cập nhật lần cuối</span>
-                      <strong>{dateTimeLabel(selectedAsset.updatedAt)}</strong>
-                    </div>
+                      <input type="text" value={dateTimeLabel(selectedAsset.updatedAt)} disabled />
+                    </label>
                   </div>
                 </section>
 
                 <section className="asset-detail-section asset-detail-section-wide">
                   <h3>Ghi chú</h3>
-                  <textarea
+                  <RichTextEditor
+                    label="Nội dung ghi chú"
                     value={assetDraft.notes || ""}
-                    onChange={(event) => updateAssetDraft("notes", event.target.value)}
+                    onChange={(value) => updateAssetDraft("notes", value)}
                     disabled={!canManage || assetSaving}
-                    rows={4}
+                    minHeight={112}
                   />
                 </section>
               </div>
             </div>
+
+            {assetDetailView === "history" && (
+              <div className="asset-change-history">
+                <div className="asset-change-history-head">
+                  <button type="button" onClick={() => setAssetDetailView("details")}>
+                    <FiChevronLeft /> Quay lại thông tin
+                  </button>
+                  <span>{assetChangeHistory.length} lần thay đổi</span>
+                </div>
+
+                {assetHistoryLoading ? (
+                  <div className="asset-change-history-state">Đang tải lịch sử...</div>
+                ) : assetHistoryError ? (
+                  <div className="asset-change-history-state is-error">{assetHistoryError}</div>
+                ) : assetChangeHistory.length === 0 ? (
+                  <div className="asset-change-history-state">
+                    Tài sản chưa có lịch sử chỉnh sửa.
+                  </div>
+                ) : (
+                  <div className="asset-change-timeline">
+                    {assetChangeHistory.map((log) => (
+                      <article className="asset-change-commit" key={log.id}>
+                        <span className="asset-change-commit-dot">
+                          <FiClock />
+                        </span>
+                        <div className="asset-change-commit-card">
+                          <header>
+                            <div>
+                              <strong>{ASSET_AUDIT_ACTION_LABELS[log.action] || log.action}</strong>
+                              <span>{log.summary || "Thông tin tài sản được cập nhật"}</span>
+                            </div>
+                            <time>{dateTimeLabel(log.occurredAt)}</time>
+                          </header>
+                          <p className="asset-change-actor">
+                            {log.actorEmployeeId
+                              ? employeeName(log.actorEmployeeId)
+                              : log.actorUsername || "Hệ thống"}
+                            {log.actorRole ? ` · ${log.actorRole}` : ""}
+                          </p>
+                          <div className="asset-change-diff-list">
+                            {Object.entries(log.changedFields || {}).map(([field, change]) => (
+                              <div className="asset-change-diff" key={field}>
+                                <b>{ASSET_AUDIT_FIELD_LABELS[field] || field}</b>
+                                <div>
+                                  <del>
+                                    <span>{assetAuditValue(field, change.before)}</span>
+                                  </del>
+                                  <ins>
+                                    <span>{assetAuditValue(field, change.after)}</span>
+                                  </ins>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
 
             <div className="modal-actions asset-detail-actions">
               <button
@@ -1805,7 +3732,7 @@ export function AssetsPage() {
               >
                 Đóng
               </button>
-              {canManage && (
+              {canManage && assetDetailView === "details" && (
                 <button
                   type="button"
                   className="primary-action"
@@ -1833,18 +3760,36 @@ export function AssetsPage() {
                   <p>{qrAsset.assetCode}</p>
                 </div>
               </div>
-              <button type="button" className="icon-button" onClick={() => setQrAsset(null)}>
+              <button type="button" className="icon-button" onClick={closeAssetQr}>
                 <FiX />
               </button>
             </div>
-            <div className="asset-qr-placeholder">
-              <FiGrid />
-              <strong>{qrAsset.name}</strong>
-              <span>Tính năng sinh và in QR sẽ được hiện thực ở bước sau.</span>
+            <div className="asset-qr-preview">
+              {qrBusy ? (
+                <span>Đang tạo mã QR...</span>
+              ) : (
+                <>
+                  <img
+                    className="asset-qr-image"
+                    aria-label={`Mã QR của ${qrAsset.assetCode}`}
+                    src={qrSvg}
+                  />
+                  <strong>{qrAsset.name}</strong>
+                  <small>Quét mã để xem thông tin của tài sản này.</small>
+                </>
+              )}
             </div>
             <div className="modal-actions">
-              <button type="button" className="secondary" onClick={() => setQrAsset(null)}>
+              <button type="button" className="secondary" onClick={closeAssetQr}>
                 Đóng
+              </button>
+              <button
+                type="button"
+                className="primary-action"
+                disabled={!qrCode || qrBusy}
+                onClick={() => void handlePrintCurrentQr()}
+              >
+                In QR
               </button>
             </div>
           </div>
@@ -1887,98 +3832,129 @@ export function AssetsPage() {
                 </div>
                 <div>
                   <span>Hợp lệ</span>
-                  <strong>{importResult?.validRows ?? "—"}</strong>
+                  <strong>{importResult?.validRows ?? "--"}</strong>
                 </div>
                 <div>
                   <span>Lỗi</span>
-                  <strong>{importResult?.errorRows ?? "—"}</strong>
+                  <strong>{importResult?.errorRows ?? "--"}</strong>
                 </div>
                 <div>
                   <span>Cảnh báo</span>
-                  <strong>{importResult?.warningRows ?? "—"}</strong>
+                  <strong>{importResult?.warningRows ?? "--"}</strong>
                 </div>
               </div>
 
               <div className="asset-import-controls">
-                <div className="asset-import-options">
-                  <label>
-                    <span>Chế độ nhập dữ liệu</span>
-                    <select
-                      value={importMode}
-                      onChange={(event) => setImportMode(event.target.value as ImportMode)}
-                    >
-                      <option value="VALID_ROWS_ONLY">Chỉ nhập những dòng hợp lệ</option>
-                      <option value="ALL_OR_NOTHING">Tất cả hoặc không nhập</option>
-                    </select>
-                  </label>
-                </div>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    width: "100%",
+                    gap: "12px",
+                    flexWrap: "wrap",
+                  }}
+                >
+                  <div className="asset-import-options">
+                    <label style={{ display: "flex", alignItems: "center", gap: "8px", margin: 0 }}>
+                      <span style={{ color: "#64748b", fontSize: "11px", fontWeight: 600 }}>
+                        Chế độ nhập dữ liệu:
+                      </span>
+                      <SearchableSelect
+                        value={importMode}
+                        onChange={(val: string) => setImportMode(val as ImportMode)}
+                        style={{
+                          width: "200px",
+                        }}
+                      >
+                        <option value="VALID_ROWS_ONLY">Chỉ nhập những dòng hợp lệ</option>
+                        <option value="ALL_OR_NOTHING">Tất cả hoặc không nhập</option>
+                      </SearchableSelect>
+                    </label>
+                  </div>
 
-                <div className="asset-import-preview-toolbar">
-                  <span>Trạng thái dòng</span>
-                  <div>
-                    <button
-                      type="button"
-                      data-active={importPreviewFilter === "ALL" ? "true" : undefined}
-                      onClick={() => setImportPreviewFilter("ALL")}
-                    >
-                      Tất cả <strong>{importResult?.totalRows ?? importRows.length}</strong>
-                    </button>
-                    <button
-                      type="button"
-                      data-active={importPreviewFilter === "VALID" ? "true" : undefined}
-                      disabled={!importResult}
-                      onClick={() => setImportPreviewFilter("VALID")}
-                    >
-                      Hợp lệ <strong>{importResult?.validRows ?? 0}</strong>
-                    </button>
-                    <button
-                      type="button"
-                      data-active={importPreviewFilter === "INVALID" ? "true" : undefined}
-                      disabled={!importResult}
-                      onClick={() => setImportPreviewFilter("INVALID")}
-                    >
-                      Lỗi <strong>{importResult?.errorRows ?? 0}</strong>
-                    </button>
-                    <button
-                      type="button"
-                      data-active={importPreviewFilter === "WARNING" ? "true" : undefined}
-                      disabled={!importResult}
-                      onClick={() => setImportPreviewFilter("WARNING")}
-                    >
-                      Cảnh báo <strong>{importResult?.warningRows ?? 0}</strong>
-                    </button>
+                  <div
+                    className="asset-import-preview-toolbar"
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      margin: 0,
+                      padding: 0,
+                    }}
+                  >
+                    <span style={{ color: "#64748b", fontSize: "11px", fontWeight: 600 }}>
+                      Trạng thái dòng:
+                    </span>
+                    <div style={{ display: "flex", gap: "6px" }}>
+                      <button
+                        type="button"
+                        data-active={importPreviewFilter === "ALL" ? "true" : undefined}
+                        onClick={() => setImportPreviewFilter("ALL")}
+                      >
+                        Tất cả <strong>{importResult?.totalRows ?? importRows.length}</strong>
+                      </button>
+                      <button
+                        type="button"
+                        data-active={importPreviewFilter === "VALID" ? "true" : undefined}
+                        disabled={!importResult}
+                        onClick={() => setImportPreviewFilter("VALID")}
+                      >
+                        Hợp lệ <strong>{importResult?.validRows ?? 0}</strong>
+                      </button>
+                      <button
+                        type="button"
+                        data-active={importPreviewFilter === "INVALID" ? "true" : undefined}
+                        disabled={!importResult}
+                        onClick={() => setImportPreviewFilter("INVALID")}
+                      >
+                        Lỗi <strong>{importResult?.errorRows ?? 0}</strong>
+                      </button>
+                      <button
+                        type="button"
+                        data-active={importPreviewFilter === "WARNING" ? "true" : undefined}
+                        disabled={!importResult}
+                        onClick={() => setImportPreviewFilter("WARNING")}
+                      >
+                        Cảnh báo <strong>{importResult?.warningRows ?? 0}</strong>
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
 
               <div className="asset-import-preview">
-                {importRows.length === 0 ? (
-                  <div className="empty-state">
-                    Chọn file Excel để xem dữ liệu trước khi import.
-                  </div>
-                ) : importPreviewRows.length === 0 ? (
-                  <div className="empty-state">Không có dòng phù hợp bộ lọc.</div>
-                ) : (
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>Dòng</th>
-                        <th>Tài sản</th>
-                        <th>Danh mục</th>
-                        <th>Phân loại</th>
-                        <th>Loại con</th>
-                        <th>Phòng ban</th>
-                        <th>Chi nhánh</th>
-                        <th>Serial/MAC</th>
-                        <th>Ngày dùng</th>
-                        <th>Nguyên giá</th>
-                        <th>Giá trị CL</th>
-                        <th>Trạng thái</th>
-                        <th>Ghi chú kiểm tra</th>
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Dòng</th>
+                      <th>Tài sản</th>
+                      <th>Danh mục</th>
+                      <th>Phân loại</th>
+                      <th>Loại con</th>
+                      <th>Phòng ban</th>
+                      <th>Chi nhánh</th>
+                      <th>Serial/MAC</th>
+                      <th>Ngày dùng</th>
+                      <th>Nguyên giá</th>
+                      <th>Giá trị CL</th>
+                      <th>Trạng thái</th>
+                      <th>Ghi chú kiểm tra</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {importRows.length === 0 || importPreviewRows.length === 0 ? (
+                      <tr className="asset-table-empty-row">
+                        <td colSpan={13}>
+                          <div className="asset-table-empty-state">
+                            {importRows.length === 0
+                              ? "Chọn file Excel để xem dữ liệu trước khi import."
+                              : "Không có dòng phù hợp bộ lọc."}
+                          </div>
+                        </td>
                       </tr>
-                    </thead>
-                    <tbody>
-                      {importPreviewRows.map((row) => {
+                    ) : (
+                      importPreviewRows.map((row) => {
                         const isResultRow = "errors" in row;
                         const source: AssetImportRowPayload | undefined = isResultRow
                           ? importRows.find((item) => item.rowNumber === row.rowNumber)
@@ -1992,28 +3968,29 @@ export function AssetsPage() {
                             <td>{row.rowNumber}</td>
                             <td>
                               <div className="asset-name-cell">
-                                <strong>{isResultRow ? row.assetName : source?.name || "—"}</strong>
-                                {source?.assetCode && <span>{source.assetCode}</span>}
+                                <strong>
+                                  {isResultRow ? row.assetName : source?.name || "--"}
+                                </strong>
                               </div>
                             </td>
                             <td>{isResultRow ? row.categoryCode : source?.categoryCode}</td>
-                            <td>{source?.assetClass || "—"}</td>
-                            <td>{source?.classType || "—"}</td>
-                            <td>{source?.departmentName || "—"}</td>
-                            <td>{source?.siteName || "—"}</td>
-                            <td>{source?.serialNumber || "—"}</td>
-                            <td>{source?.useDate || "—"}</td>
+                            <td>{source?.assetClass || "--"}</td>
+                            <td>{source?.classType || "--"}</td>
+                            <td>{source?.departmentName || "--"}</td>
+                            <td>{source?.siteName || "--"}</td>
+                            <td>{source?.serialNumber || "--"}</td>
+                            <td>{source?.useDate || "--"}</td>
                             <td>
-                              {source?.originalCost ? money.format(source.originalCost) : "—"}
+                              {source?.originalCost ? money.format(source.originalCost) : "--"}
                             </td>
-                            <td>{source?.bookValue ? money.format(source.bookValue) : "—"}</td>
+                            <td>{source?.bookValue ? money.format(source.bookValue) : "--"}</td>
                             <td>
                               {status ? (
-                                <span className="asset-import-row-status">
-                                  {importStatusLabel(status)}
-                                </span>
+                                <StatusBadge value={status} label={importStatusLabel(status)} />
+                              ) : source?.status ? (
+                                <StatusBadge value={source.status} />
                               ) : (
-                                source?.status || "—"
+                                "--"
                               )}
                             </td>
                             <td className="asset-import-message-cell">
@@ -2027,15 +4004,15 @@ export function AssetsPage() {
                                   {rowMessages.length > 1 ? ` (+${rowMessages.length - 1})` : ""}
                                 </span>
                               ) : (
-                                "—"
+                                "--"
                               )}
                             </td>
                           </tr>
                         );
-                      })}
-                    </tbody>
-                  </table>
-                )}
+                      })
+                    )}
+                  </tbody>
+                </table>
               </div>
             </div>
 

@@ -1,7 +1,7 @@
 package com.bimlab.asset.repository;
 
-import com.bimlab.asset.model.Vendor;
-import com.bimlab.asset.model.status.VendorStatus;
+import com.bimlab.asset.entity.Vendor;
+import com.bimlab.asset.entity.status.VendorStatus;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
@@ -13,10 +13,6 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-/**
- * Q8: persistence-layer test using H2 in-memory. Confirms VendorRepository +
- * Vendor entity mapping round-trip cleanly (incl. Q5 enum mapping).
- */
 @DataJpaTest
 @ActiveProfiles("test")
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)

@@ -1,11 +1,11 @@
 package com.bimlab.asset.service;
 
 
-import com.bimlab.asset.model.status.SubscriptionStatus;
-import com.bimlab.asset.model.status.VendorStatus;
+import com.bimlab.asset.entity.status.SubscriptionStatus;
+import com.bimlab.asset.entity.status.VendorStatus;
 import com.bimlab.asset.dto.request.SubscriptionRequest;
-import com.bimlab.asset.model.Subscription;
-import com.bimlab.asset.model.Vendor;
+import com.bimlab.asset.entity.Subscription;
+import com.bimlab.asset.entity.Vendor;
 import com.bimlab.asset.repository.SubscriptionRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -24,11 +24,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
-/**
- * Q2 R5: Subscription CRUD was zero-coverage before the split. These smoke
- * tests lock the cross-domain vendor lookup contract used in
- * {@code applySubscription}.
- */
 @ExtendWith(MockitoExtension.class)
 class SubscriptionServiceTest {
 

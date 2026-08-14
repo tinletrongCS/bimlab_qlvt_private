@@ -1,10 +1,10 @@
 package com.bimlab.asset.service;
 
 
-import com.bimlab.asset.model.status.AssetStatus;
+import com.bimlab.asset.entity.status.AssetStatus;
 import com.bimlab.asset.dto.request.MaintenanceRecordRequest;
-import com.bimlab.asset.model.AssetItem;
-import com.bimlab.asset.model.MaintenanceRecord;
+import com.bimlab.asset.entity.AssetItem;
+import com.bimlab.asset.entity.MaintenanceRecord;
 import com.bimlab.asset.repository.MaintenanceRecordRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -20,11 +20,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
-/**
- * Q2: targets {@link MaintenanceService}. Parent-asset resolution mocked
- * through {@link AssetService}. Warranty-window filter moved to
- * {@code AssetServiceTest} since it is an asset-domain query.
- */
 @ExtendWith(MockitoExtension.class)
 class MaintenanceServiceTest {
 

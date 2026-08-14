@@ -60,7 +60,8 @@
         "useSemanticElements": "off"
       },
       "style": {
-        "noNonNullAssertion": "off"
+        "noNonNullAssertion": "off",
+        "noDescendingSpecificity": "off"
       },
       "suspicious": {
         "noExplicitAny": "off",
@@ -71,6 +72,9 @@
         "useExhaustiveDependencies": "off",
         "noUnusedVariables": "off",
         "noUnusedFunctionParameters": "off"
+      },
+      "complexity": {
+        "noImportantStyles": "off"
       }
     }
   },

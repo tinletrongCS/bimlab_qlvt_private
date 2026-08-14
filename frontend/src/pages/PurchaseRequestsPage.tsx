@@ -39,7 +39,7 @@ export function PurchaseRequestsPage() {
             title: "Dự kiến",
             render: (item) => money.format(Number(item.estimatedCost || 0)),
           },
-          { key: "date", title: "Ngày cần", render: (item) => item.neededDate || "—" },
+          { key: "date", title: "Ngày cần", render: (item) => item.neededDate || "--" },
           {
             key: "status",
             title: "Trạng thái",
