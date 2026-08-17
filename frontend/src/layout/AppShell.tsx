@@ -64,7 +64,7 @@ const NAV_GROUPS: NavGroup[] = [
       { to: "/assets", label: "Danh sách", icon: <FiBox />, permission: "asset_access" },
       {
         to: "/asset-categories",
-        label: "Phân loại tài sản",
+        label: "Phân loại",
         icon: <FiGrid />,
         permission: "asset_manage",
       },
