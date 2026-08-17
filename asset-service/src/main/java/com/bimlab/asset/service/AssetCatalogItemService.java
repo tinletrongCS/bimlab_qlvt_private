@@ -96,6 +96,8 @@ public class AssetCatalogItemService {
         if (hasChanged && !Boolean.TRUE.equals(category.getActive())) {
             throw new IllegalArgumentException("Loại tài sản đã ngừng hoạt động");
         }
+
+        // Tìm xem đã có tài sản nào được gán vào danh mục này chưa
         if (hasChanged && assets.existsByCatalogItemId(id)) {
             throw new IllegalArgumentException("Không được thay đổi danh mục do đã có tài sản dùng danh mục này");
         }
@@ -112,9 +114,8 @@ public class AssetCatalogItemService {
         if (request.active() != null) {
             catalogItem.setActive(request.active());
         }
-        catalogItems.flush();
+        catalogItems.flush(); // Chạy UPDATE và @PreUpdate
         return toDetail(catalogItem);
-
     }
 
     @Transactional
