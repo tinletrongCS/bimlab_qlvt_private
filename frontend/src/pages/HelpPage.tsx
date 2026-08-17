@@ -20,12 +20,21 @@ export interface GuideStepItem {
   imageCaption?: string;
 }
 
+export interface GuideTabItem {
+  id: string;
+  title: string;
+  description: string;
+  steps: Array<string | GuideStepItem>;
+  details?: string[];
+}
+
 export interface GuideItem {
   id: string;
   title: string;
   icon?: ReactNode;
   description: string;
   steps: Array<string | GuideStepItem>;
+  tabs?: GuideTabItem[];
   details?: string[];
   links?: Array<{ to: string; label: string }>;
   children?: GuideItem[];
@@ -38,7 +47,7 @@ const GUIDE_TREE: GuideItem[] = [
     icon: <FiBookOpen />,
     description: "Trang Tổng quan dùng để điều hướng nhanh tới các nghiệp vụ chính.",
     steps: [
-      "Dùng các shortcut để mở nhanh danh sách tài sản, phân loại, đặt lịch, bàn giao hoặc bảo trì.",
+      "Dùng các shortcut để mở nhanh danh sách tài sản, danh mục, đặt lịch, bàn giao hoặc bảo trì.",
       "Theo dõi nhanh lịch phòng họp gần nhất nếu dữ liệu booking đã được tải.",
     ],
     links: [{ to: "/dashboard", label: "Mở Tổng quan" }],
@@ -53,9 +62,9 @@ const GUIDE_TREE: GuideItem[] = [
       {
         id: "asset-list",
         title: "Quản lý danh sách tài sản",
-        description: "Theo dõi tài sản theo loại, trạng thái, giá trị và thông tin sử dụng.",
+        description: "Theo dõi tài sản theo danh mục, trạng thái, giá trị và thông tin sử dụng.",
         steps: [
-          "Chọn loại tài sản ở sidebar trái để lọc danh sách.",
+          "Chọn danh mục ở sidebar trái để lọc danh sách.",
           "Dùng ô tìm kiếm để tìm theo mã, tên, serial hoặc nhà cung cấp.",
           "Bấm Xem trên từng dòng để mở chi tiết và cập nhật nếu có quyền.",
         ],
@@ -63,43 +72,43 @@ const GUIDE_TREE: GuideItem[] = [
       },
       {
         id: "asset-import-danhmuc",
-        title: "Import Excel phân loại tài sản",
+        title: "Import Excel danh sách danh mục",
         description:
-          "Nhập nhiều loại tài sản từ file Excel theo mẫu hệ thống với 4 bước trực quan bên dưới.",
+          "Nhập nhiều danh mục từ file Excel theo mẫu hệ thống với 4 bước trực quan bên dưới.",
         steps: [
           {
-            text: "Bước 1: Vào mục 'Tài sản > Phân loại tài sản' và bấm nút 'Nhập loại tài sản' trên thanh công cụ chính.",
-            image: "/image-dm/image-dm-1.png",
-            imageCaption: "Màn hình Phân loại tài sản: Vị trí nút 'Nhập loại tài sản'",
+            text: "Bước 1: Vào mục 'Tài sản > Danh mục' và bấm nút 'Nhập danh mục' trên thanh công cụ chính.",
+            image: "/guide/image-Category/image-dm-1.png",
+            imageCaption: "Màn hình Danh mục tài sản: Vị trí nút 'Nhập danh mục'",
           },
           {
-            text: "Bước 2: Trong hộp thoại 'Nhập phân loại tài sản', bấm 'Chọn file Excel' và chọn tệp Excel dữ liệu phân loại.",
-            image: "/image-dm/image-dm-2.png",
-            imageCaption: "Hộp thoại nhập phân loại: Thao tác chọn file Excel từ máy tính",
+            text: "Bước 2: Trong hộp thoại 'Tải danh mục tài sản', bấm 'Chọn file Excel' và chọn tệp Excel dữ liệu danh mục.",
+            image: "/guide/image-Category/image-dm-2.png",
+            imageCaption: "Hộp thoại nhập danh mục: Thao tác chọn file Excel từ máy tính",
           },
           {
-            text: "Bước 3: Bấm nút 'Kiểm tra dữ liệu' để hệ thống bắt đầu thẩm định tệp Excel phân loại.",
-            image: "/image-dm/image-dm-3.png",
+            text: "Bước 3: Bấm nút 'Kiểm tra dữ liệu' để hệ thống bắt đầu thẩm định tệp Excel danh mục.",
+            image: "/guide/image-Category/image-dm-3.png",
             imageCaption: "Kiểm tra dữ liệu: Vị trí nút 'Kiểm tra dữ liệu'",
           },
           {
             text: "Bước 4: Xem kết quả kiểm tra dữ liệu theo các trạng thái Hợp lệ, Lỗi và Cảnh báo.",
-            image: "/image-dm/image-dm-4.png",
+            image: "/guide/image-Category/image-dm-4.png",
             imageCaption: "Xem lại kết quả kiểm tra dữ liệu.",
           },
           {
-            text: "Bước 5: Chuyển sang tab 'Phân cấp cha con' (Tree view) để xem trực quan cấu trúc phân loại trước khi bấm 'Xác nhận nhập'.",
-            image: "/image-dm/image-dm-5.jpg",
+            text: "Bước 5: Chuyển sang tab 'Phân cấp cha con' (Tree view) để xem trực quan cấu trúc phân cấp danh mục trước khi bấm 'Xác nhận nhập'.",
+            image: "/guide/image-Category/image-dm-5.jpg",
             imageCaption:
-              "Tab Phân cấp cha con: Xem cấu trúc cây loại tài sản và bấm 'Xác nhận nhập'. Các dòng hợp lệ sẽ được nhập, các dòng lỗi sẽ bị loại bỏ.",
+              "Tab Phân cấp cha con: Xem cấu trúc cây danh mục và bấm 'Xác nhận nhập'. Các dòng hợp lệ sẽ được nhập, các dòng lỗi sẽ bị loại bỏ.",
           },
         ],
         details: [
-          "File Excel cần có sheet kỹ thuật tên 'DanhMuc_ThamChieu' giống file mẫu phân loại.",
+          "File Excel cần có sheet tên 'DanhMuc_ThamChieu' giống file mẫu danh mục.",
           "Chế độ nhập dữ liệu mặc định là 'Chỉ nhập những dòng hợp lệ' - hệ thống sẽ loại bỏ các dòng bị lỗi và cho phép nhập phần còn lại.",
-          "Bạn có thể kiểm tra phần lỗi/cảnh báo trên từng dòng trước khi xác nhận nhập phân loại.",
+          "Bạn có thể kiểm tra phần lỗi/cảnh báo trên từng dòng trước khi xác nhận nhập danh mục.",
         ],
-        links: [{ to: "/asset-categories", label: "Mở phân loại tài sản" }],
+        links: [{ to: "/asset-categories", label: "Mở danh mục tài sản" }],
       },
       {
         id: "asset-import-taisan",
@@ -109,22 +118,22 @@ const GUIDE_TREE: GuideItem[] = [
         steps: [
           {
             text: "Bước 1: Vào mục 'Tài sản > Danh sách' và bấm nút 'Nhập tài sản' trên thanh công cụ chính.",
-            image: "/image-hd/image-1.jpg",
+            image: "/guide/image-asset/image-asset-1.jpg",
             imageCaption: "Màn hình Danh sách tài sản: Vị trí nút 'Nhập tài sản'",
           },
           {
             text: "Bước 2: Trong hộp thoại 'Tải danh sách tài sản', bấm 'Chọn file Excel' và chọn tệp Excel dữ liệu (ví dụ: import_main.xlsx).",
-            image: "/image-hd/image-2.jpg",
+            image: "/guide/image-asset/image-asset-2.jpg",
             imageCaption: "Hộp thoại nhập file: Thao tác chọn file Excel từ máy tính",
           },
           {
             text: "Bước 3: Bấm nút 'Kiểm tra dữ liệu' ở góc dưới bên phải để hệ thống bắt đầu thẩm định tệp Excel.",
-            image: "/image-hd/image-3.jpg",
+            image: "/guide/image-asset/image-asset-3.jpg",
             imageCaption: "Kiểm tra dữ liệu: Vị trí nút 'Kiểm tra dữ liệu'",
           },
           {
             text: "Bước 4: Xem kết quả phân tích (dòng Hợp lệ, Lỗi, Cảnh báo) ở chế độ Bảng và bấm nút 'Import' để hoàn tất nhập các dòng hợp lệ.",
-            image: "/image-hd/image-4.jpg",
+            image: "/guide/image-asset/image-asset-4.jpg",
             imageCaption: "Xem lại kết quả kiểm tra dữ liệu và nhấn nút 'Import'",
           },
         ],
@@ -138,21 +147,60 @@ const GUIDE_TREE: GuideItem[] = [
       {
         id: "asset-bulk",
         title: "Thao tác hàng loạt",
-        description: "Thao tác với nhiều tài sản đã tick trong bảng.",
+        description: "Chọn nhiều tài sản để cập nhật trạng thái hoặc in mã QR theo nhóm.",
         steps: [
-          "Bật chế độ Chọn nhiều nếu checkbox chưa hiển thị.",
-          "Tick các tài sản cần xử lý.",
-          "Chọn thao tác ở Action Bar phía dưới bảng và kiểm tra lại danh sách trước khi lưu.",
+          {
+            text: "Bước 1: Ở màn hình Tài sản > Danh sách, bấm 'Chọn nhiều' phía trên bảng để bật chế độ chọn hàng loạt.",
+            image: "/guide/image-batch/image-batch-1.png",
+            imageCaption: "Vị trí nút 'Chọn nhiều' trên danh sách tài sản.",
+          },
+          {
+            text: "Bước 2: Tick checkbox ở các dòng tài sản cần xử lý. Có thể tick từng dòng hoặc dùng checkbox ở đầu bảng để chọn nhanh nhiều tài sản.",
+            image: "/guide/image-batch/image-batch-2.png",
+            imageCaption: "Chọn các tài sản cần thao tác hàng loạt.",
+          },
+          {
+            text: "Bước 3: Kiểm tra danh sách tài sản đã chọn ở khu vực thao tác bên dưới, sau đó mở ô 'Chọn thao tác' để chọn 'Cập nhật trạng thái' hoặc 'In QR theo nhóm'.",
+            image: "/guide/image-batch/image-batch-3.png",
+            imageCaption: "Khu vực thao tác hàng loạt và các tùy chọn xử lý.",
+          },
+          {
+            text: "Bước 3.1: Nếu chọn 'Cập nhật trạng thái', chọn trạng thái mới cho toàn bộ tài sản đã chọn rồi bấm 'Lưu trạng thái'.",
+            image: "/guide/image-batch/image-batch-4.png",
+            imageCaption: "Cập nhật cùng một trạng thái cho nhiều tài sản.",
+          },
+          {
+            text: "Bước 3.2: Nếu chọn 'In QR theo nhóm', hệ thống mở màn hình in mã QR cho toàn bộ tài sản đã chọn. Chọn máy in hoặc lưu PDF rồi bấm 'Lưu'.",
+            image: "/guide/image-batch/image-batch-5.png",
+            imageCaption: "Màn hình in hoặc lưu PDF mã QR theo nhóm tài sản.",
+          },
+        ],
+        details: [
+          "Chỉ những tài sản đang được tick mới được đưa vào thao tác hàng loạt.",
+          "Có thể bấm 'Bỏ chọn' để thoát chế độ chọn nhiều hoặc dùng dấu x trên từng tài sản trong vùng đã chọn để loại khỏi danh sách xử lý.",
+          "Trước khi lưu trạng thái hoặc in QR theo nhóm, nên kiểm tra lại số lượng và danh sách tài sản đã chọn.",
         ],
         links: [{ to: "/assets", label: "Mở danh sách tài sản" }],
       },
       {
         id: "asset-qr",
         title: "Xem QR/Barcode",
-        description: "Mở khung xem QR/Barcode của từng tài sản từ dòng danh sách.",
+        description: "Mở mã QR của từng tài sản từ menu thao tác trên dòng danh sách.",
         steps: [
-          "Ở bảng tài sản, dùng thao tác QR trên dòng tương ứng.",
-          "Tính năng sinh/in QR chi tiết còn phụ thuộc phần backend và quy trình sau này.",
+          {
+            text: "Bước 1: Ở bảng danh sách tài sản, bấm nút ba chấm ở cột 'Thao tác' của tài sản cần xem, sau đó chọn 'Xem QR'.",
+            image: "/guide/image-qr/image-qr-1.png",
+            imageCaption: "Mở menu thao tác của từng tài sản và chọn 'Xem QR'.",
+          },
+          {
+            text: "Bước 2: Kiểm tra mã QR trong hộp thoại. Có thể bấm 'In QR' để in mã QR của tài sản này hoặc bấm 'Đóng' để quay lại danh sách.",
+            image: "/guide/image-qr/image-qr-2.png",
+            imageCaption: "Hộp thoại mã QR tài sản và nút 'In QR'.",
+          },
+        ],
+        details: [
+          "Mỗi mã QR gắn với một tài sản cụ thể, kèm mã tài sản và tên tài sản để dễ đối chiếu.",
+          "Khi in QR đơn lẻ, hãy kiểm tra đúng tài sản trước khi gửi lệnh in hoặc lưu thành PDF.",
         ],
         links: [{ to: "/assets", label: "Mở danh sách tài sản" }],
       },
@@ -160,32 +208,107 @@ const GUIDE_TREE: GuideItem[] = [
   },
   {
     id: "categories",
-    title: "Phân loại tài sản",
+    title: "Danh mục tài sản",
     icon: <FiGrid />,
-    description: "Quản lý cây phân loại và thông tin từng loại tài sản.",
+    description: "Quản lý cây phân cấp danh mục và thông tin từng danh mục.",
     steps: ["Chọn mục con để xem hướng dẫn theo luồng đang có."],
     children: [
       {
         id: "category-tree",
         title: "Sơ đồ phân cấp",
-        description: "Xem cây loại tài sản theo cấu trúc cha con.",
+        description: "Xem, tìm kiếm và chọn danh mục tài sản trên sơ đồ phân cấp cha con.",
         steps: [
-          "Mở Tài sản > Phân loại tài sản để xem sơ đồ phân cấp.",
-          "Bấm vào node để chọn loại tài sản và xem thông tin ở khu vực chỉnh sửa.",
-          "Dùng tìm kiếm để tự bung nhánh có kết quả phù hợp.",
+          {
+            text: "Cách xem tổng quan: Vào menu 'Tài sản > Danh mục' để mở sơ đồ phân cấp. Các danh mục được hiển thị thành từng node theo quan hệ cha con, giúp nhìn nhanh cấu trúc nhóm tài sản.",
+            image: "/guide/image-Category/image-cate-dia-1.png",
+            imageCaption: "Màn hình Danh mục tài sản và sơ đồ phân cấp các nhóm danh mục.",
+          },
+          {
+            text: "Cách xem chi tiết: Dùng ô 'Tìm danh mục' để tìm theo tên, mã hoặc mô tả. Khi chọn một node trên sơ đồ, thông tin danh mục sẽ hiện ở khung cập nhật bên phải để xem.",
+            image: "/guide/image-Category/image-cate-dia-2.png",
+            imageCaption:
+              "Tìm kiếm danh mục, chọn node trên sơ đồ và xem thông tin ở khung cập nhật.",
+          },
         ],
-        links: [{ to: "/asset-categories", label: "Mở phân loại tài sản" }],
+        details: [
+          "Có thể lọc thêm theo 'Loại danh mục' và 'Trạng thái' để thu hẹp sơ đồ đang xem.",
+          "Node đang chọn sẽ được tô nổi bật, giúp đối chiếu nhanh với thông tin ở khung cập nhật bên phải.",
+          "Dùng nút 'Làm mới' khi cần tải lại sơ đồ sau khi thêm, sửa hoặc xóa danh mục.",
+        ],
+        links: [{ to: "/asset-categories", label: "Mở danh mục tài sản" }],
       },
       {
         id: "category-crud",
-        title: "Thêm/sửa/xóa loại tài sản",
-        description: "Cập nhật thông tin loại tài sản và tạo loại con.",
-        steps: [
-          "Chọn một loại tài sản trong cây hoặc danh sách chi tiết.",
-          "Bấm Thêm con để tạo loại tài sản dưới node đang chọn.",
-          "Chỉ xóa khi loại tài sản không còn con và không còn dữ liệu tham chiếu.",
+        title: "Thêm/sửa/xóa danh mục",
+        description: "Cập nhật thông tin danh mục và tạo danh mục con.",
+        steps: [],
+        tabs: [
+          {
+            id: "category-add",
+            title: "Thêm",
+            description: "Tạo danh mục mới hoặc tạo danh mục con dưới một danh mục đang chọn.",
+            steps: [
+              {
+                text: "Bước 1: Chọn danh mục cha trên sơ đồ, sau đó bấm 'Thêm con' ở khung cập nhật bên phải nếu muốn tạo danh mục con.",
+                image: "/guide/image-Category/image-cate-add-2.png",
+                imageCaption: "Chọn node cha và bấm 'Thêm con' để tạo danh mục con.",
+              },
+              {
+                text: "Bước 2: Nhập tên danh mục, mã danh mục, nhóm cha, loại tài sản, mô tả và trạng thái sử dụng trong form thêm danh mục.",
+                image: "/guide/image-Category/image-cate-add-1.png",
+                imageCaption: "Form thêm danh mục và các trường thông tin cần nhập.",
+              },
+              {
+                text: "Bước 3:Sau khi nhập đủ thông tin, bấm 'Tạo danh mục'. Danh mục mới sẽ xuất hiện trên sơ đồ phân cấp theo đúng nhóm cha đã chọn.",
+                image: "/guide/image-Category/image-cate-add-3.png",
+                imageCaption: "Tạo danh mục thành công và kiểm tra node mới trên sơ đồ.",
+              },
+            ],
+            details: [
+              "Mã danh mục nên ngắn gọn, không trùng với danh mục đã có.",
+              "Nếu tạo danh mục con, hệ thống sẽ cố định nhóm cha theo node đã chọn để tránh đặt sai cấp.",
+            ],
+          },
+          {
+            id: "category-edit",
+            title: "Sửa",
+            description: "Chỉnh sửa thông tin của danh mục đang chọn trên sơ đồ phân cấp.",
+            steps: [
+              {
+                text: "Chọn danh mục cần sửa trên sơ đồ. Khung 'Cập nhật danh mục' bên phải sẽ hiển thị các trường: tên danh mục, mã danh mục, nhóm cha, loại tài sản, mô tả và trạng thái sử dụng.",
+                image: "/guide/image-Category/image-cate-edit1.png",
+                imageCaption: "Các trường thông tin có thể kiểm tra và chỉnh sửa trong danh mục.",
+              },
+              "Cập nhật các thông tin cần thay đổi, sau đó bấm 'Lưu' để ghi nhận.",
+            ],
+            details: [
+              "Nên kiểm tra kỹ nhóm cha và loại tài sản trước khi lưu vì các trường này ảnh hưởng đến vị trí danh mục trong sơ đồ.",
+              "Nếu chỉ muốn xem thông tin, chọn node trên sơ đồ và không cần bấm lưu.",
+            ],
+          },
+          {
+            id: "category-delete",
+            title: "Xóa",
+            description: "Xóa danh mục không còn sử dụng khi danh mục đủ điều kiện xóa.",
+            steps: [
+              {
+                text: "Bước 1: Chọn danh mục cần xóa, sau đó bấm biểu tượng thùng rác trên node hoặc nút 'Xóa' trong khung cập nhật bên phải.",
+                image: "/guide/image-Category/image-cate-dele-1.png",
+                imageCaption: "Vị trí thao tác xóa danh mục trên sơ đồ và trong khung cập nhật.",
+              },
+              {
+                text: "Bước 2: Nếu hệ thống báo 'Không xóa được danh mục', danh mục có thể đang có danh mục con hoặc dữ liệu tài sản tham chiếu. Cần xử lý dữ liệu liên quan trước khi xóa lại.",
+                image: "/guide/image-Category/image-cate-dele-err.png",
+                imageCaption: "Thông báo khi danh mục chưa đủ điều kiện để xóa.",
+              },
+            ],
+            details: [
+              "Chỉ xóa danh mục khi chắc chắn không còn sử dụng trong dữ liệu tài sản.",
+              "Nếu danh mục còn con, hãy chuyển hoặc xóa các danh mục con trước.",
+            ],
+          },
         ],
-        links: [{ to: "/asset-categories", label: "Mở phân loại tài sản" }],
+        links: [{ to: "/asset-categories", label: "Mở danh mục tài sản" }],
       },
     ],
   },
@@ -275,8 +398,17 @@ function guideMatches(item: GuideItem, query: string) {
   const stepTexts = item.steps.map((step) =>
     typeof step === "string" ? step : `${step.text} ${step.imageCaption || ""}`,
   );
-  return [item.title, item.description, ...stepTexts, ...(item.details || [])].some((value) =>
-    normalizeGuideText(value).includes(query),
+  const tabTexts =
+    item.tabs?.flatMap((tab) => [
+      tab.title,
+      tab.description,
+      ...tab.steps.map((step) =>
+        typeof step === "string" ? step : `${step.text} ${step.imageCaption || ""}`,
+      ),
+      ...(tab.details || []),
+    ]) || [];
+  return [item.title, item.description, ...stepTexts, ...tabTexts, ...(item.details || [])].some(
+    (value) => normalizeGuideText(value).includes(query),
   );
 }
 
@@ -296,6 +428,7 @@ export function HelpPage() {
   const [activeId, setActiveId] = useState("overview");
   const [guideSearch, setGuideSearch] = useState("");
   const [lightboxImg, setLightboxImg] = useState<{ src: string; caption?: string } | null>(null);
+  const [selectedGuideTabId, setSelectedGuideTabId] = useState<string | null>(null);
   const normalizedGuideSearch = normalizeGuideText(guideSearch.trim());
   const visibleGuideTree = useMemo(
     () => filterGuideTree(GUIDE_TREE, normalizedGuideSearch),
@@ -306,11 +439,45 @@ export function HelpPage() {
     [visibleGuideTree],
   );
   const activeGuide = allGuides.find((item) => item.id === activeId) || allGuides[0];
+  const activeGuideTabs = activeGuide.tabs || [];
+  const activeGuideTab =
+    activeGuideTabs.find((tab) => tab.id === selectedGuideTabId) || activeGuideTabs[0];
   const activeDetails = activeGuide.details || [
     "Đọc mô tả nghiệp vụ trước, sau đó thao tác theo thứ tự các bước bên dưới để tránh chọn sai màn hình hoặc sai dữ liệu.",
     "Nếu một nút hoặc API phụ thuộc phân quyền, hãy kiểm tra lại vai trò đăng nhập và quyền tương ứng trước khi kết luận là lỗi hệ thống.",
     "Sau khi cập nhật dữ liệu, ưu tiên làm mới đúng khu vực nghiệp vụ thay vì reload toàn trang để giữ lại bộ lọc và ngữ cảnh đang thao tác.",
   ];
+  const renderGuideSteps = (steps: Array<string | GuideStepItem>) => (
+    <ol className="help-step-list">
+      {steps.map((step, idx) => {
+        const isObj = typeof step !== "string";
+        const stepText = isObj ? step.text : step;
+        const stepImage = isObj ? step.image : undefined;
+        const stepCaption = isObj ? step.imageCaption : undefined;
+
+        return (
+          <li key={idx} className="help-step-item">
+            <div className="help-step-text">{stepText}</div>
+            {stepImage && (
+              <div className="help-step-image-wrap">
+                <div
+                  className="help-step-image-box"
+                  onClick={() => setLightboxImg({ src: stepImage, caption: stepCaption })}
+                  title="Click để phóng to ảnh"
+                >
+                  <img src={stepImage} alt={stepCaption || stepText} />
+                  <div className="help-step-image-overlay">
+                    <FiZoomIn /> Phóng to hình ảnh
+                  </div>
+                </div>
+                {stepCaption && <span className="help-step-caption">{stepCaption}</span>}
+              </div>
+            )}
+          </li>
+        );
+      })}
+    </ol>
+  );
 
   return (
     <section className="help-page page-grid">
@@ -374,51 +541,62 @@ export function HelpPage() {
         </aside>
 
         <article className="panel help-detail">
-          <div className="help-detail-head">
-            {activeGuide.icon}
-            <div>
-              <h2>{activeGuide.title}</h2>
-              <p>{activeGuide.description}</p>
-            </div>
+          <div className={`help-detail-head${activeGuideTab ? " help-detail-head-with-tabs" : ""}`}>
+            {activeGuideTab ? (
+              <div className="help-guide-tab-list help-guide-tab-list-hero" role="tablist">
+                {activeGuideTabs.map((tab) => (
+                  <button
+                    type="button"
+                    key={tab.id}
+                    role="tab"
+                    aria-selected={activeGuideTab.id === tab.id}
+                    className={activeGuideTab.id === tab.id ? "active" : ""}
+                    onClick={() => setSelectedGuideTabId(tab.id)}
+                  >
+                    {tab.title}
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <>
+                {activeGuide.icon}
+                <div>
+                  <h2>{activeGuide.title}</h2>
+                  <p>{activeGuide.description}</p>
+                </div>
+              </>
+            )}
           </div>
-          <ol className="help-step-list">
-            {activeGuide.steps.map((step, idx) => {
-              const isObj = typeof step !== "string";
-              const stepText = isObj ? step.text : step;
-              const stepImage = isObj ? step.image : undefined;
-              const stepCaption = isObj ? step.imageCaption : undefined;
 
-              return (
-                <li key={idx} className="help-step-item">
-                  <div className="help-step-text">{stepText}</div>
-                  {stepImage && (
-                    <div className="help-step-image-wrap">
-                      <div
-                        className="help-step-image-box"
-                        onClick={() => setLightboxImg({ src: stepImage, caption: stepCaption })}
-                        title="Click để phóng to ảnh"
-                      >
-                        <img src={stepImage} alt={stepCaption || stepText} />
-                        <div className="help-step-image-overlay">
-                          <FiZoomIn /> Phóng to hình ảnh
-                        </div>
-                      </div>
-                      {stepCaption && <span className="help-step-caption">{stepCaption}</span>}
-                    </div>
-                  )}
-                </li>
-              );
-            })}
-          </ol>
+          {activeGuideTab ? (
+            <section className="help-guide-tabs" aria-label={`Hướng dẫn ${activeGuide.title}`}>
+              <div className="help-guide-tab-panel" role="tabpanel">
+                <h3>Hướng dẫn {activeGuideTab.title.toLowerCase()} danh mục</h3>
+                <p>{activeGuideTab.description}</p>
+                {renderGuideSteps(activeGuideTab.steps)}
+                {activeGuideTab.details && (
+                  <ul className="help-guide-tab-notes">
+                    {activeGuideTab.details.map((detail) => (
+                      <li key={detail}>{detail}</li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </section>
+          ) : (
+            renderGuideSteps(activeGuide.steps)
+          )}
 
-          <section className="help-detail-section">
-            <h3>Chi tiết cần lưu ý</h3>
-            <ul>
-              {activeDetails.map((detail) => (
-                <li key={detail}>{detail}</li>
-              ))}
-            </ul>
-          </section>
+          {!activeGuideTab && (
+            <section className="help-detail-section">
+              <h3>Chi tiết cần lưu ý</h3>
+              <ul>
+                {activeDetails.map((detail) => (
+                  <li key={detail}>{detail}</li>
+                ))}
+              </ul>
+            </section>
+          )}
 
           {activeGuide.children && activeGuide.children.length > 0 && (
             <section className="help-detail-section">

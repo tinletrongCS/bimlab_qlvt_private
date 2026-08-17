@@ -15410,6 +15410,105 @@ button,
   padding-left: 4px;
 }
 
+#root .help-guide-tabs {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin: 6px 0 20px;
+}
+
+#root .help-guide-tab-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  border-bottom: 1px solid #dbe4ee;
+}
+
+#root .help-detail-head-with-tabs {
+  align-items: stretch !important;
+  display: block !important;
+  padding: 0 0 12px !important;
+}
+
+#root .help-guide-tab-list-hero {
+  border-bottom: 0;
+  gap: 12px;
+}
+
+#root .help-guide-tab-list button {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  color: #475569;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 700;
+  min-height: 38px;
+  padding: 8px 16px;
+}
+
+#root .help-guide-tab-list-hero button {
+  background: #f8fafc;
+  border: 1px solid #dbe4ee;
+  border-bottom: 4px solid transparent;
+  border-radius: 8px 8px 0 0;
+  color: #172b43;
+  flex: 0 1 180px;
+  font-size: 20px;
+  min-height: 58px;
+  padding: 14px 28px;
+  text-align: center;
+}
+
+#root .help-guide-tab-list button:hover,
+#root .help-guide-tab-list button:focus-visible {
+  color: #0f3f66;
+}
+
+#root .help-guide-tab-list button.active {
+  border-bottom-color: #0f5d92;
+  color: #0f3f66;
+}
+
+#root .help-guide-tab-list-hero button.active {
+  background: #eaf2f8;
+  border-color: #c8d8e6;
+  border-bottom-color: #0f5d92;
+  box-shadow: 0 8px 18px rgba(15, 63, 102, 0.08);
+}
+
+#root .help-guide-tab-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+#root .help-guide-tab-panel h3 {
+  color: #0f172a;
+  font-size: 18px;
+  margin: 0;
+}
+
+#root .help-guide-tab-panel > p {
+  color: #52677a;
+  font-size: 14px;
+  margin: 0;
+}
+
+#root .help-guide-tab-notes {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  margin: 4px 0 0;
+  padding: 14px 18px 14px 34px;
+}
+
+#root .help-guide-tab-notes li {
+  color: #475569;
+  font-size: 13.5px;
+  line-height: 1.55;
+}
+
 /* Lightbox Modal */
 #root .help-lightbox-backdrop {
   position: fixed;
