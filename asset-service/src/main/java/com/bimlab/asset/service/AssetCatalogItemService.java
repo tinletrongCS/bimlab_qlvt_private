@@ -57,9 +57,9 @@ public class AssetCatalogItemService {
     @Transactional
     public AssetCatalogItemDetailResponse createCatalogItem(AssetCatalogItemRequest request) {
         AssetCategory category = categories.findById(request.categoryId())
-                .orElseThrow(() -> new IllegalArgumentException("Loại tài sản không hợp lệ"));
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy loại tài sản hoặc mã loại không hợp lệ"));
         if (!Boolean.TRUE.equals(category.getActive())) {
-            throw new IllegalArgumentException("Loại tài sản đã ngừng hoạt động");
+            throw new IllegalArgumentException("Loại tài sản với mã " + category.getCode() + " đã ngừng hoạt động");
         }
 
         AssetCatalogItem catalogItem = AssetCatalogItem.builder()
@@ -77,7 +77,7 @@ public class AssetCatalogItemService {
                 .active(request.active() == null || request.active())
                 .build();
         catalogItems.save(catalogItem);
-        catalogItem.setItemCode("DM-%06d".formatted(catalogItem.getId()));
+        catalogItem.setItemCode("CATALOG-%04d".formatted(catalogItem.getId()));
         catalogItems.flush();
         return toDetail(catalogItem);
     }
@@ -86,16 +86,17 @@ public class AssetCatalogItemService {
     public AssetCatalogItemDetailResponse updateCatalogItem(Long id, AssetCatalogItemRequest request) {
         AssetCatalogItem catalogItem = catalogItems.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Không tìm thấy danh mục với mã " + id));
+
         // lấy mã của loại tài sản mà danh mục này đang thuộc về
         Long currentCategoryId = catalogItem.getCategory() == null ? null : catalogItem.getCategory().getId();
         // categoryId trong request không khớp với id của bất kỳ id của category nào trong hệ thống
         AssetCategory category = categories.findById(request.categoryId())
-                .orElseThrow(() -> new IllegalArgumentException("Loại tài sản không hợp lệ"));
-
-        if (!Objects.equals(currentCategoryId, request.categoryId()) && !Boolean.TRUE.equals(category.getActive())) {
+                .orElseThrow(() -> new NoSuchElementException("Loại tài sản với mã " + request.categoryId() + " không tồn tại hoặc không hợp lệ"));
+        boolean hasChanged = !Objects.equals(currentCategoryId, request.categoryId());
+        if (hasChanged && !Boolean.TRUE.equals(category.getActive())) {
             throw new IllegalArgumentException("Loại tài sản đã ngừng hoạt động");
         }
-        if (!Objects.equals(currentCategoryId, request.categoryId()) && assets.existsByCatalogItemId(id)) {
+        if (hasChanged && assets.existsByCatalogItemId(id)) {
             throw new IllegalArgumentException("Không được thay đổi danh mục do đã có tài sản dùng danh mục này");
         }
         catalogItem.setName(request.name().trim());
