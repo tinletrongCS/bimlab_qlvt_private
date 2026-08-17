@@ -38,7 +38,7 @@ const GUIDE_TREE: GuideItem[] = [
     icon: <FiBookOpen />,
     description: "Trang Tổng quan dùng để điều hướng nhanh tới các nghiệp vụ chính.",
     steps: [
-      "Dùng các shortcut để mở nhanh danh sách tài sản, danh mục, đặt lịch, bàn giao hoặc bảo trì.",
+      "Dùng các shortcut để mở nhanh danh sách tài sản, phân loại, đặt lịch, bàn giao hoặc bảo trì.",
       "Theo dõi nhanh lịch phòng họp gần nhất nếu dữ liệu booking đã được tải.",
     ],
     links: [{ to: "/dashboard", label: "Mở Tổng quan" }],
@@ -53,9 +53,9 @@ const GUIDE_TREE: GuideItem[] = [
       {
         id: "asset-list",
         title: "Quản lý danh sách tài sản",
-        description: "Theo dõi tài sản theo danh mục, trạng thái, giá trị và thông tin sử dụng.",
+        description: "Theo dõi tài sản theo loại, trạng thái, giá trị và thông tin sử dụng.",
         steps: [
-          "Chọn danh mục ở sidebar trái để lọc danh sách.",
+          "Chọn loại tài sản ở sidebar trái để lọc danh sách.",
           "Dùng ô tìm kiếm để tìm theo mã, tên, serial hoặc nhà cung cấp.",
           "Bấm Xem trên từng dòng để mở chi tiết và cập nhật nếu có quyền.",
         ],
@@ -63,22 +63,22 @@ const GUIDE_TREE: GuideItem[] = [
       },
       {
         id: "asset-import-danhmuc",
-        title: "Import Excel danh sách danh mục",
+        title: "Import Excel phân loại tài sản",
         description:
-          "Nhập nhiều danh mục từ file Excel theo mẫu hệ thống với 4 bước trực quan bên dưới.",
+          "Nhập nhiều loại tài sản từ file Excel theo mẫu hệ thống với 4 bước trực quan bên dưới.",
         steps: [
           {
-            text: "Bước 1: Vào mục 'Tài sản > Danh mục' và bấm nút 'Nhập danh mục' trên thanh công cụ chính.",
+            text: "Bước 1: Vào mục 'Tài sản > Phân loại tài sản' và bấm nút 'Nhập loại tài sản' trên thanh công cụ chính.",
             image: "/image-dm/image-dm-1.png",
-            imageCaption: "Màn hình Danh mục tài sản: Vị trí nút 'Nhập danh mục'",
+            imageCaption: "Màn hình Phân loại tài sản: Vị trí nút 'Nhập loại tài sản'",
           },
           {
-            text: "Bước 2: Trong hộp thoại 'Tải danh mục tài sản', bấm 'Chọn file Excel' và chọn tệp Excel dữ liệu danh mục.",
+            text: "Bước 2: Trong hộp thoại 'Nhập phân loại tài sản', bấm 'Chọn file Excel' và chọn tệp Excel dữ liệu phân loại.",
             image: "/image-dm/image-dm-2.png",
-            imageCaption: "Hộp thoại nhập danh mục: Thao tác chọn file Excel từ máy tính",
+            imageCaption: "Hộp thoại nhập phân loại: Thao tác chọn file Excel từ máy tính",
           },
           {
-            text: "Bước 3: Bấm nút 'Kiểm tra dữ liệu' để hệ thống bắt đầu thẩm định tệp Excel danh mục.",
+            text: "Bước 3: Bấm nút 'Kiểm tra dữ liệu' để hệ thống bắt đầu thẩm định tệp Excel phân loại.",
             image: "/image-dm/image-dm-3.png",
             imageCaption: "Kiểm tra dữ liệu: Vị trí nút 'Kiểm tra dữ liệu'",
           },
@@ -88,18 +88,18 @@ const GUIDE_TREE: GuideItem[] = [
             imageCaption: "Xem lại kết quả kiểm tra dữ liệu.",
           },
           {
-            text: "Bước 5: Chuyển sang tab 'Phân cấp cha con' (Tree view) để xem trực quan cấu trúc phân cấp danh mục trước khi bấm 'Xác nhận nhập'.",
+            text: "Bước 5: Chuyển sang tab 'Phân cấp cha con' (Tree view) để xem trực quan cấu trúc phân loại trước khi bấm 'Xác nhận nhập'.",
             image: "/image-dm/image-dm-5.jpg",
             imageCaption:
-              "Tab Phân cấp cha con: Xem cấu trúc cây danh mục và bấm 'Xác nhận nhập'. Các dòng hợp lệ sẽ được nhập, các dòng lỗi sẽ bị loại bỏ.",
+              "Tab Phân cấp cha con: Xem cấu trúc cây loại tài sản và bấm 'Xác nhận nhập'. Các dòng hợp lệ sẽ được nhập, các dòng lỗi sẽ bị loại bỏ.",
           },
         ],
         details: [
-          "File Excel cần có sheet tên 'DanhMuc_ThamChieu' giống file mẫu danh mục.",
+          "File Excel cần có sheet kỹ thuật tên 'DanhMuc_ThamChieu' giống file mẫu phân loại.",
           "Chế độ nhập dữ liệu mặc định là 'Chỉ nhập những dòng hợp lệ' - hệ thống sẽ loại bỏ các dòng bị lỗi và cho phép nhập phần còn lại.",
-          "Bạn có thể kiểm tra phần lỗi/cảnh báo trên từng dòng trước khi xác nhận nhập danh mục.",
+          "Bạn có thể kiểm tra phần lỗi/cảnh báo trên từng dòng trước khi xác nhận nhập phân loại.",
         ],
-        links: [{ to: "/asset-categories", label: "Mở danh mục tài sản" }],
+        links: [{ to: "/asset-categories", label: "Mở phân loại tài sản" }],
       },
       {
         id: "asset-import-taisan",
@@ -160,32 +160,32 @@ const GUIDE_TREE: GuideItem[] = [
   },
   {
     id: "categories",
-    title: "Danh mục tài sản",
+    title: "Phân loại tài sản",
     icon: <FiGrid />,
-    description: "Quản lý cây phân cấp danh mục và thông tin từng danh mục.",
+    description: "Quản lý cây phân loại và thông tin từng loại tài sản.",
     steps: ["Chọn mục con để xem hướng dẫn theo luồng đang có."],
     children: [
       {
         id: "category-tree",
         title: "Sơ đồ phân cấp",
-        description: "Xem cây danh mục tài sản theo cấu trúc cha con.",
+        description: "Xem cây loại tài sản theo cấu trúc cha con.",
         steps: [
-          "Mở Tài sản > Danh mục để xem sơ đồ phân cấp.",
-          "Bấm vào node để chọn danh mục và xem thông tin ở khu vực chỉnh sửa.",
+          "Mở Tài sản > Phân loại tài sản để xem sơ đồ phân cấp.",
+          "Bấm vào node để chọn loại tài sản và xem thông tin ở khu vực chỉnh sửa.",
           "Dùng tìm kiếm để tự bung nhánh có kết quả phù hợp.",
         ],
-        links: [{ to: "/asset-categories", label: "Mở danh mục tài sản" }],
+        links: [{ to: "/asset-categories", label: "Mở phân loại tài sản" }],
       },
       {
         id: "category-crud",
-        title: "Thêm/sửa/xóa danh mục",
-        description: "Cập nhật thông tin danh mục và tạo danh mục con.",
+        title: "Thêm/sửa/xóa loại tài sản",
+        description: "Cập nhật thông tin loại tài sản và tạo loại con.",
         steps: [
-          "Chọn một danh mục trong cây hoặc danh sách chi tiết.",
-          "Bấm Thêm con để tạo danh mục dưới node đang chọn.",
-          "Chỉ xóa khi danh mục không còn con và không còn dữ liệu tham chiếu.",
+          "Chọn một loại tài sản trong cây hoặc danh sách chi tiết.",
+          "Bấm Thêm con để tạo loại tài sản dưới node đang chọn.",
+          "Chỉ xóa khi loại tài sản không còn con và không còn dữ liệu tham chiếu.",
         ],
-        links: [{ to: "/asset-categories", label: "Mở danh mục tài sản" }],
+        links: [{ to: "/asset-categories", label: "Mở phân loại tài sản" }],
       },
     ],
   },

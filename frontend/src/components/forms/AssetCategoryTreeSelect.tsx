@@ -152,7 +152,7 @@ export function AssetCategoryTreeSelect({
           style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}
           title={value || ""}
         >
-          {value || <span style={{ color: "#94a3b8" }}>Chọn danh mục ở bên dưới...</span>}
+          {value || <span style={{ color: "#94a3b8" }}>Chọn loại tài sản bên dưới...</span>}
         </div>
         {categoryCode && (
           <div
@@ -170,7 +170,7 @@ export function AssetCategoryTreeSelect({
         ) : tree.length > 0 ? (
           <div className="category-tree-list">{tree.map((root) => renderNode(root, 0))}</div>
         ) : (
-          <div className="category-tree-empty">Không có danh mục</div>
+          <div className="category-tree-empty">Không có loại tài sản</div>
         )}
       </div>
     </div>

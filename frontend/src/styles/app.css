@@ -15469,3 +15469,155 @@ button,
   color: #334155;
   text-align: center;
 }
+
+/* Asset catalog */
+#root .catalog-page-actions {
+  background: transparent !important;
+  border: 0 !important;
+  justify-content: flex-end;
+  padding: 0 !important;
+}
+
+#root .catalog-toolbar {
+  align-items: end !important;
+  grid-template-columns: minmax(280px, 1.5fr) repeat(3, minmax(170px, 0.7fr)) !important;
+}
+
+#root .catalog-col-actions {
+  text-align: center;
+  width: 72px;
+}
+
+#root .catalog-modal .modal-body {
+  display: block !important;
+}
+
+#root .catalog-modal-layout {
+  display: grid;
+  gap: 24px;
+  grid-template-columns: minmax(0, 1fr) 380px;
+}
+
+#root .catalog-modal-fields {
+  display: grid;
+  gap: 14px 16px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+#root .catalog-modal-fields label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+#root .catalog-modal-fields input:not([type="checkbox"]),
+#root .catalog-modal-fields textarea {
+  background: #ffffff !important;
+}
+
+#root .catalog-form-wide {
+  grid-column: 1 / -1;
+}
+
+#root .catalog-active-checkbox {
+  align-items: center;
+  flex-direction: row !important;
+}
+
+#root .catalog-active-checkbox input[type="checkbox"] {
+  accent-color: #15803d;
+  height: 16px !important;
+  margin: 0;
+  min-height: 16px !important;
+  width: 16px !important;
+}
+
+#root .catalog-modal-category,
+#root .catalog-modal-category .category-tree-select-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+#root .catalog-modal-category .category-tree-inline-box {
+  flex: 1;
+  max-height: 520px;
+  min-height: 390px;
+}
+
+@media (max-width: 960px) {
+  #root .catalog-toolbar {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  #root .catalog-modal-layout {
+    grid-template-columns: 1fr;
+  }
+
+  #root .catalog-modal-category .category-tree-inline-box {
+    min-height: 260px;
+  }
+}
+
+@media (max-width: 640px) {
+  #root .catalog-toolbar,
+  #root .catalog-modal-fields {
+    grid-template-columns: 1fr !important;
+  }
+
+  #root .catalog-form-wide {
+    grid-column: auto;
+  }
+}
+
+/* Catalog filters and shared modal presentation */
+#root .catalog-toolbar {
+  overflow: visible !important;
+  position: relative;
+  z-index: 40;
+}
+
+#root .catalog-toolbar .asset-filter-field {
+  min-width: 0;
+  position: relative;
+}
+
+#root .catalog-toolbar .searchable-select-dropdown {
+  max-height: 360px;
+  z-index: 5000;
+}
+
+#root .catalog-list-panel {
+  position: relative;
+  z-index: 1;
+}
+
+#root .catalog-list-panel .table-wrap {
+  min-height: 680px;
+}
+
+#root .catalog-modal-fields > label {
+  align-self: start;
+}
+
+#root .catalog-modal-fields > label > div,
+#root .catalog-modal-fields .searchable-select-container {
+  width: 100%;
+}
+
+#root .modal-backdrop,
+#root .asset-import-confirm {
+  backdrop-filter: none !important;
+  background: rgba(15, 23, 42, 0.72) !important;
+}
+
+#root .asset-bulk-panel-warning {
+  color: #b45309;
+  font-size: 13px;
+}
+
+@media (max-width: 760px) {
+  #root .catalog-list-panel .table-wrap {
+    min-height: 0;
+  }
+}

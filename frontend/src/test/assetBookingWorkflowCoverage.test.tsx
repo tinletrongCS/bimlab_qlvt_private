@@ -6,6 +6,7 @@ import { BookingPage } from "../pages/BookingPage";
 import { chooseSearchableOption } from "./searchableSelect";
 
 const mocks = vi.hoisted(() => ({
+  assignAssetCatalog: vi.fn(),
   cancelAssetBooking: vi.fn(),
   checkAssetBookingAvailability: vi.fn(),
   checkInAssetBooking: vi.fn(),
@@ -18,6 +19,7 @@ const mocks = vi.hoisted(() => ({
   loadAssetBookings: vi.fn(),
   loadAssetChangeHistory: vi.fn(),
   loadAssetCategoryTree: vi.fn(),
+  loadAssetCatalogItems: vi.fn(),
   loadAssets: vi.fn(),
   openModal: vi.fn(),
   toastError: vi.fn(),
@@ -124,6 +126,7 @@ const laptopAsset = {
   id: 1,
   assetCode: "TS-001",
   name: "Laptop Dell Precision",
+  catalogItem: { id: 1, itemCode: "MON-LG-27", name: "Màn hình LG 27 inch" },
   assetCategory: categories[1],
   category: "Laptop",
   serialNumber: "SN001",
@@ -254,6 +257,7 @@ vi.mock("../contexts/AppDataContext", () => ({
 }));
 
 vi.mock("../services/api", () => ({
+  assignAssetCatalog: mocks.assignAssetCatalog,
   cancelAssetBooking: mocks.cancelAssetBooking,
   checkAssetBookingAvailability: mocks.checkAssetBookingAvailability,
   checkInAssetBooking: mocks.checkInAssetBooking,
@@ -264,6 +268,7 @@ vi.mock("../services/api", () => ({
   loadAssetBookings: mocks.loadAssetBookings,
   loadAssetChangeHistory: mocks.loadAssetChangeHistory,
   loadAssetCategoryTree: mocks.loadAssetCategoryTree,
+  loadAssetCatalogItems: mocks.loadAssetCatalogItems,
   loadAssets: mocks.loadAssets,
   issueAssetQrCodes: mocks.issueAssetQrCodes,
   updateAsset: mocks.updateAsset,
@@ -288,6 +293,19 @@ describe("QLVT asset and booking workflow coverage", () => {
     mocks.ensureAssets.mockResolvedValue(undefined);
     mocks.ensureAssetDetailLookups.mockResolvedValue(undefined);
     mocks.loadAssetCategoryTree.mockResolvedValue(categoryTree);
+    mocks.loadAssetCatalogItems.mockResolvedValue([
+      {
+        id: 1,
+        itemCode: "MON-LG-27",
+        name: "Màn hình LG 27 inch",
+        catalogType: "ASSET",
+        categoryId: 2,
+        categoryCode: "LAP",
+        categoryName: "Laptop",
+        active: true,
+      },
+    ]);
+    mocks.assignAssetCatalog.mockResolvedValue(undefined);
     mocks.loadAssetChangeHistory.mockResolvedValue([
       {
         id: 1,
@@ -334,6 +352,7 @@ describe("QLVT asset and booking workflow coverage", () => {
 
     expect(await screen.findByRole("heading", { name: "Danh sách tài sản" })).toBeVisible();
     expect(screen.getByText("Laptop Dell Precision")).toBeVisible();
+    expect(screen.getByText("MON-LG-27 - Màn hình LG 27 inch")).toBeVisible();
     expect(screen.getAllByText("Phòng họp Apollo").length).toBeGreaterThan(0);
 
     await user.type(
@@ -347,6 +366,7 @@ describe("QLVT asset and booking workflow coverage", () => {
 
     await user.click(screen.getByRole("button", { name: "Cấu hình cột" }));
     expect(screen.getByRole("dialog", { name: "Cấu hình cột" })).toBeVisible();
+    expect(screen.getByLabelText("Danh mục")).toBeChecked();
     fireEvent.click(screen.getByLabelText("Serial/MAC"));
     await user.click(screen.getByRole("button", { name: /Mặc định/i }));
     await user.click(screen.getByRole("button", { name: /Áp dụng/i }));
@@ -367,6 +387,10 @@ describe("QLVT asset and booking workflow coverage", () => {
     expect(
       within(detailModal as HTMLElement).getByLabelText("Phương pháp khấu hao"),
     ).toHaveDisplayValue("Tuyến tính");
+    await waitFor(() => expect(mocks.loadAssetCatalogItems).toHaveBeenCalled());
+    expect(within(detailModal as HTMLElement).getByLabelText("Danh mục")).toHaveDisplayValue(
+      "MON-LG-27 - Màn hình LG 27 inch",
+    );
     await user.click(within(detailModal as HTMLElement).getByRole("tab", { name: /Lịch sử/i }));
     expect(await within(detailModal as HTMLElement).findByText("31/07/2026")).toBeVisible();
     expect(
@@ -438,6 +462,14 @@ describe("QLVT asset and booking workflow coverage", () => {
         1,
         expect.objectContaining({ status: "MAINTENANCE" }),
       ),
+    );
+
+    fireEvent.click(screen.getByTitle("Chọn TS-001").querySelector("input") as HTMLInputElement);
+    chooseSearchableOption(bulkActionSelect, "Gán danh mục");
+    chooseSearchableOption(screen.getByLabelText("Danh mục"), "MON-LG-27 - Màn hình LG 27 inch");
+    await user.click(screen.getByRole("button", { name: "Gán danh mục" }));
+    await waitFor(() =>
+      expect(mocks.assignAssetCatalog).toHaveBeenCalledWith({ assetIds: [1], catalogItemId: 1 }),
     );
   });
 

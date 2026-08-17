@@ -11,6 +11,7 @@ import {
   FiFileText,
   FiGrid,
   FiHelpCircle,
+  FiLayers,
   FiLogOut,
   FiMenu,
   FiRefreshCw,
@@ -61,7 +62,18 @@ const NAV_GROUPS: NavGroup[] = [
     icon: <FiBox />,
     children: [
       { to: "/assets", label: "Danh sách", icon: <FiBox />, permission: "asset_access" },
-      { to: "/asset-categories", label: "Danh mục", icon: <FiGrid />, permission: "asset_manage" },
+      {
+        to: "/asset-categories",
+        label: "Phân loại tài sản",
+        icon: <FiGrid />,
+        permission: "asset_manage",
+      },
+      {
+        to: "/asset-catalog-items",
+        label: "Danh mục",
+        icon: <FiLayers />,
+        permission: "asset_manage",
+      },
       {
         to: "/transfers",
         label: "Bàn giao",
@@ -155,6 +167,8 @@ export function AppShell() {
     let title = "BIMLab QLVT";
     if (location.pathname.startsWith("/dashboard")) title = "Tổng quan | BIMLab QLVT";
     else if (location.pathname.startsWith("/asset-categories"))
+      title = "Phân loại tài sản | BIMLab QLVT";
+    else if (location.pathname.startsWith("/asset-catalog-items"))
       title = "Danh mục tài sản | BIMLab QLVT";
     else if (location.pathname.startsWith("/assets")) title = "Danh sách tài sản | BIMLab QLVT";
     else if (location.pathname.startsWith("/transfers")) title = "Bàn giao tài sản | BIMLab QLVT";

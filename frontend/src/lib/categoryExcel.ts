@@ -29,7 +29,7 @@ function flattenCategoryRows(categories: AssetCategoryTree[]) {
   const rows: string[][] = [];
   const visit = (node: AssetCategoryTree, fallbackParentCode = "") => {
     rows.push([
-      "Danh mục",
+      "Loại tài sản",
       node.code,
       node.name,
       node.parentId ? fallbackParentCode : node.assetClass,
@@ -74,7 +74,7 @@ export function addCategoryReferenceSheet(
     { header: "Nhóm", key: "group", width: 24 },
     { header: "Mã/Giá trị nhập", key: "code", width: 24 },
     { header: "Diễn giải", key: "label", width: 34 },
-    { header: "Danh mục cha", key: "parentCode", width: 24 },
+    { header: "Loại cha", key: "parentCode", width: 24 },
   ];
 
   const rows = [
@@ -125,7 +125,7 @@ export function addHierarchicalCategorySheet(workbook: Workbook, categories: Ass
 
   const cols = [];
   for (let i = 0; i <= maxDepth; i++) {
-    cols.push({ header: `Danh mục Cấp ${i + 1}`, key: `level_${i}`, width: 30 });
+    cols.push({ header: `Loại tài sản cấp ${i + 1}`, key: `level_${i}`, width: 30 });
   }
   cols.push({ header: "Mã", key: "code", width: 24 });
   cols.push({ header: "Loại tài sản", key: "assetClass", width: 24 });
@@ -235,7 +235,9 @@ export async function parseCategoryReferenceSheet(
         columnMap.set("code", index);
       }
       if (normalized === "dien giai") columnMap.set("name", index);
-      if (normalized === "danh muc cha") columnMap.set("parentCode", index);
+      if (normalized === "loai cha" || normalized === "danh muc cha") {
+        columnMap.set("parentCode", index);
+      }
     });
     if (columnMap.has("group") && columnMap.has("code") && columnMap.has("name")) {
       headerRowNumber = rowNumber;
@@ -243,7 +245,7 @@ export async function parseCategoryReferenceSheet(
   });
 
   if (!headerRowNumber) {
-    throw new Error("Sheet danh mục thiếu dòng tiêu đề Nhóm, Mã/Giá trị nhập, Diễn giải.");
+    throw new Error("Sheet phân loại thiếu dòng tiêu đề Nhóm, Mã/Giá trị nhập, Diễn giải.");
   }
 
   const rows: AssetCategoryImportRowPayload[] = [];

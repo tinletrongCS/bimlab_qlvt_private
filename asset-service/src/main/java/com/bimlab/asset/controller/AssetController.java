@@ -5,6 +5,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 
 import com.bimlab.asset.dto.request.AssetRequest;
+import com.bimlab.asset.dto.request.AssetCatalogAssignmentRequest;
 import com.bimlab.asset.dto.request.AssetImportCommitRequest;
 import com.bimlab.asset.dto.request.AssetImportValidateRequest;
 import com.bimlab.asset.dto.request.DisposeAssetRequest;
@@ -80,6 +81,12 @@ public class AssetController {
     @PreAuthorize("hasAuthority('asset_manage')")
     public AssetResponse update(@PathVariable Long id, @Valid @RequestBody AssetRequest req) {
         return mapper.toResponse(service.updateAsset(id, req));
+    }
+
+    @PutMapping("/catalog")
+    @PreAuthorize("hasAuthority('asset_manage')")
+    public void assignCatalog(@Valid @RequestBody AssetCatalogAssignmentRequest req) {
+        service.assignCatalog(req);
     }
 
     @DeleteMapping("/{id}")

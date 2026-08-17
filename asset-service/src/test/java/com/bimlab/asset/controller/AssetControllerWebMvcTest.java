@@ -15,6 +15,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.http.MediaType;
 
 import java.util.List;
 
@@ -23,6 +24,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -85,5 +87,18 @@ class AssetControllerWebMvcTest {
         mockMvc.perform(delete("/api/asset/assets/1"))
                 .andExpect(status().isOk());
         verify(assetService).deleteAsset(1L);
+    }
+
+    @Test
+    @WithMockUser(authorities = {"asset_manage"})
+    void assignCatalog_delegatesToService() throws Exception {
+        mockMvc.perform(put("/api/asset/assets/catalog")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"assetIds":[1,2],"catalogItemId":9}
+                                """))
+                .andExpect(status().isOk());
+
+        verify(assetService).assignCatalog(any());
     }
 }

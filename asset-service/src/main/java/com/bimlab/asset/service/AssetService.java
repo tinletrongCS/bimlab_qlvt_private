@@ -1,6 +1,7 @@
 package com.bimlab.asset.service;
 
 import com.bimlab.asset.dto.request.AssetRequest;
+import com.bimlab.asset.dto.request.AssetCatalogAssignmentRequest;
 import com.bimlab.asset.dto.request.AssetImportCommitRequest;
 import com.bimlab.asset.dto.request.AssetImportRowRequest;
 import com.bimlab.asset.dto.request.AssetImportValidateRequest;
@@ -185,6 +186,18 @@ public class AssetService {
         AssetItem item = getAssetById(id);
         applyAsset(item, req);
         return assets.save(item);
+    }
+
+    @Transactional
+    public void assignCatalog(AssetCatalogAssignmentRequest request) {
+        // TODO PRACTICE CATALOG 8:
+        // - Tải catalogItem theo request.catalogItemId(), kiểm tra tồn tại và đang hoạt động.
+        // - Tải toàn bộ assets theo request.assetIds(); thiếu bất kỳ id nào thì từ chối toàn bộ.
+        // - Kiểm tra các tài sản có cùng tên sau khi trim và so sánh không phân biệt hoa thường.
+        // - Kiểm tra từng tài sản đã có loại và loại đó trùng category của catalogItem.
+        // - Gán catalogItem cho toàn bộ managed entities trong cùng transaction.
+        // - Không bắt lỗi để lưu một phần: có một dòng không hợp lệ thì rollback toàn bộ.
+        throw new UnsupportedOperationException("TODO: assignCatalog");
     }
 
     @Transactional
@@ -531,6 +544,10 @@ public class AssetService {
                 ? null
                 : assetCategories.findById(req.categoryId())
                         .orElseThrow(() -> new NoSuchElementException("Nhóm tài sản không tồn tại"));
+        // TODO PRACTICE CATALOG 7:
+        // - Nếu có catalogItem, kiểm tra catalog đang hoạt động và đã được gán category.
+        // - Bảo đảm catalogItem.category.id bằng assetCategory.id trước khi lưu tài sản.
+        // - Có thể lấy category trực tiếp từ catalog để chỉ duy trì một nguồn sự thật.
         item.setCatalogItem(catalogItem);
         item.setAssetCategory(assetCategory);
         item.setParentAsset(req.parentAssetId() == null ? null : getAssetById(req.parentAssetId()));
