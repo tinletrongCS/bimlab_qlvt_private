@@ -27,6 +27,7 @@ public class AssetCatalogItemService {
     private final AssetItemRepository assets;
     /*
     Lấy danh mục theo loại tài sản
+    Cho phép nhập từ khóa tìm theo mã và tên
      */
     @Transactional(readOnly = true)
     public Page<AssetCatalogItemListResponse> listCatalogItems(
