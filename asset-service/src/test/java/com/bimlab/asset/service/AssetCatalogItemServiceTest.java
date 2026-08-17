@@ -59,7 +59,7 @@ class AssetCatalogItemServiceTest {
 
         AssetCatalogItemDetailResponse result = service.createCatalogItem(request());
 
-        assertEquals("DM-000001", result.itemCode());
+        assertEquals("CATALOG-0001", result.itemCode());
         assertEquals("MONITOR", result.categoryCode());
         assertEquals("CAI", result.unit());
     }
