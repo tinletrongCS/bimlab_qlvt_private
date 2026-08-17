@@ -147,4 +147,30 @@ describe("SearchableSelect", () => {
     fireEvent.mouseDown(within(dropdown).getByText("Laptop Dell"));
     expect(onChange).toHaveBeenCalledWith("1");
   });
+
+  it("opens a portal dropdown upward near the viewport bottom", () => {
+    const { container } = render(
+      <SearchableSelect value="" onChange={vi.fn()} options={options} portal />,
+    );
+    vi.spyOn(
+      container.querySelector(".searchable-select-container") as HTMLElement,
+      "getBoundingClientRect",
+    ).mockReturnValue({
+      top: 700,
+      bottom: 730,
+      left: 100,
+      right: 200,
+      width: 100,
+      height: 30,
+      x: 100,
+      y: 700,
+      toJSON: () => ({}),
+    });
+
+    openDropdown(container);
+    const dropdown = document.body.querySelector(".searchable-select-dropdown") as HTMLElement;
+    expect(dropdown.style.position).toBe("fixed");
+    expect(dropdown.style.bottom).toBe("72px");
+    expect(dropdown.style.width).toBe("380px");
+  });
 });
