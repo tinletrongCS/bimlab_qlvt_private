@@ -125,4 +125,26 @@ describe("SearchableSelect", () => {
     openDropdown(container);
     expect(container.querySelector(".searchable-select-dropdown")).not.toBeInTheDocument();
   });
+
+  it("renders a portal dropdown outside clipping containers", () => {
+    const onChange = vi.fn();
+    const { container } = render(
+      <div style={{ overflow: "hidden" }}>
+        <SearchableSelect
+          value=""
+          onChange={onChange}
+          options={options}
+          portal
+          dropdownClassName="portal-menu"
+        />
+      </div>,
+    );
+
+    openDropdown(container);
+    const dropdown = document.body.querySelector(".portal-menu") as HTMLElement;
+    expect(dropdown).toBeVisible();
+    expect(container.querySelector(".portal-menu")).not.toBeInTheDocument();
+    fireEvent.mouseDown(within(dropdown).getByText("Laptop Dell"));
+    expect(onChange).toHaveBeenCalledWith("1");
+  });
 });

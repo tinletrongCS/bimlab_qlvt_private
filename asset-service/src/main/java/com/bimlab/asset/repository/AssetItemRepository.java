@@ -22,6 +22,7 @@ public interface AssetItemRepository extends JpaRepository<AssetItem, Long> {
     Optional<AssetItem> findByAssetCodeForUpdate(@Param("assetCode") String assetCode);
 
     boolean existsByAssetCode(String assetCode);
+    boolean existsByCatalogItemId(Long catalogItemId);
     List<AssetItem> findByAssetCategoryId(Long categoryId);
     List<AssetItem> findByCatalogItemId(Long catalogItemId);
 }

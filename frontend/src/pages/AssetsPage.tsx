@@ -37,15 +37,18 @@ import { useAuth } from "../contexts/AuthContext";
 import { addCategoryReferenceSheet, addHierarchicalCategorySheet } from "../lib/categoryExcel";
 import { employeeLabel, money, projectLabel } from "../lib/format";
 import {
+  assignAssetCatalog,
   commitAssetImport,
   deleteAsset,
   issueAssetQrCodes,
+  loadAssetCatalogItems,
   loadAssetCategoryTree,
   loadAssetChangeHistory,
   updateAsset,
   validateAssetImport,
 } from "../services/api";
 import type {
+  AssetCatalogItemListItem,
   AssetCategoryTree,
   AssetChangeLog,
   AssetImportCommitPayload,
@@ -60,11 +63,12 @@ type AssetStatusFilter = "ALL" | "IN_STOCK" | "ASSIGNED" | "MAINTENANCE" | "DISP
 type AssetValueFilter = "ALL" | "UNDER_10M" | "FROM_10M_TO_50M" | "FROM_50M_TO_200M" | "FROM_200M";
 type ImportMode = AssetImportCommitPayload["importMode"];
 type ImportPreviewFilter = "ALL" | "VALID" | "INVALID" | "WARNING";
-type AssetBulkAction = "status" | "move" | "assign" | "return" | "qr" | null;
+type AssetBulkAction = "status" | "move" | "assign" | "return" | "catalog" | "qr" | null;
 type AssetDetailView = "details" | "history";
 type AssetTableColumnId =
   | "asset"
   | "category"
+  | "catalog"
   | "serialNumber"
   | "status"
   | "purchaseCost"
@@ -164,11 +168,11 @@ function richTextEditorHtml(value: string) {
     : escapeHtml(value).replace(/\r?\n/g, "<br>");
 }
 
-function richTextStorageValue(value: string) {
+export function richTextStorageValue(value: string) {
   return RICH_TEXT_PATTERN.test(value) ? sanitizeRichText(value) : value;
 }
 
-function RichTextEditor({
+export function RichTextEditor({
   label,
   value,
   onChange,
@@ -495,8 +499,9 @@ const ASSET_MUTABLE_STATUSES = ["IN_STOCK", "ASSIGNED", "MAINTENANCE", "DISPOSED
 const ASSET_TABLE_STORAGE_KEY = "qlvt.assetList.tableColumns.v1";
 const ASSET_TABLE_COLUMNS: AssetTableColumnConfig[] = [
   { id: "asset", label: "Tài sản", locked: true, defaultVisible: true },
-  { id: "category", label: "Danh mục", locked: true, defaultVisible: true },
-  { id: "categoryCode", label: "Mã danh mục", defaultVisible: false },
+  { id: "category", label: "Loại", locked: true, defaultVisible: true },
+  { id: "catalog", label: "Danh mục", defaultVisible: true },
+  { id: "categoryCode", label: "Mã loại", defaultVisible: false },
   { id: "serialNumber", label: "Serial/MAC", defaultVisible: false },
   { id: "status", label: "Trạng thái", defaultVisible: true },
   { id: "purchaseCost", label: "Giá trị mua", defaultVisible: true },
@@ -514,6 +519,7 @@ const ASSET_TABLE_COLUMNS: AssetTableColumnConfig[] = [
 const ASSET_TABLE_COLUMN_WIDTHS: Record<AssetTableColumnId, number> = {
   asset: 190,
   category: 150,
+  catalog: 190,
   categoryCode: 150,
   serialNumber: 160,
   status: 118,
@@ -579,6 +585,9 @@ function readAssetColumnPreferences() {
     const visible = Array.from(
       new Set([
         ...(parsed.visible || []).filter((id): id is AssetTableColumnId => knownIds.has(id)),
+        ...ASSET_TABLE_COLUMNS.filter(
+          (column) => column.defaultVisible && !(parsed.order || []).includes(column.id),
+        ).map((column) => column.id),
         ...ASSET_TABLE_COLUMNS.filter((column) => column.locked).map((column) => column.id),
       ]),
     );
@@ -1191,10 +1200,10 @@ async function downloadAssetImportTemplate(categories: AssetCategoryTree[]) {
     "Tên tài sản*",
     "Phân loại*",
     "Phân loại lớp con*",
-    "Danh mục tài sản*",
+    "Loại tài sản*",
     "Phòng ban",
     "Chi nhánh",
-    "Mẫu tài sản",
+    "Danh mục",
     "Phương pháp khấu hao",
     "Số Series/MAC",
     "Ngày bắt đầu khấu hao",
@@ -1232,11 +1241,11 @@ async function downloadAssetImportTemplate(categories: AssetCategoryTree[]) {
   ];
 
   sheet.addRow([
-    "Không bắt buộc nhập mã tài sản. Nếu để trống, hệ thống sẽ tự sinh theo danh mục node lá.",
+    "Không bắt buộc nhập mã tài sản. Nếu để trống, hệ thống sẽ tự sinh theo loại tài sản node lá.",
     "Quy ước phân loại: nhập mã FIXED_ASSET hoặc TOOL_EQUIPMENT.",
     "Cấp cao nhất.",
     "Phân loại lớp con: TANGIBLE, INTANGIBLE, SINGLE_USE hoặc MULTI_USE.",
-    "Nhập chính xác mã danh mục node lá, ví dụ MONITOR, LAPTOP, LICENSE.",
+    "Nhập chính xác mã loại tài sản node lá, ví dụ MONITOR, LAPTOP, LICENSE.",
   ]);
   sheet.addRow(fieldKeys);
   sheet.addRow(headers);
@@ -1378,6 +1387,8 @@ export function AssetsPage() {
   const [bulkSiteId, setBulkSiteId] = useState("");
   const [bulkDepartmentId, setBulkDepartmentId] = useState("");
   const [bulkEmployeeId, setBulkEmployeeId] = useState("");
+  const [bulkCatalogItemId, setBulkCatalogItemId] = useState("");
+  const [catalogItems, setCatalogItems] = useState<AssetCatalogItemListItem[] | null>(null);
   const [assetColumnOrder, setAssetColumnOrder] = useState<AssetTableColumnId[]>(
     () => readAssetColumnPreferences().order,
   );
@@ -1419,6 +1430,12 @@ export function AssetsPage() {
     loadAssetCategoryTree()
       .then(setCategoryTree)
       .catch(() => setCategoryTree([]));
+  }, []);
+
+  useEffect(() => {
+    loadAssetCatalogItems()
+      .then(setCatalogItems)
+      .catch(() => toast.error("Không tải được danh sách danh mục tài sản."));
   }, []);
 
   useEffect(() => {
@@ -1710,6 +1727,16 @@ export function AssetsPage() {
     () => selectedAssets.reduce((sum, asset) => sum + Number(asset.purchaseCost || 0), 0),
     [selectedAssets],
   );
+  const selectedCategoryId = selectedAssets[0]?.assetCategory?.id ?? null;
+  const selectedAssetsShareName =
+    selectedAssets.length > 0 &&
+    selectedAssets.every((asset) => normalize(asset.name) === normalize(selectedAssets[0].name));
+  const selectedAssetsShareCategory =
+    selectedCategoryId !== null &&
+    selectedAssets.every((asset) => asset.assetCategory?.id === selectedCategoryId);
+  const compatibleBulkCatalogItems = (catalogItems || []).filter(
+    (item) => item.active && item.categoryId === selectedCategoryId,
+  );
 
   useEffect(() => {
     if (assetPage > assetPageCount) setAssetPage(assetPageCount);
@@ -1807,6 +1834,15 @@ export function AssetsPage() {
     });
   };
 
+  const ensureCatalogItems = async () => {
+    if (catalogItems !== null) return;
+    try {
+      setCatalogItems(await loadAssetCatalogItems());
+    } catch {
+      toast.error("Không tải được danh sách danh mục tài sản.");
+    }
+  };
+
   const openAssetDetail = (item: AssetItem) => {
     setSelectedAsset(item);
     setAssetDraft(buildAssetPayload(item));
@@ -1814,6 +1850,7 @@ export function AssetsPage() {
     setAssetChangeHistory([]);
     setAssetHistoryError("");
     void ensureAssetDetailLookups();
+    void ensureCatalogItems();
   };
 
   const closeAssetDetail = () => {
@@ -1975,6 +2012,10 @@ export function AssetsPage() {
       return;
     }
     setBulkPanelAction((current) => (current === action ? null : action));
+    if (action === "catalog") {
+      setBulkCatalogItemId("");
+      void ensureCatalogItems();
+    }
     if (action === "move" || action === "assign") {
       void ensureAssetDetailLookups();
     }
@@ -2011,6 +2052,24 @@ export function AssetsPage() {
       (asset) => ({ ...buildAssetPayload(asset), status: bulkStatus }),
       `Đã cập nhật trạng thái ${selectedAssets.length} tài sản.`,
     );
+  };
+
+  const handleBulkAssignCatalog = async () => {
+    if (!bulkCatalogItemId || !selectedAssetsShareName || !selectedAssetsShareCategory) return;
+    setBulkActionBusy(true);
+    try {
+      await assignAssetCatalog({
+        assetIds: selectedAssets.map((asset) => asset.id),
+        catalogItemId: Number(bulkCatalogItemId),
+      });
+      toast.success(`Đã gán danh mục cho ${selectedAssets.length} tài sản.`);
+      clearSelectedAssets();
+      await reloadAssetList();
+    } catch {
+      toast.error("Chưa thể gán danh mục cho các tài sản đã chọn.");
+    } finally {
+      setBulkActionBusy(false);
+    }
   };
 
   const handleBulkMoveAssets = async () => {
@@ -2177,7 +2236,7 @@ export function AssetsPage() {
     },
     {
       id: "category",
-      label: "Danh mục",
+      label: "Loại",
       render: (item) => (
         <div
           className="asset-name-cell"
@@ -2194,8 +2253,16 @@ export function AssetsPage() {
       ),
     },
     {
+      id: "catalog",
+      label: "Danh mục",
+      render: (item) => {
+        const catalog = item.catalogItem;
+        return catalog ? highlightSearchText(`${catalog.itemCode} - ${catalog.name}`, query) : "--";
+      },
+    },
+    {
       id: "categoryCode",
-      label: "Mã danh mục",
+      label: "Mã loại",
       render: (item) => highlightSearchText(item.assetCategory?.code || "--", query),
     },
     {
@@ -2438,8 +2505,8 @@ export function AssetsPage() {
           <div className="asset-category-sidebar-head">
             {!assetCategoryCollapsed && (
               <div>
-                <span>Danh mục</span>
-                <strong>{selectedCategoryNode?.name || "Tất cả danh mục"}</strong>
+                <span>Loại tài sản</span>
+                <strong>{selectedCategoryNode?.name || "Tất cả loại tài sản"}</strong>
               </div>
             )}
             {!assetCategoryCollapsed && (
@@ -2450,7 +2517,7 @@ export function AssetsPage() {
             <button
               type="button"
               className="asset-category-collapse"
-              title={assetCategoryCollapsed ? "Mở bộ lọc danh mục" : "Thu bộ lọc danh mục"}
+              title={assetCategoryCollapsed ? "Mở bộ lọc loại tài sản" : "Thu bộ lọc loại tài sản"}
               onClick={() => setAssetCategoryCollapsed((value) => !value)}
             >
               {assetCategoryCollapsed ? <FiChevronRight /> : <FiChevronLeft />}
@@ -2467,7 +2534,7 @@ export function AssetsPage() {
               >
                 <span className="asset-category-filter-spacer" />
                 <span className="asset-category-filter-copy">
-                  <strong>Tất cả danh mục</strong>
+                  <strong>Tất cả loại tài sản</strong>
                   <small>Toàn bộ tài sản</small>
                 </span>
                 <span className="asset-category-filter-count">{assets.length}</span>
@@ -2853,7 +2920,7 @@ export function AssetsPage() {
                     >
                       <option value="">Chọn thao tác</option>
                       <option value="status">Cập nhật trạng thái</option>
-
+                      <option value="catalog">Gán danh mục</option>
                       <option value="qr">In QR theo nhóm</option>
                     </SearchableSelect>
                   </label>
@@ -2942,6 +3009,49 @@ export function AssetsPage() {
                           </div>
                         </>
                       )}
+                      {bulkPanelAction === "catalog" && (
+                        <>
+                          <div className="asset-bulk-panel-copy">
+                            <strong>Gán danh mục</strong>
+                            <span>Chỉ áp dụng cho các tài sản cùng tên và cùng loại.</span>
+                          </div>
+                          <div className="asset-bulk-form-row">
+                            <label>
+                              <span>Danh mục</span>
+                              <SearchableSelect
+                                value={bulkCatalogItemId}
+                                onChange={setBulkCatalogItemId}
+                                disabled={!selectedAssetsShareName || !selectedAssetsShareCategory}
+                                options={[
+                                  { value: "", label: "Chọn danh mục" },
+                                  ...compatibleBulkCatalogItems.map((item) => ({
+                                    value: String(item.id),
+                                    label: `${item.itemCode} - ${item.name}`,
+                                  })),
+                                ]}
+                              />
+                            </label>
+                            <button
+                              type="button"
+                              className="primary-action"
+                              disabled={
+                                bulkActionBusy ||
+                                !bulkCatalogItemId ||
+                                !selectedAssetsShareName ||
+                                !selectedAssetsShareCategory
+                              }
+                              onClick={() => void handleBulkAssignCatalog()}
+                            >
+                              Gán danh mục
+                            </button>
+                          </div>
+                          {(!selectedAssetsShareName || !selectedAssetsShareCategory) && (
+                            <span className="asset-bulk-panel-warning">
+                              Các tài sản đã chọn phải cùng tên và cùng loại tài sản.
+                            </span>
+                          )}
+                        </>
+                      )}
                     </div>
                   )}
                 </div>
@@ -2959,7 +3069,7 @@ export function AssetsPage() {
             </div>
             {[
               ["Theo trạng thái", assetListInsights.statuses],
-              ["Theo danh mục", assetListInsights.categories],
+              ["Theo loại", assetListInsights.categories],
               ["Theo giá trị", assetListInsights.values],
               ["Theo chi nhánh", assetListInsights.sites],
             ].map(([title, items]) => {
@@ -3069,7 +3179,7 @@ export function AssetsPage() {
                   <strong>{selectedAsset.assetCode}</strong>
                 </div>
                 <div>
-                  <span>Danh mục</span>
+                  <span>Loại</span>
                   <strong>
                     {selectedAsset.assetCategory?.name ||
                       selectedAsset.category ||
@@ -3103,15 +3213,15 @@ export function AssetsPage() {
                       <input value={assetDraft.assetCode} disabled />
                     </label>
                     <label>
-                      <span>Danh mục</span>
+                      <span>Loại tài sản</span>
                       <input value={assetDraft.category} disabled />
                     </label>
                     <label>
-                      <span>Mã danh mục</span>
+                      <span>Mã loại</span>
                       <input value={selectedAsset.assetCategory?.code || "--"} disabled />
                     </label>
                     <label>
-                      <span>Loại tài sản</span>
+                      <span>Nhóm tài sản</span>
                       <input value={classLabel(assetDraft.assetClass)} disabled />
                     </label>
                     <label>
@@ -3123,14 +3233,23 @@ export function AssetsPage() {
                       <input value={classLabel(assetDraft.toolUsageType)} disabled />
                     </label>
                     <label>
-                      <span>Mẫu tài sản</span>
-                      <input
-                        value={
-                          selectedAsset.catalogItem
-                            ? `${selectedAsset.catalogItem.itemCode} - ${selectedAsset.catalogItem.name}`
-                            : "Chưa gắn mẫu tài sản"
+                      <span>Danh mục</span>
+                      <SearchableSelect
+                        value={String(assetDraft.catalogItemId || "")}
+                        onChange={(value) =>
+                          updateAssetDraft("catalogItemId", value ? Number(value) : null)
                         }
-                        disabled
+                        options={[
+                          { value: "", label: "Chưa gắn danh mục" },
+                          ...(catalogItems || [])
+                            .filter(
+                              (item) => item.active && item.categoryId === assetDraft.categoryId,
+                            )
+                            .map((item) => ({
+                              value: String(item.id),
+                              label: `${item.itemCode} - ${item.name}`,
+                            })),
+                        ]}
                       />
                     </label>
                     <label>
@@ -3929,7 +4048,7 @@ export function AssetsPage() {
                     <tr>
                       <th>Dòng</th>
                       <th>Tài sản</th>
-                      <th>Danh mục</th>
+                      <th>Loại tài sản</th>
                       <th>Phân loại</th>
                       <th>Loại con</th>
                       <th>Phòng ban</th>

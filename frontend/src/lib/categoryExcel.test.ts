@@ -49,14 +49,20 @@ describe("category Excel", () => {
     const workbook = new Workbook();
     const sheet = workbook.addWorksheet(CATEGORY_REFERENCE_SHEET_NAME);
     sheet.addRow(["ignored"]);
-    sheet.addRow(["Nhóm", "Mã giá trị nhập", "Diễn giải", "Danh mục cha"]);
-    sheet.addRow(["Danh mục", "LAP", { formula: '"Laptop"', result: "Laptop" }, "ROOT"]);
+    sheet.addRow(["Nhóm", "Mã giá trị nhập", "Diễn giải", "Loại cha"]);
+    sheet.addRow(["Loại tài sản", "LAP", { formula: '"Laptop"', result: "Laptop" }, "ROOT"]);
     sheet.addRow([]);
     const buffer = await workbook.xlsx.writeBuffer();
     const file = { arrayBuffer: async () => buffer } as File;
 
     await expect(parseCategoryReferenceSheet(file)).resolves.toEqual([
-      { rowNumber: 3, group: "Danh mục", code: "LAP", name: "Laptop", parentCode: "ROOT" },
+      {
+        rowNumber: 3,
+        group: "Loại tài sản",
+        code: "LAP",
+        name: "Laptop",
+        parentCode: "ROOT",
+      },
     ]);
   });
 
