@@ -1,8 +1,11 @@
 import { Workbook } from "exceljs";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  addAssetCategoryDropdowns,
   addCategoryReferenceSheet,
+  addHierarchicalCategorySheet,
   CATEGORY_REFERENCE_SHEET_NAME,
+  CATEGORY_TREE_SHEET_NAME,
   downloadCategoryImportTemplate,
   emptyCategoryImportResult,
   parseCategoryReferenceSheet,
@@ -43,6 +46,54 @@ describe("category Excel", () => {
     expect(sheet.getRow(1).height).toBe(24);
     expect(sheet.getRow(9).getCell(2).value).toBe("LAP");
     expect(sheet.getRow(9).getCell(4).value).toBe("ROOT");
+  });
+
+  it("adds dependent asset type dropdowns with leaf category values", () => {
+    const workbook = new Workbook();
+    const hierarchy = [
+      {
+        id: 10,
+        code: "FIXED_ASSET",
+        name: "Tài sản cố định",
+        assetClass: "FIXED_ASSET",
+        parentId: null,
+        active: true,
+        children: [
+          {
+            id: 11,
+            code: "TANGIBLE",
+            name: "Hữu hình",
+            assetClass: "FIXED_ASSET",
+            parentId: 10,
+            active: true,
+            children: [
+              {
+                id: 12,
+                code: "TSCD_MONITOR",
+                name: "Màn hình",
+                assetClass: "FIXED_ASSET",
+                parentId: 11,
+                active: true,
+                children: [],
+              },
+            ],
+          },
+        ],
+      },
+    ] as any;
+    const referenceSheet = addCategoryReferenceSheet(workbook, { categories: hierarchy });
+    const treeSheet = addHierarchicalCategorySheet(workbook, hierarchy);
+    const sheet = workbook.addWorksheet("Thiết bị");
+
+    addAssetCategoryDropdowns(workbook, sheet, hierarchy, 5, 6);
+
+    expect(sheet.getCell("G5").dataValidation.formulae).toEqual(["ASSET_CLASSES"]);
+    expect(sheet.getCell("H5").dataValidation.formulae[0]).toContain('="Tài sản cố định"');
+    expect(sheet.getCell("I6").dataValidation.formulae[0]).toContain('="Hữu hình"');
+    expect(workbook.definedNames.getRanges("TANGIBLE").ranges).toEqual(["'Loai_ThamChieu'!$I$2"]);
+    expect(referenceSheet.getCell("I2").value).toBe("Màn hình (TSCD_MONITOR)");
+    expect(treeSheet.name).toBe(CATEGORY_TREE_SHEET_NAME);
+    expect(treeSheet.getColumn(3).values).toContain("Màn hình");
   });
 
   it("parses normalized headers, rich cells, formulas, and skips blank rows", async () => {

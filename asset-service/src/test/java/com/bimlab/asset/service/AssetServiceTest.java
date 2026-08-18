@@ -43,6 +43,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -61,10 +62,18 @@ class AssetServiceTest {
 
     @BeforeEach
     void setUp() {
+        AssetCategory tangibleCategory = AssetCategory.builder()
+                .id(9L)
+                .code("TANGIBLE")
+                .name("Tài sản cố định hữu hình")
+                .assetClass(AssetClass.FIXED_ASSET)
+                .active(true)
+                .build();
         laptopCategory = AssetCategory.builder()
                 .id(10L)
                 .code("LAP")
                 .name("Laptop")
+                .parent(tangibleCategory)
                 .assetClass(AssetClass.FIXED_ASSET)
                 .active(true)
                 .build();
@@ -239,6 +248,19 @@ class AssetServiceTest {
     }
 
     @Test
+    void validateAssetImport_rejectsCategoryOutsideSelectedChildClass() {
+        laptopCategory.getParent().setCode("INTANGIBLE");
+        when(assetCategories.findByCode("LAP")).thenReturn(Optional.of(laptopCategory));
+        when(assetCategories.existsByParentId(10L)).thenReturn(false);
+
+        AssetImportValidationResponse response = service.validateAssetImport(
+                new AssetImportValidateRequest(List.of(validImportRow(2)))
+        );
+
+        assertTrue(hasCode(response.rows().get(0).errors(), "CATEGORY_BRANCH_MISMATCH"));
+    }
+
+    @Test
     void importAssets_allOrNothingSkipsEverythingWhenAnyRowInvalid() {
         when(assetCategories.findByCode("LAP")).thenReturn(Optional.of(laptopCategory));
         when(assetCategories.existsByParentId(10L)).thenReturn(false);
@@ -290,8 +312,32 @@ class AssetServiceTest {
         assertEquals(AssetClass.FIXED_ASSET, saved.getValue().getAssetClass());
         assertEquals(FixedAssetType.TANGIBLE, saved.getValue().getFixedAssetType());
         assertEquals(AssetStatus.IN_STOCK, saved.getValue().getStatus());
+        assertEquals("HD-2026-001", saved.getValue().getContractNumber());
+        assertEquals("INV-2026-001", saved.getValue().getInvoiceNumber());
         assertEquals(new BigDecimal("10000000"), saved.getValue().getPurchaseCost());
         assertEquals(7L, sequence.getCurrentNumber());
+    }
+
+    @Test
+    void importAssets_createsQuantityAssetsButKeepsOneResultRow() {
+        AssetCodeSequence sequence = new AssetCodeSequence(10L);
+        sequence.setCurrentNumber(5L);
+        when(assetCategories.findByCode("LAP")).thenReturn(Optional.of(laptopCategory));
+        when(assetCategories.existsByParentId(10L)).thenReturn(false);
+        when(assetCodeSequences.findById(10L)).thenReturn(Optional.of(sequence));
+        when(assetCodeSequences.findWithLockByCategoryId(10L)).thenReturn(Optional.of(sequence));
+        when(assetCodeSequences.save(sequence)).thenReturn(sequence);
+        when(assets.save(any(AssetItem.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        AssetImportCommitResponse response = service.importAssets(new AssetImportCommitRequest(
+                "VALID_ROWS_ONLY",
+                List.of(validImportRow(1, 3))
+        ));
+
+        assertEquals(3, response.importedRows());
+        assertEquals(1, response.rows().size());
+        assertEquals("LAP-00006 - LAP-00008", response.rows().get(0).generatedAssetCodePreview());
+        verify(assets, times(3)).save(any(AssetItem.class));
     }
 
     @Test
@@ -381,9 +427,16 @@ class AssetServiceTest {
     }
 
     private AssetImportRowRequest validImportRow(int rowNumber) {
+        return validImportRow(rowNumber, 1);
+    }
+
+    private AssetImportRowRequest validImportRow(int rowNumber, int quantity) {
         return new AssetImportRowRequest(
                 rowNumber,
+                quantity,
                 null,
+                "HD-2026-001",
+                "INV-2026-001",
                 "Laptop " + rowNumber,
                 "TSCD",
                 "Huu hinh",
@@ -392,7 +445,8 @@ class AssetServiceTest {
                 null,
                 null,
                 "STRAIGHT_LINE",
-                "SN-" + rowNumber,
+                quantity == 1 ? "SN-" + rowNumber : null,
+                LocalDate.of(2025, 12, 1),
                 LocalDate.of(2026, 1, 2),
                 LocalDate.of(2026, 1, 1),
                 36,
@@ -409,7 +463,10 @@ class AssetServiceTest {
     private AssetImportRowRequest warningImportRow(int rowNumber) {
         return new AssetImportRowRequest(
                 rowNumber,
+                1,
                 "OLD-1",
+                null,
+                null,
                 "Laptop warning",
                 "TSCD",
                 "Huu hinh",
@@ -419,6 +476,7 @@ class AssetServiceTest {
                 null,
                 "STRAIGHT_LINE",
                 "SN-W",
+                LocalDate.of(2025, 12, 1),
                 LocalDate.of(2026, 1, 1),
                 LocalDate.of(2026, 1, 2),
                 36,
@@ -435,11 +493,15 @@ class AssetServiceTest {
     private AssetImportRowRequest invalidImportRow(int rowNumber) {
         return new AssetImportRowRequest(
                 rowNumber,
+                1,
+                null,
+                null,
                 null,
                 " ",
                 "BROKEN",
                 null,
                 " ",
+                null,
                 null,
                 null,
                 null,

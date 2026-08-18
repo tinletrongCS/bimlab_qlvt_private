@@ -17,6 +17,8 @@ public record AssetResponse(
         String toolUsageType,
         String serialNumber,
         String source,
+        String contractNumber,
+        String invoiceNumber,
         VendorResponse vendor,
         Long assignedEmployeeId,
         Long departmentId,

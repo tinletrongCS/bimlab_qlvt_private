@@ -104,7 +104,7 @@ const GUIDE_TREE: GuideItem[] = [
           },
         ],
         details: [
-          "File Excel cần có sheet tên 'DanhMuc_ThamChieu' giống file mẫu danh mục.",
+          "File Excel cần có sheet tên 'Loai_ThamChieu' giống file mẫu phân loại.",
           "Chế độ nhập dữ liệu mặc định là 'Chỉ nhập những dòng hợp lệ' - hệ thống sẽ loại bỏ các dòng bị lỗi và cho phép nhập phần còn lại.",
           "Bạn có thể kiểm tra phần lỗi/cảnh báo trên từng dòng trước khi xác nhận nhập danh mục.",
         ],
@@ -122,7 +122,7 @@ const GUIDE_TREE: GuideItem[] = [
             imageCaption: "Màn hình Danh sách tài sản: Vị trí nút 'Nhập tài sản'",
           },
           {
-            text: "Bước 2: Trong hộp thoại 'Tải danh sách tài sản', bấm 'Chọn file Excel' và chọn tệp Excel dữ liệu (ví dụ: import_main.xlsx).",
+            text: "Bước 2: Trong hộp thoại 'Tải danh sách tài sản', bấm 'Chọn file Excel' và chọn tệp Excel có sheet 'Thiết bị' (ví dụ: import_main.xlsx).",
             image: "/guide/image-asset/image-asset-2.jpg",
             imageCaption: "Hộp thoại nhập file: Thao tác chọn file Excel từ máy tính",
           },
@@ -138,7 +138,7 @@ const GUIDE_TREE: GuideItem[] = [
           },
         ],
         details: [
-          "File mẫu Excel cần có sheet tên 'HoSoTaiSan_import' hoặc theo định dạng mẫu tải về từ hệ thống.",
+          "File Excel cần có sheet tên 'Thiết bị'; mỗi dòng có thể khai báo Số lượng và chỉ được bung thành nhiều tài sản khi xác nhận import.",
           "Chế độ nhập dữ liệu mặc định là 'Chỉ nhập những dòng hợp lệ' - hệ thống sẽ loại bỏ các dòng bị lỗi và cho phép nhập phần còn lại.",
           "Bạn có thể tải kết quả kiểm tra dạng CSV để xem chi tiết các lỗi trên từng dòng nếu có.",
         ],

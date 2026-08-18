@@ -142,6 +142,8 @@ export interface AssetItem {
   toolUsageType?: string;
   serialNumber?: string;
   source?: string;
+  contractNumber?: string;
+  invoiceNumber?: string;
   vendor?: Vendor;
   assignedEmployeeId?: number;
   departmentId?: number;
@@ -321,7 +323,10 @@ export interface AssetCatalogAssignmentPayload {
 
 export interface AssetImportRowPayload {
   rowNumber: number;
+  quantity?: number | null;
   assetCode?: string;
+  contractNumber?: string;
+  invoiceNumber?: string;
   name?: string;
   assetClass?: string;
   classType?: string;
@@ -331,6 +336,7 @@ export interface AssetImportRowPayload {
   catalogItemCode?: string;
   depreciationMethod?: string;
   serialNumber?: string;
+  purchaseDate?: string;
   depreciationStartDate?: string;
   useDate?: string;
   usefulLifeMonths?: number | null;

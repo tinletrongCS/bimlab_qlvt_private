@@ -152,11 +152,20 @@ public class AssetService {
 
             try {
                 ImportLookup lookup = resolveImportLookup(row);
-                String generatedAssetCode = nextAssetCode(lookup.category());
-                AssetItem item = toAssetItem(row, lookup, generatedAssetCode);
-                assets.save(item);
-                importedRows++;
-                commitResults.add(withStatus(validationRow, "IMPORTED", generatedAssetCode));
+                String firstGeneratedCode = null;
+                String lastGeneratedCode = null;
+                for (int index = 0; index < quantity(row); index++) {
+                    String generatedAssetCode = nextAssetCode(lookup.category());
+                    AssetItem item = toAssetItem(row, lookup, generatedAssetCode);
+                    assets.save(item);
+                    if (firstGeneratedCode == null) firstGeneratedCode = generatedAssetCode;
+                    lastGeneratedCode = generatedAssetCode;
+                }
+                importedRows += quantity(row);
+                String generatedCodes = Objects.equals(firstGeneratedCode, lastGeneratedCode)
+                        ? firstGeneratedCode
+                        : firstGeneratedCode + " - " + lastGeneratedCode;
+                commitResults.add(withStatus(validationRow, "IMPORTED", generatedCodes));
             } catch (RuntimeException ex) {
                 skippedRows++;
                 errorRows++;
@@ -221,6 +230,12 @@ public class AssetService {
         if (isBlank(row.assetClass())) {
             errors.add(message("assetClass", "REQUIRED", "Phân loại tài sản không được để trống"));
         }
+        if (row.quantity() != null && row.quantity() <= 0) {
+            errors.add(message("quantity", "INVALID_QUANTITY", "Số lượng phải lớn hơn 0"));
+        }
+        if (quantity(row) > 1 && !isBlank(row.serialNumber())) {
+            errors.add(message("serialNumber", "SERIAL_REQUIRES_SINGLE_QUANTITY", "Dòng có số seri chỉ được nhập số lượng 1: Mỗi số seri chỉ gán với một tài sản."));
+        }
         if (!isBlank(row.assetCode())) {
             warnings.add(message("assetCode", "ASSET_CODE_IGNORED", "Mã tài sản trong file sẽ được bỏ qua; hệ thống tự sinh mã mới"));
         }
@@ -237,6 +252,7 @@ public class AssetService {
             if (assetClass != null && category.getAssetClass() != assetClass) {
                 errors.add(message("assetClass", "ASSET_CLASS_MISMATCH", "Phân loại tài sản không khớp với danh mục"));
             }
+            validateCategoryBranch(row, category, assetClass, errors);
         }
 
         validateClassType(row, assetClass, errors, warnings);
@@ -252,7 +268,7 @@ public class AssetService {
 
         String generatedPreview = null;
         if (category != null && errors.isEmpty()) {
-            generatedPreview = previewAssetCode(category, previewCounters);
+            generatedPreview = previewAssetCode(category, previewCounters, quantity(row));
         }
         String status = errors.isEmpty()
                 ? warnings.isEmpty() ? "VALID" : "WARNING"
@@ -285,6 +301,32 @@ public class AssetService {
         if (assetClass == AssetClass.TOOL_EQUIPMENT && parseToolUsageType(row.classType()) == null) {
             errors.add(message("classType", "INVALID_TOOL_USAGE_TYPE", "Loại công cụ dụng cụ phải là SINGLE_USE hoặc MULTI_USE"));
         }
+    }
+
+    private void validateCategoryBranch(
+            AssetImportRowRequest row,
+            AssetCategory category,
+            AssetClass assetClass,
+            List<AssetImportMessageResponse> errors
+    ) {
+        if (assetClass == null || isBlank(row.classType())) return;
+        String expectedParentCode;
+        if (assetClass == AssetClass.FIXED_ASSET) {
+            FixedAssetType type = parseFixedAssetType(row.classType());
+            if (type == null) return;
+            expectedParentCode = type.name();
+        } else {
+            ToolUsageType type = parseToolUsageType(row.classType());
+            if (type == null) return;
+            expectedParentCode = type.name();
+        }
+
+        AssetCategory current = category;
+        while (current != null) {
+            if (expectedParentCode.equalsIgnoreCase(current.getCode())) return;
+            current = current.getParent();
+        }
+        errors.add(message("categoryCode", "CATEGORY_BRANCH_MISMATCH", "Loại tài sản không thuộc phân loại lớp con đã chọn"));
     }
 
     private void validateCatalogItem(
@@ -382,6 +424,9 @@ public class AssetService {
             item.setToolUsageType(type != null ? type : ToolUsageType.MULTI_USE);
         }
         item.setSerialNumber(trimToNull(row.serialNumber()));
+        item.setContractNumber(trimToNull(row.contractNumber()));
+        item.setInvoiceNumber(trimToNull(row.invoiceNumber()));
+        item.setPurchaseDate(row.purchaseDate());
         item.setUseDate(row.useDate());
         item.setDepreciationStartDate(row.depreciationStartDate());
         item.setOriginalCost(row.originalCost());
@@ -416,12 +461,20 @@ public class AssetService {
         return code;
     }
 
-    private String previewAssetCode(AssetCategory category, Map<Long, Long> previewCounters) {
+    private String previewAssetCode(
+            AssetCategory category,
+            Map<Long, Long> previewCounters,
+            int quantity
+    ) {
         long current = assetCodeSequences.findById(category.getId())
                 .map(AssetCodeSequence::getCurrentNumber)
                 .orElse(0L);
-        long offset = previewCounters.merge(category.getId(), 1L, Long::sum);
-        return assetCode(category, current + offset);
+        long lastOffset = previewCounters.merge(category.getId(), (long) quantity, Long::sum);
+        long firstOffset = lastOffset - quantity + 1;
+        String firstCode = assetCode(category, current + firstOffset);
+        return quantity == 1
+                ? firstCode
+                : firstCode + " - " + assetCode(category, current + lastOffset);
     }
 
     private String assetCode(AssetCategory category, long number) {
@@ -441,6 +494,7 @@ public class AssetService {
     private AssetClass parseAssetClass(String raw, List<AssetImportMessageResponse> errors) {
         if (isBlank(raw)) return null;
         String normalized = normalizeEnum(raw);
+        if ("FIX_ASSET".equals(normalized)) return AssetClass.FIXED_ASSET;
         if ("TSCD".equals(normalized) || "TAI_SAN_CO_DINH".equals(normalized)) return AssetClass.FIXED_ASSET;
         if ("CCDC".equals(normalized) || "CONG_CU_DUNG_CU".equals(normalized)) return AssetClass.TOOL_EQUIPMENT;
         AssetClass parsed = parseEnumOrNull(AssetClass.class, normalized);
@@ -508,6 +562,10 @@ public class AssetService {
 
     private int rowNumber(AssetImportRowRequest row) {
         return row.rowNumber() == null ? 0 : row.rowNumber();
+    }
+
+    private int quantity(AssetImportRowRequest row) {
+        return row.quantity() == null ? 1 : row.quantity();
     }
 
     private boolean isBlank(String value) {

@@ -34,7 +34,11 @@ import { StatusBadge } from "../components/StatusBadge";
 import { useActions } from "../contexts/ActionsContext";
 import { useAppData } from "../contexts/AppDataContext";
 import { useAuth } from "../contexts/AuthContext";
-import { addCategoryReferenceSheet, addHierarchicalCategorySheet } from "../lib/categoryExcel";
+import {
+  addAssetCategoryDropdowns,
+  addCategoryReferenceSheet,
+  addHierarchicalCategorySheet,
+} from "../lib/categoryExcel";
 import { employeeLabel, money, projectLabel } from "../lib/format";
 import {
   assignAssetCatalog,
@@ -941,6 +945,7 @@ function normalize(value: string): string {
   return value
     .normalize("NFD")
     .replace(/\p{Diacritic}/gu, "")
+    .replace(/[đĐ]/g, "d")
     .toLowerCase()
     .trim();
 }
@@ -999,6 +1004,7 @@ function normalizeAssetClass(value: string): string | undefined {
   if (text.includes("ccdc") || text.includes("cong cu")) return "TOOL_EQUIPMENT";
   if (text.includes("tscd") || text.includes("tai san co dinh")) return "FIXED_ASSET";
   const upper = value.trim().toUpperCase();
+  if (upper === "FIX_ASSET") return "FIXED_ASSET";
   if (upper === "FIXED_ASSET" || upper === "TOOL_EQUIPMENT") return upper;
   return value.trim();
 }
@@ -1027,98 +1033,126 @@ function normalizeStatus(value: string): string | undefined {
 }
 
 function extractCategoryCode(value: string): string | undefined {
+  const codeInParentheses = value.match(/\(([A-Z0-9_]+)\)\s*$/i)?.[1];
+  if (codeInParentheses) return codeInParentheses.toUpperCase();
   const code = value.split("(")[0].trim().split(/\s+/)[0];
   return code || undefined;
 }
 
 async function parseAssetImportFile(file: File): Promise<AssetImportRowPayload[]> {
   const XLSX = await import("xlsx");
-  const workbook = XLSX.read(await file.arrayBuffer(), { type: "array", cellDates: true });
-  const sheetName =
-    workbook.SheetNames.find((name) => normalize(name) === "hosotaisan_import") ??
-    workbook.SheetNames[0];
-  if (!sheetName) throw new Error("File không có sheet dữ liệu.");
+  const workbook = XLSX.read(await file.arrayBuffer(), { type: "array", cellDates: false });
+  const sheetName = workbook.SheetNames.find((name) => normalize(name) === "thiet bi");
+  if (!sheetName) throw new Error("Không tìm thấy sheet Thiết bị.");
 
   const sheet = workbook.Sheets[sheetName];
   const rows = XLSX.utils.sheet_to_json<SheetRow>(sheet, {
     header: 1,
-    blankrows: false,
+    blankrows: true,
     defval: "",
     raw: true,
   });
-  const keyRowIndex = rows.findIndex((row) => {
-    const keys = row.map(cellText);
-    return keys.includes("assets.asset_code") && keys.includes("assets.name");
+  const headerRowIndex = rows.findIndex((row) => {
+    const headers = row.map((cell) => normalize(cellText(cell)));
+    return headers.includes("ten thiet bi") && headers.includes("so luong");
   });
-  if (keyRowIndex < 0) {
-    throw new Error("Không tìm thấy dòng mapping cột assets.asset_code/assets.name.");
+  if (headerRowIndex < 0) {
+    throw new Error("Không tìm thấy hàng tiêu đề Tên thiết bị/Số lượng trong sheet Thiết bị.");
   }
 
-  const keyRow = rows[keyRowIndex].map(cellText);
-  const findColumn = (matcher: (key: string) => boolean) => keyRow.findIndex(matcher);
-  const assetCodeIndex = findColumn((key) => key === "assets.asset_code");
-  const nameIndex = findColumn((key) => key === "assets.name");
-  const assetClassIndex = findColumn((key) => key === "assets.asset_class");
-  const classTypeIndex = findColumn((key) => key.includes("fixed_asset_type"));
-  const categoryIndex = findColumn((key) => key.includes("asset_categories.code"));
-  const departmentIndex = findColumn((key) => key === "assets.department_id");
-  const siteIndex = findColumn((key) => key === "assets.site_id");
-  const catalogItemIndex = findColumn((key) => key === "catalog_item_code");
-  const depreciationMethodIndex = findColumn((key) => key === "depreciation_method");
-  const serialIndex = findColumn((key) => key === "series_mac_number" || key === "serial_number");
-  const depreciationStartIndex = findColumn((key) => key === "depreciation_start_date");
-  const useDateIndex = findColumn((key) => key === "use_date");
-  const usefulLifeMonthsIndex = findColumn((key) => key === "useful_life_months");
-  const originalCostIndex = findColumn((key) => key === "original_cost");
-  const bookValueIndex = findColumn((key) => key === "book_value");
-  const statusIndex = findColumn((key) => key === "status");
-  const countryIndex = findColumn((key) => key === "country_code");
-  const manufactureYearIndex = findColumn((key) => key === "manufacture_year");
-  const installationYearIndex = findColumn((key) => key === "installation_year");
-  const technicalDescriptionIndex = findColumn((key) => key === "technical_description");
+  const headers = rows[headerRowIndex].map((cell) => normalize(cellText(cell)));
+  const findColumn = (prefix: string) => headers.findIndex((header) => header.startsWith(prefix));
+  const assetCodeIndex = findColumn("ma thiet bi");
+  const nameIndex = findColumn("ten thiet bi");
+  const technicalDescriptionIndex = findColumn("thong so ky thuat");
+  const assetClassIndex = findColumn("phan loai tscd/ccdc");
+  const classTypeIndex = findColumn("phan loai lop con");
+  const categoryIndex = findColumn("loai");
+  const modelIndex = findColumn("model");
+  const serialIndex = findColumn("so seri");
+  const siteIndex = findColumn("vi tri lap dat");
+  const departmentIndex = findColumn("phong ban su dung");
+  const countryIndex = findColumn("nuoc sx");
+  const purchaseDateIndex = findColumn("ngay mua");
+  const quantityIndex = findColumn("so luong");
+  const unitPriceIndex = findColumn("don gia");
+  const usefulLifeYearsIndex = findColumn("thoi gian kh");
+  const statusIndex = findColumn("tinh trang");
+  const contractNumberIndex = findColumn("ma hop dong");
+  const invoiceNumberIndex = findColumn("so hoa don");
+  const expandMergedColumn = (columnIndex: number) => {
+    if (columnIndex < 0) return;
+    const merges = sheet["!merges"] ?? [];
+    for (const merge of merges) {
+      if (columnIndex < merge.s.c || columnIndex > merge.e.c) continue;
+      const anchor = sheet[XLSX.utils.encode_cell(merge.s)];
+      if (!anchor) continue;
+      const value = anchor?.v as SheetCell;
+      for (let rowIndex = merge.s.r; rowIndex <= merge.e.r; rowIndex += 1) {
+        sheet[XLSX.utils.encode_cell({ r: rowIndex, c: columnIndex })] = { ...anchor, v: value };
+        const row = rows[rowIndex] ?? [];
+        row[columnIndex] = value;
+        rows[rowIndex] = row;
+      }
+    }
+    sheet["!merges"] = merges.filter((merge) => columnIndex < merge.s.c || columnIndex > merge.e.c);
+  };
+  expandMergedColumn(contractNumberIndex);
+  expandMergedColumn(invoiceNumberIndex);
 
   const parsedRows: AssetImportRowPayload[] = [];
-  const dataStartIndex = keyRowIndex + 2;
+  const dataStartIndex = headerRowIndex + 1;
+  let lastContractNumber = "";
+  let lastInvoiceNumber = "";
   for (let index = dataStartIndex; index < rows.length; index += 1) {
     const row = rows[index];
     const assetClass = normalizeAssetClass(readText(row, assetClassIndex));
     const name = readText(row, nameIndex);
     const categoryCode = extractCategoryCode(readText(row, categoryIndex));
+    const model = readText(row, modelIndex);
+    const specification = readText(row, technicalDescriptionIndex);
+    const technicalDescription = [model ? `Model: ${model}` : "", specification]
+      .filter(Boolean)
+      .join("\n");
     const hasData = Boolean(
       name ||
         assetClass ||
         categoryCode ||
         readText(row, classTypeIndex) ||
-        readText(row, departmentIndex) ||
-        readText(row, siteIndex),
+        readText(row, assetCodeIndex),
     );
     if (!hasData) {
       if (parsedRows.length > 0) break;
       continue;
     }
 
+    const contractNumber = readText(row, contractNumberIndex);
+    const invoiceNumber = readText(row, invoiceNumberIndex);
+    if (contractNumber) lastContractNumber = contractNumber;
+    if (invoiceNumber) lastInvoiceNumber = invoiceNumber;
+
     parsedRows.push({
       rowNumber: index + 1,
+      quantity: readInteger(row, quantityIndex) ?? 1,
       assetCode: readText(row, assetCodeIndex) || undefined,
+      contractNumber: contractNumber || lastContractNumber || undefined,
+      invoiceNumber: invoiceNumber || lastInvoiceNumber || undefined,
       name: name || undefined,
       assetClass,
       classType: normalizeClassType(readText(row, classTypeIndex)),
       categoryCode,
       departmentName: readText(row, departmentIndex) || undefined,
       siteName: readText(row, siteIndex) || undefined,
-      catalogItemCode: readText(row, catalogItemIndex) || undefined,
-      depreciationMethod: readText(row, depreciationMethodIndex) || undefined,
       serialNumber: readText(row, serialIndex) || undefined,
-      depreciationStartDate: readDate(row, depreciationStartIndex),
-      useDate: readDate(row, useDateIndex),
-      usefulLifeMonths: readInteger(row, usefulLifeMonthsIndex),
-      originalCost: readNumber(row, originalCostIndex),
-      bookValue: readNumber(row, bookValueIndex),
+      purchaseDate: readDate(row, purchaseDateIndex),
+      usefulLifeMonths: (() => {
+        const years = readNumber(row, usefulLifeYearsIndex);
+        return years === null ? null : Math.round(years * 12);
+      })(),
+      originalCost: readNumber(row, unitPriceIndex),
       status: normalizeStatus(readText(row, statusIndex)),
       countryCode: readText(row, countryIndex) || undefined,
-      manufactureYear: readInteger(row, manufactureYearIndex),
-      installationYear: readInteger(row, installationYearIndex),
-      technicalDescription: readText(row, technicalDescriptionIndex) || undefined,
+      technicalDescription: technicalDescription || undefined,
     });
   }
 
@@ -1126,11 +1160,17 @@ async function parseAssetImportFile(file: File): Promise<AssetImportRowPayload[]
   return parsedRows;
 }
 
-function downloadImportCsv(result: AssetImportValidationResponse) {
+function downloadImportCsv(
+  result: AssetImportValidationResponse,
+  sourceRows: AssetImportRowPayload[],
+) {
   const header = [
     "Dong Excel",
     "Trang thai",
     "Ten tai san",
+    "So luong",
+    "Ma hop dong",
+    "So hoa don",
     "Danh muc",
     "Ma tai san du kien",
     "Loi",
@@ -1140,19 +1180,23 @@ function downloadImportCsv(result: AssetImportValidationResponse) {
     `"${String(value ?? "").replace(/"/g, '""')}"`;
   const lines = [
     header.map(escapeCsvCell).join(","),
-    ...result.rows.map((row) =>
-      [
+    ...result.rows.map((row) => {
+      const source = sourceRows.find((item) => item.rowNumber === row.rowNumber);
+      return [
         row.rowNumber,
         row.status,
         row.assetName,
+        source?.quantity ?? 1,
+        source?.contractNumber,
+        source?.invoiceNumber,
         row.categoryCode,
         row.generatedAssetCodePreview,
         row.errors.map((item) => `${item.code}: ${item.message}`).join("; "),
         row.warnings.map((item) => `${item.code}: ${item.message}`).join("; "),
       ]
         .map(escapeCsvCell)
-        .join(","),
-    ),
+        .join(",");
+    }),
   ];
   const blob = new Blob([`\uFEFF${lines.join("\n")}`], { type: "text/csv;charset=utf-8" });
   const url = URL.createObjectURL(blob);
@@ -1169,113 +1213,93 @@ async function downloadAssetImportTemplate(categories: AssetCategoryTree[]) {
   workbook.creator = "BIMLab QLVT";
   workbook.created = new Date();
 
-  const sheet = workbook.addWorksheet("HoSoTaiSan_import", {
+  const sheet = workbook.addWorksheet("Thiết bị", {
     views: [{ state: "frozen", ySplit: 4 }],
   });
+  sheet.properties.defaultRowHeight = 22;
 
-  const fieldKeys = [
-    "assets.asset_code",
-    "assets.name",
-    "assets.asset_class",
-    "assets.fixed_asset_type/assets.tool_usage_type",
-    "assets.category_id/asset_categories.code",
-    "assets.department_id",
-    "assets.site_id",
-    "catalog_item_code",
-    "depreciation_method",
-    "series_mac_number",
-    "depreciation_start_date",
-    "use_date",
-    "useful_life_months",
-    "original_cost",
-    "book_value",
-    "status",
-    "country_code",
-    "manufacture_year",
-    "installation_year",
-    "technical_description",
-  ];
   const headers = [
-    "Mã tài sản",
-    "Tên tài sản*",
-    "Phân loại*",
-    "Phân loại lớp con*",
-    "Loại tài sản*",
-    "Phòng ban",
-    "Chi nhánh",
-    "Danh mục",
-    "Phương pháp khấu hao",
-    "Số Series/MAC",
-    "Ngày bắt đầu khấu hao",
-    "Ngày sử dụng",
-    "Số tháng",
-    "Nguyên giá tài sản",
-    "Giá trị sổ sách",
-    "Trạng thái tài sản",
-    "Mã quốc gia/Xuất xứ",
-    "Năm sản xuất",
-    "Năm lắp đặt/Cài đặt",
-    "Mô tả kỹ thuật",
+    "STT",
+    "Mã thiết bị",
+    "Mã hợp đồng",
+    "Số hóa đơn",
+    "Tên thiết bị",
+    "Thông số kỹ thuật",
+    "Phân loại TSCĐ/CCDC\n- TSCĐ: FIXED_ASSET\n- CCDC: TOOL_EQUIPMENT",
+    "Phân loại lớp con\n- Nếu là TSCĐ: TANGIBLE / INTANGIBLE\n- Nếu là CCDC: SINGLE_USE / MULTI_USE",
+    "Loại\n- Nhập mã loại tài sản node lá",
+    "Model",
+    "Số seri",
+    "Vị trí lắp đặt",
+    "Phòng ban sử dụng",
+    "Nhà cung cấp",
+    "Nước SX",
+    "Ngày mua",
+    "Số lượng",
+    "Đơn giá (Chưa VAT)",
+    "Nguyên giá (VNĐ)",
+    "Thuế VAT",
+    "Thời gian bảo hành (tháng)",
+    "Thời gian KH (năm)",
+    "Tình trạng",
+    "Người quản lý",
+    "Ghi chú",
+    "Đã nhập nhà cung cấp",
   ];
   const examples = [
-    "MONITOR-00001",
+    1,
+    "ASUS-VY279HGR",
+    "HD-2026-001",
+    "0000123",
     "Màn hình ASUS",
-    "FIXED_ASSET",
-    "TANGIBLE",
-    "MONITOR",
-    "CNTT - Marketing",
-    "BIMLab",
-    "MONITOR_DELL_24_HD",
-    "STRAIGHT_LINE",
+    "Màn hình 27 inch, Full HD",
+    "Tài sản cố định",
+    "Hữu hình",
+    "",
+    "VY279HGR",
     "SN-MAC-001",
-    "2026-01-01",
-    "2026-01-05",
-    36,
-    6000000,
-    6000000,
-    "Trong kho",
+    "BIMLab",
+    "CNTT - Marketing",
+    "",
     "VN",
-    2025,
-    2026,
-    "Màn hình 24 inch, Full HD",
+    "2026-01-05",
+    2,
+    6000000,
+    12000000,
+    960000,
+    24,
+    3,
+    "Đang sử dụng",
+    "",
+    "",
+    "",
   ];
 
+  sheet.addRow(["DANH MỤC THIẾT BỊ"]);
   sheet.addRow([
-    "Không bắt buộc nhập mã tài sản. Nếu để trống, hệ thống sẽ tự sinh theo loại tài sản node lá.",
-    "Quy ước phân loại: nhập mã FIXED_ASSET hoặc TOOL_EQUIPMENT.",
-    "Cấp cao nhất.",
-    "Phân loại lớp con: TANGIBLE, INTANGIBLE, SINGLE_USE hoặc MULTI_USE.",
-    "Nhập chính xác mã loại tài sản node lá, ví dụ MONITOR, LAPTOP, LICENSE.",
+    "Mỗi dòng là một nhóm tài sản cùng thông tin; hệ thống chỉ bung theo Số lượng khi xác nhận import và tự sinh mã riêng cho từng tài sản. Cột Nhà cung cấp và Đã nhập nhà cung cấp chỉ để đối chiếu, không được nhập vào hệ thống.",
   ]);
-  sheet.addRow(fieldKeys);
+  sheet.addRow([]);
   sheet.addRow(headers);
   sheet.addRow(examples);
   sheet.addRow([]);
 
-  sheet.mergeCells("A1:T1");
+  sheet.mergeCells("A1:Z1");
   const noteCell = sheet.getCell("A1");
-  noteCell.font = { name: "Be Vietnam Pro", size: 11, bold: true, color: { argb: "FF154D7C" } };
-  noteCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFEFF6FF" } };
-  noteCell.alignment = { vertical: "middle", wrapText: true };
-  noteCell.border = {
-    top: { style: "thin", color: { argb: "FFBFDBFE" } },
-    left: { style: "thin", color: { argb: "FFBFDBFE" } },
-    bottom: { style: "thin", color: { argb: "FFBFDBFE" } },
-    right: { style: "thin", color: { argb: "FFBFDBFE" } },
-  };
+  noteCell.font = { name: "Calibri", size: 13, bold: true, color: { argb: "FFFFFFFF" } };
+  noteCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF154D7C" } };
+  noteCell.alignment = { horizontal: "center", vertical: "middle" };
   sheet.getRow(1).height = 34;
 
-  sheet.getRow(2).height = 24;
-  sheet.getRow(2).eachCell((cell) => {
-    cell.font = { name: "Be Vietnam Pro", size: 10, color: { argb: "FF64748B" } };
-    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFF8FAFC" } };
-    cell.alignment = { vertical: "middle", wrapText: true };
-    cell.border = { bottom: { style: "thin", color: { argb: "FFE5E7EB" } } };
-  });
+  sheet.mergeCells("A2:Z2");
+  sheet.getCell("A2").font = { name: "Calibri", size: 13, color: { argb: "FF154D7C" } };
+  sheet.getCell("A2").fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFEFF6FF" } };
+  sheet.getCell("A2").alignment = { vertical: "middle", wrapText: true };
+  sheet.getRow(2).height = 30;
 
-  sheet.getRow(3).height = 42;
-  sheet.getRow(3).eachCell((cell) => {
-    cell.font = { name: "Be Vietnam Pro", size: 12, bold: true, color: { argb: "FFFFFFFF" } };
+  sheet.getRow(4).height = 64;
+  sheet.getRow(4).eachCell((cell) => {
+    cell.font = { name: "Calibri", size: 13, bold: true, color: { argb: "FFFFFFFF" } };
     cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF154D7C" } };
     cell.alignment = { horizontal: "center", vertical: "middle", wrapText: true };
     cell.border = {
@@ -1286,55 +1310,111 @@ async function downloadAssetImportTemplate(categories: AssetCategoryTree[]) {
     };
   });
 
-  sheet.getRow(4).eachCell((cell) => {
-    cell.font = { name: "Be Vietnam Pro", size: 11, color: { argb: "FF111827" } };
+  sheet.getRow(5).eachCell((cell) => {
+    cell.font = { name: "Calibri", size: 13, color: { argb: "FF111827" } };
     cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFF8FAFC" } };
     cell.alignment = { vertical: "middle", wrapText: true };
   });
 
-  const widths = [16, 28, 16, 24, 22, 22, 18, 24, 20, 20, 22, 18, 12, 18, 18, 18, 18, 14, 18, 36];
+  const widths = [
+    8, 18, 20, 16, 30, 38, 24, 26, 22, 18, 18, 20, 22, 26, 14, 16, 12, 20, 20, 14, 20, 18, 18, 20,
+    30, 22,
+  ];
   widths.forEach((width, index) => {
-    sheet.getColumn(index + 1).width = width;
+    const longestLine = [headers[index], examples[index]]
+      .flatMap((value) => String(value ?? "").split("\n"))
+      .reduce((longest, line) => Math.max(longest, line.length), 0);
+    sheet.getColumn(index + 1).width = Math.min(42, Math.max(width, longestLine + 2));
   });
 
-  for (let rowIndex = 5; rowIndex <= 200; rowIndex += 1) {
-    sheet.getCell(`C${rowIndex}`).dataValidation = {
-      type: "list",
-      allowBlank: false,
-      formulae: ['"FIXED_ASSET,TOOL_EQUIPMENT"'],
-      showErrorMessage: true,
-      errorTitle: "Sai phân loại",
-      error: "Chọn FIXED_ASSET hoặc TOOL_EQUIPMENT.",
-    };
-    sheet.getCell(`D${rowIndex}`).dataValidation = {
-      type: "list",
-      allowBlank: false,
-      formulae: ['"TANGIBLE,INTANGIBLE,SINGLE_USE,MULTI_USE"'],
-      showErrorMessage: true,
-      errorTitle: "Sai phân loại lớp con",
-      error: "Chọn một giá trị trong danh sách.",
-    };
-    sheet.getCell(`I${rowIndex}`).dataValidation = {
-      type: "list",
-      allowBlank: true,
-      formulae: ['"STRAIGHT_LINE,DECLINING_BALANCE,NONE"'],
-    };
-    sheet.getCell(`P${rowIndex}`).dataValidation = {
+  for (let rowIndex = 5; rowIndex <= 1000; rowIndex += 1) {
+    for (let columnIndex = 1; columnIndex <= headers.length; columnIndex += 1) {
+      const cell = sheet.getCell(rowIndex, columnIndex);
+      cell.alignment = { ...cell.alignment, vertical: "top", wrapText: true };
+      cell.font = { ...cell.font, name: "Calibri", size: 13 };
+      cell.protection = { locked: false };
+    }
+    sheet.getCell(`P${rowIndex}`).numFmt = "dd/mm/yyyy";
+    sheet.getCell(`W${rowIndex}`).dataValidation = {
       type: "list",
       allowBlank: true,
       formulae: ['"IN_STOCK,ASSIGNED,MAINTENANCE,DISPOSED,LOST,PENDING"'],
     };
+    for (const [column, color] of Object.entries({
+      G: "FFF8FBFF",
+      H: "FFF8FCF9",
+      I: "FFFFFDF5",
+    })) {
+      const cell = sheet.getCell(`${column}${rowIndex}`);
+      cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: color } };
+      cell.border = {
+        top: { style: "thin", color: { argb: "FFDDE3EA" } },
+        left: { style: "thin", color: { argb: "FFDDE3EA" } },
+        bottom: { style: "thin", color: { argb: "FFDDE3EA" } },
+        right: { style: "thin", color: { argb: "FFDDE3EA" } },
+      };
+    }
   }
 
-  sheet.autoFilter = "A3:T3";
+  const pasteSafeBorder = {
+    top: { style: "thin" as const, color: { argb: "FFDDE3EA" } },
+    left: { style: "thin" as const, color: { argb: "FFDDE3EA" } },
+    bottom: { style: "thin" as const, color: { argb: "FFDDE3EA" } },
+    right: { style: "thin" as const, color: { argb: "FFDDE3EA" } },
+  };
+  sheet.addConditionalFormatting({
+    ref: "A5:Z1000",
+    rules: [
+      {
+        type: "expression",
+        formulae: ["1=1"],
+        priority: 4,
+        style: {
+          font: { name: "Calibri", size: 13 },
+          alignment: { vertical: "top", wrapText: true },
+          border: pasteSafeBorder,
+        },
+      },
+    ],
+  });
+  Object.entries({ G: "FFF8FBFF", H: "FFF8FCF9", I: "FFFFFDF5" }).forEach(
+    ([column, color], index) => {
+      sheet.addConditionalFormatting({
+        ref: `${column}5:${column}1000`,
+        rules: [
+          {
+            type: "expression",
+            formulae: ["1=1"],
+            priority: index + 1,
+            style: {
+              fill: { type: "pattern", pattern: "solid", bgColor: { argb: color } },
+              border: pasteSafeBorder,
+            },
+          },
+        ],
+      });
+    },
+  );
+
+  sheet.autoFilter = "A4:Z4";
   sheet.eachRow((row) => {
     row.eachCell((cell) => {
-      cell.font = { name: "Be Vietnam Pro", size: cell.font?.size ?? 11, ...cell.font };
+      cell.font = { ...cell.font, name: "Calibri", size: 13 };
     });
   });
 
   addCategoryReferenceSheet(workbook, { categories });
   addHierarchicalCategorySheet(workbook, categories);
+  addAssetCategoryDropdowns(workbook, sheet, categories);
+  await sheet.protect("", {
+    selectLockedCells: true,
+    selectUnlockedCells: true,
+    formatCells: false,
+    formatColumns: false,
+    formatRows: false,
+    sort: true,
+    autoFilter: true,
+  });
 
   const buffer = await workbook.xlsx.writeBuffer();
   const blob = new Blob([buffer], {
@@ -1343,7 +1423,7 @@ async function downloadAssetImportTemplate(categories: AssetCategoryTree[]) {
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
-  link.download = "mau_import_danh_sach_danh_muc_tai_san_bimlab.xlsx";
+  link.download = "mau_import_thiet_bi_bimlab_v2.xlsx";
   link.click();
   URL.revokeObjectURL(url);
 }
@@ -2450,7 +2530,9 @@ export function AssetsPage() {
   const handleDownloadTemplate = async () => {
     const loadingToast = toast.loading("Đang tạo file mẫu Excel...");
     try {
-      await downloadAssetImportTemplate(categoryTree);
+      const latestCategoryTree = await loadAssetCategoryTree();
+      setCategoryTree(latestCategoryTree);
+      await downloadAssetImportTemplate(latestCategoryTree);
       toast.success("Đã tải file mẫu Excel.", { id: loadingToast });
     } catch {
       toast.error("Không tạo được file mẫu Excel.", { id: loadingToast });
@@ -3940,7 +4022,7 @@ export function AssetsPage() {
                 </label>
                 <div className="asset-import-file-meta">
                   <strong>{importFileName || "Chưa chọn file Excel"}</strong>
-                  <small>Hỗ trợ sheet HoSoTaiSan_import, định dạng .xlsx hoặc .xls</small>
+                  <small>Hỗ trợ sheet Thiết bị, định dạng .xlsx hoặc .xls</small>
                 </div>
               </div>
 
@@ -4048,15 +4130,17 @@ export function AssetsPage() {
                     <tr>
                       <th>Dòng</th>
                       <th>Tài sản</th>
+                      <th>Số lượng</th>
+                      <th>Mã hợp đồng</th>
+                      <th>Số hóa đơn</th>
                       <th>Loại tài sản</th>
                       <th>Phân loại</th>
                       <th>Loại con</th>
                       <th>Phòng ban</th>
                       <th>Chi nhánh</th>
                       <th>Serial/MAC</th>
-                      <th>Ngày dùng</th>
-                      <th>Nguyên giá</th>
-                      <th>Giá trị CL</th>
+                      <th>Ngày mua</th>
+                      <th>Đơn giá</th>
                       <th>Trạng thái</th>
                       <th>Ghi chú kiểm tra</th>
                     </tr>
@@ -4064,7 +4148,7 @@ export function AssetsPage() {
                   <tbody>
                     {importRows.length === 0 || importPreviewRows.length === 0 ? (
                       <tr className="asset-table-empty-row">
-                        <td colSpan={13}>
+                        <td colSpan={15}>
                           <div className="asset-table-empty-state">
                             {importRows.length === 0
                               ? "Chọn file Excel để xem dữ liệu trước khi import."
@@ -4092,17 +4176,19 @@ export function AssetsPage() {
                                 </strong>
                               </div>
                             </td>
+                            <td>{source?.quantity ?? 1}</td>
+                            <td>{source?.contractNumber || "--"}</td>
+                            <td>{source?.invoiceNumber || "--"}</td>
                             <td>{isResultRow ? row.categoryCode : source?.categoryCode}</td>
                             <td>{source?.assetClass || "--"}</td>
                             <td>{source?.classType || "--"}</td>
                             <td>{source?.departmentName || "--"}</td>
                             <td>{source?.siteName || "--"}</td>
                             <td>{source?.serialNumber || "--"}</td>
-                            <td>{source?.useDate || "--"}</td>
+                            <td>{source?.purchaseDate || "--"}</td>
                             <td>
                               {source?.originalCost ? money.format(source.originalCost) : "--"}
                             </td>
-                            <td>{source?.bookValue ? money.format(source.bookValue) : "--"}</td>
                             <td>
                               {status ? (
                                 <StatusBadge value={status} label={importStatusLabel(status)} />
@@ -4157,7 +4243,7 @@ export function AssetsPage() {
                 <button
                   type="button"
                   className="secondary"
-                  onClick={() => downloadImportCsv(importResult)}
+                  onClick={() => downloadImportCsv(importResult, importRows)}
                   disabled={importBusy}
                 >
                   <FiDownload /> Tải kết quả
