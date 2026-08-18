@@ -638,56 +638,99 @@ describe("QLVT asset and booking workflow coverage", () => {
   it("parses, validates, imports, and exports an asset workbook", async () => {
     const user = userEvent.setup();
     const XLSX = await import("xlsx");
-    const keys = [
-      "assets.asset_code",
-      "assets.name",
-      "assets.asset_class",
-      "fixed_asset_type",
-      "asset_categories.code",
-      "assets.department_id",
-      "assets.site_id",
-      "catalog_item_code",
-      "depreciation_method",
-      "series_mac_number",
-      "depreciation_start_date",
-      "use_date",
-      "useful_life_months",
-      "original_cost",
-      "book_value",
-      "status",
-      "country_code",
-      "manufacture_year",
-      "installation_year",
-      "technical_description",
+    const headers = [
+      "STT",
+      "Mã thiết bị",
+      "Mã hợp đồng",
+      "Số hóa đơn",
+      "Tên thiết bị",
+      "Thông số kỹ thuật",
+      "Phân loại TSCĐ/CCDC",
+      "Phân loại lớp con",
+      "Loại",
+      "Model",
+      "Số seri",
+      "Vị trí lắp đặt",
+      "Phòng ban sử dụng",
+      "Nhà cung cấp",
+      "Nước SX",
+      "Ngày mua",
+      "Số lượng",
+      "Đơn giá (Chưa VAT)",
+      "Nguyên giá (VNĐ)",
+      "Thuế VAT",
+      "Thời gian bảo hành (tháng)",
+      "Thời gian KH (năm)",
+      "Tình trạng",
+      "Người quản lý",
+      "Ghi chú",
+      "Đã nhập nhà cung cấp",
     ];
     const worksheet = XLSX.utils.aoa_to_sheet([
-      keys,
-      keys.map(() => "Mô tả"),
+      ["DANH MỤC THIẾT BỊ"],
+      ["Master data"],
+      ["Hướng dẫn nhập dữ liệu"],
+      headers,
       [
+        1,
         "TS-NEW",
+        "HD-001",
+        "INV-001",
         "Máy trạm BIM",
-        "Tài sản cố định",
-        "TANGIBLE",
-        "LAP (Laptop)",
-        "BIM",
-        "Văn phòng HCM",
-        "CAT-1",
-        "STRAIGHT_LINE",
-        "SN-NEW",
-        new Date("2026-07-01"),
-        new Date("2026-07-02"),
-        60,
-        40_000_000,
-        35_000_000,
-        "Trong kho",
-        "VN",
-        2026,
-        2026,
         "Máy dựng hình",
+        "Tài sản cố định",
+        "Hữu hình",
+        "Laptop (LAP)",
+        "WS-01",
+        "",
+        "Văn phòng HCM",
+        "BIM",
+        "Nhà cung cấp A",
+        "VN",
+        new Date("2026-07-01"),
+        3,
+        40_000_000,
+        120_000_000,
+        9_600_000,
+        24,
+        5,
+        "Trong kho",
+        "",
+        "",
+        "",
+      ],
+      [
+        2,
+        "TS-NEW-2",
+        "",
+        "",
+        "Máy trạm BIM 2",
+        "Máy dựng hình phụ",
+        "Tài sản cố định",
+        "Hữu hình",
+        "Laptop (LAP)",
+        "WS-02",
+        "",
+        "Văn phòng HCM",
+        "BIM",
+        "Nhà cung cấp A",
+        "VN",
+        new Date("2026-07-01"),
+        1,
+        30_000_000,
+        30_000_000,
+        2_400_000,
+        24,
+        5,
+        "Trong kho",
+        "",
+        "",
+        "",
       ],
     ]);
+    worksheet["!merges"] = [XLSX.utils.decode_range("C5:C6"), XLSX.utils.decode_range("D5:D6")];
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "HoSoTaiSan_Import");
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Thiết bị");
     const bytes = XLSX.write(workbook, { type: "array", bookType: "xlsx" });
     const validation = {
       uploadStatus: "VALID",
@@ -697,7 +740,7 @@ describe("QLVT asset and booking workflow coverage", () => {
       warningRows: 0,
       rows: [
         {
-          rowNumber: 3,
+          rowNumber: 5,
           status: "VALID",
           assetCode: "TS-NEW",
           name: "Máy trạm BIM",
@@ -721,13 +764,66 @@ describe("QLVT asset and booking workflow coverage", () => {
 
     await user.click(screen.getByRole("button", { name: /Tải mẫu Excel/i }));
     await waitFor(() => expect(URL.createObjectURL).toHaveBeenCalled(), { timeout: 5000 });
+    const templateBlob = vi.mocked(URL.createObjectURL).mock.calls[0][0] as Blob;
+    const templateWorkbook = new (await import("exceljs")).Workbook();
+    await templateWorkbook.xlsx.load(await templateBlob.arrayBuffer());
+    const templateSheet = templateWorkbook.getWorksheet("Thiết bị");
+    expect(templateSheet?.getCell("G6").dataValidation.formulae).toEqual(["ASSET_CLASSES"]);
+    expect(templateSheet?.getCell("H6").dataValidation.formulae[0]).toContain('="Tài sản cố định"');
+    expect(templateSheet?.getCell("I6").dataValidation.formulae[0]).toContain('="Hữu hình"');
+    expect(templateSheet?.getCell("G6").protection.locked).toBe(false);
+    expect(templateSheet?.getCell("G6").font).toMatchObject({ name: "Calibri", size: 13 });
+    expect(templateSheet?.getCell("P6").numFmt).toBe("dd/mm/yyyy");
+    expect(templateSheet?.getCell("G6").fill).toMatchObject({
+      type: "pattern",
+      fgColor: { argb: "FFF8FBFF" },
+    });
+    expect(templateSheet?.getCell("G6").border).toMatchObject({
+      top: { style: "thin", color: { argb: "FFDDE3EA" } },
+      left: { style: "thin", color: { argb: "FFDDE3EA" } },
+      bottom: { style: "thin", color: { argb: "FFDDE3EA" } },
+      right: { style: "thin", color: { argb: "FFDDE3EA" } },
+    });
+    const pasteSafeSheet = templateSheet as typeof templateSheet & {
+      sheetProtection?: { sheet?: boolean; formatCells?: boolean };
+      conditionalFormattings?: Array<{ ref: string }>;
+    };
+    expect(pasteSafeSheet.sheetProtection).toMatchObject({ sheet: true });
+    expect(pasteSafeSheet.sheetProtection?.formatCells).not.toBe(true);
+    expect(pasteSafeSheet.conditionalFormattings?.map(({ ref }) => ref)).toEqual([
+      "A5:Z1000",
+      "G5:G1000",
+      "H5:H1000",
+      "I5:I1000",
+    ]);
 
     await user.click(screen.getByRole("button", { name: /Nhập tài sản/i }));
     const input = document.querySelector('input[type="file"]') as HTMLInputElement;
     await user.upload(input, new File([bytes], "assets.xlsx"));
     expect(await screen.findByText("Máy trạm BIM")).toBeVisible();
+    expect(screen.getAllByText("HD-001")).toHaveLength(2);
+    expect(screen.getAllByText("INV-001")).toHaveLength(2);
     await user.click(screen.getByRole("button", { name: "Kiểm tra dữ liệu" }));
-    await waitFor(() => expect(mocks.validateAssetImport).toHaveBeenCalled());
+    await waitFor(() =>
+      expect(mocks.validateAssetImport).toHaveBeenCalledWith([
+        expect.objectContaining({
+          rowNumber: 5,
+          quantity: 3,
+          contractNumber: "HD-001",
+          invoiceNumber: "INV-001",
+          name: "Máy trạm BIM",
+          originalCost: 40_000_000,
+          purchaseDate: "2026-07-01",
+          usefulLifeMonths: 60,
+        }),
+        expect.objectContaining({
+          rowNumber: 6,
+          contractNumber: "HD-001",
+          invoiceNumber: "INV-001",
+          name: "Máy trạm BIM 2",
+        }),
+      ]),
+    );
     await user.click(screen.getByRole("button", { name: "Import" }));
     await waitFor(() => expect(mocks.commitAssetImport).toHaveBeenCalled());
     await user.click(screen.getByRole("button", { name: /Tải kết quả/i }));

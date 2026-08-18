@@ -8,7 +8,10 @@ public record AssetImportRowRequest(
         dòng gốc trong Excel do frontend đã truyền vào từ JSON
          */
         Integer rowNumber,
+        Integer quantity,
         String assetCode,
+        String contractNumber,
+        String invoiceNumber,
         String name,
         String assetClass,
         String classType,
@@ -18,6 +21,7 @@ public record AssetImportRowRequest(
         String catalogItemCode,
         String depreciationMethod,
         String serialNumber,
+        LocalDate purchaseDate,
         LocalDate depreciationStartDate,
         LocalDate useDate,
         Integer usefulLifeMonths,

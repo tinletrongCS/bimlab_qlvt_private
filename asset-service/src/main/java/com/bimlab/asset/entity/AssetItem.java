@@ -74,6 +74,12 @@ public class AssetItem {
     @Column(length = 120)
     private String source;
 
+    @Column(name = "contract_number", length = 120)
+    private String contractNumber;
+
+    @Column(name = "invoice_number", length = 120)
+    private String invoiceNumber;
+
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "vendor_id")
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})

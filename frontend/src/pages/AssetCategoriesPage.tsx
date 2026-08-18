@@ -1171,7 +1171,7 @@ export function AssetCategoriesPage() {
                   </label>
                   <div className="asset-import-file-meta">
                     <strong>{importFileName || "Chưa chọn file Excel"}</strong>
-                    <small>Dùng sheet DanhMuc_ThamChieu giống file mẫu import tài sản.</small>
+                    <small>Dùng sheet Loai_ThamChieu giống file mẫu import tài sản.</small>
                   </div>
                 </div>
 

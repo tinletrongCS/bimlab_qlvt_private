@@ -98,7 +98,7 @@ public class AssetController {
     /*
     TODO tính khấu hao theo từng danh mục tài sản -> để làm sau khi có công thức tính
      */
-    // Snapshot khấu hao là dữ liệu thuần tài chính → chỉ nhóm xem được tài chính
+    // Snapshot khấu hao là dữ liệu thuần tài chính -> chỉ nhóm xem được tài chính
     // (asset_finance_view/finance_manage; asset_manage nhập liệu tài chính nên giữ).
     @GetMapping("/{id}/depreciation")
     @PreAuthorize("hasAnyAuthority('asset_finance_view','asset_finance_manage','asset_manage')")
