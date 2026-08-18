@@ -48,6 +48,20 @@ describe("category Excel", () => {
     expect(sheet.getRow(9).getCell(4).value).toBe("ROOT");
   });
 
+  it("supports a category-only reference sheet and requires it for dropdowns", () => {
+    const workbook = new Workbook();
+    const sheet = addCategoryReferenceSheet(workbook, {
+      categories: [],
+      includeStatuses: false,
+    });
+
+    expect(sheet.rowCount).toBe(7);
+    expect(addCategoryReferenceSheet(new Workbook()).rowCount).toBe(13);
+    expect(() => addAssetCategoryDropdowns(new Workbook(), sheet, [], 5, 5)).toThrow(
+      CATEGORY_REFERENCE_SHEET_NAME,
+    );
+  });
+
   it("adds dependent asset type dropdowns with leaf category values", () => {
     const workbook = new Workbook();
     const hierarchy = [
