@@ -38,7 +38,7 @@ public class AssetCategoryService {
     private final AssetCategoryRepository categories;
     private final AssetItemRepository assets;
     private final AssetCatalogItemRepository catalogItems;
-    private final AssetCodeSequenceRepository assetCodeSequence;
+    private final AssetCodeSequenceRepository assetCodeSequences;
 
     @Transactional(readOnly = true)
     public List<AssetCategoryResponse> listCategories() {
@@ -273,19 +273,19 @@ public class AssetCategoryService {
     public void deleteCategory(Long id) {
         AssetCategory category = categories.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Không tìm thấy danh mục với id: " + id));
-
+        String categoryCodeLabel = category.getCode() + "-" + category.getName();
         if (categories.existsByParentId(id)) {
-            throw new IllegalArgumentException("Không thể xóa danh mục đang có danh mục con.");
+            throw new IllegalArgumentException("categoryId: Không thể xóa danh mục " + categoryCodeLabel + " đang có danh mục con.");
         }
 
         if (!assets.findByAssetCategoryId(id).isEmpty()) {
-            throw new IllegalArgumentException("Không thể xóa danh mục " + category.getCode() + "-" + category.getName() + " đang được tài sản sử dụng.");
+            throw new IllegalArgumentException("categoryId: Không thể xóa danh mục " + categoryCodeLabel + " đang được tài sản sử dụng.");
         }
 
         if (catalogItems.existsByCategoryId(id)) {
-            throw new IllegalArgumentException("Không thể xóa danh mục " + category.getCode() + "-" + category.getName() + " đang được danh mục vật tư sử dụng.");
+            throw new IllegalArgumentException("categoryId: Không thể xóa danh mục " + categoryCodeLabel + " đang được danh mục vật tư sử dụng.");
         }
-        assetCodeSequence.deleteById(id);
+        assetCodeSequences.deleteById(id);
         categories.delete(category);
     }
 
