@@ -6,6 +6,10 @@ import type {
   AssetBookingCancelPayload,
   AssetBookingCheckoutPayload,
   AssetBookingPayload,
+  AssetCatalogAssignmentPayload,
+  AssetCatalogItemDetail,
+  AssetCatalogItemListItem,
+  AssetCatalogItemPayload,
   AssetCategory,
   AssetCategoryImportCommitPayload,
   AssetCategoryImportCommitResponse,
@@ -34,6 +38,7 @@ import type {
   FileUploadResponse,
   MaintenanceRecord,
   MaintenanceRecordPayload,
+  PageResponse,
   Permission,
   ProjectLite,
   PurchaseRequest,
@@ -145,6 +150,10 @@ export async function updateAsset(id: number, payload: AssetPayload): Promise<As
   return response.data;
 }
 
+export async function assignAssetCatalog(payload: AssetCatalogAssignmentPayload): Promise<void> {
+  await api.put("/asset/assets/catalog", payload);
+}
+
 export async function deleteAsset(id: number): Promise<void> {
   await api.delete(`/asset/assets/${id}`);
 }
@@ -228,6 +237,37 @@ export async function commitAssetCategoryImport(
     payload,
   );
   return response.data;
+}
+
+export async function loadAssetCatalogItems(): Promise<AssetCatalogItemListItem[]> {
+  const response = await api.get<PageResponse<AssetCatalogItemListItem>>("/asset/catalog-items", {
+    params: { page: 0, size: 1000, sort: "name,asc" },
+  });
+  return response.data.content;
+}
+
+export async function loadAssetCatalogItem(id: number): Promise<AssetCatalogItemDetail> {
+  const response = await api.get<AssetCatalogItemDetail>(`/asset/catalog-items/${id}`);
+  return response.data;
+}
+
+export async function createAssetCatalogItem(
+  payload: AssetCatalogItemPayload,
+): Promise<AssetCatalogItemDetail> {
+  const response = await api.post<AssetCatalogItemDetail>("/asset/catalog-items", payload);
+  return response.data;
+}
+
+export async function updateAssetCatalogItem(
+  id: number,
+  payload: AssetCatalogItemPayload,
+): Promise<AssetCatalogItemDetail> {
+  const response = await api.put<AssetCatalogItemDetail>(`/asset/catalog-items/${id}`, payload);
+  return response.data;
+}
+
+export async function deactivateAssetCatalogItem(id: number): Promise<void> {
+  await api.delete(`/asset/catalog-items/${id}`);
 }
 
 export async function loadDepreciation(id: number): Promise<DepreciationSnapshot> {

@@ -64,6 +64,71 @@ export interface AssetCatalogItem {
   category?: AssetCategory | null;
 }
 
+export type AssetCatalogType = "ASSET" | "TOOL" | "MATERIAL" | "PRODUCT_REFERENCE";
+export type CatalogUnit =
+  | "CAI"
+  | "CHIEC"
+  | "BO"
+  | "CAP"
+  | "HOP"
+  | "THUNG"
+  | "GOI"
+  | "CUON"
+  | "MET"
+  | "MET_VUONG"
+  | "MET_KHOI"
+  | "KILOGRAM"
+  | "TAN"
+  | "LIT"
+  | "CHAI"
+  | "TAM"
+  | "THANH";
+
+export interface AssetCatalogItemListItem {
+  id: number;
+  itemCode: string;
+  name: string;
+  catalogType: AssetCatalogType;
+  categoryId: number;
+  categoryCode: string;
+  categoryName: string;
+  unit?: string;
+  active: boolean;
+}
+
+export interface AssetCatalogItemDetail extends AssetCatalogItemListItem {
+  inventoryGroup?: string;
+  costValue?: number;
+  standardValue?: number;
+  fixedValue?: number;
+  internalValue?: number;
+  technicalSpec?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface AssetCatalogItemPayload {
+  name: string;
+  categoryId: number;
+  catalogType: AssetCatalogType;
+  inventoryGroup?: string;
+  unit?: CatalogUnit;
+  costValue?: number | null;
+  standardValue?: number | null;
+  fixedValue?: number | null;
+  internalValue?: number | null;
+  technicalSpec?: string;
+  active: boolean;
+}
+
+export interface PageResponse<T> {
+  content: T[];
+  totalElements: number;
+  totalPages: number;
+  number: number;
+  size: number;
+}
+
 export interface AssetItem {
   id: number;
   assetCode: string;
@@ -77,6 +142,8 @@ export interface AssetItem {
   toolUsageType?: string;
   serialNumber?: string;
   source?: string;
+  contractNumber?: string;
+  invoiceNumber?: string;
   vendor?: Vendor;
   assignedEmployeeId?: number;
   departmentId?: number;
@@ -249,9 +316,17 @@ export interface AssetPayload {
   disposalReason?: string;
 }
 
+export interface AssetCatalogAssignmentPayload {
+  assetIds: number[];
+  catalogItemId: number;
+}
+
 export interface AssetImportRowPayload {
   rowNumber: number;
+  quantity?: number | null;
   assetCode?: string;
+  contractNumber?: string;
+  invoiceNumber?: string;
   name?: string;
   assetClass?: string;
   classType?: string;
@@ -261,6 +336,7 @@ export interface AssetImportRowPayload {
   catalogItemCode?: string;
   depreciationMethod?: string;
   serialNumber?: string;
+  purchaseDate?: string;
   depreciationStartDate?: string;
   useDate?: string;
   usefulLifeMonths?: number | null;

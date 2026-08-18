@@ -32,6 +32,9 @@ public enum Permission {
     ASSET_TRANSFERS_MANAGE("asset_transfers_manage"),
     ASSET_TRANSFERS_APPROVE("asset_transfers_approve"),
 
+    /*
+    NHÀ CUNG CẤP, GÓI ĐĂNG KÝ, YÊU CẦU MUA SẮM, HỢP ĐỒNG, BẢO TRÌ
+     */
     VENDOR_MANAGE("vendor_manage"),
     SUBSCRIPTION_MANAGE("subscription_manage"),
     PURCHASE_REQUEST_CREATE("purchase_request_create"),

@@ -23,13 +23,13 @@ const QUICK_ACTIONS = [
   {
     to: "/assets",
     title: "Danh sách tài sản",
-    description: "Tra cứu, lọc theo danh mục và xem chi tiết tài sản.",
+    description: "Tra cứu, lọc theo loại và xem chi tiết tài sản.",
     icon: <FiBox />,
   },
   {
     to: "/asset-categories",
-    title: "Danh mục tài sản",
-    description: "Quản lý cây danh mục và nhóm phân loại tài sản.",
+    title: "Phân loại tài sản",
+    description: "Quản lý cây phân loại và các loại tài sản.",
     icon: <FiGrid />,
   },
   {

@@ -624,30 +624,30 @@ describe("QLVT pages", () => {
     } as any);
     await renderRoute("/asset-categories", "Thiết bị");
 
-    await user.type(screen.getByLabelText("Tìm danh mục"), "Laptop");
+    await user.type(screen.getByLabelText("Tìm loại tài sản"), "Laptop");
     await user.click(screen.getByRole("button", { name: "Xóa nội dung tìm kiếm" }));
-    fireEvent.change(screen.getByLabelText("Loại danh mục"), { target: { value: "FIXED_ASSET" } });
+    fireEvent.change(screen.getByLabelText("Nhóm tài sản"), { target: { value: "FIXED_ASSET" } });
     fireEvent.change(screen.getByLabelText("Trạng thái"), { target: { value: "ACTIVE" } });
 
-    await user.clear(screen.getByLabelText("Tên danh mục"));
-    await user.type(screen.getByLabelText("Tên danh mục"), "Màn hình");
-    await user.type(screen.getByLabelText("Mã danh mục"), "MON");
+    await user.clear(screen.getByLabelText("Tên loại tài sản"));
+    await user.type(screen.getByLabelText("Tên loại tài sản"), "Màn hình");
+    await user.type(screen.getByLabelText("Mã loại"), "MON");
     await user.type(screen.getByLabelText("Mô tả"), "Màn hình văn phòng");
-    await user.click(screen.getByRole("button", { name: "Tạo danh mục" }));
+    await user.click(screen.getByRole("button", { name: "Tạo loại tài sản" }));
     await waitFor(() => expect(api.createAssetCategory).toHaveBeenCalled());
 
-    await user.click(screen.getAllByTitle("Thêm danh mục con")[0]);
-    expect(screen.getByText("Tạo danh mục con của")).toBeVisible();
-    await user.type(screen.getByLabelText("Tên danh mục"), "Máy trạm");
-    await user.type(screen.getByLabelText("Mã danh mục"), "WS");
+    await user.click(screen.getAllByTitle("Thêm loại con")[0]);
+    expect(screen.getByText("Tạo loại con của")).toBeVisible();
+    await user.type(screen.getByLabelText("Tên loại tài sản"), "Máy trạm");
+    await user.type(screen.getByLabelText("Mã loại"), "WS");
 
     await user.click(screen.getAllByTitle("Xóa")[0]);
     await waitFor(() => expect(api.deleteAssetCategory).toHaveBeenCalled());
 
-    await user.click(screen.getByRole("button", { name: /In danh mục/i }));
+    await user.click(screen.getByRole("button", { name: /Tải mẫu Excel/i }));
     await waitFor(() => expect(categoryExcelMocks.download).toHaveBeenCalled());
 
-    await user.click(screen.getByRole("button", { name: /Nhập danh mục/i }));
+    await user.click(screen.getByRole("button", { name: /Nhập loại tài sản/i }));
     const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
     await user.upload(fileInput, new File(["xlsx"], "categories.xlsx"));
     await waitFor(() => expect(categoryExcelMocks.parse).toHaveBeenCalled());
