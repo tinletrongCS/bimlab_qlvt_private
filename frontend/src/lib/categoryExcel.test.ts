@@ -1,8 +1,11 @@
 import { Workbook } from "exceljs";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  addAssetCategoryDropdowns,
   addCategoryReferenceSheet,
+  addHierarchicalCategorySheet,
   CATEGORY_REFERENCE_SHEET_NAME,
+  CATEGORY_TREE_SHEET_NAME,
   downloadCategoryImportTemplate,
   emptyCategoryImportResult,
   parseCategoryReferenceSheet,
@@ -45,18 +48,86 @@ describe("category Excel", () => {
     expect(sheet.getRow(9).getCell(4).value).toBe("ROOT");
   });
 
+  it("supports a category-only reference sheet and requires it for dropdowns", () => {
+    const workbook = new Workbook();
+    const sheet = addCategoryReferenceSheet(workbook, {
+      categories: [],
+      includeStatuses: false,
+    });
+
+    expect(sheet.rowCount).toBe(7);
+    expect(addCategoryReferenceSheet(new Workbook()).rowCount).toBe(13);
+    expect(() => addAssetCategoryDropdowns(new Workbook(), sheet, [], 5, 5)).toThrow(
+      CATEGORY_REFERENCE_SHEET_NAME,
+    );
+  });
+
+  it("adds dependent asset type dropdowns with leaf category values", () => {
+    const workbook = new Workbook();
+    const hierarchy = [
+      {
+        id: 10,
+        code: "FIXED_ASSET",
+        name: "Tài sản cố định",
+        assetClass: "FIXED_ASSET",
+        parentId: null,
+        active: true,
+        children: [
+          {
+            id: 11,
+            code: "TANGIBLE",
+            name: "Hữu hình",
+            assetClass: "FIXED_ASSET",
+            parentId: 10,
+            active: true,
+            children: [
+              {
+                id: 12,
+                code: "TSCD_MONITOR",
+                name: "Màn hình",
+                assetClass: "FIXED_ASSET",
+                parentId: 11,
+                active: true,
+                children: [],
+              },
+            ],
+          },
+        ],
+      },
+    ] as any;
+    const referenceSheet = addCategoryReferenceSheet(workbook, { categories: hierarchy });
+    const treeSheet = addHierarchicalCategorySheet(workbook, hierarchy);
+    const sheet = workbook.addWorksheet("Thiết bị");
+
+    addAssetCategoryDropdowns(workbook, sheet, hierarchy, 5, 6);
+
+    expect(sheet.getCell("G5").dataValidation.formulae).toEqual(["ASSET_CLASSES"]);
+    expect(sheet.getCell("H5").dataValidation.formulae[0]).toContain('="Tài sản cố định"');
+    expect(sheet.getCell("I6").dataValidation.formulae[0]).toContain('="Hữu hình"');
+    expect(workbook.definedNames.getRanges("TANGIBLE").ranges).toEqual(["'Loai_ThamChieu'!$I$2"]);
+    expect(referenceSheet.getCell("I2").value).toBe("Màn hình (TSCD_MONITOR)");
+    expect(treeSheet.name).toBe(CATEGORY_TREE_SHEET_NAME);
+    expect(treeSheet.getColumn(3).values).toContain("Màn hình");
+  });
+
   it("parses normalized headers, rich cells, formulas, and skips blank rows", async () => {
     const workbook = new Workbook();
     const sheet = workbook.addWorksheet(CATEGORY_REFERENCE_SHEET_NAME);
     sheet.addRow(["ignored"]);
-    sheet.addRow(["Nhóm", "Mã giá trị nhập", "Diễn giải", "Danh mục cha"]);
-    sheet.addRow(["Danh mục", "LAP", { formula: '"Laptop"', result: "Laptop" }, "ROOT"]);
+    sheet.addRow(["Nhóm", "Mã giá trị nhập", "Diễn giải", "Loại cha"]);
+    sheet.addRow(["Loại tài sản", "LAP", { formula: '"Laptop"', result: "Laptop" }, "ROOT"]);
     sheet.addRow([]);
     const buffer = await workbook.xlsx.writeBuffer();
     const file = { arrayBuffer: async () => buffer } as File;
 
     await expect(parseCategoryReferenceSheet(file)).resolves.toEqual([
-      { rowNumber: 3, group: "Danh mục", code: "LAP", name: "Laptop", parentCode: "ROOT" },
+      {
+        rowNumber: 3,
+        group: "Loại tài sản",
+        code: "LAP",
+        name: "Laptop",
+        parentCode: "ROOT",
+      },
     ]);
   });
 

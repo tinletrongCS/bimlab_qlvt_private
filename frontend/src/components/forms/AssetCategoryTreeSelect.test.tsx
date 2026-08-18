@@ -55,13 +55,13 @@ describe("AssetCategoryTreeSelect", () => {
         value=""
         onChange={onChange}
         onCodeChange={onCodeChange}
-        label="Danh mục"
+        label="Loại tài sản"
         required
       />,
     );
     expect(screen.getByText("Đang tải...")).toBeVisible();
     expect(await screen.findByText("Thiết bị")).toBeVisible();
-    expect(screen.getByText("Chọn danh mục ở bên dưới...")).toBeVisible();
+    expect(screen.getByText("Chọn loại tài sản bên dưới...")).toBeVisible();
     expect(screen.getByText("*")).toBeVisible();
     expect(screen.queryByText("Laptop")).not.toBeInTheDocument();
 
@@ -101,6 +101,6 @@ describe("AssetCategoryTreeSelect", () => {
   it("shows an empty message when loading fails", async () => {
     mocks.loadAssetCategoryTree.mockRejectedValueOnce(new Error("network"));
     render(<AssetCategoryTreeSelect value="" onChange={vi.fn()} />);
-    expect(await screen.findByText("Không có danh mục")).toBeVisible();
+    expect(await screen.findByText("Không có loại tài sản")).toBeVisible();
   });
 });
