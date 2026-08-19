@@ -1,6 +1,6 @@
 import { type FormEvent, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
-import { FiPlus, FiSearch } from "react-icons/fi";
+import { FiPlus, FiRotateCcw, FiSearch, FiSlash, FiX } from "react-icons/fi";
 import { CrudModal } from "../components/CrudModal";
 import { DataTable } from "../components/DataTable";
 import { AssetCategoryTreeSelect } from "../components/forms/AssetCategoryTreeSelect";
@@ -29,6 +29,21 @@ import type {
 
 type ActiveFilter = "ALL" | "ACTIVE" | "INACTIVE";
 type TypeFilter = "ALL" | AssetCatalogType;
+type CatalogTableColumnId =
+  | "code"
+  | "name"
+  | "category"
+  | "type"
+  | "unit"
+  | "assetCount"
+  | "status";
+
+interface CatalogTableColumnConfig {
+  id: CatalogTableColumnId;
+  label: string;
+  locked?: boolean;
+  defaultVisible?: boolean;
+}
 
 interface CatalogFormState {
   itemCode: string;
@@ -96,6 +111,72 @@ const UNIT_LABELS: Record<CatalogUnit, string> = {
   THANH: "Thanh",
 };
 
+const CATALOG_TABLE_STORAGE_KEY = "qlvt.catalogList.tableColumns.v1";
+const CATALOG_TABLE_COLUMNS: CatalogTableColumnConfig[] = [
+  { id: "code", label: "Mã danh mục", locked: true, defaultVisible: true },
+  { id: "name", label: "Tên danh mục", locked: true, defaultVisible: true },
+  { id: "category", label: "Loại tài sản", locked: true, defaultVisible: true },
+  { id: "type", label: "Kiểu danh mục", defaultVisible: true },
+  { id: "unit", label: "Đơn vị tính", defaultVisible: true },
+  { id: "assetCount", label: "Số tài sản", defaultVisible: true },
+  { id: "status", label: "Khả dụng", defaultVisible: true },
+];
+const CATALOG_TABLE_COLUMN_IDS = CATALOG_TABLE_COLUMNS.map((column) => column.id);
+const DEFAULT_CATALOG_TABLE_VISIBLE_COLUMNS = CATALOG_TABLE_COLUMNS.filter(
+  (column) => column.defaultVisible || column.locked,
+).map((column) => column.id);
+const CATALOG_TABLE_COLUMN_WIDTHS: Record<CatalogTableColumnId, number> = {
+  code: 160,
+  name: 250,
+  category: 360,
+  type: 170,
+  unit: 130,
+  assetCount: 110,
+  status: 140,
+};
+
+function normalizeCatalogColumnOrder(order: CatalogTableColumnId[]) {
+  const lockedIds = CATALOG_TABLE_COLUMNS.filter((column) => column.locked).map(
+    (column) => column.id,
+  );
+  const optionalIds = [
+    ...order.filter((id) => CATALOG_TABLE_COLUMN_IDS.includes(id) && !lockedIds.includes(id)),
+    ...CATALOG_TABLE_COLUMN_IDS.filter((id) => !lockedIds.includes(id) && !order.includes(id)),
+  ];
+  return [...lockedIds, ...optionalIds];
+}
+
+function readCatalogColumnPreferences() {
+  const fallback = {
+    order: normalizeCatalogColumnOrder(CATALOG_TABLE_COLUMN_IDS),
+    visible: DEFAULT_CATALOG_TABLE_VISIBLE_COLUMNS,
+  };
+  if (typeof window === "undefined") return fallback;
+
+  try {
+    const raw = window.localStorage.getItem(CATALOG_TABLE_STORAGE_KEY);
+    if (!raw) return fallback;
+    const parsed = JSON.parse(raw) as Partial<{
+      order: CatalogTableColumnId[];
+      visible: CatalogTableColumnId[];
+    }>;
+    const knownIds = new Set(CATALOG_TABLE_COLUMN_IDS);
+    const order = [
+      ...(parsed.order || []).filter((id): id is CatalogTableColumnId => knownIds.has(id)),
+      ...CATALOG_TABLE_COLUMN_IDS.filter((id) => !(parsed.order || []).includes(id)),
+    ];
+    const visible = Array.from(
+      new Set([
+        ...(parsed.visible || []).filter((id): id is CatalogTableColumnId => knownIds.has(id)),
+        ...CATALOG_TABLE_COLUMNS.filter((column) => column.locked).map((column) => column.id),
+      ]),
+    );
+    return { order: normalizeCatalogColumnOrder(order), visible };
+  } catch {
+    return fallback;
+  }
+}
+
 export function AssetCatalogItemsPage() {
   const { hasPermission } = useAuth();
   const [items, setItems] = useState<AssetCatalogItemListItem[]>([]);
@@ -108,6 +189,16 @@ export function AssetCatalogItemsPage() {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [form, setForm] = useState<CatalogFormState>(EMPTY_FORM);
   const [busy, setBusy] = useState(false);
+  const [multiSelectMode, setMultiSelectMode] = useState(false);
+  const [selectedItemIds, setSelectedItemIds] = useState<Set<number>>(() => new Set());
+  const [columnConfigOpen, setColumnConfigOpen] = useState(false);
+  const [columnOrder, setColumnOrder] = useState<CatalogTableColumnId[]>(
+    () => readCatalogColumnPreferences().order,
+  );
+  const [visibleColumns, setVisibleColumns] = useState<CatalogTableColumnId[]>(
+    () => readCatalogColumnPreferences().visible,
+  );
+  const [draggedColumn, setDraggedColumn] = useState<CatalogTableColumnId | null>(null);
 
   const canManage = hasPermission("asset_manage");
 
@@ -119,6 +210,22 @@ export function AssetCatalogItemsPage() {
       })
       .catch(() => toast.error("Không tải được danh sách danh mục tài sản."));
   }, []);
+
+  useEffect(() => {
+    window.localStorage.setItem(
+      CATALOG_TABLE_STORAGE_KEY,
+      JSON.stringify({ order: columnOrder, visible: visibleColumns }),
+    );
+  }, [columnOrder, visibleColumns]);
+
+  useEffect(() => {
+    setSelectedItemIds((current) => {
+      if (current.size === 0) return current;
+      const validIds = new Set(items.map((item) => item.id));
+      const next = new Set(Array.from(current).filter((id) => validIds.has(id)));
+      return next.size === current.size ? current : next;
+    });
+  }, [items]);
 
   const filteredItems = useMemo(() => {
     const keyword = normalize(query);
@@ -135,6 +242,12 @@ export function AssetCatalogItemsPage() {
       );
     });
   }, [activeFilter, categoryFilter, items, query, typeFilter]);
+
+  const selectedItems = useMemo(
+    () => items.filter((item) => selectedItemIds.has(item.id)),
+    [items, selectedItemIds],
+  );
+  const activeSelectedItems = selectedItems.filter((item) => item.active);
 
   const openCreate = () => {
     setEditingId(null);
@@ -216,6 +329,148 @@ export function AssetCatalogItemsPage() {
     }
   };
 
+  const deactivateSelected = async () => {
+    if (activeSelectedItems.length === 0 || busy) return;
+    if (
+      !window.confirm(
+        `Ngừng cho phép gán ${activeSelectedItems.length} danh mục đã chọn cho tài sản mới?`,
+      )
+    ) {
+      return;
+    }
+
+    setBusy(true);
+    try {
+      const results = await Promise.allSettled(
+        activeSelectedItems.map((item) => deactivateAssetCatalogItem(item.id)),
+      );
+      const succeededIds = new Set(
+        results
+          .map((result, index) =>
+            result.status === "fulfilled" ? activeSelectedItems[index].id : 0,
+          )
+          .filter(Boolean),
+      );
+      setItems(await loadAssetCatalogItems());
+      setSelectedItemIds((current) => {
+        const next = new Set(current);
+        succeededIds.forEach((id) => {
+          next.delete(id);
+        });
+        return next;
+      });
+      if (succeededIds.size === activeSelectedItems.length) {
+        toast.success(`Đã ngừng cho phép gán ${succeededIds.size} danh mục.`);
+      } else {
+        toast.error(`Đã cập nhật ${succeededIds.size}/${activeSelectedItems.length} danh mục.`);
+      }
+    } catch {
+      toast.error("Không tải lại được danh sách sau khi cập nhật.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const toggleColumn = (id: CatalogTableColumnId) => {
+    if (CATALOG_TABLE_COLUMNS.find((column) => column.id === id)?.locked) return;
+    setVisibleColumns((current) =>
+      current.includes(id) ? current.filter((item) => item !== id) : [...current, id],
+    );
+  };
+
+  const resetColumns = () => {
+    setColumnOrder(normalizeCatalogColumnOrder(CATALOG_TABLE_COLUMN_IDS));
+    setVisibleColumns(DEFAULT_CATALOG_TABLE_VISIBLE_COLUMNS);
+  };
+
+  const dropColumn = (targetId: CatalogTableColumnId) => {
+    if (!draggedColumn || draggedColumn === targetId) return;
+    const dragged = CATALOG_TABLE_COLUMNS.find((column) => column.id === draggedColumn);
+    const target = CATALOG_TABLE_COLUMNS.find((column) => column.id === targetId);
+    if (dragged?.locked || target?.locked) {
+      setDraggedColumn(null);
+      return;
+    }
+    setColumnOrder((current) => {
+      const withoutDragged = current.filter((id) => id !== draggedColumn);
+      const targetIndex = withoutDragged.indexOf(targetId);
+      if (targetIndex < 0) return current;
+      return normalizeCatalogColumnOrder([
+        ...withoutDragged.slice(0, targetIndex),
+        draggedColumn,
+        ...withoutDragged.slice(targetIndex),
+      ]);
+    });
+    setDraggedColumn(null);
+  };
+
+  const catalogColumns = [
+    {
+      key: "code",
+      title: "Mã danh mục",
+      className: "catalog-col-code",
+      render: (item: AssetCatalogItemListItem) => <b>{item.itemCode}</b>,
+    },
+    {
+      key: "name",
+      title: "Tên danh mục",
+      className: "catalog-col-name",
+      render: (item: AssetCatalogItemListItem) => item.name,
+    },
+    {
+      key: "category",
+      title: "Loại tài sản",
+      className: "catalog-col-category",
+      render: (item: AssetCatalogItemListItem) => `${item.categoryCode} - ${item.categoryName}`,
+    },
+    {
+      key: "type",
+      title: "Kiểu danh mục",
+      className: "catalog-col-type",
+      render: (item: AssetCatalogItemListItem) => TYPE_LABELS[item.catalogType],
+    },
+    {
+      key: "unit",
+      title: "Đơn vị tính",
+      className: "catalog-col-unit",
+      render: (item: AssetCatalogItemListItem) => unitLabel(item.unit),
+    },
+    {
+      key: "assetCount",
+      title: "Số tài sản",
+      className: "catalog-col-asset-count",
+      render: (item: AssetCatalogItemListItem) => item.assetCount ?? 0,
+    },
+    {
+      key: "status",
+      title: "Khả dụng",
+      className: "catalog-col-status",
+      render: (item: AssetCatalogItemListItem) => {
+        const availability = item.active ? "ACTIVE" : "INACTIVE";
+        return <StatusBadge value={availability} label={AVAILABILITY_LABELS[availability]} />;
+      },
+    },
+  ];
+  const columnById = new Map(catalogColumns.map((column) => [column.key, column]));
+  const visibleColumnSet = new Set(visibleColumns);
+  const configuredColumns = columnOrder
+    .map((id) => columnById.get(id))
+    .filter((column): column is (typeof catalogColumns)[number] => {
+      if (!column) return false;
+      const config = CATALOG_TABLE_COLUMNS.find((item) => item.id === column.key);
+      return visibleColumnSet.has(column.key as CatalogTableColumnId) || Boolean(config?.locked);
+    });
+  const columnConfigOrder = [
+    ...columnOrder.filter((id) => CATALOG_TABLE_COLUMNS.find((column) => column.id === id)?.locked),
+    ...columnOrder.filter(
+      (id) => !CATALOG_TABLE_COLUMNS.find((column) => column.id === id)?.locked,
+    ),
+  ];
+  const tableMinWidth = configuredColumns.reduce(
+    (total, column) => total + CATALOG_TABLE_COLUMN_WIDTHS[column.key as CatalogTableColumnId],
+    150 + (multiSelectMode ? 44 : 0),
+  );
+
   return (
     <section className="asset-page catalog-page panel">
       <header className="asset-page-header">
@@ -277,50 +532,169 @@ export function AssetCatalogItemsPage() {
         </FilterSelect>
       </div>
 
-      <div className="asset-list-panel catalog-list-panel">
+      <div
+        className={`asset-list-panel catalog-list-panel ${
+          columnConfigOpen ? "column-config-open" : ""
+        }`}
+      >
         <div className="asset-list-head">
-          <strong>Danh sách danh mục</strong>
-          <span>
-            {filteredItems.length}/{items.length} danh mục
-          </span>
+          <div className="catalog-list-head-copy">
+            <strong>Danh sách danh mục</strong>
+            <span>
+              {filteredItems.length}/{items.length} danh mục
+            </span>
+          </div>
+          <div className="asset-list-head-actions">
+            {canManage && (
+              <button
+                type="button"
+                className="asset-table-text-action asset-multi-select-toggle"
+                data-active={multiSelectMode ? "true" : undefined}
+                onClick={() => {
+                  setMultiSelectMode((enabled) => {
+                    if (enabled) setSelectedItemIds(new Set());
+                    return !enabled;
+                  });
+                }}
+              >
+                {multiSelectMode ? "Tắt chọn nhiều" : "Chọn nhiều"}
+              </button>
+            )}
+            <button
+              type="button"
+              className="asset-table-text-action asset-column-config-toggle"
+              aria-expanded={columnConfigOpen}
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={() => setColumnConfigOpen((open) => !open)}
+            >
+              Cấu hình cột
+            </button>
+          </div>
         </div>
+
+        {columnConfigOpen && (
+          <>
+            <button
+              type="button"
+              className="asset-column-backdrop"
+              aria-label="Đóng cấu hình cột"
+              onClick={() => setColumnConfigOpen(false)}
+            />
+            <div
+              className="asset-column-popover catalog-column-popover"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="catalog-column-config-title"
+            >
+              <div className="asset-column-popover-head">
+                <div>
+                  <strong id="catalog-column-config-title">Cấu hình cột</strong>
+                  <span>Bật/tắt và kéo để sắp xếp. Các cột cố định luôn hiển thị.</span>
+                </div>
+                <button
+                  type="button"
+                  className="icon-button"
+                  title="Đóng"
+                  aria-label="Đóng cấu hình cột"
+                  onClick={() => setColumnConfigOpen(false)}
+                >
+                  <FiX />
+                </button>
+              </div>
+              <div className="asset-column-list">
+                {columnConfigOrder.map((id) => {
+                  const column = CATALOG_TABLE_COLUMNS.find((item) => item.id === id);
+                  if (!column) return null;
+                  const locked = Boolean(column.locked);
+                  const checked = visibleColumnSet.has(id) || locked;
+                  return (
+                    <label
+                      key={id}
+                      className={`asset-column-option ${
+                        draggedColumn === id ? "is-dragging" : ""
+                      } ${locked ? "is-locked" : ""}`}
+                      draggable={!locked}
+                      onDragStart={() => {
+                        if (!locked) setDraggedColumn(id);
+                      }}
+                      onDragOver={(event) => event.preventDefault()}
+                      onDrop={() => dropColumn(id)}
+                      onDragEnd={() => setDraggedColumn(null)}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        disabled={locked}
+                        onChange={() => toggleColumn(id)}
+                      />
+                      <span>{column.label}</span>
+                      {locked && <em>Bắt buộc</em>}
+                    </label>
+                  );
+                })}
+              </div>
+              <div className="asset-column-popover-actions">
+                <button type="button" className="secondary" onClick={resetColumns}>
+                  <FiRotateCcw /> Mặc định
+                </button>
+                <button
+                  type="button"
+                  className="primary"
+                  onClick={() => setColumnConfigOpen(false)}
+                >
+                  Áp dụng
+                </button>
+              </div>
+            </div>
+          </>
+        )}
+
+        {canManage && multiSelectMode && selectedItems.length > 0 && (
+          <div
+            className="catalog-selection-bar"
+            role="region"
+            aria-label="Thao tác danh mục đã chọn"
+          >
+            <strong>{selectedItems.length} danh mục đã chọn</strong>
+            <div>
+              <button
+                type="button"
+                className="danger-action"
+                disabled={activeSelectedItems.length === 0 || busy}
+                onClick={() => void deactivateSelected()}
+              >
+                <FiSlash /> Ngừng cho phép gán ({activeSelectedItems.length})
+              </button>
+              <button
+                type="button"
+                className="secondary"
+                disabled={busy}
+                onClick={() => setSelectedItemIds(new Set())}
+              >
+                <FiX /> Bỏ chọn
+              </button>
+            </div>
+          </div>
+        )}
+
         <DataTable
           data={filteredItems}
           getRowKey={(item) => item.id}
           emptyText={query ? "Không tìm thấy danh mục" : "Chưa có danh mục tài sản"}
           itemLabel="danh mục"
           pageSizeOptions={[20, 50, 100]}
-          tableMinWidth={980}
+          tableMinWidth={tableMinWidth}
+          selection={
+            multiSelectMode
+              ? {
+                  selectedKeys: selectedItemIds,
+                  onChange: (keys) => setSelectedItemIds(new Set(Array.from(keys, Number))),
+                  getLabel: (item) => item.name,
+                }
+              : undefined
+          }
           columns={[
-            { key: "code", title: "Mã danh mục", render: (item) => <b>{item.itemCode}</b> },
-            { key: "name", title: "Tên danh mục", render: (item) => item.name },
-            {
-              key: "category",
-              title: "Loại tài sản",
-              render: (item) => `${item.categoryCode} - ${item.categoryName}`,
-            },
-            {
-              key: "type",
-              title: "Kiểu danh mục",
-              render: (item) => TYPE_LABELS[item.catalogType],
-            },
-            { key: "unit", title: "Đơn vị tính", render: (item) => unitLabel(item.unit) },
-            {
-              key: "assetCount",
-              title: "Số tài sản",
-              className: "catalog-col-asset-count",
-              render: (item) => item.assetCount ?? 0,
-            },
-            {
-              key: "status",
-              title: "Khả dụng",
-              render: (item) => {
-                const availability = item.active ? "ACTIVE" : "INACTIVE";
-                return (
-                  <StatusBadge value={availability} label={AVAILABILITY_LABELS[availability]} />
-                );
-              },
-            },
+            ...configuredColumns,
             {
               key: "actions",
               title: "Thao tác",
@@ -333,14 +707,18 @@ export function AssetCatalogItemsPage() {
                       label: "Xem tài sản",
                       onClick: () => openAssetsForCatalog(item),
                     },
-                    { label: "Sửa thông tin", onClick: () => void openEdit(item.id) },
-                    ...(item.active
+                    ...(canManage
                       ? [
-                          {
-                            label: "Ngừng cho phép gán",
-                            danger: true,
-                            onClick: () => void deactivate(item),
-                          },
+                          { label: "Sửa thông tin", onClick: () => void openEdit(item.id) },
+                          ...(item.active
+                            ? [
+                                {
+                                  label: "Ngừng cho phép gán",
+                                  danger: true,
+                                  onClick: () => void deactivate(item),
+                                },
+                              ]
+                            : []),
                         ]
                       : []),
                   ]}

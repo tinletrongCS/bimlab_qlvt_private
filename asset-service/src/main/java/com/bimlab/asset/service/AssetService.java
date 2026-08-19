@@ -44,14 +44,7 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.stream.Collectors;
-    /*
-    Tôi viết những dòng này
-    sẽ có những con chó phải trả giá
-     */
-// sẽ có những con chó phải trả giá
-// sẽ có những con chó phải trả giá
-// sẽ có những con chó phải trả giá
-// sẽ có những con chó phải trả giá
+
 @Service
 @RequiredArgsConstructor
 public class AssetService {
@@ -203,10 +196,6 @@ public class AssetService {
         applyAsset(item, req);
         return assets.save(item);
     }
-    /*
-    Gán hàng loạt tài sản vào một danh mục
-    Yêu cầu mỗi lần gán phải cùng loại (và cùng tên -> cái này cần xem lại có hợp lý không)
-     */
     @Transactional
     public void assignCatalog(AssetCatalogAssignmentRequest request) {
         AssetCatalogItem catalogItem = catalogItems.findById(request.catalogItemId())
@@ -651,6 +640,11 @@ public class AssetService {
     private void applyAsset(AssetItem item, AssetRequest req) {
         item.setAssetCode(req.assetCode());
         item.setName(req.name());
+        if (item.getCatalogItem() != null && req.catalogItemId() == null) {
+            throw new IllegalArgumentException(
+                    "Tài sản đã có danh mục; chỉ được đổi sang danh mục khác cùng loại tài sản"
+            );
+        }
         AssetCatalogItem catalogItem = req.catalogItemId() == null
                 ? null
                 : catalogItems.findById(req.catalogItemId())

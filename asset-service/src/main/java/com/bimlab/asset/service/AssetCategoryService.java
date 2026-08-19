@@ -290,7 +290,6 @@ public class AssetCategoryService {
     }
 
     // Helper functions
-    // sẽ có những con chó phải trả giá
     private AssetCategoryResponse modelToDto(AssetCategory category) {
         return new AssetCategoryResponse(
                 category.getId(),
@@ -324,7 +323,6 @@ public class AssetCategoryService {
                 children
         );
     }
-    // sẽ có những con chó phải trả giá
     private AssetCategoryImportRowResult validateCategoryImportRow(
             AssetCategoryImportRowRequest row,
             Map<String, AssetCategory> dbByCode,
