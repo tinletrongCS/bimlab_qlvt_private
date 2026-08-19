@@ -16067,3 +16067,83 @@ button,
     overflow-y: auto;
   }
 }
+
+/* ==========================================================================
+   Transfer Asset Picker Table & Filters
+   ========================================================================== */
+.transfer-asset-picker {
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  animation: transferPickerFadeIn 0.2s ease;
+}
+
+@keyframes transferPickerFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.transfer-asset-picker-filters {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) minmax(240px, 1.2fr) auto;
+  gap: 12px;
+  margin-bottom: 12px;
+  background: #ffffff;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  align-items: flex-end;
+}
+
+.transfer-asset-picker-table-wrap {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  overflow: auto;
+  background: #ffffff;
+  max-height: 360px;
+}
+
+.transfer-asset-picker-table {
+  width: 100%;
+  min-width: 860px;
+  table-layout: fixed;
+  text-align: left;
+  border-collapse: collapse;
+}
+
+.transfer-asset-picker-table th {
+  background: #f1f5f9;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.transfer-asset-picker-table tr {
+  transition: background-color 0.15s ease;
+}
+
+.transfer-asset-picker-table tr:hover {
+  background-color: #f8fafc;
+}
+
+.transfer-asset-picker-checkbox {
+  cursor: pointer;
+  width: 16px;
+  height: 16px;
+  accent-color: #2563eb;
+}
+
+@media (max-width: 768px) {
+  .transfer-asset-picker-filters {
+    grid-template-columns: 1fr;
+  }
+}

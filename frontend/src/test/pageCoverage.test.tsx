@@ -483,12 +483,21 @@ describe("QLVT pages", () => {
     await user.click(screen.getByLabelText("Chỉ định người xét duyệt"));
     chooseSearchableOption(screen.getByPlaceholderText("Thêm người duyệt..."), /Nguyễn Văn A/);
     expect(screen.getByText("Nguyễn Văn A · HR")).toBeVisible();
-    const assetSelector = screen.getByPlaceholderText("Chọn tài sản để thêm");
-    expect(assetSelector).toHaveValue("");
-    chooseSearchableOption(assetSelector, /TS-001/);
-    expect(
-      assetSelector.closest(".searchable-select-container")?.querySelector('option[value="1"]'),
-    ).toHaveTextContent(/✓ TS-001 .* \(đã chọn\)/);
+
+    // Mở bộ chọn tài sản
+    await user.click(screen.getByRole("button", { name: /Thêm tài sản/ }));
+    expect(await screen.findByText("Bộ chọn tài sản khả dụng")).toBeVisible();
+    expect(screen.getByText("TS-001")).toBeVisible();
+
+    // Chọn tài sản TS-001 và xác nhận
+    const checkboxes = screen.getAllByRole("checkbox");
+    const assetRowCheckbox = checkboxes[checkboxes.length - 1];
+    await user.click(assetRowCheckbox);
+    await user.click(screen.getByRole("button", { name: /Xác nhận chọn/ }));
+
+    // Kiểm tra bảng tài sản đã chọn hiển thị TS-001
+    expect(screen.getByText("TS-001")).toBeVisible();
+
     await waitFor(() => {
       expect(siteSelect).toHaveValue("Văn phòng");
       expect(departmentSelect).toHaveValue("BIM");
@@ -504,6 +513,50 @@ describe("QLVT pages", () => {
         }),
       ),
     );
+  });
+
+  it("filters and multi-selects assets with the asset picker in transfers page", async () => {
+    const user = userEvent.setup();
+    vi.mocked(api.loadTransfers).mockResolvedValueOnce([]);
+    await renderRoute("/transfers", "Danh sách phiếu");
+
+    await user.click(screen.getByRole("button", { name: "Tạo phiếu" }));
+    expect(await screen.findByText("Danh sách tài sản bàn giao/thu hồi")).toBeVisible();
+
+    // Open asset picker
+    await user.click(screen.getByRole("button", { name: /Thêm tài sản/ }));
+    expect(await screen.findByText("Bộ chọn tài sản khả dụng")).toBeVisible();
+
+    // Search filter
+    const searchInput = screen.getByPlaceholderText("Nhập mã hoặc tên tài sản...");
+    await user.type(searchInput, "TS-001");
+    expect(screen.getByText("TS-001")).toBeVisible();
+
+    // Quick select all filtered
+    await user.click(screen.getByRole("button", { name: /Chọn tất cả/ }));
+    expect(screen.getByText(/Đã tick:/)).toHaveTextContent("1");
+
+    // Deselect
+    await user.click(screen.getByRole("button", { name: "Bỏ chọn" }));
+    expect(screen.getByText(/Đã tick:/)).toHaveTextContent("0");
+
+    // Select via row checkbox
+    const checkboxes = screen.getAllByRole("checkbox");
+    const assetRowCheckbox = checkboxes[checkboxes.length - 1];
+    await user.click(assetRowCheckbox);
+    expect(screen.getByText(/Đã tick:/)).toHaveTextContent("1");
+
+    // Confirm selection
+    await user.click(screen.getByRole("button", { name: /Xác nhận chọn/ }));
+    expect(screen.queryByText("Bộ chọn tài sản khả dụng")).toBeNull();
+
+    // Verify selected asset table
+    expect(screen.getByText("TS-001")).toBeVisible();
+
+    // Delete asset from selected table
+    const deleteBtn = screen.getByTitle("Xóa");
+    await user.click(deleteBtn);
+    expect(screen.getByText(/Chưa có tài sản nào được chọn/)).toBeVisible();
   });
 
   it("filters and decides assigned pending transfers", async () => {
