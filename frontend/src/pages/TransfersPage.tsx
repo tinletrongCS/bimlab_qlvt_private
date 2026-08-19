@@ -75,24 +75,24 @@ function highlightTransferText(value: string, query: string) {
 function formatTransferDate(value?: string): string {
   return value
     ? new Date(`${value}T00:00:00`).toLocaleDateString("vi-VN", {
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-    })
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      })
     : "--";
 }
 
 function formatTransferDateTime(value?: string): string {
   return value
     ? new Date(value).toLocaleString("vi-VN", {
-      hour12: false,
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-    })
+        hour12: false,
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+      })
     : "--";
 }
 
@@ -805,7 +805,7 @@ export function TransfersPage() {
                       </td>
                       <td>
                         {transfer.transferType === "REVOKE" ||
-                          transfer.transferType === "Thu hồi" ? (
+                        transfer.transferType === "Thu hồi" ? (
                           <span>Thu hồi về kho, gỡ toàn bộ thông tin gán</span>
                         ) : (
                           <>
@@ -1169,8 +1169,8 @@ export function TransfersPage() {
                   const normalizedSearch = pendingSearch.trim().toLowerCase();
                   const summaryText =
                     normalizedSearch &&
-                      !title.toLowerCase().includes(normalizedSearch) &&
-                      ticket.reason.toLowerCase().includes(normalizedSearch)
+                    !title.toLowerCase().includes(normalizedSearch) &&
+                    ticket.reason.toLowerCase().includes(normalizedSearch)
                       ? ticket.reason
                       : title || ticket.reason || "--";
                   return (
