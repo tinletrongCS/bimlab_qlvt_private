@@ -26,11 +26,13 @@ describe("SearchableSelect", () => {
     );
     const input = screen.getByRole("combobox");
     expect(input).toHaveValue("Laptop Dell");
+    expect(input).toHaveAttribute("title", "Laptop Dell");
 
     openDropdown(container);
     const dropdown = getDropdown(container);
     expect(dropdown.getByText("Màn hình LG")).toBeVisible();
     expect(dropdown.getByText("Laptop Dell")).toHaveClass("selected");
+    expect(dropdown.getByText("Laptop Dell")).toHaveAttribute("title", "Laptop Dell");
 
     fireEvent.mouseDown(dropdown.getByText("Màn hình LG"));
     expect(onChange).toHaveBeenCalledWith("2");

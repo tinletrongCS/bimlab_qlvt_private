@@ -39,6 +39,7 @@ import java.time.Year;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Objects;
@@ -199,14 +200,25 @@ public class AssetService {
 
     @Transactional
     public void assignCatalog(AssetCatalogAssignmentRequest request) {
-        // TODO PRACTICE CATALOG 8:
-        // - Tải catalogItem theo request.catalogItemId(), kiểm tra tồn tại và đang hoạt động.
-        // - Tải toàn bộ assets theo request.assetIds(); thiếu bất kỳ id nào thì từ chối toàn bộ.
-        // - Kiểm tra các tài sản có cùng tên sau khi trim và so sánh không phân biệt hoa thường.
-        // - Kiểm tra từng tài sản đã có loại và loại đó trùng category của catalogItem.
-        // - Gán catalogItem cho toàn bộ managed entities trong cùng transaction.
-        // - Không bắt lỗi để lưu một phần: có một dòng không hợp lệ thì rollback toàn bộ.
-        throw new UnsupportedOperationException("TODO: assignCatalog");
+        AssetCatalogItem catalogItem = catalogItems.findById(request.catalogItemId())
+                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy danh mục tài sản"));
+        AssetCategory catalogCategory = requireUsableCatalogCategory(catalogItem);
+
+        List<Long> assetIds = request.assetIds().stream().distinct().toList();
+        List<AssetItem> selectedAssets = assets.findAllById(assetIds);
+        if (selectedAssets.size() != assetIds.size()) {
+            throw new NoSuchElementException("Một hoặc nhiều tài sản đã chọn không tồn tại");
+        }
+
+        String sharedName = normalizeName(selectedAssets.get(0).getName());
+        for (AssetItem asset : selectedAssets) {
+            if (!Objects.equals(sharedName, normalizeName(asset.getName()))) {
+                throw new IllegalArgumentException("Các tài sản đã chọn phải cùng tên để gán chung một danh mục");
+            }
+            validateCatalogCategoryMatch(catalogItem, catalogCategory, asset.getAssetCategory());
+            asset.setCatalogItem(catalogItem);
+        }
+        assets.saveAll(selectedAssets);
     }
 
     @Transactional
@@ -589,6 +601,40 @@ public class AssetService {
                 .toUpperCase();
     }
 
+    private String normalizeName(String value) {
+        return trimToNull(value) == null ? "" : value.trim().toLowerCase(Locale.ROOT);
+    }
+
+    private AssetCategory requireUsableCatalogCategory(AssetCatalogItem catalogItem) {
+        if (!Boolean.TRUE.equals(catalogItem.getActive())) {
+            throw new IllegalArgumentException("Danh mục tài sản đã ngừng cho phép gán mới");
+        }
+        return requireCatalogCategory(catalogItem);
+    }
+
+    private AssetCategory requireCatalogCategory(AssetCatalogItem catalogItem) {
+        AssetCategory category = catalogItem.getCategory();
+        if (category == null) {
+            throw new IllegalArgumentException("Danh mục tài sản chưa gắn loại tài sản");
+        }
+        return category;
+    }
+
+    private void validateCatalogCategoryMatch(
+            AssetCatalogItem catalogItem,
+            AssetCategory catalogCategory,
+            AssetCategory assetCategory
+    ) {
+        if (assetCategory == null) {
+            throw new IllegalArgumentException("Tài sản phải có loại tài sản trước khi gán danh mục");
+        }
+        if (!Objects.equals(catalogCategory.getId(), assetCategory.getId())) {
+            throw new IllegalArgumentException(
+                    "Danh mục " + catalogItem.getName() + " phải cùng loại tài sản với tài sản đã chọn"
+            );
+        }
+    }
+
     private record ImportLookup(AssetCategory category, AssetCatalogItem catalogItem, AssetClass assetClass) {}
     /*
     Dùng khi cần cập nhật và áp dụng vào tài sản
@@ -604,10 +650,18 @@ public class AssetService {
                 ? null
                 : assetCategories.findById(req.categoryId())
                         .orElseThrow(() -> new NoSuchElementException("Nhóm tài sản không tồn tại"));
-        // TODO PRACTICE CATALOG 7:
-        // - Nếu có catalogItem, kiểm tra catalog đang hoạt động và đã được gán category.
-        // - Bảo đảm catalogItem.category.id bằng assetCategory.id trước khi lưu tài sản.
-        // - Có thể lấy category trực tiếp từ catalog để chỉ duy trì một nguồn sự thật.
+        if (catalogItem != null) {
+            boolean keepsExistingCatalog = item.getCatalogItem() != null
+                    && Objects.equals(item.getCatalogItem().getId(), catalogItem.getId());
+            AssetCategory catalogCategory = keepsExistingCatalog
+                    ? requireCatalogCategory(catalogItem)
+                    : requireUsableCatalogCategory(catalogItem);
+            if (assetCategory == null) {
+                assetCategory = catalogCategory;
+            } else {
+                validateCatalogCategoryMatch(catalogItem, catalogCategory, assetCategory);
+            }
+        }
         item.setCatalogItem(catalogItem);
         item.setAssetCategory(assetCategory);
         item.setParentAsset(req.parentAssetId() == null ? null : getAssetById(req.parentAssetId()));

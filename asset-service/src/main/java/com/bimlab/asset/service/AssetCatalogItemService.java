@@ -5,6 +5,8 @@ import com.bimlab.asset.dto.response.AssetCatalogItemDetailResponse;
 import com.bimlab.asset.dto.response.AssetCatalogItemListResponse;
 import com.bimlab.asset.entity.AssetCatalogItem;
 import com.bimlab.asset.entity.AssetCategory;
+import com.bimlab.asset.entity.status.AssetClass;
+import com.bimlab.asset.entity.status.CatalogType;
 import com.bimlab.asset.repository.AssetCatalogItemRepository;
 import com.bimlab.asset.repository.AssetCategoryRepository;
 import com.bimlab.asset.repository.AssetItemRepository;
@@ -14,7 +16,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.UUID;
@@ -37,7 +41,19 @@ public class AssetCatalogItemService {
             Pageable pageable
     ) {
         String keyWord = keyword == null ? "" : keyword.trim();
-        return catalogItems.findList(keyWord, categoryId, active, pageable);
+        Page<AssetCatalogItemListResponse> page = catalogItems.findList(keyWord, categoryId, active, pageable);
+        if (page.isEmpty()) {
+            return page;
+        }
+
+        List<Long> catalogItemIds = page.getContent().stream()
+                .map(AssetCatalogItemListResponse::id)
+                .toList();
+        Map<Long, Long> assetCounts = new HashMap<>();
+        for (AssetItemRepository.CatalogAssetCount count : assets.countByCatalogItemIds(catalogItemIds)) {
+            assetCounts.put(count.getCatalogItemId(), count.getAssetCount());
+        }
+        return page.map(item -> item.withAssetCount(assetCounts.getOrDefault(item.id(), 0L)));
     }
 
     @Transactional(readOnly = true)
@@ -61,12 +77,13 @@ public class AssetCatalogItemService {
         if (!Boolean.TRUE.equals(category.getActive())) {
             throw new IllegalArgumentException("Loại tài sản với mã " + category.getCode() + " đã ngừng hoạt động");
         }
+        CatalogType catalogType = requireMatchingCatalogType(category, request.catalogType());
 
         AssetCatalogItem catalogItem = AssetCatalogItem.builder()
                 .itemCode("TMP-" + UUID.randomUUID())
                 .name(request.name().trim())
                 .category(category)
-                .catalogType(request.catalogType())
+                .catalogType(catalogType)
                 .inventoryGroup(trimToNull(request.inventoryGroup()))
                 .unit(request.unit() == null ? null : request.unit().name())
                 .costValue(request.costValue())
@@ -101,9 +118,10 @@ public class AssetCatalogItemService {
         if (hasChanged && assets.existsByCatalogItemId(id)) {
             throw new IllegalArgumentException("Không được thay đổi danh mục do đã có tài sản dùng danh mục này");
         }
+        CatalogType catalogType = requireMatchingCatalogType(category, request.catalogType());
         catalogItem.setName(request.name().trim());
         catalogItem.setCategory(category);
-        catalogItem.setCatalogType(request.catalogType());
+        catalogItem.setCatalogType(catalogType);
         catalogItem.setInventoryGroup(trimToNull(request.inventoryGroup()));
         catalogItem.setUnit(request.unit() == null ? null : request.unit().name());
         catalogItem.setCostValue(request.costValue());
@@ -151,5 +169,17 @@ public class AssetCatalogItemService {
 
     private String trimToNull(String value) {
         return value == null || value.isBlank() ? null : value.trim();
+    }
+
+    private CatalogType requireMatchingCatalogType(AssetCategory category, CatalogType requestedType) {
+        CatalogType expectedType = category.getAssetClass() == AssetClass.TOOL_EQUIPMENT
+                ? CatalogType.TOOL
+                : CatalogType.ASSET;
+        if (requestedType != expectedType) {
+            throw new IllegalArgumentException(
+                    "Kiểu danh mục phải phù hợp với nhóm quản lý của loại tài sản"
+            );
+        }
+        return expectedType;
     }
 }
