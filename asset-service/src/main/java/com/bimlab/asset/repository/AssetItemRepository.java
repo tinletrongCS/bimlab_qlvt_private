@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -25,4 +26,17 @@ public interface AssetItemRepository extends JpaRepository<AssetItem, Long> {
     boolean existsByCatalogItemId(Long catalogItemId);
     List<AssetItem> findByAssetCategoryId(Long categoryId);
     List<AssetItem> findByCatalogItemId(Long catalogItemId);
+
+    @Query("""
+            select asset.catalogItem.id as catalogItemId, count(asset.id) as assetCount
+            from AssetItem asset
+            where asset.catalogItem.id in :catalogItemIds
+            group by asset.catalogItem.id
+            """)
+    List<CatalogAssetCount> countByCatalogItemIds(@Param("catalogItemIds") Collection<Long> catalogItemIds);
+
+    interface CatalogAssetCount {
+        Long getCatalogItemId();
+        Long getAssetCount();
+    }
 }

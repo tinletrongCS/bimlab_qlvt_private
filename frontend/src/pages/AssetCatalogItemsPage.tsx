@@ -71,6 +71,11 @@ const TYPE_LABELS: Record<AssetCatalogType, string> = {
   PRODUCT_REFERENCE: "Sản phẩm tham chiếu",
 };
 
+const AVAILABILITY_LABELS = {
+  ACTIVE: "Có thể gán",
+  INACTIVE: "Ngừng gán",
+} as const;
+
 const UNIT_LABELS: Record<CatalogUnit, string> = {
   CAI: "Cái",
   CHIEC: "Chiếc",
@@ -141,8 +146,15 @@ export function AssetCatalogItemsPage() {
     setBusy(true);
     try {
       const item = await loadAssetCatalogItem(id);
+      const itemCategory = categories.find((category) => category.id === item.categoryId);
+      const nextForm = formFromDetail(item);
       setEditingId(id);
-      setForm(formFromDetail(item));
+      setForm({
+        ...nextForm,
+        catalogType: itemCategory
+          ? catalogTypeForAssetClass(itemCategory.assetClass)
+          : nextForm.catalogType,
+      });
       setModalOpen(true);
     } catch {
       toast.error("Không tải được chi tiết danh mục.");
@@ -191,14 +203,14 @@ export function AssetCatalogItemsPage() {
   };
 
   const deactivate = async (item: AssetCatalogItemListItem) => {
-    if (!window.confirm(`Ngưng hoạt động danh mục "${item.name}"?`)) return;
+    if (!window.confirm(`Ngừng cho phép gán danh mục "${item.name}" cho tài sản mới?`)) return;
     setBusy(true);
     try {
       await deactivateAssetCatalogItem(item.id);
       setItems(await loadAssetCatalogItems());
-      toast.success("Đã ngưng hoạt động danh mục.");
+      toast.success("Danh mục đã ngừng được phép gán cho tài sản mới.");
     } catch {
-      toast.error("Không thể ngưng hoạt động danh mục đang được sử dụng.");
+      toast.error("Không thể cập nhật khả dụng của danh mục.");
     } finally {
       setBusy(false);
     }
@@ -255,13 +267,13 @@ export function AssetCatalogItemsPage() {
           ))}
         </FilterSelect>
         <FilterSelect
-          label="Trạng thái"
+          label="Khả dụng"
           value={activeFilter}
           onChange={(value) => setActiveFilter(value as ActiveFilter)}
         >
-          <option value="ALL">Tất cả trạng thái</option>
-          <option value="ACTIVE">Đang hoạt động</option>
-          <option value="INACTIVE">Ngưng hoạt động</option>
+          <option value="ALL">Tất cả</option>
+          <option value="ACTIVE">Có thể gán</option>
+          <option value="INACTIVE">Ngừng gán</option>
         </FilterSelect>
       </div>
 
@@ -294,9 +306,20 @@ export function AssetCatalogItemsPage() {
             },
             { key: "unit", title: "Đơn vị tính", render: (item) => unitLabel(item.unit) },
             {
+              key: "assetCount",
+              title: "Số tài sản",
+              className: "catalog-col-asset-count",
+              render: (item) => item.assetCount ?? 0,
+            },
+            {
               key: "status",
-              title: "Trạng thái",
-              render: (item) => <StatusBadge value={item.active ? "ACTIVE" : "INACTIVE"} />,
+              title: "Khả dụng",
+              render: (item) => {
+                const availability = item.active ? "ACTIVE" : "INACTIVE";
+                return (
+                  <StatusBadge value={availability} label={AVAILABILITY_LABELS[availability]} />
+                );
+              },
             },
             {
               key: "actions",
@@ -306,11 +329,15 @@ export function AssetCatalogItemsPage() {
                 <OverflowActions
                   label={`Mở thao tác cho ${item.name}`}
                   actions={[
+                    {
+                      label: "Xem tài sản",
+                      onClick: () => openAssetsForCatalog(item),
+                    },
                     { label: "Sửa thông tin", onClick: () => void openEdit(item.id) },
                     ...(item.active
                       ? [
                           {
-                            label: "Ngưng hoạt động",
+                            label: "Ngừng cho phép gán",
                             danger: true,
                             onClick: () => void deactivate(item),
                           },
@@ -349,19 +376,12 @@ export function AssetCatalogItemsPage() {
                 onChange={(value) => setForm({ ...form, name: value })}
                 required
               />
-              <label>
-                <span>Kiểu danh mục *</span>
-                <SearchableSelect
-                  value={form.catalogType}
-                  onChange={(value) => setForm({ ...form, catalogType: value as AssetCatalogType })}
-                >
-                  {Object.entries(TYPE_LABELS).map(([value, label]) => (
-                    <option key={value} value={value}>
-                      {label}
-                    </option>
-                  ))}
-                </SearchableSelect>
-              </label>
+              <CatalogField
+                label="Kiểu danh mục"
+                value={TYPE_LABELS[form.catalogType]}
+                onChange={() => undefined}
+                disabled
+              />
               <CatalogField
                 label="Nhóm kiểm kê"
                 value={form.inventoryGroup}
@@ -416,7 +436,7 @@ export function AssetCatalogItemsPage() {
                   checked={form.active}
                   onChange={(event) => setForm({ ...form, active: event.target.checked })}
                 />
-                <span>Đang hoạt động</span>
+                <span>Cho phép gán danh mục này cho tài sản</span>
               </label>
             </div>
             <div className="catalog-modal-category">
@@ -431,6 +451,9 @@ export function AssetCatalogItemsPage() {
                     categoryId: id ?? null,
                     categoryName: name,
                     categoryCode: code || "",
+                    catalogType: catalogTypeForAssetClass(
+                      categories.find((category) => category.id === id)?.assetClass,
+                    ),
                   })
                 }
               />
@@ -526,6 +549,19 @@ function normalize(value: string): string {
     .toLocaleLowerCase("vi")
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "");
+}
+
+function catalogTypeForAssetClass(assetClass?: string): AssetCatalogType {
+  return assetClass === "TOOL_EQUIPMENT" ? "TOOL" : "ASSET";
+}
+
+function openAssetsForCatalog(item: AssetCatalogItemListItem) {
+  const params = new URLSearchParams({
+    catalogItemId: String(item.id),
+    catalogName: item.name,
+  });
+  window.history.pushState(null, "", `/assets?${params.toString()}`);
+  window.dispatchEvent(new PopStateEvent("popstate"));
 }
 
 function emptyToUndefined(value: string): string | undefined {

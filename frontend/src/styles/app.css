@@ -4409,6 +4409,22 @@ button:hover {
   width: 100%;
 }
 
+.asset-bulk-panel input {
+  background: #ffffff;
+  border: 1px solid #dbe3ef;
+  border-radius: 8px;
+  color: #111827;
+  font-size: 12px;
+  min-height: 34px;
+  padding: 7px 9px;
+  width: 100%;
+}
+
+.asset-bulk-panel input:disabled {
+  background: #eef2f7;
+  color: #64748b;
+}
+
 .asset-bulk-panel .primary-action {
   border-radius: 8px;
   align-self: end;
@@ -4436,6 +4452,10 @@ button:hover {
 .asset-bulk-form-row.compact {
   grid-template-columns: auto;
   justify-content: end;
+}
+
+.asset-bulk-form-row.catalog-create {
+  grid-template-columns: minmax(190px, 1fr) minmax(180px, 260px) auto;
 }
 
 @keyframes assetSelectionEnter {
@@ -7003,7 +7023,8 @@ tr[data-status="INVALID"] .asset-import-row-status {
   }
 
   .asset-bulk-form-row,
-  .asset-bulk-form-row.three {
+  .asset-bulk-form-row.three,
+  .asset-bulk-form-row.catalog-create {
     grid-template-columns: 1fr;
   }
 
@@ -7072,7 +7093,8 @@ tr[data-status="INVALID"] .asset-import-row-status {
 }
 
 .asset-bulk-form-row,
-.asset-bulk-form-row.three {
+.asset-bulk-form-row.three,
+.asset-bulk-form-row.catalog-create {
   gap: 8px;
 }
 
@@ -8407,6 +8429,11 @@ textarea,
 #root .asset-bulk-form-row,
 #root .asset-bulk-form-row.three {
   grid-template-columns: repeat(3, minmax(150px, 1fr));
+  gap: 5px !important;
+}
+
+#root .asset-bulk-form-row.catalog-create {
+  grid-template-columns: minmax(190px, 1fr) minmax(180px, 260px) auto;
   gap: 5px !important;
 }
 
@@ -10640,9 +10667,43 @@ textarea,
 
 #root .asset-list-summary {
   display: flex !important;
-  align-items: center !important;
+  align-items: flex-start !important;
+  flex-direction: column;
+  gap: 3px;
   min-width: 0;
   overflow: hidden;
+}
+
+#root .asset-catalog-filter-context {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
+  color: #15507f;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+#root .asset-catalog-filter-context button {
+  display: inline-grid;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #52677a;
+  cursor: pointer;
+  place-items: center;
+}
+
+#root .asset-catalog-filter-context button:hover {
+  color: #b42318;
+}
+
+#root .catalog-col-asset-count {
+  width: 96px;
+  text-align: center;
 }
 
 #root .asset-total-value-line {
@@ -15718,5 +15779,291 @@ button,
 @media (max-width: 760px) {
   #root .catalog-list-panel .table-wrap {
     min-height: 0;
+  }
+}
+
+@media (max-width: 1180px) {
+  #root .asset-bulk-form-row.catalog-create {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Selected asset actions stay next to the table instead of below the result set. */
+#root .asset-list-panel > .asset-selection-workspace {
+  align-items: center;
+  background: #f7f9fc;
+  border: 0 !important;
+  border-bottom: 1px solid #cbd5e1 !important;
+  display: grid;
+  gap: 12px !important;
+  grid-template-columns: minmax(180px, 0.7fr) minmax(0, 1.8fr);
+  margin: 0 !important;
+  min-height: 54px;
+  overflow: visible;
+  padding: 8px 10px !important;
+  position: relative;
+  z-index: 35;
+}
+
+#root .asset-list-panel > .asset-selection-workspace.is-empty {
+  display: none;
+}
+
+#root .asset-selection-summary {
+  min-width: 0;
+}
+
+#root .asset-selection-summary strong,
+#root .asset-selection-summary span {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#root .asset-selection-summary strong {
+  color: #172b43;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+#root .asset-selection-summary span {
+  color: #5d6b7b;
+  font-size: 11px;
+  margin-top: 2px;
+}
+
+#root .asset-list-panel > .asset-selection-workspace .asset-selection-actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px !important;
+  justify-content: flex-end;
+}
+
+#root .asset-list-panel > .asset-selection-workspace .asset-selection-actions button {
+  min-height: 32px;
+  white-space: nowrap;
+}
+
+#root .asset-list-panel > .asset-selection-workspace .asset-catalog-action {
+  background: #15507f;
+  border-color: #15507f;
+  color: #ffffff;
+}
+
+#root .asset-list-panel > .asset-selection-workspace .asset-clear-selection {
+  border-color: transparent;
+  background: transparent;
+}
+
+#root .asset-bulk-mobile-actions {
+  display: none;
+}
+
+#root .asset-bulk-modal {
+  max-height: calc(100vh - 32px);
+  overflow: visible;
+  width: min(660px, calc(100vw - 32px));
+}
+
+#root .asset-bulk-catalog-modal {
+  height: min(680px, calc(100vh - 32px));
+  width: min(960px, calc(100vw - 32px));
+}
+
+#root .asset-bulk-catalog-modal .asset-bulk-modal-body {
+  align-content: start;
+  flex: 1 1 auto;
+  overflow-y: auto;
+}
+
+#root .asset-bulk-modal .modal-head {
+  padding: 14px 18px !important;
+}
+
+#root .asset-bulk-modal .modal-actions {
+  padding: 12px 18px !important;
+}
+
+#root .asset-bulk-modal-body {
+  display: grid !important;
+  gap: 16px;
+  grid-template-columns: 1fr !important;
+  overflow: visible;
+  padding: 18px !important;
+}
+
+#root .asset-bulk-modal-body > label,
+#root .asset-bulk-catalog-fields label {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+#root .asset-bulk-modal-body label > span,
+#root .asset-bulk-catalog-fields label > span {
+  color: #43566b;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+#root .asset-bulk-modal-body input {
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #172b43;
+  min-height: 36px;
+  padding: 7px 9px !important;
+  width: 100%;
+}
+
+#root .asset-bulk-modal-body input:disabled {
+  background: #eef2f6 !important;
+  color: #5d6b7b;
+}
+
+#root .asset-bulk-context {
+  border-bottom: 1px solid #dbe3ec;
+  border-top: 1px solid #dbe3ec;
+  display: grid;
+  gap: 14px;
+  grid-template-columns: minmax(0, 1fr) 80px minmax(0, 1.2fr);
+  padding: 10px 0;
+}
+
+#root .asset-bulk-context > div {
+  min-width: 0;
+}
+
+#root .asset-bulk-context span,
+#root .asset-bulk-context strong {
+  display: block;
+}
+
+#root .asset-bulk-context span {
+  color: #687789;
+  font-size: 10.5px;
+}
+
+#root .asset-bulk-context strong {
+  color: #172b43;
+  font-size: 12px;
+  margin-top: 3px;
+  overflow-wrap: anywhere;
+}
+
+#root .asset-bulk-mode-tabs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  width: 100%;
+}
+
+#root .asset-bulk-mode-tabs button {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #43566b;
+  min-height: 36px;
+  padding: 7px 10px;
+}
+
+#root .asset-bulk-mode-tabs button + button {
+  border-left: 0;
+}
+
+#root .asset-bulk-mode-tabs button[aria-selected="true"] {
+  background: #eaf2f8;
+  border-color: #15507f;
+  color: #0f3f66;
+  font-weight: 700;
+}
+
+#root .asset-bulk-catalog-fields {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: 1fr;
+  min-height: 68px;
+}
+
+#root .asset-bulk-catalog-fields[hidden],
+#root .asset-bulk-modal .modal-actions button[hidden] {
+  display: none !important;
+}
+
+#root .asset-bulk-catalog-fields.new-catalog {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+#root .asset-bulk-empty-note {
+  color: #687789;
+  font-size: 11px;
+}
+
+#root .asset-bulk-modal .asset-bulk-panel-warning {
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  color: #9a4d0b;
+  font-size: 12px;
+  padding: 9px 10px;
+}
+
+#root .asset-bulk-catalog-modal .searchable-select-container {
+  width: 100%;
+  z-index: 50;
+}
+
+#root .asset-bulk-catalog-modal .searchable-select-dropdown {
+  max-height: 260px;
+  z-index: 5000;
+}
+
+@media (max-width: 900px) {
+  #root .asset-list-panel > .asset-selection-workspace {
+    grid-template-columns: minmax(160px, 1fr) auto;
+  }
+
+  #root .asset-bulk-desktop-actions .asset-bulk-optional-action {
+    display: none;
+  }
+
+  #root .asset-bulk-mobile-actions {
+    display: grid;
+    gap: 4px;
+    grid-column: 1 / -1;
+    grid-template-columns: auto minmax(180px, 1fr);
+  }
+}
+
+@media (max-width: 620px) {
+  #root .asset-list-panel > .asset-selection-workspace {
+    grid-template-columns: 1fr;
+  }
+
+  #root .asset-list-panel > .asset-selection-workspace .asset-selection-actions {
+    justify-content: flex-start;
+  }
+
+  #root .asset-bulk-mobile-actions {
+    grid-template-columns: 1fr;
+  }
+
+  #root .asset-bulk-mobile-actions > span {
+    display: none;
+  }
+
+  #root .asset-bulk-context,
+  #root .asset-bulk-catalog-fields.new-catalog {
+    grid-template-columns: 1fr;
+  }
+
+  #root .asset-bulk-modal {
+    height: auto;
+    max-height: calc(100vh - 16px);
+    min-height: 0;
+    overflow: hidden;
+    width: calc(100vw - 16px);
+  }
+
+  #root .asset-bulk-modal-body {
+    overflow-y: auto;
   }
 }

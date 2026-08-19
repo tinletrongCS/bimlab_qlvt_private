@@ -94,6 +94,7 @@ export interface AssetCatalogItemListItem {
   categoryName: string;
   unit?: string;
   active: boolean;
+  assetCount?: number;
 }
 
 export interface AssetCatalogItemDetail extends AssetCatalogItemListItem {
