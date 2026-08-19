@@ -19,88 +19,107 @@ vi.mock("../lib/categoryExcel", async (importOriginal) => ({
   parseCategoryReferenceSheet: categoryExcelMocks.parse,
 }));
 
-const { asset, categories, categoryTree, employee, permissions, vendor } = vi.hoisted(() => {
-  const permissions = [
-    "asset_access",
-    "asset_manage",
-    "vendor_manage",
-    "subscription_manage",
-    "purchase_request_create",
-    "purchase_request_approve",
-    "contract_manage",
-    "maintenance_manage",
-    "asset_report_view",
-  ] as const;
+const { asset, categories, categoryTree, catalogItems, employee, permissions, vendor } = vi.hoisted(
+  () => {
+    const permissions = [
+      "asset_access",
+      "asset_manage",
+      "vendor_manage",
+      "subscription_manage",
+      "purchase_request_create",
+      "purchase_request_approve",
+      "contract_manage",
+      "maintenance_manage",
+      "asset_report_view",
+    ] as const;
 
-  const vendor = {
-    id: 1,
-    name: "Công ty Thiết bị BIM",
-    taxCode: "0101001001",
-    contactName: "Nguyễn Vendor",
-    email: "vendor@bimlab.test",
-    phone: "0900000001",
-    website: "vendor.bimlab.test",
-    status: "ACTIVE",
-  };
-
-  const asset = {
-    id: 1,
-    assetCode: "TS-001",
-    name: "Laptop Dell Precision",
-    category: "Thiết bị",
-    serialNumber: "SN001",
-    source: "PURCHASE",
-    vendor,
-    assignedEmployeeId: 1,
-    departmentId: 1,
-    siteId: 1,
-    projectId: 1,
-    purchaseCost: 35_000_000,
-    originalCost: 35_000_000,
-    bookValue: 30_000_000,
-    residualValue: 5_000_000,
-    status: "ASSIGNED",
-  };
-
-  const categories = [
-    {
+    const vendor = {
       id: 1,
-      code: "TB",
-      name: "Thiết bị",
-      assetClass: "FIXED_ASSET",
-      parentId: null,
-      description: "Nhóm thiết bị",
-      active: true,
-    },
-    {
-      id: 2,
-      code: "LAP",
-      name: "Laptop",
-      assetClass: "FIXED_ASSET",
-      parentId: 1,
-      description: "Máy tính xách tay",
-      active: true,
-    },
-  ];
+      name: "Công ty Thiết bị BIM",
+      taxCode: "0101001001",
+      contactName: "Nguyễn Vendor",
+      email: "vendor@bimlab.test",
+      phone: "0900000001",
+      website: "vendor.bimlab.test",
+      status: "ACTIVE",
+    };
 
-  const categoryTree = [
-    {
-      ...categories[0],
-      children: [{ ...categories[1], children: [] }],
-    },
-  ];
+    const asset = {
+      id: 1,
+      assetCode: "TS-001",
+      name: "Laptop Dell Precision",
+      category: "Thiết bị",
+      catalogItem: {
+        id: 1,
+        itemCode: "CAT-001",
+        name: "Laptop Dell Precision",
+      },
+      serialNumber: "SN001",
+      source: "PURCHASE",
+      vendor,
+      assignedEmployeeId: 1,
+      departmentId: 1,
+      siteId: 1,
+      projectId: 1,
+      purchaseCost: 35_000_000,
+      originalCost: 35_000_000,
+      bookValue: 30_000_000,
+      residualValue: 5_000_000,
+      status: "ASSIGNED",
+    };
 
-  const employee = {
-    id: 1,
-    fullName: "Nguyễn Văn A",
-    employeeCode: "E001",
-    departmentId: 1,
-    departmentName: "BIM",
-    positionName: "HR",
-  };
+    const catalogItems = [
+      {
+        id: 1,
+        itemCode: "CAT-001",
+        name: "Laptop Dell Precision",
+        catalogType: "ASSET" as const,
+        categoryId: 1,
+        categoryCode: "TB",
+        categoryName: "Thiết bị",
+      },
+    ];
 
-  return { asset, categories, categoryTree, employee, permissions, vendor };
-});
+    const categories = [
+      {
+        id: 1,
+        code: "TB",
+        name: "Thiết bị",
+        assetClass: "FIXED_ASSET",
+        parentId: null,
+        description: "Nhóm thiết bị",
+        active: true,
+      },
+      {
+        id: 2,
+        code: "LAP",
+        name: "Laptop",
+        assetClass: "FIXED_ASSET",
+        parentId: 1,
+        description: "Máy tính xách tay",
+        active: true,
+      },
+    ];
+
+    const categoryTree = [
+      {
+        ...categories[0],
+        children: [{ ...categories[1], children: [] }],
+      },
+    ];
+
+    const employee = {
+      id: 1,
+      fullName: "Nguyễn Văn A",
+      employeeCode: "E001",
+      departmentId: 1,
+      departmentName: "BIM",
+      positionName: "HR",
+    };
+
+    return { asset, categories, categoryTree, catalogItems, employee, permissions, vendor };
+  },
+);
 
 vi.mock("../auth/oidc", () => ({
   consumeLoginReturnUrl: vi.fn(() => null),
@@ -266,6 +285,7 @@ vi.mock("../services/api", () => ({
   ]),
   loadProjects: vi.fn().mockResolvedValue([{ id: 1, name: "Dự án Alpha", code: "ALPHA" }]),
   loadAssetCategories: vi.fn().mockResolvedValue(categories),
+  loadAssetCatalogItems: vi.fn().mockResolvedValue(catalogItems),
   loadAssetCategoryTree: vi.fn().mockResolvedValue(categoryTree),
   loadAssetBookings: vi.fn().mockResolvedValue([
     {
@@ -526,6 +546,13 @@ describe("QLVT pages", () => {
     // Open asset picker
     await user.click(screen.getByRole("button", { name: /Thêm tài sản/ }));
     expect(await screen.findByText("Bộ chọn tài sản khả dụng")).toBeVisible();
+
+    // Filter by catalog item
+    chooseSearchableOption(
+      screen.getByPlaceholderText(/Tất cả catalog item/),
+      /CAT-001 · Laptop Dell Precision/,
+    );
+    expect(screen.getByText("TS-001")).toBeVisible();
 
     // Search filter
     const searchInput = screen.getByPlaceholderText("Nhập mã hoặc tên tài sản...");

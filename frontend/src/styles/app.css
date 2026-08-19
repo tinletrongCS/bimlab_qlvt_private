@@ -16118,6 +16118,21 @@ button,
   }
 }
 
+.transfer-asset-picker-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.transfer-asset-picker-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
 .transfer-asset-picker-filters {
   display: grid;
   grid-template-columns: minmax(220px, 1fr) minmax(240px, 1.2fr) auto;

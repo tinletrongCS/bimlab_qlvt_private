@@ -11,11 +11,11 @@ import {
   cancelTransfer,
   createTransfer,
   downloadTransferDocument,
-  loadAssetCategories,
+  loadAssetCatalogItems,
   rejectTransfer,
   uploadTransferDocument,
 } from "../services/api";
-import type { AssetCategory, AssetItem, AssetTransfer, EmployeeLite } from "../services/types";
+import type { AssetCatalogItemListItem, AssetTransfer, EmployeeLite } from "../services/types";
 
 const DEFAULT_SITE_VALUE = "BIMLAB";
 
@@ -75,24 +75,24 @@ function highlightTransferText(value: string, query: string) {
 function formatTransferDate(value?: string): string {
   return value
     ? new Date(`${value}T00:00:00`).toLocaleDateString("vi-VN", {
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-      })
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    })
     : "--";
 }
 
 function formatTransferDateTime(value?: string): string {
   return value
     ? new Date(value).toLocaleString("vi-VN", {
-        hour12: false,
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-      })
+      hour12: false,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    })
     : "--";
 }
 
@@ -228,12 +228,12 @@ export function TransfersPage() {
 
   // Asset picker state
   const [showAssetPicker, setShowAssetPicker] = useState(false);
-  const [pickerCategoryFilter, setPickerCategoryFilter] = useState("");
+  const [pickerCatalogFilter, setPickerCatalogFilter] = useState("");
   const [pickerSearchQuery, setPickerSearchQuery] = useState("");
   const [pickerTempSelected, setPickerTempSelected] = useState<Set<number>>(new Set());
   const [pickerPage, setPickerPage] = useState(1);
   const [pickerPageSize, setPickerPageSize] = useState(10);
-  const [categories, setCategories] = useState<AssetCategory[]>([]);
+  const [catalogItems, setCatalogItems] = useState<AssetCatalogItemListItem[]>([]);
 
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -279,12 +279,12 @@ export function TransfersPage() {
   useEffect(() => setAssetPage(1), [selectedAssetIds]);
 
   useEffect(() => {
-    if (showAssetPicker && categories.length === 0) {
-      loadAssetCategories()
-        .then((cats) => setCategories(cats))
-        .catch((err) => console.error("Failed to load asset categories:", err));
+    if (showAssetPicker && catalogItems.length === 0) {
+      loadAssetCatalogItems()
+        .then((items) => setCatalogItems(items))
+        .catch((err) => console.error("Failed to load catalog items:", err));
     }
-  }, [showAssetPicker, categories.length]);
+  }, [showAssetPicker, catalogItems.length]);
 
   const resetForm = () => {
     setTransferType("Bàn giao");
@@ -298,7 +298,7 @@ export function TransfersPage() {
     setSelectedAssetIds([]);
     setSelectedFiles([]);
     setShowAssetPicker(false);
-    setPickerCategoryFilter("");
+    setPickerCatalogFilter("");
     setPickerSearchQuery("");
     setPickerTempSelected(new Set());
     setPickerPage(1);
@@ -405,21 +405,12 @@ export function TransfersPage() {
     return assets.filter((asset) => !pendingAssetIds.has(asset.id));
   }, [assets, transfers]);
 
-  const getAssetCategoryLabel = (asset: AssetItem) => {
-    return asset.assetCategory?.name || asset.category || asset.catalogItem?.category?.name || "--";
-  };
-
   const filteredPickerAssets = useMemo(() => {
     return availableAssets.filter((asset) => {
-      // Filter by category
-      if (pickerCategoryFilter) {
-        const catId = Number(pickerCategoryFilter);
-        const assetCatId = asset.assetCategory?.id ?? asset.catalogItem?.category?.id;
-        const assetCatName =
-          asset.assetCategory?.name || asset.category || asset.catalogItem?.category?.name;
-        const isMatchId = !Number.isNaN(catId) && assetCatId === catId;
-        const isMatchName = assetCatName === pickerCategoryFilter;
-        if (!isMatchId && !isMatchName) return false;
+      // Filter by catalog item
+      if (pickerCatalogFilter) {
+        const catalogId = Number(pickerCatalogFilter);
+        if (asset.catalogItem?.id !== catalogId) return false;
       }
       // Filter by search query
       if (pickerSearchQuery.trim()) {
@@ -430,7 +421,7 @@ export function TransfersPage() {
       }
       return true;
     });
-  }, [availableAssets, pickerCategoryFilter, pickerSearchQuery]);
+  }, [availableAssets, pickerCatalogFilter, pickerSearchQuery]);
 
   const pickerPageCount = Math.max(1, Math.ceil(filteredPickerAssets.length / pickerPageSize));
   const safePickerPage = Math.min(pickerPage, pickerPageCount);
@@ -441,7 +432,7 @@ export function TransfersPage() {
 
   useEffect(() => {
     setPickerPage(1);
-  }, [pickerCategoryFilter, pickerSearchQuery]);
+  }, [pickerCatalogFilter, pickerSearchQuery]);
 
   const isAllCurrentPageSelected =
     pagedPickerAssets.length > 0 && pagedPickerAssets.every((a) => pickerTempSelected.has(a.id));
@@ -480,6 +471,14 @@ export function TransfersPage() {
   const handleOpenPicker = () => {
     setPickerTempSelected(new Set(selectedAssetIds));
     setShowAssetPicker(true);
+    setPickerCatalogFilter("");
+    setPickerSearchQuery("");
+    setPickerPage(1);
+    if (catalogItems.length === 0) {
+      loadAssetCatalogItems()
+        .then((items) => setCatalogItems(items))
+        .catch((err) => console.error("Failed to load catalog items:", err));
+    }
   };
 
   const handleConfirmPickerSelection = () => {
@@ -806,7 +805,7 @@ export function TransfersPage() {
                       </td>
                       <td>
                         {transfer.transferType === "REVOKE" ||
-                        transfer.transferType === "Thu hồi" ? (
+                          transfer.transferType === "Thu hồi" ? (
                           <span>Thu hồi về kho, gỡ toàn bộ thông tin gán</span>
                         ) : (
                           <>
@@ -1170,8 +1169,8 @@ export function TransfersPage() {
                   const normalizedSearch = pendingSearch.trim().toLowerCase();
                   const summaryText =
                     normalizedSearch &&
-                    !title.toLowerCase().includes(normalizedSearch) &&
-                    ticket.reason.toLowerCase().includes(normalizedSearch)
+                      !title.toLowerCase().includes(normalizedSearch) &&
+                      ticket.reason.toLowerCase().includes(normalizedSearch)
                       ? ticket.reason
                       : title || ticket.reason || "--";
                   return (
@@ -1757,6 +1756,7 @@ export function TransfersPage() {
                   }}
                 >
                   <div
+                    className="transfer-asset-picker-header"
                     style={{
                       display: "flex",
                       justifyContent: "space-between",
@@ -1784,7 +1784,10 @@ export function TransfersPage() {
                       </span>
                     </div>
 
-                    <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                    <div
+                      className="transfer-asset-picker-actions"
+                      style={{ display: "flex", gap: "8px", alignItems: "center" }}
+                    >
                       <span style={{ fontSize: "13px", color: "#475569" }}>
                         Đã tick:{" "}
                         <strong style={{ color: "#2563eb" }}>{pickerTempSelected.size}</strong>
@@ -1829,7 +1832,7 @@ export function TransfersPage() {
                       alignItems: "flex-end",
                     }}
                   >
-                    {/* Category filter */}
+                    {/* Catalog item filter */}
                     <div>
                       <label
                         style={{
@@ -1840,17 +1843,17 @@ export function TransfersPage() {
                           display: "block",
                         }}
                       >
-                        Lọc theo danh mục
+                        Lọc theo Danh mục (Catalog)
                       </label>
                       <SearchableSelect
-                        value={pickerCategoryFilter}
-                        placeholder="Tất cả danh mục"
-                        onChange={(val) => setPickerCategoryFilter(val)}
+                        value={pickerCatalogFilter}
+                        placeholder="Tất cả catalog item"
+                        onChange={(val) => setPickerCatalogFilter(val)}
                       >
-                        <option value="">-- Tất cả danh mục --</option>
-                        {categories.map((c) => (
+                        <option value="">-- Tất cả catalog item --</option>
+                        {catalogItems.map((c) => (
                           <option key={c.id} value={String(c.id)}>
-                            {c.code} · {c.name}
+                            {c.itemCode} · {c.name}
                           </option>
                         ))}
                       </SearchableSelect>
@@ -2035,7 +2038,7 @@ export function TransfersPage() {
                               width: "160px",
                             }}
                           >
-                            Danh mục
+                            Catalog Item
                           </th>
                           <th
                             style={{
@@ -2149,7 +2152,9 @@ export function TransfersPage() {
                                       fontSize: "11px",
                                     }}
                                   >
-                                    {getAssetCategoryLabel(asset)}
+                                    {asset.catalogItem
+                                      ? `${asset.catalogItem.itemCode} · ${asset.catalogItem.name}`
+                                      : "--"}
                                   </span>
                                 </td>
                                 <td style={{ padding: "8px 12px", fontSize: "12px" }}>
