@@ -12,6 +12,7 @@ const mocks = vi.hoisted(() => ({
   checkInAssetBooking: vi.fn(),
   checkOutAssetBooking: vi.fn(),
   commitAssetImport: vi.fn(),
+  createAssetCatalogItem: vi.fn(),
   deleteAsset: vi.fn(),
   ensureAssetDetailLookups: vi.fn(),
   ensureAssets: vi.fn(),
@@ -270,6 +271,7 @@ vi.mock("../services/api", () => ({
   checkInAssetBooking: mocks.checkInAssetBooking,
   checkOutAssetBooking: mocks.checkOutAssetBooking,
   commitAssetImport: mocks.commitAssetImport,
+  createAssetCatalogItem: mocks.createAssetCatalogItem,
   createAssetBooking: mocks.createAssetBooking,
   deleteAsset: mocks.deleteAsset,
   loadAssetBookings: mocks.loadAssetBookings,
@@ -335,6 +337,16 @@ describe("QLVT asset and booking workflow coverage", () => {
       },
     ]);
     mocks.assignAssetCatalog.mockResolvedValue(undefined);
+    mocks.createAssetCatalogItem.mockResolvedValue({
+      id: 4,
+      itemCode: "CATALOG-0004",
+      name: "Phòng họp Apollo",
+      catalogType: "TOOL",
+      categoryId: 3,
+      categoryCode: "ROOM",
+      categoryName: "Phòng họp",
+      active: true,
+    });
     mocks.loadAssetChangeHistory.mockResolvedValue([
       {
         id: 1,
@@ -418,9 +430,21 @@ describe("QLVT asset and booking workflow coverage", () => {
       within(detailModal as HTMLElement).getByLabelText("Phương pháp khấu hao"),
     ).toHaveDisplayValue("Tuyến tính");
     await waitFor(() => expect(mocks.loadAssetCatalogItems).toHaveBeenCalled());
-    expect(within(detailModal as HTMLElement).getByLabelText("Danh mục")).toHaveDisplayValue(
-      "MON-LG-27 - Laptop - LAP",
-    );
+    const detailCatalog = within(detailModal as HTMLElement).getByLabelText("Danh mục");
+    expect(detailCatalog).toHaveDisplayValue("MON-LG-27 - Laptop - LAP");
+    const detailCatalogNative = detailCatalog.closest("label")?.querySelector("select");
+    expect(detailCatalogNative).not.toBeNull();
+    expect(
+      within(detailCatalogNative as HTMLSelectElement).queryByRole("option", {
+        name: "Chưa gắn danh mục",
+      }),
+    ).not.toBeInTheDocument();
+    expect(
+      within(detailCatalogNative as HTMLSelectElement).queryByRole("option", {
+        name: "ROOM-ALT - Phòng họp - ROOM",
+      }),
+    ).not.toBeInTheDocument();
+    chooseSearchableOption(detailCatalog, "LAP-ALT - Laptop - LAP");
     await user.click(within(detailModal as HTMLElement).getByRole("tab", { name: /Lịch sử/i }));
     expect(await within(detailModal as HTMLElement).findByText("31/07/2026")).toBeVisible();
     expect(
@@ -473,6 +497,7 @@ describe("QLVT asset and booking workflow coverage", () => {
         1,
         expect.objectContaining({
           name: "Laptop Dell Precision 7780",
+          catalogItemId: 2,
           manufactureYear: 2026,
           technicalDescription: "<strong>Core i9</strong>",
         }),
@@ -581,6 +606,37 @@ describe("QLVT asset and booking workflow coverage", () => {
     expect(within(catalogModal).getByText("Phòng họp Apollo")).toBeVisible();
     expect(within(catalogModal).getAllByText("MON-LG-27 - Laptop - LAP").length).toBeGreaterThan(0);
     expect(within(catalogModal).getByText("Chưa gắn danh mục")).toBeVisible();
+  });
+
+  it("creates a catalog for selected assets that do not have one", async () => {
+    const user = userEvent.setup();
+    appAssets = [roomAsset];
+    render(<AssetsPage />);
+    await screen.findByRole("heading", { name: "Danh sách tài sản" });
+    await user.click(screen.getByRole("button", { name: "Chọn nhiều" }));
+    fireEvent.click(screen.getByTitle("Chọn ROOM-01").querySelector("input") as HTMLInputElement);
+    const bulkActionSelect = screen
+      .getAllByLabelText(/Thao tác/i)
+      .find((element) => element.getAttribute("role") === "combobox") as HTMLElement;
+    chooseSearchableOption(bulkActionSelect, "Gán danh mục");
+
+    const catalogModal = screen.getByRole("dialog", { name: "Tạo hoặc gán danh mục" });
+    await user.click(within(catalogModal).getByRole("tab", { name: "Tạo danh mục mới" }));
+    const catalogName = within(catalogModal).getByLabelText("Tên danh mục mới");
+    await user.clear(catalogName);
+    await user.type(catalogName, "Phòng họp Apollo mới");
+    await user.click(within(catalogModal).getByRole("button", { name: "Tạo và gán danh mục" }));
+
+    await waitFor(() =>
+      expect(mocks.createAssetCatalogItem).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: "Phòng họp Apollo mới",
+          categoryId: 3,
+          catalogType: "TOOL",
+        }),
+      ),
+    );
+    expect(mocks.assignAssetCatalog).toHaveBeenCalledWith({ assetIds: [2], catalogItemId: 4 });
   });
 
   it("reports bulk update and delete failures", async () => {

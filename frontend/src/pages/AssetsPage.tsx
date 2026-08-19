@@ -2314,7 +2314,6 @@ export function AssetsPage() {
     }
   };
 
-  /* v8 ignore start -- exercised through the bulk catalog integration flow */
   const handleBulkCreateAndAssignCatalog = async () => {
     if (catalogAssignmentDisabled || !selectedAssetCategory) return;
     if (selectedAssetsHaveCatalog) {
@@ -2352,7 +2351,6 @@ export function AssetsPage() {
       setBulkActionBusy(false);
     }
   };
-  /* v8 ignore stop */
 
   const handleBulkMoveAssets = async () => {
     if (!bulkSiteId && !bulkDepartmentId && !bulkEmployeeId) {
@@ -3752,7 +3750,9 @@ export function AssetsPage() {
                           updateAssetDraft("catalogItemId", value ? Number(value) : null)
                         }
                         options={[
-                          { value: "", label: "Chưa gắn danh mục" },
+                          ...(selectedAsset.catalogItem
+                            ? []
+                            : [{ value: "", label: "Chưa gắn danh mục" }]),
                           ...(catalogItems || [])
                             .filter(
                               (item) =>

@@ -4,6 +4,7 @@ package com.bimlab.asset.service;
 import com.bimlab.asset.dto.request.AssetImportCommitRequest;
 import com.bimlab.asset.dto.request.AssetImportRowRequest;
 import com.bimlab.asset.dto.request.AssetImportValidateRequest;
+import com.bimlab.asset.dto.request.AssetCatalogAssignmentRequest;
 import com.bimlab.asset.dto.request.AssetRequest;
 import com.bimlab.asset.dto.request.DisposeAssetRequest;
 import com.bimlab.asset.dto.response.AssetImportCommitResponse;
@@ -11,6 +12,7 @@ import com.bimlab.asset.dto.response.AssetImportMessageResponse;
 import com.bimlab.asset.dto.response.AssetImportValidationResponse;
 import com.bimlab.asset.dto.response.DepreciationSnapshot;
 import com.bimlab.asset.dto.response.UtilizationReportResponse;
+import com.bimlab.asset.entity.AssetCatalogItem;
 import com.bimlab.asset.entity.AssetCategory;
 import com.bimlab.asset.entity.AssetCodeSequence;
 import com.bimlab.asset.entity.AssetItem;
@@ -341,6 +343,80 @@ class AssetServiceTest {
     }
 
     @Test
+    void assignCatalog_assignsDistinctAssetsWithSameNameAndCategory() {
+        AssetCatalogItem catalogItem = catalogItem(100L, laptopCategory, true);
+        AssetItem first = asset(1L, "Laptop X", laptopCategory, null);
+        AssetItem second = asset(2L, " laptop x ", laptopCategory, null);
+        when(catalogItems.findById(100L)).thenReturn(Optional.of(catalogItem));
+        when(assets.findAllById(List.of(1L, 2L))).thenReturn(List.of(first, second));
+
+        service.assignCatalog(new AssetCatalogAssignmentRequest(List.of(1L, 2L, 2L), 100L));
+
+        assertEquals(catalogItem, first.getCatalogItem());
+        assertEquals(catalogItem, second.getCatalogItem());
+        verify(assets).saveAll(List.of(first, second));
+    }
+
+    @Test
+    void assignCatalog_rejectsDifferentAssetCategory() {
+        AssetCatalogItem catalogItem = catalogItem(100L, laptopCategory, true);
+        AssetCategory monitorCategory = AssetCategory.builder()
+                .id(11L).code("MON").name("Màn hình").active(true).build();
+        AssetItem monitor = asset(1L, "Màn hình LG", monitorCategory, null);
+        when(catalogItems.findById(100L)).thenReturn(Optional.of(catalogItem));
+        when(assets.findAllById(List.of(1L))).thenReturn(List.of(monitor));
+
+        assertThrows(IllegalArgumentException.class, () -> service.assignCatalog(
+                new AssetCatalogAssignmentRequest(List.of(1L), 100L)
+        ));
+        verify(assets, never()).saveAll(any());
+    }
+
+    @Test
+    void assignCatalog_rejectsDifferentAssetNames() {
+        AssetCatalogItem catalogItem = catalogItem(100L, laptopCategory, true);
+        AssetItem first = asset(1L, "Laptop X", laptopCategory, null);
+        AssetItem second = asset(2L, "Laptop Y", laptopCategory, null);
+        when(catalogItems.findById(100L)).thenReturn(Optional.of(catalogItem));
+        when(assets.findAllById(List.of(1L, 2L))).thenReturn(List.of(first, second));
+
+        assertThrows(IllegalArgumentException.class, () -> service.assignCatalog(
+                new AssetCatalogAssignmentRequest(List.of(1L, 2L), 100L)
+        ));
+        verify(assets, never()).saveAll(any());
+    }
+
+    @Test
+    void assignCatalog_rejectsInactiveCatalogAndMissingAssets() {
+        AssetCatalogItem inactiveCatalog = catalogItem(100L, laptopCategory, false);
+        when(catalogItems.findById(100L)).thenReturn(Optional.of(inactiveCatalog));
+        assertThrows(IllegalArgumentException.class, () -> service.assignCatalog(
+                new AssetCatalogAssignmentRequest(List.of(1L), 100L)
+        ));
+
+        AssetCatalogItem activeCatalog = catalogItem(101L, laptopCategory, true);
+        when(catalogItems.findById(101L)).thenReturn(Optional.of(activeCatalog));
+        when(assets.findAllById(List.of(1L, 2L))).thenReturn(List.of(asset(1L, "Laptop X", laptopCategory, null)));
+        assertThrows(NoSuchElementException.class, () -> service.assignCatalog(
+                new AssetCatalogAssignmentRequest(List.of(1L, 2L), 101L)
+        ));
+        verify(assets, never()).saveAll(any());
+    }
+
+    @Test
+    void updateAsset_rejectsRemovingAnExistingCatalog() {
+        AssetCatalogItem currentCatalog = catalogItem(100L, laptopCategory, true);
+        AssetItem item = asset(1L, "Laptop X", laptopCategory, currentCatalog);
+        item.setAssetCode("A-1");
+        when(assets.findById(1L)).thenReturn(Optional.of(item));
+
+        assertThrows(IllegalArgumentException.class, () -> service.updateAsset(
+                1L, updateRequest(null, laptopCategory.getId())
+        ));
+        verify(assets, never()).save(any());
+    }
+
+    @Test
     void disposeAsset_setsStatusAndUnassigns() {
         AssetItem item = AssetItem.builder()
                 .id(1L).assetCode("A1").name("Laptop").category("IT")
@@ -522,5 +598,42 @@ class AssetServiceTest {
 
     private boolean hasCode(List<AssetImportMessageResponse> messages, String code) {
         return messages.stream().anyMatch(message -> code.equals(message.code()));
+    }
+
+    private AssetCatalogItem catalogItem(Long id, AssetCategory category, boolean active) {
+        return AssetCatalogItem.builder()
+                .id(id)
+                .itemCode("CAT-" + id)
+                .name("Danh mục Laptop")
+                .category(category)
+                .active(active)
+                .build();
+    }
+
+    private AssetItem asset(
+            Long id,
+            String name,
+            AssetCategory category,
+            AssetCatalogItem catalogItem
+    ) {
+        return AssetItem.builder()
+                .id(id)
+                .assetCode("A-" + id)
+                .name(name)
+                .assetCategory(category)
+                .catalogItem(catalogItem)
+                .build();
+    }
+
+    private AssetRequest updateRequest(Long catalogItemId, Long categoryId) {
+        return new AssetRequest(
+                "A-1", "Laptop X", "Laptop", null, null,
+                null, null, null, null, null,
+                null, null, null, null, "IN_STOCK",
+                "NONE", null, null,
+                catalogItemId, categoryId, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null,
+                null, null, null, null
+        );
     }
 }
