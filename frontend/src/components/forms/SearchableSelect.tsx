@@ -82,6 +82,7 @@ export function SearchableSelect({
 
   const selectedOption = mergedOptions.find((o) => String(o.value) === String(value));
   const displayValue = open ? search : selectedOption ? selectedOption.label : "";
+  const displayTitle = displayValue || selectedOption?.label || placeholder;
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -147,6 +148,7 @@ export function SearchableSelect({
           <div
             key={o.value}
             className={`searchable-select-option ${String(o.value) === String(value) ? "selected" : ""}`}
+            title={o.label || "Không chọn"}
             onMouseDown={(e) => {
               e.stopPropagation();
               e.preventDefault();
@@ -207,6 +209,7 @@ export function SearchableSelect({
           }}
           disabled={disabled}
           placeholder={selectedOption ? selectedOption.label : placeholder}
+          title={displayTitle}
         />
         <FiChevronDown className={`searchable-select-icon${open ? " rotated" : ""}`} />
       </div>
