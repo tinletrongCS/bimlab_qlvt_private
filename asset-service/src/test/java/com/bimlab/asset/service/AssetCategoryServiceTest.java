@@ -11,6 +11,7 @@ import com.bimlab.asset.entity.AssetItem;
 import com.bimlab.asset.entity.status.AssetClass;
 import com.bimlab.asset.repository.AssetCatalogItemRepository;
 import com.bimlab.asset.repository.AssetCategoryRepository;
+import com.bimlab.asset.repository.AssetCodeSequenceRepository;
 import com.bimlab.asset.repository.AssetItemRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -36,7 +37,8 @@ class AssetCategoryServiceTest {
     @Mock AssetCategoryRepository categories;
     @Mock AssetItemRepository assets;
     @Mock AssetCatalogItemRepository catalogItems;
-
+    @Mock
+    AssetCodeSequenceRepository assetCodeSequences;
     @InjectMocks AssetCategoryService service;
 
     @Test
@@ -175,7 +177,7 @@ class AssetCategoryServiceTest {
         when(catalogItems.existsByCategoryId(1L)).thenReturn(false);
 
         service.deleteCategory(1L);
-
+        verify(assetCodeSequences).deleteById(1L);
         verify(categories).delete(category);
     }
 

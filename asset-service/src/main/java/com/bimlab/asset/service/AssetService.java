@@ -237,7 +237,7 @@ public class AssetService {
             errors.add(message("name", "REQUIRED", "Tên tài sản không được để trống"));
         }
         if (isBlank(row.categoryCode())) {
-            errors.add(message("categoryCode", "REQUIRED", "Mã danh mục không được để trống"));
+            errors.add(message("categoryCode", "REQUIRED", "Mã loại không được để trống"));
         }
         if (isBlank(row.assetClass())) {
             errors.add(message("assetClass", "REQUIRED", "Phân loại tài sản không được để trống"));
@@ -256,13 +256,13 @@ public class AssetService {
         AssetCategory category = resolveCategory(row.categoryCode(), errors);
         if (category != null) {
             if (Boolean.FALSE.equals(category.getActive())) {
-                errors.add(message("categoryCode", "CATEGORY_INACTIVE", "Danh mục tài sản đang ngưng sử dụng"));
+                errors.add(message("categoryCode", "CATEGORY_INACTIVE", "Loại tài sản tài sản đang ngưng sử dụng"));
             }
             if (assetCategories.existsByParentId(category.getId())) {
-                errors.add(message("categoryCode", "CATEGORY_NOT_LEAF", "Chỉ được import vào danh mục cụ thể"));
+                errors.add(message("categoryCode", "CATEGORY_NOT_LEAF", "Cần được gán vào danh mục cấp 4"));
             }
             if (assetClass != null && category.getAssetClass() != assetClass) {
-                errors.add(message("assetClass", "ASSET_CLASS_MISMATCH", "Phân loại tài sản không khớp với danh mục"));
+                errors.add(message("assetClass", "ASSET_CLASS_MISMATCH", "Phân loại tài sản không khớp với phân loại gốc"));
             }
             validateCategoryBranch(row, category, assetClass, errors);
         }
@@ -311,7 +311,7 @@ public class AssetService {
             errors.add(message("classType", "INVALID_FIXED_ASSET_TYPE", "Loại tài sản cố định phải là Hữu hình hoặc Vô hình"));
         }
         if (assetClass == AssetClass.TOOL_EQUIPMENT && parseToolUsageType(row.classType()) == null) {
-            errors.add(message("classType", "INVALID_TOOL_USAGE_TYPE", "Loại công cụ dụng cụ phải là SINGLE_USE hoặc MULTI_USE"));
+            errors.add(message("classType", "INVALID_TOOL_USAGE_TYPE", "Loại công cụ dụng cụ phải là Dùng 1 lần hoặc Dùng nhiều lần"));
         }
     }
 
@@ -350,18 +350,18 @@ public class AssetService {
         if (isBlank(row.catalogItemCode())) return;
         AssetCatalogItem catalogItem = catalogItems.findByItemCode(normalizeCode(row.catalogItemCode())).orElse(null);
         if (catalogItem == null) {
-            errors.add(message("catalogItemCode", "CATALOG_ITEM_NOT_FOUND", "Không tìm thấy mẫu tài sản theo mã đã nhập"));
+            errors.add(message("catalogItemCode", "CATALOG_ITEM_NOT_FOUND", "Không tìm thấy danh mục tài sản theo mã đã nhập"));
             return;
         }
         if (Boolean.FALSE.equals(catalogItem.getActive())) {
-            errors.add(message("catalogItemCode", "CATALOG_ITEM_INACTIVE", "Mẫu tài sản đang ngưng sử dụng"));
+            errors.add(message("catalogItemCode", "CATALOG_ITEM_INACTIVE", "Danh mục tài sản đang ngưng sử dụng"));
         }
         if (category != null && catalogItem.getCategory() != null
                 && !Objects.equals(catalogItem.getCategory().getId(), category.getId())) {
-            errors.add(message("catalogItemCode", "CATALOG_CATEGORY_MISMATCH", "Mẫu tài sản không thuộc danh mục đã chọn"));
+            errors.add(message("catalogItemCode", "CATALOG_CATEGORY_MISMATCH", "Danh mục không khớp với loại tài sản"));
         }
         if (catalogItem.getCategory() == null) {
-            warnings.add(message("catalogItemCode", "CATALOG_WITHOUT_CATEGORY", "Mẫu tài sản chưa gắn danh mục"));
+            warnings.add(message("catalogItemCode", "CATALOG_WITHOUT_CATEGORY", "Danh mục chưa được phân loại tài sản"));
         }
     }
 
@@ -636,7 +636,9 @@ public class AssetService {
     }
 
     private record ImportLookup(AssetCategory category, AssetCatalogItem catalogItem, AssetClass assetClass) {}
-
+    /*
+    Dùng khi cần cập nhật và áp dụng vào tài sản
+     */
     private void applyAsset(AssetItem item, AssetRequest req) {
         item.setAssetCode(req.assetCode());
         item.setName(req.name());
