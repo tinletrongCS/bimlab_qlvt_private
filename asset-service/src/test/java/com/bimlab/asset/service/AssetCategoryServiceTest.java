@@ -192,13 +192,15 @@ class AssetCategoryServiceTest {
                 importRow(4, "Loại tài sản cố định", "TANGIBLE", "Tài sản cố định hữu hình", "FIXED_ASSET"),
                 importRow(5, "Loại tài sản cố định", "INTANGIBLE", "Tài sản cố định vô hình", "FIXED_ASSET"),
                 importRow(6, "Loại công cụ dụng cụ", "SINGLE_USE", "Công cụ dụng cụ phân bổ 1 lần", "TOOL_EQUIPMENT"),
-                importRow(7, "Loại công cụ dụng cụ", "MULTI_USE", "Công cụ dụng cụ phân bổ nhiều lần", "TOOL_EQUIPMENT")
+                importRow(7, "Loại công cụ dụng cụ", "MULTI_USE", "Công cụ dụng cụ phân bổ nhiều lần", "TOOL_EQUIPMENT"),
+                importRow(8, "Loại tài sản", "CCDC_IT_EQUIPMENT", "Thiết bị CNTT", "MULTI_USE"),
+                importRow(9, "Loại tài sản", "CCDC_MONITOR", "Màn hình", "CCDC_IT_EQUIPMENT")
         )));
 
         assertEquals("SUCCESS", result.uploadStatus());
-        assertEquals(6, result.importedRows());
+        assertEquals(8, result.importedRows());
         assertEquals(0, result.skippedRows());
-        verify(categories, times(6)).save(any(AssetCategory.class));
+        verify(categories, times(8)).save(any(AssetCategory.class));
     }
 
     private AssetCategoryImportRowRequest importRow(

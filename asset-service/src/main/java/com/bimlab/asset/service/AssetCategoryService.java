@@ -415,6 +415,7 @@ public class AssetCategoryService {
                 "phanloailopcon",
                 "loaitaisancodinh",
                 "loaicongcudungcu",
+                "loaitaisan",
                 "danhmuc",
                 "danhmuccha",
                 "danhmuctaisan"
