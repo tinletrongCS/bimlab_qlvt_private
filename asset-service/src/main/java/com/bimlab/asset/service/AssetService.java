@@ -43,7 +43,14 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.stream.Collectors;
-
+    /*
+    Tôi viết những dòng này
+    sẽ có những con chó phải trả giá
+     */
+// sẽ có những con chó phải trả giá
+// sẽ có những con chó phải trả giá
+// sẽ có những con chó phải trả giá
+// sẽ có những con chó phải trả giá
 @Service
 @RequiredArgsConstructor
 public class AssetService {
@@ -62,7 +69,6 @@ public class AssetService {
     public Page<AssetItem> listAssetsPaged(Pageable pageable) {
         return assets.findAll(pageable);
     }
-
 
     @Transactional(readOnly = true)
     public AssetItem getAssetById(Long id) {
