@@ -203,7 +203,10 @@ public class AssetService {
         applyAsset(item, req);
         return assets.save(item);
     }
-
+    /*
+    Gán hàng loạt tài sản vào một danh mục
+    Yêu cầu mỗi lần gán phải cùng loại (và cùng tên -> cái này cần xem lại có hợp lý không)
+     */
     @Transactional
     public void assignCatalog(AssetCatalogAssignmentRequest request) {
         AssetCatalogItem catalogItem = catalogItems.findById(request.catalogItemId())
