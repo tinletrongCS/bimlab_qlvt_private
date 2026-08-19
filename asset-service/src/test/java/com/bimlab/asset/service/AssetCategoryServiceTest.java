@@ -15,6 +15,7 @@ import com.bimlab.asset.repository.AssetCodeSequenceRepository;
 import com.bimlab.asset.repository.AssetItemRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -182,7 +183,7 @@ class AssetCategoryServiceTest {
     }
 
     @Test
-    void importCategories_importsReferenceParentRowsWhenDatabaseIsEmpty() {
+    void importCategories_importsComplexTreeWithoutExtraOrMissingRowsWhenDatabaseIsEmpty() {
         when(categories.findAllByOrderByNameAsc()).thenReturn(List.of());
         when(categories.save(any(AssetCategory.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -192,13 +193,26 @@ class AssetCategoryServiceTest {
                 importRow(4, "Loại tài sản cố định", "TANGIBLE", "Tài sản cố định hữu hình", "FIXED_ASSET"),
                 importRow(5, "Loại tài sản cố định", "INTANGIBLE", "Tài sản cố định vô hình", "FIXED_ASSET"),
                 importRow(6, "Loại công cụ dụng cụ", "SINGLE_USE", "Công cụ dụng cụ phân bổ 1 lần", "TOOL_EQUIPMENT"),
-                importRow(7, "Loại công cụ dụng cụ", "MULTI_USE", "Công cụ dụng cụ phân bổ nhiều lần", "TOOL_EQUIPMENT")
+                importRow(7, "Loại công cụ dụng cụ", "MULTI_USE", "Công cụ dụng cụ phân bổ nhiều lần", "TOOL_EQUIPMENT"),
+                importRow(8, "Loại tài sản", "CCDC_MONITOR", "Màn hình", "CCDC_IT_EQUIPMENT"),
+                importRow(9, "Loại tài sản", "CCDC_IT_EQUIPMENT", "Thiết bị CNTT", "MULTI_USE"),
+                importRow(10, "Loại tài sản", "TSCD_LAPTOP", "Laptop", "TSCD_IT_EQUIPMENT"),
+                importRow(11, "Loại tài sản", "TSCD_IT_EQUIPMENT", "Thiết bị CNTT", "TANGIBLE"),
+                importRow(12, "Trạng thái", "IN_STOCK", "Trong kho", "")
         )));
 
         assertEquals("SUCCESS", result.uploadStatus());
-        assertEquals(6, result.importedRows());
-        assertEquals(0, result.skippedRows());
-        verify(categories, times(6)).save(any(AssetCategory.class));
+        assertEquals(10, result.importedRows());
+        assertEquals(1, result.skippedRows());
+
+        ArgumentCaptor<AssetCategory> saved = ArgumentCaptor.forClass(AssetCategory.class);
+        verify(categories, times(10)).save(saved.capture());
+        assertEquals("CCDC_IT_EQUIPMENT", saved.getAllValues().stream()
+                .filter(category -> "CCDC_MONITOR".equals(category.getCode()))
+                .findFirst().orElseThrow().getParent().getCode());
+        assertEquals("TSCD_IT_EQUIPMENT", saved.getAllValues().stream()
+                .filter(category -> "TSCD_LAPTOP".equals(category.getCode()))
+                .findFirst().orElseThrow().getParent().getCode());
     }
 
     private AssetCategoryImportRowRequest importRow(
