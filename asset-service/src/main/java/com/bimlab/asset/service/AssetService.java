@@ -44,7 +44,14 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.stream.Collectors;
-
+    /*
+    Tôi viết những dòng này
+    sẽ có những con chó phải trả giá
+     */
+// sẽ có những con chó phải trả giá
+// sẽ có những con chó phải trả giá
+// sẽ có những con chó phải trả giá
+// sẽ có những con chó phải trả giá
 @Service
 @RequiredArgsConstructor
 public class AssetService {
@@ -63,7 +70,6 @@ public class AssetService {
     public Page<AssetItem> listAssetsPaged(Pageable pageable) {
         return assets.findAll(pageable);
     }
-
 
     @Transactional(readOnly = true)
     public AssetItem getAssetById(Long id) {
@@ -197,7 +203,10 @@ public class AssetService {
         applyAsset(item, req);
         return assets.save(item);
     }
-
+    /*
+    Gán hàng loạt tài sản vào một danh mục
+    Yêu cầu mỗi lần gán phải cùng loại (và cùng tên -> cái này cần xem lại có hợp lý không)
+     */
     @Transactional
     public void assignCatalog(AssetCatalogAssignmentRequest request) {
         AssetCatalogItem catalogItem = catalogItems.findById(request.catalogItemId())
