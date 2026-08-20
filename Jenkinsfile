@@ -280,9 +280,24 @@ BUILD_NUMBER=${env.BUILD_NUMBER ?: ''}
       }
     }
 
+    stage('Production approval'){
+      when { expression {env.BRANCH_NAME == 'production'} }
+      steps{
+        script {
+          input message: "Deploy QLVT ${env.IMAGE_TAG} to Production?", ok: 'Deploy'
+          env.PRODUCTION_APPROVED = 'true' 
+        }
+      }
+    }
+
     stage('Deploy production (local /opt/bimlab)') {
       when { expression { env.BRANCH_NAME == 'production' } }
       steps {
+        script{
+          if(env.PRODUCTION_APPROVED != 'true'){
+            error('Production deployment requires approval.')
+          }
+        }
         sh '''
           set -eu
           docker run --rm \
@@ -297,15 +312,6 @@ BUILD_NUMBER=${env.BUILD_NUMBER ?: ''}
               sh deploy/ci-deploy.sh /opt/bimlab/qlvt "$PWD"
             '
         '''
-      }
-    }
-
-    stage('Production approval') {
-      when {
-        expression { return params.DEPLOY_TARGET == 'production' }
-      }
-      steps {
-        input message: "Deploy QLVT ${env.IMAGE_TAG} to PRODUCTION?", ok: 'Deploy'
       }
     }
 
