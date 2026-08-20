@@ -190,6 +190,10 @@ BUILD_NUMBER=${env.BUILD_NUMBER ?: ''}
         sh '''
           set -eu
           IMAGE="bimlab-ci/bimlab-asset-service:$IMAGE_TAG"
+          # Cổng đọc từ application.yml — smoke không được tự bịa cổng riêng; đổi server.port
+          # mà quên smoke thì trước đây smoke gọi 8086 cứng, đỏ oan (hoặc xanh oan).
+          APP_PORT=$(sed -n 's/^  port: \([0-9]*\)$/\1/p' asset-service/src/main/resources/application.yml | head -1)
+          [ -n "$APP_PORT" ] || { echo "[smoke] khong doc duoc server.port tu application.yml"; exit 1; }
           SUF="$IMAGE_TAG"
           NET="smoke-qlvt-$SUF"; PG="smoke-pg-$SUF"; MINIO="smoke-minio-$SUF"; APP="smoke-app-$SUF"
           CURL="curlimages/curl:latest"
@@ -216,7 +220,7 @@ BUILD_NUMBER=${env.BUILD_NUMBER ?: ''}
           echo "[smoke] poll /actuator/health"
           ok=false
           for i in $(seq 1 40); do
-            body=$(docker run --rm --network "$NET" "$CURL" -sf "http://$APP:8086/actuator/health" 2>/dev/null || true)
+            body=$(docker run --rm --network "$NET" "$CURL" -sf "http://$APP:$APP_PORT/actuator/health" 2>/dev/null || true)
             case "$body" in *'"status":"UP"'*) ok=true; break;; esac
             running=$(docker inspect -f '{{.State.Running}}' "$APP" 2>/dev/null || echo false)
             if [ "$running" != "true" ]; then echo "[smoke] app thoat som:"; docker logs --tail 60 "$APP"; exit 1; fi
