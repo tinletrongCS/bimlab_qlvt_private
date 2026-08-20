@@ -76,24 +76,24 @@ function highlightTransferText(value: string, query: string) {
 function formatTransferDate(value?: string): string {
   return value
     ? new Date(`${value}T00:00:00`).toLocaleDateString("vi-VN", {
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-    })
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      })
     : "--";
 }
 
 function formatTransferDateTime(value?: string): string {
   return value
     ? new Date(value).toLocaleString("vi-VN", {
-      hour12: false,
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-    })
+        hour12: false,
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+      })
     : "--";
 }
 
@@ -868,7 +868,7 @@ export function TransfersPage() {
                       </td>
                       <td>
                         {transfer.transferType === "REVOKE" ||
-                          transfer.transferType === "Thu hồi" ? (
+                        transfer.transferType === "Thu hồi" ? (
                           <span>Thu hồi về kho, gỡ toàn bộ thông tin gán</span>
                         ) : (
                           <>
@@ -1232,8 +1232,8 @@ export function TransfersPage() {
                   const normalizedSearch = pendingSearch.trim().toLowerCase();
                   const summaryText =
                     normalizedSearch &&
-                      !title.toLowerCase().includes(normalizedSearch) &&
-                      ticket.reason.toLowerCase().includes(normalizedSearch)
+                    !title.toLowerCase().includes(normalizedSearch) &&
+                    ticket.reason.toLowerCase().includes(normalizedSearch)
                       ? ticket.reason
                       : title || ticket.reason || "--";
                   return (
@@ -1915,7 +1915,8 @@ export function TransfersPage() {
                     Danh sách tài sản bàn giao/thu hồi
                   </h3>
                   <p style={{ margin: "4px 0 0", fontSize: "13px", color: "#64748b" }}>
-                    Đã chọn <strong style={{ color: "#2563eb" }}>{pickerTempSelected.size}</strong> tài sản cho phiếu này
+                    Đã chọn <strong style={{ color: "#2563eb" }}>{pickerTempSelected.size}</strong>{" "}
+                    tài sản cho phiếu này
                   </p>
                 </div>
                 <div>
@@ -2065,16 +2066,16 @@ export function TransfersPage() {
                       >
                         Tìm kiếm mã / tên tài sản
                       </label>
-                      <div >
+                      <div>
                         <input
                           type="text"
                           value={pickerSearchQuery}
                           onChange={(e) => setPickerSearchQuery(e.target.value)}
                           placeholder="Nhập mã hoặc tên tài sản..."
-                        // style={{
-                        //   ...formInputStyle,
-                        //   paddingLeft: "32px",
-                        // }}
+                          // style={{
+                          //   ...formInputStyle,
+                          //   paddingLeft: "32px",
+                          // }}
                         />
                         <FiSearch
                           size={14}
@@ -2399,7 +2400,8 @@ export function TransfersPage() {
                                   }}
                                 >
                                   {asset.departmentId
-                                    ? departments.find((d) => d.id === asset.departmentId)?.name || "--"
+                                    ? departments.find((d) => d.id === asset.departmentId)?.name ||
+                                      "--"
                                     : "--"}
                                 </td>
                                 <td
@@ -2409,7 +2411,9 @@ export function TransfersPage() {
                                     color: "#475569",
                                   }}
                                 >
-                                  {asset.assignedEmployeeId ? empLabel(asset.assignedEmployeeId) : "--"}
+                                  {asset.assignedEmployeeId
+                                    ? empLabel(asset.assignedEmployeeId)
+                                    : "--"}
                                 </td>
                               </tr>
                             );
