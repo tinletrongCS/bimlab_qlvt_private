@@ -1290,42 +1290,12 @@ async function downloadAssetImportTemplate(categories: AssetCategoryTree[]) {
     "Ghi chú",
     "Đã nhập nhà cung cấp",
   ];
-  const examples = [
-    1,
-    "ASUS-VY279HGR",
-    "HD-2026-001",
-    "0000123",
-    "Màn hình ASUS",
-    "Màn hình 27 inch, Full HD",
-    "Tài sản cố định",
-    "Hữu hình",
-    "",
-    "VY279HGR",
-    "SN-MAC-001",
-    "BIMLab",
-    "CNTT - Marketing",
-    "",
-    "VN",
-    "2026-01-05",
-    2,
-    6000000,
-    12000000,
-    960000,
-    24,
-    3,
-    "Đang sử dụng",
-    "",
-    "",
-    "",
-  ];
-
   sheet.addRow(["DANH MỤC THIẾT BỊ"]);
   sheet.addRow([
     "Mỗi dòng là một nhóm tài sản cùng thông tin; hệ thống chỉ bung theo Số lượng khi xác nhận import và tự sinh mã riêng cho từng tài sản. Cột Nhà cung cấp và Đã nhập nhà cung cấp chỉ để đối chiếu, không được nhập vào hệ thống.",
   ]);
   sheet.addRow([]);
   sheet.addRow(headers);
-  sheet.addRow(examples);
   sheet.addRow([]);
 
   sheet.mergeCells("A1:Z1");
@@ -1354,18 +1324,12 @@ async function downloadAssetImportTemplate(categories: AssetCategoryTree[]) {
     };
   });
 
-  sheet.getRow(5).eachCell((cell) => {
-    cell.font = { name: "Calibri", size: 13, color: { argb: "FF111827" } };
-    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFF8FAFC" } };
-    cell.alignment = { vertical: "middle", wrapText: true };
-  });
-
   const widths = [
     8, 18, 20, 16, 30, 38, 24, 26, 22, 18, 18, 20, 22, 26, 14, 16, 12, 20, 20, 14, 20, 18, 18, 20,
     30, 22,
   ];
   widths.forEach((width, index) => {
-    const longestLine = [headers[index], examples[index]]
+    const longestLine = [headers[index]]
       .flatMap((value) => String(value ?? "").split("\n"))
       .reduce((longest, line) => Math.max(longest, line.length), 0);
     sheet.getColumn(index + 1).width = Math.min(42, Math.max(width, longestLine + 2));
@@ -1450,15 +1414,6 @@ async function downloadAssetImportTemplate(categories: AssetCategoryTree[]) {
   addCategoryReferenceSheet(workbook, { categories });
   addHierarchicalCategorySheet(workbook, categories);
   addAssetCategoryDropdowns(workbook, sheet, categories);
-  await sheet.protect("", {
-    selectLockedCells: true,
-    selectUnlockedCells: true,
-    formatCells: false,
-    formatColumns: false,
-    formatRows: false,
-    sort: true,
-    autoFilter: true,
-  });
 
   const buffer = await workbook.xlsx.writeBuffer();
   const blob = new Blob([buffer], {

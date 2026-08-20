@@ -925,6 +925,9 @@ describe("QLVT asset and booking workflow coverage", () => {
     const templateWorkbook = new (await import("exceljs")).Workbook();
     await templateWorkbook.xlsx.load(await templateBlob.arrayBuffer());
     const templateSheet = templateWorkbook.getWorksheet("Thiết bị");
+    expect(
+      Array.from({ length: 26 }, (_, index) => templateSheet?.getCell(5, index + 1).value),
+    ).toEqual(Array(26).fill(null));
     expect(templateSheet?.getCell("G6").dataValidation.formulae).toEqual(["ASSET_CLASSES"]);
     expect(templateSheet?.getCell("H6").dataValidation.formulae[0]).toContain('="Tài sản cố định"');
     expect(templateSheet?.getCell("I6").dataValidation.formulae[0]).toContain('="Hữu hình"');
@@ -945,8 +948,7 @@ describe("QLVT asset and booking workflow coverage", () => {
       sheetProtection?: { sheet?: boolean; formatCells?: boolean };
       conditionalFormattings?: Array<{ ref: string }>;
     };
-    expect(pasteSafeSheet.sheetProtection).toMatchObject({ sheet: true });
-    expect(pasteSafeSheet.sheetProtection?.formatCells).not.toBe(true);
+    expect(pasteSafeSheet.sheetProtection?.sheet).not.toBe(true);
     expect(pasteSafeSheet.conditionalFormattings?.map(({ ref }) => ref)).toEqual([
       "A5:Z1000",
       "G5:G1000",
