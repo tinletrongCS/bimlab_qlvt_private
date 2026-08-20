@@ -192,7 +192,7 @@ BUILD_NUMBER=${env.BUILD_NUMBER ?: ''}
           IMAGE="bimlab-ci/bimlab-asset-service:$IMAGE_TAG"
           # Cổng đọc từ application.yml — smoke không được tự bịa cổng riêng; đổi server.port
           # mà quên smoke thì trước đây smoke gọi 8086 cứng, đỏ oan (hoặc xanh oan).
-          APP_PORT=$(sed -n 's/^  port: \([0-9]*\)$/\1/p' asset-service/src/main/resources/application.yml | head -1)
+          APP_PORT=$(awk '/^server:/ { getline; print $2; exit }' asset-service/src/main/resources/application.yml)
           [ -n "$APP_PORT" ] || { echo "[smoke] khong doc duoc server.port tu application.yml"; exit 1; }
           SUF="$IMAGE_TAG"
           NET="smoke-qlvt-$SUF"; PG="smoke-pg-$SUF"; MINIO="smoke-minio-$SUF"; APP="smoke-app-$SUF"
