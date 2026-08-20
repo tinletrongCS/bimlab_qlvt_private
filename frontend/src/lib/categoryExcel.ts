@@ -1,11 +1,13 @@
-import type { Workbook } from "exceljs";
+import type { Workbook, Worksheet } from "exceljs";
 import type {
   AssetCategoryImportRowPayload,
   AssetCategoryImportValidationResponse,
   AssetCategoryTree,
 } from "../services/types";
 
-export const CATEGORY_REFERENCE_SHEET_NAME = "DanhMuc_ThamChieu";
+export const CATEGORY_REFERENCE_SHEET_NAME = "Loai_ThamChieu";
+export const CATEGORY_TREE_SHEET_NAME = "Cay_PhanLoai";
+const LEGACY_CATEGORY_REFERENCE_SHEET_NAME = "DanhMuc_ThamChieu";
 
 const baseCategoryReferenceRows = [
   ["Phân loại", "FIXED_ASSET", "Tài sản cố định", ""],
@@ -29,7 +31,7 @@ function flattenCategoryRows(categories: AssetCategoryTree[]) {
   const rows: string[][] = [];
   const visit = (node: AssetCategoryTree, fallbackParentCode = "") => {
     rows.push([
-      "Danh mục",
+      "Loại tài sản",
       node.code,
       node.name,
       node.parentId ? fallbackParentCode : node.assetClass,
@@ -42,6 +44,41 @@ function flattenCategoryRows(categories: AssetCategoryTree[]) {
     visit(root);
   });
   return rows;
+}
+
+function categoryRows(categories: AssetCategoryTree[]) {
+  const seen = new Set<string>();
+  return [...baseCategoryReferenceRows, ...flattenCategoryRows(categories)].filter((row) => {
+    if (seen.has(row[1])) return false;
+    seen.add(row[1]);
+    return true;
+  });
+}
+
+function leafOptionsByRoot(categories: AssetCategoryTree[], rootCode: string) {
+  const children = new Map<string, string[]>();
+  const labels = new Map<string, string>();
+  categoryRows(categories).forEach(([, code, label, parentCode]) => {
+    labels.set(code, label);
+    if (!parentCode) return;
+    children.set(parentCode, [...(children.get(parentCode) ?? []), code]);
+  });
+
+  const leaves: string[] = [];
+  const visit = (code: string, path: Set<string>) => {
+    if (path.has(code)) return;
+    const directChildren = children.get(code) ?? [];
+    if (code !== rootCode && directChildren.length === 0) {
+      leaves.push(code);
+      return;
+    }
+    const nextPath = new Set(path).add(code);
+    directChildren.forEach((child) => {
+      visit(child, nextPath);
+    });
+  };
+  visit(rootCode, new Set());
+  return leaves.map((code) => `${labels.get(code) ?? code} (${code})`);
 }
 
 function normalize(value: string) {
@@ -74,12 +111,11 @@ export function addCategoryReferenceSheet(
     { header: "Nhóm", key: "group", width: 24 },
     { header: "Mã/Giá trị nhập", key: "code", width: 24 },
     { header: "Diễn giải", key: "label", width: 34 },
-    { header: "Danh mục cha", key: "parentCode", width: 24 },
+    { header: "Loại cha", key: "parentCode", width: 24 },
   ];
 
   const rows = [
-    ...baseCategoryReferenceRows,
-    ...flattenCategoryRows(options.categories ?? []),
+    ...categoryRows(options.categories ?? []),
     ...(options.includeStatuses === false ? [] : statusReferenceRows),
   ];
 
@@ -94,8 +130,9 @@ export function addCategoryReferenceSheet(
   });
 
   sheet.eachRow((row, rowNumber) => {
-    row.height = rowNumber === 1 ? 24 : 20;
+    if (rowNumber === 1) row.height = 24;
     row.eachCell((cell) => {
+      cell.font = { ...cell.font, name: "Calibri", size: 13 };
       cell.border = {
         top: { style: "thin", color: { argb: "FFD9E2EC" } },
         left: { style: "thin", color: { argb: "FFD9E2EC" } },
@@ -110,7 +147,7 @@ export function addCategoryReferenceSheet(
 }
 
 export function addHierarchicalCategorySheet(workbook: Workbook, categories: AssetCategoryTree[]) {
-  const sheet = workbook.addWorksheet("Cay_DanhMuc");
+  const sheet = workbook.addWorksheet(CATEGORY_TREE_SHEET_NAME);
 
   const getMaxDepth = (nodes: AssetCategoryTree[], currentDepth = 0): number => {
     let max = currentDepth;
@@ -125,7 +162,7 @@ export function addHierarchicalCategorySheet(workbook: Workbook, categories: Ass
 
   const cols = [];
   for (let i = 0; i <= maxDepth; i++) {
-    cols.push({ header: `Danh mục Cấp ${i + 1}`, key: `level_${i}`, width: 30 });
+    cols.push({ header: `Loại tài sản cấp ${i + 1}`, key: `level_${i}`, width: 30 });
   }
   cols.push({ header: "Mã", key: "code", width: 24 });
   cols.push({ header: "Loại tài sản", key: "assetClass", width: 24 });
@@ -157,7 +194,7 @@ export function addHierarchicalCategorySheet(workbook: Workbook, categories: Ass
   ];
 
   sheet.getRow(1).eachCell((cell) => {
-    cell.font = { bold: true, color: { argb: "FFFFFFFF" } };
+    cell.font = { name: "Calibri", size: 13, bold: true, color: { argb: "FFFFFFFF" } };
     cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF1F4E79" } };
     cell.alignment = { vertical: "middle", horizontal: "center", wrapText: true };
   });
@@ -167,8 +204,8 @@ export function addHierarchicalCategorySheet(workbook: Workbook, categories: Ass
       row.height = 24;
       return;
     }
-    row.height = 20;
     row.eachCell((cell, colNumber) => {
+      cell.font = { ...cell.font, name: "Calibri", size: 13 };
       cell.border = {
         top: { style: "thin", color: { argb: "FFD9E2EC" } },
         left: { style: "thin", color: { argb: "FFD9E2EC" } },
@@ -182,12 +219,76 @@ export function addHierarchicalCategorySheet(workbook: Workbook, categories: Ass
         cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: color } };
         cell.alignment = { vertical: "middle", horizontal: "left", wrapText: true };
       } else {
-        cell.alignment = { vertical: "middle", horizontal: "left", wrapText: false };
+        cell.alignment = { vertical: "middle", horizontal: "left", wrapText: true };
       }
     });
   });
 
   return sheet;
+}
+
+export function addAssetCategoryDropdowns(
+  workbook: Workbook,
+  sheet: Worksheet,
+  categories: AssetCategoryTree[],
+  startRow = 5,
+  endRow = 1000,
+) {
+  const referenceSheet = workbook.getWorksheet(CATEGORY_REFERENCE_SHEET_NAME);
+  if (!referenceSheet) throw new Error(`Không tìm thấy sheet ${CATEGORY_REFERENCE_SHEET_NAME}.`);
+
+  const lists = [
+    ["ASSET_CLASSES", ["Tài sản cố định", "Công cụ dụng cụ"]],
+    ["FIXED_ASSET", ["Hữu hình", "Vô hình"]],
+    ["TOOL_EQUIPMENT", ["Dùng một lần", "Dùng nhiều lần"]],
+    ["TANGIBLE", leafOptionsByRoot(categories, "TANGIBLE")],
+    ["INTANGIBLE", leafOptionsByRoot(categories, "INTANGIBLE")],
+    ["SINGLE_USE", leafOptionsByRoot(categories, "SINGLE_USE")],
+    ["MULTI_USE", leafOptionsByRoot(categories, "MULTI_USE")],
+    ["EMPTY_LIST", [""]],
+  ] as const;
+
+  lists.forEach(([name, values], index) => {
+    const column = referenceSheet.getColumn(6 + index);
+    column.hidden = true;
+    column.values = [name, ...(values.length ? values : [""])];
+    const letter = column.letter;
+    workbook.definedNames.add(
+      `'${CATEGORY_REFERENCE_SHEET_NAME}'!$${letter}$2:$${letter}$${Math.max(2, values.length + 1)}`,
+      name,
+    );
+  });
+
+  for (let row = startRow; row <= endRow; row += 1) {
+    sheet.getCell(`G${row}`).dataValidation = {
+      type: "list",
+      allowBlank: false,
+      formulae: ["ASSET_CLASSES"],
+      showErrorMessage: true,
+      errorTitle: "Sai phân loại",
+      error: "Chọn một giá trị trong danh sách.",
+    };
+    sheet.getCell(`H${row}`).dataValidation = {
+      type: "list",
+      allowBlank: false,
+      formulae: [
+        `INDIRECT(IF($G${row}="Tài sản cố định","FIXED_ASSET",IF($G${row}="Công cụ dụng cụ","TOOL_EQUIPMENT","EMPTY_LIST")))`,
+      ],
+      showErrorMessage: true,
+      errorTitle: "Sai phân loại lớp con",
+      error: "Chọn lớp con thuộc phân loại đã chọn.",
+    };
+    sheet.getCell(`I${row}`).dataValidation = {
+      type: "list",
+      allowBlank: false,
+      formulae: [
+        `INDIRECT(IF($H${row}="Hữu hình","TANGIBLE",IF($H${row}="Vô hình","INTANGIBLE",IF($H${row}="Dùng một lần","SINGLE_USE",IF($H${row}="Dùng nhiều lần","MULTI_USE","EMPTY_LIST")))))`,
+      ],
+      showErrorMessage: true,
+      errorTitle: "Sai loại tài sản",
+      error: "Chọn loại cuối cùng thuộc lớp con đã chọn.",
+    };
+  }
 }
 
 export async function downloadCategoryImportTemplate(categories: AssetCategoryTree[]) {
@@ -218,7 +319,9 @@ export async function parseCategoryReferenceSheet(
   const ExcelJS = await import("exceljs");
   const workbook = new ExcelJS.Workbook();
   await workbook.xlsx.load(await file.arrayBuffer());
-  const sheet = workbook.getWorksheet(CATEGORY_REFERENCE_SHEET_NAME);
+  const sheet =
+    workbook.getWorksheet(CATEGORY_REFERENCE_SHEET_NAME) ??
+    workbook.getWorksheet(LEGACY_CATEGORY_REFERENCE_SHEET_NAME);
   if (!sheet) {
     throw new Error(`Không tìm thấy sheet ${CATEGORY_REFERENCE_SHEET_NAME}.`);
   }
@@ -235,7 +338,9 @@ export async function parseCategoryReferenceSheet(
         columnMap.set("code", index);
       }
       if (normalized === "dien giai") columnMap.set("name", index);
-      if (normalized === "danh muc cha") columnMap.set("parentCode", index);
+      if (normalized === "loai cha" || normalized === "danh muc cha") {
+        columnMap.set("parentCode", index);
+      }
     });
     if (columnMap.has("group") && columnMap.has("code") && columnMap.has("name")) {
       headerRowNumber = rowNumber;
@@ -243,7 +348,7 @@ export async function parseCategoryReferenceSheet(
   });
 
   if (!headerRowNumber) {
-    throw new Error("Sheet danh mục thiếu dòng tiêu đề Nhóm, Mã/Giá trị nhập, Diễn giải.");
+    throw new Error("Sheet phân loại thiếu dòng tiêu đề Nhóm, Mã/Giá trị nhập, Diễn giải.");
   }
 
   const rows: AssetCategoryImportRowPayload[] = [];

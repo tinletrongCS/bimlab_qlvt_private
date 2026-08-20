@@ -6,11 +6,13 @@ import { BookingPage } from "../pages/BookingPage";
 import { chooseSearchableOption } from "./searchableSelect";
 
 const mocks = vi.hoisted(() => ({
+  assignAssetCatalog: vi.fn(),
   cancelAssetBooking: vi.fn(),
   checkAssetBookingAvailability: vi.fn(),
   checkInAssetBooking: vi.fn(),
   checkOutAssetBooking: vi.fn(),
   commitAssetImport: vi.fn(),
+  createAssetCatalogItem: vi.fn(),
   deleteAsset: vi.fn(),
   ensureAssetDetailLookups: vi.fn(),
   ensureAssets: vi.fn(),
@@ -18,7 +20,9 @@ const mocks = vi.hoisted(() => ({
   loadAssetBookings: vi.fn(),
   loadAssetChangeHistory: vi.fn(),
   loadAssetCategoryTree: vi.fn(),
+  loadAssetCatalogItems: vi.fn(),
   loadAssets: vi.fn(),
+  loadDepartments: vi.fn(),
   openModal: vi.fn(),
   toastError: vi.fn(),
   toastLoading: vi.fn(),
@@ -124,6 +128,12 @@ const laptopAsset = {
   id: 1,
   assetCode: "TS-001",
   name: "Laptop Dell Precision",
+  catalogItem: {
+    id: 1,
+    itemCode: "MON-LG-27",
+    name: "Màn hình LG 27 inch",
+    category: categories[1],
+  },
   assetCategory: categories[1],
   category: "Laptop",
   serialNumber: "SN001",
@@ -174,6 +184,7 @@ const roomAsset = {
 };
 
 const assets = [laptopAsset, roomAsset];
+let appAssets = assets;
 
 const bookings = [
   {
@@ -217,13 +228,13 @@ const bookings = [
 vi.mock("../contexts/AppDataContext", () => ({
   useAppData: () => ({
     summary: {
-      assets: assets.length,
+      assets: appAssets.length,
       subscriptions: 0,
       vendors: 1,
       purchaseRequests: 0,
       contracts: 0,
     },
-    assets,
+    assets: appAssets,
     subscriptions: [],
     vendors: [vendor],
     requests: [],
@@ -254,17 +265,21 @@ vi.mock("../contexts/AppDataContext", () => ({
 }));
 
 vi.mock("../services/api", () => ({
+  assignAssetCatalog: mocks.assignAssetCatalog,
   cancelAssetBooking: mocks.cancelAssetBooking,
   checkAssetBookingAvailability: mocks.checkAssetBookingAvailability,
   checkInAssetBooking: mocks.checkInAssetBooking,
   checkOutAssetBooking: mocks.checkOutAssetBooking,
   commitAssetImport: mocks.commitAssetImport,
+  createAssetCatalogItem: mocks.createAssetCatalogItem,
   createAssetBooking: mocks.createAssetBooking,
   deleteAsset: mocks.deleteAsset,
   loadAssetBookings: mocks.loadAssetBookings,
   loadAssetChangeHistory: mocks.loadAssetChangeHistory,
   loadAssetCategoryTree: mocks.loadAssetCategoryTree,
+  loadAssetCatalogItems: mocks.loadAssetCatalogItems,
   loadAssets: mocks.loadAssets,
+  loadDepartments: mocks.loadDepartments,
   issueAssetQrCodes: mocks.issueAssetQrCodes,
   updateAsset: mocks.updateAsset,
   validateAssetImport: mocks.validateAssetImport,
@@ -273,7 +288,13 @@ vi.mock("../services/api", () => ({
 describe("QLVT asset and booking workflow coverage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    appAssets = assets;
     window.localStorage.clear();
+    Object.defineProperties(document, {
+      execCommand: { configurable: true, value: vi.fn(() => true) },
+      queryCommandState: { configurable: true, value: vi.fn(() => false) },
+      queryCommandValue: { configurable: true, value: vi.fn(() => "rgb(71, 85, 105)") },
+    });
     vi.spyOn(window, "confirm").mockReturnValue(true);
     vi.spyOn(window, "requestAnimationFrame").mockImplementation((callback) => {
       callback(0);
@@ -283,6 +304,49 @@ describe("QLVT asset and booking workflow coverage", () => {
     mocks.ensureAssets.mockResolvedValue(undefined);
     mocks.ensureAssetDetailLookups.mockResolvedValue(undefined);
     mocks.loadAssetCategoryTree.mockResolvedValue(categoryTree);
+    mocks.loadAssetCatalogItems.mockResolvedValue([
+      {
+        id: 1,
+        itemCode: "MON-LG-27",
+        name: "Màn hình LG 27 inch",
+        catalogType: "ASSET",
+        categoryId: 2,
+        categoryCode: "LAP",
+        categoryName: "Laptop",
+        active: true,
+      },
+      {
+        id: 2,
+        itemCode: "LAP-ALT",
+        name: "Bộ máy tính thay thế",
+        catalogType: "ASSET",
+        categoryId: 2,
+        categoryCode: "LAP",
+        categoryName: "Laptop",
+        active: true,
+      },
+      {
+        id: 3,
+        itemCode: "ROOM-ALT",
+        name: "Danh mục phòng họp",
+        catalogType: "ASSET",
+        categoryId: 3,
+        categoryCode: "ROOM",
+        categoryName: "Phòng họp",
+        active: true,
+      },
+    ]);
+    mocks.assignAssetCatalog.mockResolvedValue(undefined);
+    mocks.createAssetCatalogItem.mockResolvedValue({
+      id: 4,
+      itemCode: "CATALOG-0004",
+      name: "Phòng họp Apollo",
+      catalogType: "TOOL",
+      categoryId: 3,
+      categoryCode: "ROOM",
+      categoryName: "Phòng họp",
+      active: true,
+    });
     mocks.loadAssetChangeHistory.mockResolvedValue([
       {
         id: 1,
@@ -297,7 +361,8 @@ describe("QLVT asset and booking workflow coverage", () => {
         },
       },
     ]);
-    mocks.loadAssets.mockResolvedValue(assets);
+    mocks.loadAssets.mockResolvedValue(appAssets);
+    mocks.loadDepartments.mockResolvedValue(departments);
     mocks.issueAssetQrCodes.mockResolvedValue([
       {
         assetId: 1,
@@ -329,6 +394,7 @@ describe("QLVT asset and booking workflow coverage", () => {
 
     expect(await screen.findByRole("heading", { name: "Danh sách tài sản" })).toBeVisible();
     expect(screen.getByText("Laptop Dell Precision")).toBeVisible();
+    expect(screen.getByText("MON-LG-27 - Màn hình LG 27 inch")).toBeVisible();
     expect(screen.getAllByText("Phòng họp Apollo").length).toBeGreaterThan(0);
 
     await user.type(
@@ -342,6 +408,7 @@ describe("QLVT asset and booking workflow coverage", () => {
 
     await user.click(screen.getByRole("button", { name: "Cấu hình cột" }));
     expect(screen.getByRole("dialog", { name: "Cấu hình cột" })).toBeVisible();
+    expect(screen.getByLabelText("Danh mục")).toBeChecked();
     fireEvent.click(screen.getByLabelText("Serial/MAC"));
     await user.click(screen.getByRole("button", { name: /Mặc định/i }));
     await user.click(screen.getByRole("button", { name: /Áp dụng/i }));
@@ -352,6 +419,32 @@ describe("QLVT asset and booking workflow coverage", () => {
     expect(screen.getAllByText("TS-001 · Laptop Dell Precision").length).toBeGreaterThan(0);
     const detailModal = screen.getByText("Định danh và phân loại").closest(".asset-detail-modal");
     expect(detailModal).not.toBeNull();
+    expect(
+      within(detailModal as HTMLElement).getByRole("button", { name: "In đậm Mô tả kỹ thuật" }),
+    ).toBeVisible();
+    expect(
+      within(detailModal as HTMLElement).getByRole("button", { name: "Đỏ - Mô tả kỹ thuật" }),
+    ).toBeVisible();
+    expect(detailModal?.querySelector('input[type="color"]')).not.toBeInTheDocument();
+    expect(
+      within(detailModal as HTMLElement).getByLabelText("Phương pháp khấu hao"),
+    ).toHaveDisplayValue("Tuyến tính");
+    await waitFor(() => expect(mocks.loadAssetCatalogItems).toHaveBeenCalled());
+    const detailCatalog = within(detailModal as HTMLElement).getByLabelText("Danh mục");
+    expect(detailCatalog).toHaveDisplayValue("MON-LG-27 - Laptop - LAP");
+    const detailCatalogNative = detailCatalog.closest("label")?.querySelector("select");
+    expect(detailCatalogNative).not.toBeNull();
+    expect(
+      within(detailCatalogNative as HTMLSelectElement).queryByRole("option", {
+        name: "Chưa gắn danh mục",
+      }),
+    ).not.toBeInTheDocument();
+    expect(
+      within(detailCatalogNative as HTMLSelectElement).queryByRole("option", {
+        name: "ROOM-ALT - Phòng họp - ROOM",
+      }),
+    ).not.toBeInTheDocument();
+    chooseSearchableOption(detailCatalog, "LAP-ALT - Laptop - LAP");
     await user.click(within(detailModal as HTMLElement).getByRole("tab", { name: /Lịch sử/i }));
     expect(await within(detailModal as HTMLElement).findByText("31/07/2026")).toBeVisible();
     expect(
@@ -367,13 +460,47 @@ describe("QLVT asset and booking workflow coverage", () => {
     await user.click(within(detailModal as HTMLElement).getByRole("button", { name: /Quay lại/i }));
     const nameInput = within(detailModal as HTMLElement).getByDisplayValue("Laptop Dell Precision");
     fireEvent.change(nameInput, { target: { value: "Laptop Dell Precision 7780" } });
+    chooseSearchableOption(
+      within(detailModal as HTMLElement).getByLabelText("Năm sản xuất"),
+      "2026",
+    );
+    const technicalDescription = within(detailModal as HTMLElement).getByRole("textbox", {
+      name: "Mô tả kỹ thuật",
+    });
+    technicalDescription.textContent = "Core i9";
+    const selectedText = document.createRange();
+    selectedText.selectNodeContents(technicalDescription);
+    window.getSelection()?.removeAllRanges();
+    window.getSelection()?.addRange(selectedText);
+    document.dispatchEvent(new Event("selectionchange"));
+    fireEvent.mouseDown(
+      within(detailModal as HTMLElement).getByRole("button", {
+        name: "In đậm Mô tả kỹ thuật",
+      }),
+    );
+    expect(technicalDescription.innerHTML).toBe("<strong>Core i9</strong>");
+    expect(window.getSelection()?.toString()).toBe("Core i9");
+    fireEvent.mouseDown(
+      within(detailModal as HTMLElement).getByRole("button", {
+        name: "In đậm Mô tả kỹ thuật",
+      }),
+    );
+    expect(technicalDescription.innerHTML).toBe("Core i9");
+    expect(window.getSelection()?.toString()).toBe("Core i9");
+    technicalDescription.innerHTML = '<strong>Core i9</strong><img src="x" onerror="alert(1)">';
+    fireEvent.input(technicalDescription);
     await user.click(
       within(detailModal as HTMLElement).getByRole("button", { name: "Lưu thay đổi" }),
     );
     await waitFor(() =>
       expect(mocks.updateAsset).toHaveBeenCalledWith(
         1,
-        expect.objectContaining({ name: "Laptop Dell Precision 7780" }),
+        expect.objectContaining({
+          name: "Laptop Dell Precision 7780",
+          catalogItemId: 2,
+          manufactureYear: 2026,
+          technicalDescription: "<strong>Core i9</strong>",
+        }),
       ),
     );
 
@@ -391,6 +518,35 @@ describe("QLVT asset and booking workflow coverage", () => {
         expect.objectContaining({ status: "MAINTENANCE" }),
       ),
     );
+
+    fireEvent.click(screen.getByTitle("Chọn TS-001").querySelector("input") as HTMLInputElement);
+    chooseSearchableOption(bulkActionSelect, "Gán danh mục");
+    const catalogModal = screen.getByRole("dialog", { name: "Tạo hoặc gán danh mục" });
+    expect(within(catalogModal).getByText("Danh mục hiện tại")).toBeVisible();
+    expect(within(catalogModal).getAllByText("MON-LG-27 - Laptop - LAP").length).toBeGreaterThan(0);
+    expect(within(catalogModal).getByLabelText("Danh mục")).toHaveDisplayValue(
+      "MON-LG-27 - Laptop - LAP",
+    );
+    expect(within(catalogModal).getByRole("tab", { name: "Danh mục có sẵn" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    expect(within(catalogModal).getByLabelText("Danh mục")).toBeDisabled();
+    expect(within(catalogModal).getByRole("button", { name: "Gán danh mục" })).toBeDisabled();
+    expect(within(catalogModal).getByRole("tab", { name: "Tạo danh mục mới" })).toBeDisabled();
+    await user.click(within(catalogModal).getByRole("tab", { name: "Đổi danh mục" }));
+    expect(within(catalogModal).getByRole("tab", { name: "Đổi danh mục" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    chooseSearchableOption(
+      within(catalogModal).getByLabelText("Danh mục khác"),
+      "LAP-ALT - Laptop - LAP",
+    );
+    await user.click(within(catalogModal).getByRole("button", { name: "Đổi danh mục" }));
+    await waitFor(() =>
+      expect(mocks.assignAssetCatalog).toHaveBeenCalledWith({ assetIds: [1], catalogItemId: 2 }),
+    );
   });
 
   it("deletes selected assets from the selection workspace", async () => {
@@ -403,6 +559,84 @@ describe("QLVT asset and booking workflow coverage", () => {
     const workspace = screen.getByText("1 tài sản đã chọn").closest(".asset-selection-workspace");
     await user.click(within(workspace as HTMLElement).getByRole("button", { name: "Xóa" }));
     await waitFor(() => expect(mocks.deleteAsset).toHaveBeenCalledWith(1));
+  });
+
+  it("lists every selected asset group in the bulk catalog modal", async () => {
+    const user = userEvent.setup();
+    appAssets = [
+      laptopAsset,
+      { ...laptopAsset, id: 3, assetCode: "TS-002" },
+      roomAsset,
+      { ...roomAsset, id: 4, assetCode: "ROOM-02" },
+    ];
+    render(<AssetsPage />);
+    await screen.findByRole("heading", { name: "Danh sách tài sản" });
+    await user.click(screen.getByRole("button", { name: "Chọn nhiều" }));
+
+    fireEvent.click(screen.getByTitle("Chọn TS-001").querySelector("input") as HTMLInputElement);
+    fireEvent.click(screen.getByTitle("Chọn TS-002").querySelector("input") as HTMLInputElement);
+    fireEvent.click(screen.getByTitle("Chọn ROOM-01").querySelector("input") as HTMLInputElement);
+    fireEvent.click(screen.getByTitle("Chọn ROOM-02").querySelector("input") as HTMLInputElement);
+    const bulkActionSelect = screen
+      .getAllByLabelText(/Thao tác/i)
+      .find((element) => element.getAttribute("role") === "combobox") as HTMLElement;
+    chooseSearchableOption(bulkActionSelect, "Gán danh mục");
+
+    const catalogModal = screen.getByRole("dialog", { name: "Tạo hoặc gán danh mục" });
+    expect(within(catalogModal).getByText("4 tài sản đã chọn")).toBeVisible();
+    const rows = Array.from(catalogModal.querySelectorAll(".asset-bulk-context-row"));
+    expect(rows).toHaveLength(2);
+    expect(
+      rows.some(
+        (row) =>
+          row.textContent?.includes("Laptop Dell Precision") &&
+          row.textContent?.includes("2") &&
+          row.textContent?.includes("MON-LG-27 - Laptop - LAP"),
+      ),
+    ).toBe(true);
+    expect(
+      rows.some(
+        (row) =>
+          row.textContent?.includes("Phòng họp Apollo") &&
+          row.textContent?.includes("2") &&
+          row.textContent?.includes("Chưa gắn danh mục"),
+      ),
+    ).toBe(true);
+    expect(within(catalogModal).getByText("Laptop Dell Precision")).toBeVisible();
+    expect(within(catalogModal).getByText("Phòng họp Apollo")).toBeVisible();
+    expect(within(catalogModal).getAllByText("MON-LG-27 - Laptop - LAP").length).toBeGreaterThan(0);
+    expect(within(catalogModal).getByText("Chưa gắn danh mục")).toBeVisible();
+  });
+
+  it("creates a catalog for selected assets that do not have one", async () => {
+    const user = userEvent.setup();
+    appAssets = [roomAsset];
+    render(<AssetsPage />);
+    await screen.findByRole("heading", { name: "Danh sách tài sản" });
+    await user.click(screen.getByRole("button", { name: "Chọn nhiều" }));
+    fireEvent.click(screen.getByTitle("Chọn ROOM-01").querySelector("input") as HTMLInputElement);
+    const bulkActionSelect = screen
+      .getAllByLabelText(/Thao tác/i)
+      .find((element) => element.getAttribute("role") === "combobox") as HTMLElement;
+    chooseSearchableOption(bulkActionSelect, "Gán danh mục");
+
+    const catalogModal = screen.getByRole("dialog", { name: "Tạo hoặc gán danh mục" });
+    await user.click(within(catalogModal).getByRole("tab", { name: "Tạo danh mục mới" }));
+    const catalogName = within(catalogModal).getByLabelText("Tên danh mục mới");
+    await user.clear(catalogName);
+    await user.type(catalogName, "Phòng họp Apollo mới");
+    await user.click(within(catalogModal).getByRole("button", { name: "Tạo và gán danh mục" }));
+
+    await waitFor(() =>
+      expect(mocks.createAssetCatalogItem).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: "Phòng họp Apollo mới",
+          categoryId: 3,
+          catalogType: "TOOL",
+        }),
+      ),
+    );
+    expect(mocks.assignAssetCatalog).toHaveBeenCalledWith({ assetIds: [2], catalogItemId: 4 });
   });
 
   it("reports bulk update and delete failures", async () => {
@@ -429,7 +663,7 @@ describe("QLVT asset and booking workflow coverage", () => {
     );
   });
 
-  it("opens asset QR and resets active filters", async () => {
+  it("opens asset QR and resets filters without clearing search", async () => {
     const user = userEvent.setup();
     render(<AssetsPage />);
     await screen.findByRole("heading", { name: "Danh sách tài sản" });
@@ -449,7 +683,7 @@ describe("QLVT asset and booking workflow coverage", () => {
     chooseSearchableOption(screen.getByLabelText(/Giá trị/i), "10 - 50 triệu");
     await user.click(screen.getByRole("button", { name: "Tất cả" }));
     expect(screen.getByPlaceholderText("Tìm theo mã, tên, serial, nhà cung cấp...")).toHaveValue(
-      "",
+      "Dell",
     );
     expect(screen.getByLabelText(/Trạng thái/i)).toHaveValue("Tất cả trạng thái");
     expect(screen.getByLabelText(/Giá trị/i)).toHaveValue("Tất cả giá trị");
@@ -473,6 +707,8 @@ describe("QLVT asset and booking workflow coverage", () => {
     fireEvent.change(screen.getByLabelText(/^Kết thúc$/i), {
       target: { value: "2026-07-20T09:00" },
     });
+    chooseSearchableOption(screen.getByLabelText(/^Phòng ban$/i), "Hành chính");
+    expect(screen.getByLabelText(/^Phòng ban$/i)).toHaveValue("Hành chính");
     await user.type(screen.getByLabelText(/^Mục đích$/i), "Demo mô hình BIM");
     await user.click(screen.getByRole("button", { name: /Kiểm tra lịch/i }));
     await waitFor(() => expect(mocks.checkAssetBookingAvailability).toHaveBeenCalled());
@@ -485,6 +721,7 @@ describe("QLVT asset and booking workflow coverage", () => {
           assetCode: "ROOM-01",
           title: "Demo phối hợp",
           purpose: "Demo mô hình BIM",
+          departmentId: 2,
           createdBy: "admin",
         }),
       ),
@@ -558,56 +795,99 @@ describe("QLVT asset and booking workflow coverage", () => {
   it("parses, validates, imports, and exports an asset workbook", async () => {
     const user = userEvent.setup();
     const XLSX = await import("xlsx");
-    const keys = [
-      "assets.asset_code",
-      "assets.name",
-      "assets.asset_class",
-      "fixed_asset_type",
-      "asset_categories.code",
-      "assets.department_id",
-      "assets.site_id",
-      "catalog_item_code",
-      "depreciation_method",
-      "series_mac_number",
-      "depreciation_start_date",
-      "use_date",
-      "useful_life_months",
-      "original_cost",
-      "book_value",
-      "status",
-      "country_code",
-      "manufacture_year",
-      "installation_year",
-      "technical_description",
+    const headers = [
+      "STT",
+      "Mã thiết bị",
+      "Mã hợp đồng",
+      "Số hóa đơn",
+      "Tên thiết bị",
+      "Thông số kỹ thuật",
+      "Phân loại TSCĐ/CCDC",
+      "Phân loại lớp con",
+      "Loại",
+      "Model",
+      "Số seri",
+      "Vị trí lắp đặt",
+      "Phòng ban sử dụng",
+      "Nhà cung cấp",
+      "Nước SX",
+      "Ngày mua",
+      "Số lượng",
+      "Đơn giá (Chưa VAT)",
+      "Nguyên giá (VNĐ)",
+      "Thuế VAT",
+      "Thời gian bảo hành (tháng)",
+      "Thời gian KH (năm)",
+      "Tình trạng",
+      "Người quản lý",
+      "Ghi chú",
+      "Đã nhập nhà cung cấp",
     ];
     const worksheet = XLSX.utils.aoa_to_sheet([
-      keys,
-      keys.map(() => "Mô tả"),
+      ["DANH MỤC THIẾT BỊ"],
+      ["Master data"],
+      ["Hướng dẫn nhập dữ liệu"],
+      headers,
       [
+        1,
         "TS-NEW",
+        "HD-001",
+        "INV-001",
         "Máy trạm BIM",
-        "Tài sản cố định",
-        "TANGIBLE",
-        "LAP (Laptop)",
-        "BIM",
-        "Văn phòng HCM",
-        "CAT-1",
-        "STRAIGHT_LINE",
-        "SN-NEW",
-        new Date("2026-07-01"),
-        new Date("2026-07-02"),
-        60,
-        40_000_000,
-        35_000_000,
-        "Trong kho",
-        "VN",
-        2026,
-        2026,
         "Máy dựng hình",
+        "Tài sản cố định",
+        "Hữu hình",
+        "Laptop (LAP)",
+        "WS-01",
+        "",
+        "Văn phòng HCM",
+        "BIM",
+        "Nhà cung cấp A",
+        "VN",
+        new Date("2026-07-01"),
+        3,
+        40_000_000,
+        120_000_000,
+        9_600_000,
+        24,
+        5,
+        "Trong kho",
+        "",
+        "",
+        "",
+      ],
+      [
+        2,
+        "TS-NEW-2",
+        "",
+        "",
+        "Máy trạm BIM 2",
+        "Máy dựng hình phụ",
+        "Tài sản cố định",
+        "Hữu hình",
+        "Laptop (LAP)",
+        "WS-02",
+        "",
+        "Văn phòng HCM",
+        "BIM",
+        "Nhà cung cấp A",
+        "VN",
+        new Date("2026-07-01"),
+        1,
+        30_000_000,
+        30_000_000,
+        2_400_000,
+        24,
+        5,
+        "Trong kho",
+        "",
+        "",
+        "",
       ],
     ]);
+    worksheet["!merges"] = [XLSX.utils.decode_range("C5:C6"), XLSX.utils.decode_range("D5:D6")];
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "HoSoTaiSan_Import");
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Thiết bị");
     const bytes = XLSX.write(workbook, { type: "array", bookType: "xlsx" });
     const validation = {
       uploadStatus: "VALID",
@@ -617,7 +897,7 @@ describe("QLVT asset and booking workflow coverage", () => {
       warningRows: 0,
       rows: [
         {
-          rowNumber: 3,
+          rowNumber: 5,
           status: "VALID",
           assetCode: "TS-NEW",
           name: "Máy trạm BIM",
@@ -641,13 +921,66 @@ describe("QLVT asset and booking workflow coverage", () => {
 
     await user.click(screen.getByRole("button", { name: /Tải mẫu Excel/i }));
     await waitFor(() => expect(URL.createObjectURL).toHaveBeenCalled(), { timeout: 5000 });
+    const templateBlob = vi.mocked(URL.createObjectURL).mock.calls[0][0] as Blob;
+    const templateWorkbook = new (await import("exceljs")).Workbook();
+    await templateWorkbook.xlsx.load(await templateBlob.arrayBuffer());
+    const templateSheet = templateWorkbook.getWorksheet("Thiết bị");
+    expect(templateSheet?.getCell("G6").dataValidation.formulae).toEqual(["ASSET_CLASSES"]);
+    expect(templateSheet?.getCell("H6").dataValidation.formulae[0]).toContain('="Tài sản cố định"');
+    expect(templateSheet?.getCell("I6").dataValidation.formulae[0]).toContain('="Hữu hình"');
+    expect(templateSheet?.getCell("G6").protection.locked).toBe(false);
+    expect(templateSheet?.getCell("G6").font).toMatchObject({ name: "Calibri", size: 13 });
+    expect(templateSheet?.getCell("P6").numFmt).toBe("dd/mm/yyyy");
+    expect(templateSheet?.getCell("G6").fill).toMatchObject({
+      type: "pattern",
+      fgColor: { argb: "FFF8FBFF" },
+    });
+    expect(templateSheet?.getCell("G6").border).toMatchObject({
+      top: { style: "thin", color: { argb: "FFDDE3EA" } },
+      left: { style: "thin", color: { argb: "FFDDE3EA" } },
+      bottom: { style: "thin", color: { argb: "FFDDE3EA" } },
+      right: { style: "thin", color: { argb: "FFDDE3EA" } },
+    });
+    const pasteSafeSheet = templateSheet as typeof templateSheet & {
+      sheetProtection?: { sheet?: boolean; formatCells?: boolean };
+      conditionalFormattings?: Array<{ ref: string }>;
+    };
+    expect(pasteSafeSheet.sheetProtection).toMatchObject({ sheet: true });
+    expect(pasteSafeSheet.sheetProtection?.formatCells).not.toBe(true);
+    expect(pasteSafeSheet.conditionalFormattings?.map(({ ref }) => ref)).toEqual([
+      "A5:Z1000",
+      "G5:G1000",
+      "H5:H1000",
+      "I5:I1000",
+    ]);
 
     await user.click(screen.getByRole("button", { name: /Nhập tài sản/i }));
     const input = document.querySelector('input[type="file"]') as HTMLInputElement;
     await user.upload(input, new File([bytes], "assets.xlsx"));
     expect(await screen.findByText("Máy trạm BIM")).toBeVisible();
+    expect(screen.getAllByText("HD-001")).toHaveLength(2);
+    expect(screen.getAllByText("INV-001")).toHaveLength(2);
     await user.click(screen.getByRole("button", { name: "Kiểm tra dữ liệu" }));
-    await waitFor(() => expect(mocks.validateAssetImport).toHaveBeenCalled());
+    await waitFor(() =>
+      expect(mocks.validateAssetImport).toHaveBeenCalledWith([
+        expect.objectContaining({
+          rowNumber: 5,
+          quantity: 3,
+          contractNumber: "HD-001",
+          invoiceNumber: "INV-001",
+          name: "Máy trạm BIM",
+          originalCost: 40_000_000,
+          purchaseDate: "2026-07-01",
+          usefulLifeMonths: 60,
+        }),
+        expect.objectContaining({
+          rowNumber: 6,
+          contractNumber: "HD-001",
+          invoiceNumber: "INV-001",
+          name: "Máy trạm BIM 2",
+        }),
+      ]),
+    );
     await user.click(screen.getByRole("button", { name: "Import" }));
     await waitFor(() => expect(mocks.commitAssetImport).toHaveBeenCalled());
     await user.click(screen.getByRole("button", { name: /Tải kết quả/i }));

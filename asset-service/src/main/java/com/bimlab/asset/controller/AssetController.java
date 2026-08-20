@@ -5,6 +5,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 
 import com.bimlab.asset.dto.request.AssetRequest;
+import com.bimlab.asset.dto.request.AssetCatalogAssignmentRequest;
 import com.bimlab.asset.dto.request.AssetImportCommitRequest;
 import com.bimlab.asset.dto.request.AssetImportValidateRequest;
 import com.bimlab.asset.dto.request.DisposeAssetRequest;
@@ -82,6 +83,12 @@ public class AssetController {
         return mapper.toResponse(service.updateAsset(id, req));
     }
 
+    @PutMapping("/catalog")
+    @PreAuthorize("hasAuthority('asset_manage')")
+    public void assignCatalog(@Valid @RequestBody AssetCatalogAssignmentRequest req) {
+        service.assignCatalog(req);
+    }
+
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAuthority('asset_manage')")
     public void delete(@PathVariable Long id) {
@@ -91,7 +98,7 @@ public class AssetController {
     /*
     TODO tính khấu hao theo từng danh mục tài sản -> để làm sau khi có công thức tính
      */
-    // Snapshot khấu hao là dữ liệu thuần tài chính → chỉ nhóm xem được tài chính
+    // Snapshot khấu hao là dữ liệu thuần tài chính -> chỉ nhóm xem được tài chính
     // (asset_finance_view/finance_manage; asset_manage nhập liệu tài chính nên giữ).
     @GetMapping("/{id}/depreciation")
     @PreAuthorize("hasAnyAuthority('asset_finance_view','asset_finance_manage','asset_manage')")

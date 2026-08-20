@@ -4,6 +4,7 @@ import { ActionsProvider } from "./contexts/ActionsContext";
 import { AppDataProvider } from "./contexts/AppDataContext";
 import { AuthProvider } from "./contexts/AuthContext";
 import { AppShell } from "./layout/AppShell";
+import { AssetCatalogItemsPage } from "./pages/AssetCatalogItemsPage";
 import { AssetCategoriesPage } from "./pages/AssetCategoriesPage";
 import { AssetsPage } from "./pages/AssetsPage";
 import { BookingPage } from "./pages/BookingPage";
@@ -53,6 +54,14 @@ function App() {
                   element={
                     <ProtectedRoute permission="asset_manage">
                       <AssetCategoriesPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/asset-catalog-items"
+                  element={
+                    <ProtectedRoute permission="asset_manage">
+                      <AssetCatalogItemsPage />
                     </ProtectedRoute>
                   }
                 />

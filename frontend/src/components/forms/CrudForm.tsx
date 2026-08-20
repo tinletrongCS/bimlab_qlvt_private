@@ -256,7 +256,7 @@ function CrudFormInner({
   return (
     <CrudModal
       title={`${titlePrefix} ${modalLabel(modal.type)}`}
-      subtitle="Nhập thông tin theo nghiệp vụ QLVT"
+      subtitle=""
       submitting={submitting}
       onClose={onClose}
       onSubmit={submit}
@@ -472,7 +472,7 @@ function CrudFormInner({
           </div>
           <div className="crud-modal-col-right">
             <AssetCategoryTreeSelect
-              label="Danh mục tài sản"
+              label="Loại tài sản"
               value={form.category}
               onChange={(name, code, id) => {
                 setField("category", name);

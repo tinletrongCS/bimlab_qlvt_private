@@ -37,6 +37,8 @@ public class AssetMapper {
                 enumName(asset.getToolUsageType()),
                 asset.getSerialNumber(),
                 asset.getSource(),
+                asset.getContractNumber(),
+                asset.getInvoiceNumber(),
                 toVendorResponse(asset.getVendor()),
                 asset.getAssignedEmployeeId(),
                 asset.getDepartmentId(),

@@ -40,6 +40,7 @@ class AssetBookingServiceTest {
     @Mock AssetItemRepository assets;
     @Mock AssetBookingMapper mapper;
     @Mock AssetAccessService access;
+    @Mock AssetReferenceLookup references;
 
     @InjectMocks AssetBookingService service;
 
@@ -65,6 +66,7 @@ class AssetBookingServiceTest {
 
     @Test
     void createBooking_stampsRequesterAndCreatedByFromCaller_ignoringBody() {
+        when(references.departmentName(1L)).thenReturn("Phòng BIM");
         when(assets.findByAssetCode("ROOM-A")).thenReturn(Optional.of(bookableRoom()));
         when(bookings.findOverlappingBookings(any(), any(), any(), any())).thenReturn(List.of());
         when(bookings.save(any(AssetBookingSession.class))).thenAnswer(inv -> inv.getArgument(0));
@@ -75,6 +77,17 @@ class AssetBookingServiceTest {
         verify(bookings).save(captor.capture());
         assertEquals(42L, captor.getValue().getRequestedByEmployeeId(), "requester must come from caller, not body");
         assertEquals("alice", captor.getValue().getCreatedBy(), "createdBy must come from principal, not body");
+    }
+
+    @Test
+    void createBooking_rejectsUnknownDepartment() {
+        when(references.departmentName(1L)).thenReturn(null);
+
+        assertThrows(IllegalArgumentException.class,
+                () -> service.createBooking(payload(99L, "x"), 42L, "alice"));
+
+        verify(assets, never()).findByAssetCode(any());
+        verify(bookings, never()).save(any());
     }
 
     @Test

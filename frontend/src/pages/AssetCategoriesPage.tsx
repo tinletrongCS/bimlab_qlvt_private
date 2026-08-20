@@ -249,7 +249,7 @@ function CategoryNode({
                   onEdit(node);
                   onCreateChild(node);
                 }}
-                title="Thêm danh mục con"
+                title="Thêm loại con"
               >
                 <FiPlus />
               </button>
@@ -349,7 +349,7 @@ function StructureView({
       <div className="category-structure-grid">
         <aside className="category-structure-sidebar">
           <div className="category-structure-sidebar-head">
-            <p>Danh mục gốc</p>
+            <p>Loại gốc</p>
             <span>{roots.length} nhóm · click để xem</span>
           </div>
           <nav>
@@ -379,7 +379,7 @@ function StructureView({
         <section className="category-structure-detail">
           <div className="category-structure-detail-head">
             <div>
-              <p>Danh mục cha</p>
+              <p>Loại cha</p>
               <h3 title={activeRoot.name}>{activeRoot.name}</h3>
               <span>
                 {assetClassLabel(activeRoot.assetClass)} · {activeRoot.children.length} nhóm con
@@ -389,7 +389,7 @@ function StructureView({
           </div>
           <div className="category-structure-rows">
             {activeRoot.children.length === 0 ? (
-              <p className="category-structure-empty">Danh mục này chưa có nhóm con.</p>
+              <p className="category-structure-empty">Loại tài sản này chưa có nhóm con.</p>
             ) : (
               activeRoot.children.map((node) => (
                 <StructureRow
@@ -472,7 +472,7 @@ function StructureRow({
               ))}
             </div>
           ) : (
-            <p className="category-structure-empty">Chưa có danh mục con</p>
+            <p className="category-structure-empty">Chưa có loại con</p>
           )}
         </div>
       )}
@@ -630,7 +630,7 @@ export function AssetCategoriesPage() {
       const categoryData = await loadAssetCategories();
       setCategories(categoryData);
     } catch {
-      toast.error("Không tải được danh mục tài sản.");
+      toast.error("Không tải được phân loại tài sản.");
     } finally {
       setLoading(false);
     }
@@ -700,10 +700,10 @@ export function AssetCategoriesPage() {
     try {
       if (editing) {
         await updateAssetCategory(editing.id, form);
-        toast.success("Đã cập nhật danh mục.");
+        toast.success("Đã cập nhật loại tài sản.");
       } else {
         await createAssetCategory(form);
-        toast.success("Đã tạo danh mục.");
+        toast.success("Đã tạo loại tài sản.");
       }
       setEditing(null);
       setSelectedCategoryId(nextSelectedId ?? null);
@@ -712,14 +712,14 @@ export function AssetCategoriesPage() {
       await refresh();
       closeImport();
     } catch {
-      toast.error("Không lưu được danh mục.");
+      toast.error("Không lưu được loại tài sản.");
     } finally {
       setSubmitting(false);
     }
   };
 
   const remove = async (category: AssetCategory) => {
-    if (!window.confirm(`Xóa danh mục ${category.name}?`)) return;
+    if (!window.confirm(`Xóa loại tài sản ${category.name}?`)) return;
     const nextSelectedId = category.parentId ?? null;
     setSubmitting(true);
     try {
@@ -735,9 +735,9 @@ export function AssetCategoriesPage() {
         setExpandedStructureIds((prev) => new Set(prev).add(nextSelectedId));
       }
       await refresh();
-      toast.success("Đã xóa danh mục.");
+      toast.success("Đã xóa loại tài sản.");
     } catch {
-      toast.error("Không xóa được danh mục.");
+      toast.error("Không xóa được loại tài sản.");
     } finally {
       setSubmitting(false);
     }
@@ -770,7 +770,7 @@ export function AssetCategoriesPage() {
       setImportPreview(emptyCategoryImportResult(rows));
       setImportPreviewTab("TABLE");
       setExpandedImportTreeCodes(new Set());
-      toast.success(`Đã đọc ${rows.length} dòng từ sheet danh mục.`);
+      toast.success(`Đã đọc ${rows.length} dòng từ sheet phân loại.`);
     } catch (error) {
       setImportFileName("");
       setImportRows([]);
@@ -791,23 +791,23 @@ export function AssetCategoriesPage() {
     try {
       const result = await validateAssetCategoryImport(importRows);
       setImportPreview(result);
-      if (result.errorRows > 0) toast.error("File danh mục còn lỗi cần sửa.");
-      else toast.success("Dữ liệu danh mục hợp lệ.");
+      if (result.errorRows > 0) toast.error("File phân loại còn lỗi cần sửa.");
+      else toast.success("Dữ liệu phân loại hợp lệ.");
     } catch {
-      toast.error("Backend validate danh mục đang chờ bạn implement phần TODO.");
+      toast.error("Backend kiểm tra phân loại đang chờ bạn implement phần TODO.");
     } finally {
       setImportBusy(false);
     }
   };
 
   const handleDownloadCategoryTemplate = async () => {
-    const loadingToast = toast.loading("Đang tạo file mẫu danh mục...");
+    const loadingToast = toast.loading("Đang tạo file mẫu phân loại...");
     try {
       const latestTree = await loadAssetCategoryTree();
       await downloadCategoryImportTemplate(latestTree);
-      toast.success("Đã tải file mẫu danh mục.", { id: loadingToast });
+      toast.success("Đã tải file mẫu phân loại.", { id: loadingToast });
     } catch {
-      toast.error("Không tạo được file mẫu danh mục.", { id: loadingToast });
+      toast.error("Không tạo được file mẫu phân loại.", { id: loadingToast });
     }
   };
 
@@ -828,7 +828,7 @@ export function AssetCategoriesPage() {
       await refresh();
       closeImport();
     } catch {
-      toast.error("Backend lưu danh mục đang chờ bạn implement phần TODO.");
+      toast.error("Backend lưu phân loại đang chờ bạn implement phần TODO.");
     } finally {
       setImportBusy(false);
     }
@@ -854,7 +854,7 @@ export function AssetCategoriesPage() {
       <div className="panel">
         <header className="asset-page-header">
           <div>
-            <h2>Danh mục tài sản</h2>
+            <h2>Phân loại tài sản</h2>
           </div>
         </header>
         <div className="asset-page-actions category-page-actions">
@@ -863,7 +863,7 @@ export function AssetCategoriesPage() {
             className="asset-add-button btn-download-green"
             onClick={() => void handleDownloadCategoryTemplate()}
           >
-            <FiDownload /> In danh mục
+            <FiDownload /> Tải mẫu Excel
           </button>
           <button
             type="button"
@@ -873,7 +873,7 @@ export function AssetCategoriesPage() {
               setImportOpen(true);
             }}
           >
-            <FiUpload /> Nhập danh mục
+            <FiUpload /> Nhập loại tài sản
           </button>
         </div>
 
@@ -896,7 +896,7 @@ export function AssetCategoriesPage() {
 
               <div className="category-filters">
                 <label className="category-search-field">
-                  Tìm danh mục
+                  Tìm loại tài sản
                   <span>
                     <FiSearch />
                     <input
@@ -917,7 +917,7 @@ export function AssetCategoriesPage() {
                   </span>
                 </label>
                 <label>
-                  Loại danh mục
+                  Nhóm tài sản
                   <select
                     value={assetClassFilter}
                     onChange={(event) =>
@@ -945,7 +945,7 @@ export function AssetCategoriesPage() {
               {loading ? (
                 <div className="loading">Đang tải dữ liệu...</div>
               ) : filteredCategories.length === 0 ? (
-                <div className="empty-state">Chưa có danh mục.</div>
+                <div className="empty-state">Chưa có loại tài sản.</div>
               ) : (
                 <div style={{ position: "relative" }}>
                   <div className="category-org-viewport">
@@ -1017,7 +1017,7 @@ export function AssetCategoriesPage() {
 
           <form className="category-editor" onSubmit={submit}>
             <div className="category-editor-heading">
-              <h3>{editing ? "Cập nhật danh mục" : "Thêm danh mục"}</h3>
+              <h3>{editing ? "Cập nhật loại tài sản" : "Thêm loại tài sản"}</h3>
               {editing && (
                 <button type="button" className="ghost-button" onClick={startCreate}>
                   <FiX /> Hủy
@@ -1027,7 +1027,7 @@ export function AssetCategoriesPage() {
 
             {!editing && form.parentId && (
               <div className="category-parent-context">
-                <span>Tạo danh mục con của</span>
+                <span>Tạo loại con của</span>
                 <strong>
                   {categories.find((category) => category.id === form.parentId)?.name}
                 </strong>
@@ -1035,7 +1035,7 @@ export function AssetCategoriesPage() {
             )}
 
             <label>
-              Tên danh mục
+              Tên loại tài sản
               <input
                 value={form.name}
                 onChange={(event) => setForm((prev) => ({ ...prev, name: event.target.value }))}
@@ -1045,7 +1045,7 @@ export function AssetCategoriesPage() {
             </label>
 
             <label>
-              Mã danh mục
+              Mã loại
               <input
                 value={form.code}
                 onChange={(event) => setForm((prev) => ({ ...prev, code: event.target.value }))}
@@ -1135,7 +1135,7 @@ export function AssetCategoriesPage() {
                 type="submit"
                 disabled={submitting || (editing ? !categoryFormChanged : false)}
               >
-                <FiSave /> {editing ? "Lưu" : "Tạo danh mục"}
+                <FiSave /> {editing ? "Lưu" : "Tạo loại tài sản"}
               </button>
             </div>
           </form>
@@ -1150,7 +1150,7 @@ export function AssetCategoriesPage() {
                     <FiFileText />
                   </span>
                   <div>
-                    <h2>Tải danh mục tài sản</h2>
+                    <h2>Nhập phân loại tài sản</h2>
                   </div>
                 </div>
                 <button type="button" className="icon-button" onClick={requestCloseImport}>
@@ -1171,7 +1171,7 @@ export function AssetCategoriesPage() {
                   </label>
                   <div className="asset-import-file-meta">
                     <strong>{importFileName || "Chưa chọn file Excel"}</strong>
-                    <small>Dùng sheet DanhMuc_ThamChieu giống file mẫu import tài sản.</small>
+                    <small>Dùng sheet Loai_ThamChieu giống file mẫu import tài sản.</small>
                   </div>
                 </div>
 
@@ -1310,9 +1310,9 @@ export function AssetCategoriesPage() {
                         <thead>
                           <tr>
                             <th>Dòng</th>
-                            <th>Tên danh mục</th>
+                            <th>Tên loại tài sản</th>
                             <th>Mã</th>
-                            <th>Danh mục cha</th>
+                            <th>Loại cha</th>
                             <th>Thao tác</th>
                             <th>Trạng thái</th>
                             <th>Ghi chú kiểm tra</th>
@@ -1416,7 +1416,7 @@ export function AssetCategoriesPage() {
                       <FiX />
                     </div>
                     <div className="asset-import-confirm-content">
-                      <strong>Hủy phiên nhập danh mục?</strong>
+                      <strong>Hủy phiên nhập phân loại tài sản?</strong>
                       <p>
                         File đã chọn, dữ liệu preview và kết quả kiểm tra hiện tại sẽ bị xóa khỏi
                         màn hình.
@@ -1477,7 +1477,7 @@ function MaximizedTreeModal({
         }}
       >
         <div className="modal-head" style={{ padding: "12px 20px" }}>
-          <h2 style={{ fontSize: "16px", margin: 0 }}>Sơ đồ phân cấp danh mục</h2>
+          <h2 style={{ fontSize: "16px", margin: 0 }}>Sơ đồ phân loại tài sản</h2>
           <button type="button" className="icon-button" onClick={onClose}>
             <FiX />
           </button>

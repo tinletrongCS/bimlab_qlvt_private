@@ -37,7 +37,7 @@ public class AssetReferenceLookup {
         try {
             return jdbc.queryForObject(sql, String.class, value);
         } catch (DataAccessException ignored) {
-            // ponytail: QLVT hiện dùng DB chung; fallback null khi reference chưa có hoặc DB đã tách.
+            // Reference data can be temporarily unavailable while shared services are starting.
             return null;
         }
     }

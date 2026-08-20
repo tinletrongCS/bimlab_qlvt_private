@@ -16,6 +16,7 @@ import {
   FiXCircle,
 } from "react-icons/fi";
 import { DataTable } from "../components/DataTable";
+import { SearchableSelect } from "../components/forms/SearchableSelect";
 import { OverflowActions } from "../components/OverflowActions";
 import { useAuth } from "../contexts/AuthContext";
 import {
@@ -26,12 +27,14 @@ import {
   createAssetBooking,
   loadAssetBookings,
   loadAssets,
+  loadDepartments,
 } from "../services/api";
 import type {
   AssetBooking,
   AssetBookingAvailability,
   AssetBookingPayload,
   AssetItem,
+  DepartmentLite,
 } from "../services/types";
 
 type BookingAction = "check-in" | "check-out" | "cancel";
@@ -406,6 +409,7 @@ export function BookingPage() {
   const { user } = useAuth();
   const timeGridScrollRef = useRef<HTMLDivElement | null>(null);
   const [assets, setAssets] = useState<AssetItem[]>([]);
+  const [departments, setDepartments] = useState<DepartmentLite[]>([]);
   const [bookings, setBookings] = useState<AssetBooking[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -443,6 +447,20 @@ export function BookingPage() {
         .sort((a, b) => `${a.assetCode} ${a.name}`.localeCompare(`${b.assetCode} ${b.name}`)),
     [assets],
   );
+  const departmentOptions = useMemo(
+    () =>
+      departments
+        .slice()
+        .sort((a, b) => a.name.localeCompare(b.name, "vi"))
+        .map((department) => ({ value: String(department.id), label: department.name })),
+    [departments],
+  );
+  const departmentNameById = useMemo(
+    () => new Map(departments.map((department) => [department.id, department.name])),
+    [departments],
+  );
+  const departmentName = (id?: number | null) =>
+    id ? departmentNameById.get(id) || `Phòng ban #${id}` : "--";
 
   const selectedFilterAsset = useMemo(
     () => assetOptions.find((asset) => asset.assetCode === filters.assetCode),
@@ -474,8 +492,21 @@ export function BookingPage() {
     async function loadInitialData() {
       setLoading(true);
       try {
-        const assetData = await loadAssets();
-        if (!cancelled) setAssets(assetData);
+        const [assetResult, departmentResult] = await Promise.allSettled([
+          loadAssets(),
+          loadDepartments(),
+        ]);
+        if (cancelled) return;
+        if (assetResult.status === "fulfilled") {
+          setAssets(assetResult.value);
+        } else {
+          toast.error(errorMessage(assetResult.reason, "Không tải được danh sách tài sản."));
+        }
+        if (departmentResult.status === "fulfilled") {
+          setDepartments(departmentResult.value);
+        } else {
+          toast.error(errorMessage(departmentResult.reason, "Không tải được danh sách phòng ban."));
+        }
       } catch (error) {
         if (!cancelled) toast.error(errorMessage(error, "Không tải được danh sách tài sản."));
       } finally {
@@ -717,7 +748,7 @@ export function BookingPage() {
     {
       id: "department",
       label: "Phòng ban",
-      render: (item) => item.departmentId || "--",
+      render: (item) => departmentName(item.departmentId),
     },
     {
       id: "site",
@@ -951,13 +982,11 @@ export function BookingPage() {
 
             <label>
               Phòng ban
-              <input
-                inputMode="numeric"
+              <SearchableSelect
                 value={form.departmentId}
-                onChange={(event) =>
-                  setForm((prev) => ({ ...prev, departmentId: event.target.value }))
-                }
-                placeholder="ID phòng ban"
+                onChange={(value) => setForm((prev) => ({ ...prev, departmentId: value }))}
+                placeholder="Chọn phòng ban"
+                options={[{ value: "", label: "Không chọn" }, ...departmentOptions]}
               />
             </label>
 
@@ -1536,11 +1565,11 @@ export function BookingPage() {
                   <span>Phòng ban / site / dự án</span>
                   <strong>
                     {[
-                      selectedBooking.departmentId,
+                      departmentName(selectedBooking.departmentId),
                       selectedBooking.siteId,
                       selectedBooking.projectId,
                     ]
-                      .filter(Boolean)
+                      .filter((value) => value && value !== "--")
                       .join(" · ") || "--"}
                   </strong>
                 </div>

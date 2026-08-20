@@ -1,4 +1,12 @@
-import React, { type ReactNode, useEffect, useRef, useState } from "react";
+import React, {
+  type CSSProperties,
+  type ReactNode,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
+import { createPortal } from "react-dom";
 import { FiChevronDown } from "react-icons/fi";
 
 export interface SearchableSelectOption {
@@ -14,6 +22,8 @@ interface SearchableSelectProps {
   placeholder?: string;
   disabled?: boolean;
   className?: string;
+  dropdownClassName?: string;
+  portal?: boolean;
   style?: React.CSSProperties;
 }
 
@@ -38,12 +48,15 @@ export function SearchableSelect({
   placeholder = "Không chọn",
   disabled = false,
   className = "",
+  dropdownClassName = "",
+  portal = false,
   style,
 }: SearchableSelectProps) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const [portalStyle, setPortalStyle] = useState<CSSProperties>();
 
   const mergedOptions = [...options];
 
@@ -69,6 +82,7 @@ export function SearchableSelect({
 
   const selectedOption = mergedOptions.find((o) => String(o.value) === String(value));
   const displayValue = open ? search : selectedOption ? selectedOption.label : "";
+  const displayTitle = displayValue || selectedOption?.label || placeholder;
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -81,6 +95,34 @@ export function SearchableSelect({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  useLayoutEffect(() => {
+    if (!open || !portal) return;
+    const positionDropdown = () => {
+      const rect = containerRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      const spaceBelow = window.innerHeight - rect.bottom - 8;
+      const openUpwards = spaceBelow < 360 && rect.top > spaceBelow;
+      const width = Math.min(Math.max(rect.width, 380), window.innerWidth - 16);
+      setPortalStyle({
+        position: "fixed",
+        left: Math.max(8, Math.min(rect.left, window.innerWidth - width - 8)),
+        top: openUpwards ? undefined : rect.bottom + 4,
+        bottom: openUpwards ? window.innerHeight - rect.top + 4 : undefined,
+        width,
+        maxHeight: Math.max(160, Math.min(360, openUpwards ? rect.top - 8 : spaceBelow)),
+        overflowY: "auto",
+        zIndex: 20000,
+      });
+    };
+    positionDropdown();
+    window.addEventListener("resize", positionDropdown);
+    window.addEventListener("scroll", positionDropdown, true);
+    return () => {
+      window.removeEventListener("resize", positionDropdown);
+      window.removeEventListener("scroll", positionDropdown, true);
+    };
+  }, [open, portal]);
+
   const filteredOptions = mergedOptions.filter((o) =>
     o.label.toLowerCase().includes(search.toLowerCase()),
   );
@@ -92,9 +134,37 @@ export function SearchableSelect({
       setSearch("");
     } else {
       setOpen(true);
-      setTimeout(() => inputRef.current?.focus(), 0);
+      setTimeout(() => inputRef.current?.focus({ preventScroll: true }), 0);
     }
   };
+
+  const dropdown = (
+    <div
+      className={`searchable-select-dropdown ${dropdownClassName}`}
+      style={portal ? portalStyle : undefined}
+    >
+      {filteredOptions.length > 0 ? (
+        filteredOptions.map((o) => (
+          <div
+            key={o.value}
+            className={`searchable-select-option ${String(o.value) === String(value) ? "selected" : ""}`}
+            title={o.label || "Không chọn"}
+            onMouseDown={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              onChange(o.value);
+              setOpen(false);
+              setSearch("");
+            }}
+          >
+            {o.label || "Không chọn"}
+          </div>
+        ))
+      ) : (
+        <div className="searchable-select-empty">Không tìm thấy</div>
+      )}
+    </div>
+  );
 
   return (
     <div
@@ -139,6 +209,7 @@ export function SearchableSelect({
           }}
           disabled={disabled}
           placeholder={selectedOption ? selectedOption.label : placeholder}
+          title={displayTitle}
         />
         <FiChevronDown className={`searchable-select-icon${open ? " rotated" : ""}`} />
       </div>
@@ -156,32 +227,10 @@ export function SearchableSelect({
           </option>
         ))}
       </select>
-      {open && !disabled && (
-        <div className="searchable-select-dropdown">
-          {filteredOptions.length > 0 ? (
-            filteredOptions.map((o) => (
-              <div
-                key={o.value}
-                className={
-                  "searchable-select-option " +
-                  (String(o.value) === String(value) ? "selected" : "")
-                }
-                onMouseDown={(e) => {
-                  e.stopPropagation();
-                  e.preventDefault();
-                  onChange(o.value);
-                  setOpen(false);
-                  setSearch("");
-                }}
-              >
-                {o.label || "Không chọn"}
-              </div>
-            ))
-          ) : (
-            <div className="searchable-select-empty">Không tìm thấy</div>
-          )}
-        </div>
-      )}
+      {open &&
+        !disabled &&
+        (!portal || portalStyle) &&
+        (portal ? createPortal(dropdown, document.body) : dropdown)}
     </div>
   );
 }

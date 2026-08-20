@@ -27,6 +27,7 @@ spring:
     open-in-view: false
     properties:
       hibernate:
+        generate_statistics: ${HIBERNATE_GENERATE_STATISTICS:false}
         default_schema: asset
         hbm2ddl:
           create_namespaces: true
@@ -92,5 +93,7 @@ management:
 
 # STEP-5 observability: include correlationId in every log line (MDC set by CorrelationIdMdcFilter).
 logging:
+  level:
+    org.hibernate.engine.internal.StatisticalLoggingSessionEventListener: INFO
   pattern:
     level: "%5p [${spring.application.name:asset-service},%X{correlationId:-}]"
