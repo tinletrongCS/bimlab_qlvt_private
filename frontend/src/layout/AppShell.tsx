@@ -1,6 +1,5 @@
 import { type ReactElement, useEffect, useMemo, useState } from "react";
 import {
-  FiAlertTriangle,
   FiBarChart2,
   FiBox,
   FiBriefcase,
