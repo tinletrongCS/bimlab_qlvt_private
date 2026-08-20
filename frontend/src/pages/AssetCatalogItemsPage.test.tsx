@@ -28,10 +28,12 @@ vi.mock("../contexts/AuthContext", () => ({
 vi.mock("../components/forms/AssetCategoryTreeSelect", () => ({
   AssetCategoryTreeSelect: ({
     onChange,
+    disabled,
   }: {
     onChange: (name: string, code?: string, id?: number) => void;
+    disabled?: boolean;
   }) => (
-    <button type="button" onClick={() => onChange("Màn hình", "MON", 10)}>
+    <button type="button" disabled={disabled} onClick={() => onChange("Màn hình", "MON", 10)}>
       Chọn loại Màn hình
     </button>
   ),
@@ -101,16 +103,27 @@ describe("AssetCatalogItemsPage", () => {
     );
   });
 
-  it("edits and deactivates an existing catalog item", async () => {
+  it("views details before editing and deactivates an existing catalog item", async () => {
     const user = userEvent.setup();
     vi.spyOn(window, "confirm").mockReturnValue(true);
     render(<AssetCatalogItemsPage />);
     expect(await screen.findByText("MON-LG-27")).toBeVisible();
 
     await user.click(screen.getByRole("button", { name: "Mở thao tác cho Màn hình LG 27 inch" }));
-    await user.click(await screen.findByRole("menuitem", { name: "Sửa thông tin" }));
-    expect(await screen.findByRole("heading", { name: "Cập nhật danh mục" })).toBeVisible();
+    await user.click(await screen.findByRole("menuitem", { name: "Xem chi tiết" }));
+    expect(await screen.findByRole("heading", { name: "Chi tiết danh mục" })).toBeVisible();
     const name = screen.getByLabelText(/Tên danh mục/i);
+    expect(name).toBeDisabled();
+    expect(screen.getByLabelText(/Nhóm kiểm kê/i)).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Chọn loại Màn hình" })).toBeDisabled();
+    expect(screen.queryByRole("button", { name: "Lưu" })).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Cập nhật" }));
+    expect(screen.getByRole("heading", { name: "Cập nhật danh mục" })).toBeVisible();
+    expect(name).toBeEnabled();
+    expect(screen.getByLabelText(/Nhóm kiểm kê/i)).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Chọn loại Màn hình" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Lưu" })).toBeVisible();
+    expect(mocks.update).not.toHaveBeenCalled();
     await user.clear(name);
     await user.type(name, "Màn hình LG cập nhật");
     await user.click(screen.getByRole("button", { name: "Lưu" }));

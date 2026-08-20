@@ -1,6 +1,6 @@
-import { type FormEvent, useEffect, useMemo, useState } from "react";
+import { type FormEvent, type MouseEvent, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
-import { FiPlus, FiRotateCcw, FiSearch, FiSlash, FiX } from "react-icons/fi";
+import { FiEdit2, FiPlus, FiRotateCcw, FiSearch, FiSlash, FiX } from "react-icons/fi";
 import { CrudModal } from "../components/CrudModal";
 import { DataTable } from "../components/DataTable";
 import { AssetCategoryTreeSelect } from "../components/forms/AssetCategoryTreeSelect";
@@ -29,6 +29,7 @@ import type {
 
 type ActiveFilter = "ALL" | "ACTIVE" | "INACTIVE";
 type TypeFilter = "ALL" | AssetCatalogType;
+type CatalogModalMode = "create" | "view" | "edit";
 type CatalogTableColumnId =
   | "code"
   | "name"
@@ -126,13 +127,13 @@ const DEFAULT_CATALOG_TABLE_VISIBLE_COLUMNS = CATALOG_TABLE_COLUMNS.filter(
   (column) => column.defaultVisible || column.locked,
 ).map((column) => column.id);
 const CATALOG_TABLE_COLUMN_WIDTHS: Record<CatalogTableColumnId, number> = {
-  code: 160,
-  name: 250,
-  category: 360,
-  type: 170,
-  unit: 130,
-  assetCount: 110,
-  status: 140,
+  code: 124,
+  name: 210,
+  category: 300,
+  type: 132,
+  unit: 84,
+  assetCount: 78,
+  status: 98,
 };
 
 function normalizeCatalogColumnOrder(order: CatalogTableColumnId[]) {
@@ -186,6 +187,7 @@ export function AssetCatalogItemsPage() {
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("ALL");
   const [activeFilter, setActiveFilter] = useState<ActiveFilter>("ALL");
   const [modalOpen, setModalOpen] = useState(false);
+  const [modalMode, setModalMode] = useState<CatalogModalMode>("create");
   const [editingId, setEditingId] = useState<number | null>(null);
   const [form, setForm] = useState<CatalogFormState>(EMPTY_FORM);
   const [busy, setBusy] = useState(false);
@@ -250,18 +252,20 @@ export function AssetCatalogItemsPage() {
   const activeSelectedItems = selectedItems.filter((item) => item.active);
 
   const openCreate = () => {
+    setModalMode("create");
     setEditingId(null);
     setForm(EMPTY_FORM);
     setModalOpen(true);
   };
 
-  const openEdit = async (id: number) => {
+  const openDetail = async (id: number) => {
     setBusy(true);
     try {
       const item = await loadAssetCatalogItem(id);
       const itemCategory = categories.find((category) => category.id === item.categoryId);
       const nextForm = formFromDetail(item);
       setEditingId(id);
+      setModalMode("view");
       setForm({
         ...nextForm,
         catalogType: itemCategory
@@ -280,8 +284,15 @@ export function AssetCatalogItemsPage() {
     if (!busy) setModalOpen(false);
   };
 
+  const startEditingFromDetail = (event: MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setModalMode("edit");
+  };
+
   const submit = async (event: FormEvent) => {
     event.preventDefault();
+    if (modalMode === "view") return;
     if (!form.categoryId) {
       toast.error("Chọn loại tài sản cho danh mục.");
       return;
@@ -409,37 +420,43 @@ export function AssetCatalogItemsPage() {
       key: "code",
       title: "Mã danh mục",
       className: "catalog-col-code",
-      render: (item: AssetCatalogItemListItem) => <b>{item.itemCode}</b>,
+      render: (item: AssetCatalogItemListItem) => <CatalogTableText value={item.itemCode} strong />,
     },
     {
       key: "name",
       title: "Tên danh mục",
       className: "catalog-col-name",
-      render: (item: AssetCatalogItemListItem) => item.name,
+      render: (item: AssetCatalogItemListItem) => <CatalogTableText value={item.name} strong />,
     },
     {
       key: "category",
       title: "Loại tài sản",
       className: "catalog-col-category",
-      render: (item: AssetCatalogItemListItem) => `${item.categoryCode} - ${item.categoryName}`,
+      render: (item: AssetCatalogItemListItem) => (
+        <CatalogTableText value={`${item.categoryCode} - ${item.categoryName}`} />
+      ),
     },
     {
       key: "type",
       title: "Kiểu danh mục",
       className: "catalog-col-type",
-      render: (item: AssetCatalogItemListItem) => TYPE_LABELS[item.catalogType],
+      render: (item: AssetCatalogItemListItem) => (
+        <CatalogTableText value={TYPE_LABELS[item.catalogType]} />
+      ),
     },
     {
       key: "unit",
       title: "Đơn vị tính",
       className: "catalog-col-unit",
-      render: (item: AssetCatalogItemListItem) => unitLabel(item.unit),
+      render: (item: AssetCatalogItemListItem) => <CatalogTableText value={unitLabel(item.unit)} />,
     },
     {
       key: "assetCount",
       title: "Số tài sản",
       className: "catalog-col-asset-count",
-      render: (item: AssetCatalogItemListItem) => item.assetCount ?? 0,
+      render: (item: AssetCatalogItemListItem) => (
+        <CatalogTableText value={String(item.assetCount ?? 0)} />
+      ),
     },
     {
       key: "status",
@@ -468,7 +485,7 @@ export function AssetCatalogItemsPage() {
   ];
   const tableMinWidth = configuredColumns.reduce(
     (total, column) => total + CATALOG_TABLE_COLUMN_WIDTHS[column.key as CatalogTableColumnId],
-    150 + (multiSelectMode ? 44 : 0),
+    118 + (multiSelectMode ? 36 : 0),
   );
 
   return (
@@ -707,9 +724,12 @@ export function AssetCatalogItemsPage() {
                       label: "Xem tài sản",
                       onClick: () => openAssetsForCatalog(item),
                     },
+                    {
+                      label: "Xem chi tiết",
+                      onClick: () => void openDetail(item.id),
+                    },
                     ...(canManage
                       ? [
-                          { label: "Sửa thông tin", onClick: () => void openEdit(item.id) },
                           ...(item.active
                             ? [
                                 {
@@ -731,15 +751,39 @@ export function AssetCatalogItemsPage() {
 
       {modalOpen && (
         <CrudModal
-          title={editingId ? "Cập nhật danh mục" : "Thêm danh mục"}
+          title={
+            modalMode === "view"
+              ? "Chi tiết danh mục"
+              : modalMode === "edit"
+                ? "Cập nhật danh mục"
+                : "Thêm danh mục"
+          }
           subtitle="Khai báo thông tin dùng chung cho các tài sản cùng danh mục."
           submitting={busy}
           onClose={closeModal}
           onSubmit={submit}
           wide
           className="catalog-modal"
+          mode={modalMode}
+          footer={
+            modalMode === "view" ? (
+              <>
+                <button className="secondary" type="button" onClick={closeModal}>
+                  Đóng
+                </button>
+                {canManage && (
+                  <button className="primary-action" type="button" onClick={startEditingFromDetail}>
+                    <FiEdit2 /> Cập nhật
+                  </button>
+                )}
+              </>
+            ) : undefined
+          }
         >
-          <div className="catalog-modal-layout">
+          <fieldset
+            className="catalog-modal-form catalog-modal-layout"
+            disabled={modalMode === "view"}
+          >
             <div className="catalog-modal-fields">
               <CatalogField
                 label="Mã danh mục"
@@ -753,6 +797,7 @@ export function AssetCatalogItemsPage() {
                 value={form.name}
                 onChange={(value) => setForm({ ...form, name: value })}
                 required
+                disabled={modalMode === "view"}
               />
               <CatalogField
                 label="Kiểu danh mục"
@@ -764,12 +809,14 @@ export function AssetCatalogItemsPage() {
                 label="Nhóm kiểm kê"
                 value={form.inventoryGroup}
                 onChange={(value) => setForm({ ...form, inventoryGroup: value })}
+                disabled={modalMode === "view"}
               />
               <label>
                 <FormLabel>Đơn vị tính</FormLabel>
                 <SearchableSelect
                   value={form.unit}
                   onChange={(value) => setForm({ ...form, unit: value as CatalogUnit | "" })}
+                  disabled={modalMode === "view"}
                   options={[
                     { value: "", label: "Chưa chọn" },
                     ...Object.entries(UNIT_LABELS).map(([value, label]) => ({ value, label })),
@@ -781,24 +828,28 @@ export function AssetCatalogItemsPage() {
                 type="currency"
                 value={form.costValue}
                 onChange={(value) => setForm({ ...form, costValue: value })}
+                disabled={modalMode === "view"}
               />
               <Field
                 label="Giá tiêu chuẩn"
                 type="currency"
                 value={form.standardValue}
                 onChange={(value) => setForm({ ...form, standardValue: value })}
+                disabled={modalMode === "view"}
               />
               <Field
                 label="Giá cố định"
                 type="currency"
                 value={form.fixedValue}
                 onChange={(value) => setForm({ ...form, fixedValue: value })}
+                disabled={modalMode === "view"}
               />
               <Field
                 label="Giá nội bộ"
                 type="currency"
                 value={form.internalValue}
                 onChange={(value) => setForm({ ...form, internalValue: value })}
+                disabled={modalMode === "view"}
               />
               <div className="catalog-form-wide">
                 <RichTextEditor
@@ -806,6 +857,7 @@ export function AssetCatalogItemsPage() {
                   value={form.technicalSpec}
                   onChange={(value) => setForm({ ...form, technicalSpec: value })}
                   minHeight={150}
+                  disabled={modalMode === "view"}
                 />
               </div>
               <label className="catalog-active-checkbox catalog-form-wide">
@@ -813,6 +865,7 @@ export function AssetCatalogItemsPage() {
                   type="checkbox"
                   checked={form.active}
                   onChange={(event) => setForm({ ...form, active: event.target.checked })}
+                  disabled={modalMode === "view"}
                 />
                 <span>Cho phép gán danh mục này cho tài sản</span>
               </label>
@@ -823,6 +876,7 @@ export function AssetCatalogItemsPage() {
                 required
                 value={form.categoryName}
                 categoryCode={form.categoryCode}
+                disabled={modalMode === "view"}
                 onChange={(name, code, id) =>
                   setForm({
                     ...form,
@@ -836,7 +890,7 @@ export function AssetCatalogItemsPage() {
                 }
               />
             </div>
-          </div>
+          </fieldset>
         </CrudModal>
       )}
     </section>
@@ -899,6 +953,15 @@ function CatalogField({
         placeholder={placeholder}
       />
     </label>
+  );
+}
+
+function CatalogTableText({ value, strong = false }: { value: string; strong?: boolean }) {
+  const content = strong ? <strong>{value}</strong> : value;
+  return (
+    <span className="catalog-table-text" title={value}>
+      {content}
+    </span>
   );
 }
 

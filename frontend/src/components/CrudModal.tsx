@@ -1,5 +1,7 @@
 import type { FormEvent, ReactNode } from "react";
-import { FiEdit2, FiPlus, FiX } from "react-icons/fi";
+import { FiEdit2, FiEye, FiPlus, FiX } from "react-icons/fi";
+
+type CrudModalMode = "create" | "edit" | "view";
 
 interface CrudModalProps {
   title: string;
@@ -10,6 +12,8 @@ interface CrudModalProps {
   onSubmit: (event: FormEvent) => void;
   wide?: boolean;
   className?: string;
+  mode?: CrudModalMode;
+  footer?: ReactNode;
 }
 
 export function CrudModal({
@@ -21,9 +25,11 @@ export function CrudModal({
   onSubmit,
   wide = false,
   className = "",
+  mode,
+  footer,
 }: CrudModalProps) {
-  const isUpdate = title.toLowerCase().startsWith("cập nhật");
-  const HeaderIcon = isUpdate ? FiEdit2 : FiPlus;
+  const resolvedMode = mode || (title.toLowerCase().startsWith("cập nhật") ? "edit" : "create");
+  const HeaderIcon = resolvedMode === "view" ? FiEye : resolvedMode === "edit" ? FiEdit2 : FiPlus;
 
   return (
     <div className="modal-backdrop" onMouseDown={onClose}>
@@ -34,7 +40,7 @@ export function CrudModal({
       >
         <div className="modal-head">
           <div className="modal-title-group">
-            <div className={`modal-title-icon ${isUpdate ? "edit" : "create"}`}>
+            <div className={`modal-title-icon ${resolvedMode}`}>
               <HeaderIcon />
             </div>
             <div>
@@ -48,12 +54,16 @@ export function CrudModal({
         </div>
         <div className="modal-body">{children}</div>
         <div className="modal-actions">
-          <button className="secondary" type="button" onClick={onClose}>
-            Hủy
-          </button>
-          <button type="submit" disabled={submitting}>
-            {submitting ? "Đang lưu..." : "Lưu"}
-          </button>
+          {footer || (
+            <>
+              <button className="secondary" type="button" onClick={onClose}>
+                Hủy
+              </button>
+              <button type="submit" disabled={submitting}>
+                {submitting ? "Đang lưu..." : "Lưu"}
+              </button>
+            </>
+          )}
         </div>
       </form>
     </div>
