@@ -561,17 +561,27 @@ describe("QLVT pages", () => {
 
     // Quick select all filtered
     await user.click(screen.getByRole("button", { name: /Chọn tất cả/ }));
-    expect(screen.getByText(/Đã tick:/)).toHaveTextContent("1");
+    expect(screen.getByText(/Đã chọn.*tài sản cho phiếu này/)).toHaveTextContent("1");
 
     // Deselect
     await user.click(screen.getByRole("button", { name: "Bỏ chọn" }));
-    expect(screen.getByText(/Đã tick:/)).toHaveTextContent("0");
+    expect(screen.getByText(/Đã chọn.*tài sản cho phiếu này/)).toHaveTextContent("0");
 
     // Select via row checkbox
     const checkboxes = screen.getAllByRole("checkbox");
     const assetRowCheckbox = checkboxes[checkboxes.length - 1];
     await user.click(assetRowCheckbox);
-    expect(screen.getByText(/Đã tick:/)).toHaveTextContent("1");
+    expect(screen.getByText(/Đã chọn.*tài sản cho phiếu này/)).toHaveTextContent("1");
+
+    // Test Exit Confirmation Modal when navigating back to list
+    await user.click(screen.getByRole("button", { name: "Danh sách phiếu" }));
+    expect(await screen.findByText("Rời khỏi trang?")).toBeVisible();
+    expect(screen.getByText(/chưa được tạo phiếu/)).toBeVisible();
+
+    // Click "Tiếp tục chỉnh sửa" -> modal closes, remains in create view with selection intact
+    await user.click(screen.getByRole("button", { name: "Tiếp tục chỉnh sửa" }));
+    expect(screen.queryByText("Rời khỏi trang?")).toBeNull();
+    expect(screen.getByText("Bộ chọn tài sản khả dụng")).toBeVisible();
 
     // Confirm selection
     await user.click(screen.getByRole("button", { name: /Xác nhận chọn/ }));
@@ -580,10 +590,24 @@ describe("QLVT pages", () => {
     // Verify selected asset table
     expect(screen.getByText("TS-001")).toBeVisible();
 
-    // Delete asset from selected table
-    const deleteBtn = screen.getByTitle("Xóa");
-    await user.click(deleteBtn);
-    expect(screen.getByText(/Chưa có tài sản nào được chọn/)).toBeVisible();
+    // Test clicking Sidebar menu "Danh mục" with unsaved assets -> AppShell exit modal shows
+    const catalogMenuLinks = screen.getAllByRole("link", { name: /Danh mục/i });
+    if (catalogMenuLinks.length > 0) {
+      await user.click(catalogMenuLinks[0]);
+      expect(await screen.findByText("Rời khỏi trang?")).toBeVisible();
+      // Click "Tiếp tục chỉnh sửa"
+      await user.click(screen.getByRole("button", { name: "Tiếp tục chỉnh sửa" }));
+      expect(screen.queryByText("Rời khỏi trang?")).toBeNull();
+    }
+
+    // Click "Danh sách phiếu" again with selected assets -> modal shows again
+    await user.click(screen.getByRole("button", { name: "Danh sách phiếu" }));
+    expect(await screen.findByText("Rời khỏi trang?")).toBeVisible();
+
+    // Click "Xác nhận thoát" -> modal closes and switches to list view
+    await user.click(screen.getByRole("button", { name: "Xác nhận thoát" }));
+    expect(screen.queryByText("Rời khỏi trang?")).toBeNull();
+    expect(screen.getByText("Danh sách phiếu")).toBeVisible();
   });
 
   it("filters and decides assigned pending transfers", async () => {

@@ -3,6 +3,7 @@ import { ProtectedRoute } from "./auth/ProtectedRoute";
 import { ActionsProvider } from "./contexts/ActionsContext";
 import { AppDataProvider } from "./contexts/AppDataContext";
 import { AuthProvider } from "./contexts/AuthContext";
+import { NavigationGuardProvider } from "./contexts/NavigationGuardContext";
 import { AppShell } from "./layout/AppShell";
 import { AssetCatalogItemsPage } from "./pages/AssetCatalogItemsPage";
 import { AssetCategoriesPage } from "./pages/AssetCategoriesPage";
@@ -24,7 +25,8 @@ function App() {
       <AuthProvider>
         <AppDataProvider>
           <ActionsProvider>
-            <Routes>
+            <NavigationGuardProvider>
+              <Routes>
               <Route path="/login" element={<LoginPage />} />
               <Route
                 element={
@@ -133,11 +135,12 @@ function App() {
               </Route>
               <Route path="*" element={<Navigate to="/dashboard" replace />} />
             </Routes>
-          </ActionsProvider>
-        </AppDataProvider>
-      </AuthProvider>
-    </BrowserRouter>
-  );
+          </NavigationGuardProvider>
+        </ActionsProvider>
+      </AppDataProvider>
+    </AuthProvider>
+  </BrowserRouter>
+);
 }
 
 export default App;
