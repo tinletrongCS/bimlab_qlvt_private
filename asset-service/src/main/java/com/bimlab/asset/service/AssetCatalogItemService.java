@@ -167,6 +167,13 @@ public class AssetCatalogItemService {
         );
     }
 
+    private void isValidCategory(AssetCategory category) {
+        categories.findById(category.getId())
+                .orElseThrow(() -> new NoSuchElementException("Loại tài sản với mã " + category.getId() + " không tồn tại hoặc không hợp lệ"));
+        if (!Boolean.TRUE.equals(category.getActive())) {
+            throw new IllegalArgumentException("Loại tài sản đã ngừng hoạt động");
+        }
+    }
     private String trimToNull(String value) {
         return value == null || value.isBlank() ? null : value.trim();
     }

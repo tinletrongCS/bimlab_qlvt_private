@@ -1423,7 +1423,9 @@ async function downloadAssetImportTemplate(categories: AssetCategoryTree[]) {
   const link = document.createElement("a");
   link.href = url;
   link.download = "mau_import_thiet_bi_bimlab_v2.xlsx";
+  document.body.appendChild(link);
   link.click();
+  link.remove();
   URL.revokeObjectURL(url);
 }
 
