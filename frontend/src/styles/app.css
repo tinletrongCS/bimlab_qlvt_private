@@ -15652,6 +15652,13 @@ button,
   display: block !important;
 }
 
+#root .catalog-modal-form {
+  border: 0;
+  margin: 0;
+  min-inline-size: 0;
+  padding: 0;
+}
+
 #root .catalog-modal-layout {
   display: grid;
   gap: 24px;
@@ -15703,6 +15710,21 @@ button,
   flex: 1;
   max-height: 520px;
   min-height: 390px;
+}
+
+#root .catalog-modal-category .category-tree-select-container[data-disabled] {
+  color: #64748b;
+}
+
+#root
+  .catalog-modal-category
+  .category-tree-select-container[data-disabled]
+  .category-tree-inline-box {
+  background: #f8fafc;
+}
+
+#root .catalog-modal-category .category-tree-select-container[data-disabled] .category-tree-node {
+  cursor: default;
 }
 
 @media (max-width: 960px) {
@@ -15763,95 +15785,112 @@ button,
 }
 
 #root .catalog-list-panel .table-wrap.has-row-selection table {
-  width: max(calc(100% + 44px), var(--qlvt-table-min-width, 100%)) !important;
-  min-width: max(calc(100% + 44px), var(--qlvt-table-min-width, 100%)) !important;
+  width: max(100%, var(--qlvt-table-min-width, 100%)) !important;
+  min-width: max(100%, var(--qlvt-table-min-width, 100%)) !important;
 }
 
 #root .catalog-list-panel .data-table-select-column {
   box-sizing: border-box;
-  min-width: 44px;
-  padding-left: 10px !important;
-  padding-right: 10px !important;
+  min-width: 36px;
+  padding-left: 6px !important;
+  padding-right: 6px !important;
   text-align: center;
-  width: 44px;
+  width: 36px;
 }
 
 #root .catalog-list-panel .table-index-header,
 #root .catalog-list-panel .table-index-cell {
   box-sizing: border-box;
-  min-width: 52px;
-  width: 52px;
+  max-width: 40px !important;
+  min-width: 40px !important;
+  width: 40px !important;
 }
 
 #root .catalog-list-panel th,
 #root .catalog-list-panel td {
   box-sizing: border-box;
-  height: 58px;
-  max-height: 58px;
+  font-size: 12.5px !important;
+  height: 42px;
+  line-height: 1.25;
+  max-height: 42px;
   overflow: hidden;
+  padding: 8px 10px !important;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 #root .catalog-list-panel th {
-  height: 48px;
-  max-height: 48px;
+  font-size: 11.5px !important;
+  height: 38px;
+  max-height: 38px;
 }
 
 #root .catalog-list-panel .catalog-col-code {
-  min-width: 160px;
-  width: 160px;
+  min-width: 124px;
+  width: 124px;
 }
 
 #root .catalog-list-panel .catalog-col-name {
-  min-width: 250px;
-  width: 250px;
+  min-width: 210px;
+  width: 210px;
 }
 
 #root .catalog-list-panel .catalog-col-category {
-  min-width: 360px;
-  width: 360px;
+  min-width: 300px;
+  width: 300px;
 }
 
 #root .catalog-list-panel .catalog-col-type {
-  min-width: 170px;
-  width: 170px;
+  min-width: 132px;
+  width: 132px;
 }
 
 #root .catalog-list-panel .catalog-col-unit {
-  min-width: 130px;
-  width: 130px;
+  min-width: 84px;
+  width: 84px;
 }
 
 #root .catalog-list-panel .catalog-col-asset-count {
-  min-width: 110px;
-  width: 110px;
+  min-width: 78px;
+  width: 78px;
 }
 
 #root .catalog-list-panel .catalog-col-status {
-  min-width: 140px;
-  width: 140px;
+  min-width: 98px;
+  width: 98px;
 }
 
 #root .catalog-list-panel .catalog-col-actions {
-  min-width: 86px;
-  width: 86px;
+  min-width: 78px;
+  width: 78px;
 }
 
-#root .catalog-list-panel th.catalog-col-actions,
-#root .catalog-list-panel td.catalog-col-actions {
-  position: sticky !important;
-  right: 0 !important;
-  box-shadow: -1px 0 0 #cbd5e1;
-  z-index: 3;
+#root .catalog-list-panel .catalog-table-text {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color 0.15s ease;
+  white-space: nowrap;
 }
 
-#root .catalog-list-panel th.catalog-col-actions {
-  z-index: 6;
+#root .catalog-list-panel .catalog-table-text:hover,
+#root .catalog-list-panel td:hover .catalog-table-text {
+  color: #0f4f79 !important;
+}
+
+#root .catalog-list-panel .catalog-table-text strong {
+  color: inherit !important;
+  display: block;
+  font-weight: 600 !important;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 #root .catalog-list-panel .table-wrap {
-  min-height: 680px;
+  min-height: 560px;
 }
 
 #root .catalog-modal-fields > label {

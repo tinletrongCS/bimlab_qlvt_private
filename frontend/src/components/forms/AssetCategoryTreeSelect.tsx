@@ -10,6 +10,7 @@ interface AssetCategoryTreeSelectProps {
   required?: boolean;
   categoryCode?: string;
   onCodeChange?: (code: string) => void;
+  disabled?: boolean;
 }
 
 export function AssetCategoryTreeSelect({
@@ -19,6 +20,7 @@ export function AssetCategoryTreeSelect({
   required,
   categoryCode,
   onCodeChange,
+  disabled = false,
 }: AssetCategoryTreeSelectProps) {
   const [tree, setTree] = useState<AssetCategoryTree[]>([]);
   const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
@@ -35,6 +37,7 @@ export function AssetCategoryTreeSelect({
   const toggleExpand = (e: MouseEvent, id: number) => {
     e.stopPropagation();
     e.preventDefault();
+    if (disabled) return;
     setExpandedIds((current) => {
       const next = new Set(current);
       if (next.has(id)) next.delete(id);
@@ -44,6 +47,7 @@ export function AssetCategoryTreeSelect({
   };
 
   const handleSelect = (node: AssetCategoryTree) => {
+    if (disabled) return;
     if (!node.children || node.children.length === 0) {
       // Leaf node - fill both name and code
       onChange(node.name, node.code, node.id);
@@ -82,6 +86,7 @@ export function AssetCategoryTreeSelect({
               type="button"
               className="tree-expander"
               onClick={(e) => toggleExpand(e, node.id)}
+              disabled={disabled}
             >
               {isExpanded ? <FiChevronDown /> : <FiChevronRight />}
             </button>
@@ -140,7 +145,11 @@ export function AssetCategoryTreeSelect({
   };
 
   return (
-    <div className="form-field category-tree-select-container">
+    <div
+      className="form-field category-tree-select-container"
+      data-disabled={disabled || undefined}
+      aria-disabled={disabled || undefined}
+    >
       {label && (
         <label className="form-label-text">
           {label} {required && <span className="form-required">*</span>}
