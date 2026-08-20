@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
-import { FiCheck, FiEye, FiPlus, FiSearch, FiTrash2, FiX } from "react-icons/fi";
+import { FiAlertTriangle, FiCheck, FiEye, FiPlus, FiSearch, FiTrash2, FiX } from "react-icons/fi";
 import { SearchableSelect } from "../components/forms/SearchableSelect";
 import { OverflowActions } from "../components/OverflowActions";
 import { useAppData } from "../contexts/AppDataContext";
 import { useAuth } from "../contexts/AuthContext";
+import { useNavigationGuard } from "../contexts/NavigationGuardContext";
 import { readError } from "../lib/format";
 import {
   approveTransfer,
@@ -75,24 +76,24 @@ function highlightTransferText(value: string, query: string) {
 function formatTransferDate(value?: string): string {
   return value
     ? new Date(`${value}T00:00:00`).toLocaleDateString("vi-VN", {
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-      })
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    })
     : "--";
 }
 
 function formatTransferDateTime(value?: string): string {
   return value
     ? new Date(value).toLocaleString("vi-VN", {
-        hour12: false,
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-      })
+      hour12: false,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    })
     : "--";
 }
 
@@ -237,6 +238,7 @@ export function TransfersPage() {
 
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showExitConfirmModal, setShowExitConfirmModal] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -286,6 +288,59 @@ export function TransfersPage() {
     }
   }, [showAssetPicker, catalogItems.length]);
 
+  const isFormDirty = useMemo(() => {
+    return (
+      selectedAssetIds.length > 0 ||
+      pickerTempSelected.size > 0 ||
+      Boolean(toEmployeeId) ||
+      Boolean(toDepartmentId) ||
+      Boolean(reason.trim()) ||
+      selectedFiles.length > 0 ||
+      approvedByUsers.length > 0
+    );
+  }, [
+    selectedAssetIds.length,
+    pickerTempSelected.size,
+    toEmployeeId,
+    toDepartmentId,
+    reason,
+    selectedFiles.length,
+    approvedByUsers.length,
+  ]);
+
+  const { setGuard } = useNavigationGuard();
+
+  useEffect(() => {
+    if (view === "create" && isFormDirty) {
+      setGuard({
+        isDirty: true,
+        countLabel:
+          selectedAssetIds.length > 0
+            ? `${selectedAssetIds.length} tài sản đã chọn`
+            : pickerTempSelected.size > 0
+              ? `${pickerTempSelected.size} tài sản đang tick`
+              : "thông tin",
+        onConfirm: () => {
+          resetForm();
+        },
+      });
+    } else {
+      setGuard(null);
+    }
+    return () => setGuard(null);
+  }, [view, isFormDirty, selectedAssetIds.length, pickerTempSelected.size, setGuard]);
+
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (view === "create" && isFormDirty) {
+        e.preventDefault();
+        e.returnValue = "";
+      }
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [view, isFormDirty]);
+
   const resetForm = () => {
     setTransferType("Bàn giao");
     setTransferDate(minimumTransferDate());
@@ -305,15 +360,23 @@ export function TransfersPage() {
   };
 
   const handleTabChange = (newView: "list" | "create") => {
-    setView(newView);
-    setSelectedTicket(null);
     if (newView === "create") {
+      setView("create");
+      setSelectedTicket(null);
       resetForm();
       void ensureAssets(false, true);
-    } else {
-      void refresh();
-      setListPage(1);
+      return;
     }
+
+    if (view === "create" && isFormDirty) {
+      setShowExitConfirmModal(true);
+      return;
+    }
+
+    setView("list");
+    setSelectedTicket(null);
+    void refresh();
+    setListPage(1);
   };
 
   const groupedTransfers = useMemo(() => {
@@ -805,7 +868,7 @@ export function TransfersPage() {
                       </td>
                       <td>
                         {transfer.transferType === "REVOKE" ||
-                        transfer.transferType === "Thu hồi" ? (
+                          transfer.transferType === "Thu hồi" ? (
                           <span>Thu hồi về kho, gỡ toàn bộ thông tin gán</span>
                         ) : (
                           <>
@@ -1169,8 +1232,8 @@ export function TransfersPage() {
                   const normalizedSearch = pendingSearch.trim().toLowerCase();
                   const summaryText =
                     normalizedSearch &&
-                    !title.toLowerCase().includes(normalizedSearch) &&
-                    ticket.reason.toLowerCase().includes(normalizedSearch)
+                      !title.toLowerCase().includes(normalizedSearch) &&
+                      ticket.reason.toLowerCase().includes(normalizedSearch)
                       ? ticket.reason
                       : title || ticket.reason || "--";
                   return (
@@ -1292,6 +1355,156 @@ export function TransfersPage() {
             <div className="modal-actions asset-detail-actions">
               <button type="button" className="secondary" onClick={() => setSelectedTicket(null)}>
                 Đóng
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal xác nhận thoát khi đang tạo phiếu dở dang (Tối giản, không bo góc) */}
+      {showExitConfirmModal && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(15, 23, 42, 0.45)",
+            backdropFilter: "blur(4px)",
+            WebkitBackdropFilter: "blur(4px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "16px",
+            zIndex: 9999,
+          }}
+        >
+          <div
+            style={{
+              background: "#ffffff",
+              borderRadius: "0px",
+              boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)",
+              maxWidth: "420px",
+              width: "100%",
+              overflow: "hidden",
+              border: "1px solid #e2e8f0",
+              animation: "fadeIn 0.15s ease",
+            }}
+          >
+            <div style={{ padding: "32px 28px 24px", textAlign: "center" }}>
+              {/* Icon Cảnh báo Tối giản */}
+              <div
+                style={{
+                  margin: "0 auto 16px",
+                  width: "48px",
+                  height: "48px",
+                  borderRadius: "50%",
+                  background: "#fef2f2",
+                  color: "#dc2626",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  style={{ width: "24px", height: "24px" }}
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                  />
+                </svg>
+              </div>
+
+              {/* Nội dung văn bản */}
+              <h2
+                style={{
+                  fontSize: "18px",
+                  fontWeight: 700,
+                  color: "#0f172a",
+                  margin: "0 0 8px",
+                  letterSpacing: "-0.01em",
+                }}
+              >
+                Rời khỏi trang?
+              </h2>
+              <p
+                style={{
+                  fontSize: "13.5px",
+                  color: "#475569",
+                  lineHeight: "1.6",
+                  margin: 0,
+                }}
+              >
+                Bạn đang có{" "}
+                <span style={{ fontWeight: 600, color: "#2563eb" }}>
+                  {selectedAssetIds.length > 0
+                    ? `${selectedAssetIds.length} tài sản`
+                    : pickerTempSelected.size > 0
+                      ? `${pickerTempSelected.size} tài sản`
+                      : "thông tin"}
+                </span>{" "}
+                đã chọn chưa được tạo phiếu. Mọi thay đổi chưa lưu sẽ bị mất.
+              </p>
+            </div>
+
+            {/* Hành động */}
+            <div
+              style={{
+                display: "flex",
+                gap: "10px",
+                padding: "0 24px 24px",
+              }}
+            >
+              <button
+                type="button"
+                onClick={() => setShowExitConfirmModal(false)}
+                style={{
+                  flex: 1,
+                  padding: "10px 16px",
+                  fontSize: "13.5px",
+                  fontWeight: 500,
+                  color: "#334155",
+                  background: "#ffffff",
+                  border: "1px solid #cbd5e1",
+                  borderRadius: "0px",
+                  cursor: "pointer",
+                  transition: "background-color 0.15s ease",
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = "#f8fafc")}
+                onMouseLeave={(e) => (e.currentTarget.style.background = "#ffffff")}
+              >
+                Tiếp tục chỉnh sửa
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  resetForm();
+                  setView("list");
+                  setShowExitConfirmModal(false);
+                  void refresh();
+                  setListPage(1);
+                }}
+                style={{
+                  flex: 1,
+                  padding: "10px 16px",
+                  fontSize: "13.5px",
+                  fontWeight: 600,
+                  color: "#ffffff",
+                  background: "#dc2626",
+                  border: "1px solid #dc2626",
+                  borderRadius: "0px",
+                  cursor: "pointer",
+                  transition: "background-color 0.15s ease",
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = "#b91c1c")}
+                onMouseLeave={(e) => (e.currentTarget.style.background = "#dc2626")}
+              >
+                Xác nhận thoát
               </button>
             </div>
           </div>
@@ -1702,11 +1915,11 @@ export function TransfersPage() {
                     Danh sách tài sản bàn giao/thu hồi
                   </h3>
                   <p style={{ margin: "4px 0 0", fontSize: "13px", color: "#64748b" }}>
-                    Đã chọn <strong>{selectedAssetIds.length}</strong> tài sản cho phiếu này
+                    Đã chọn <strong style={{ color: "#2563eb" }}>{pickerTempSelected.size}</strong> tài sản cho phiếu này
                   </p>
                 </div>
                 <div>
-                  {!showAssetPicker ? (
+                  {!showAssetPicker && (
                     <button
                       type="button"
                       className="asset-add-button transfer-picker-open-btn"
@@ -1721,22 +1934,6 @@ export function TransfersPage() {
                     >
                       <FiPlus size={16} />
                       Thêm tài sản ({availableAssets.length} khả dụng)
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      className="secondary transfer-picker-close-btn"
-                      onClick={handleConfirmPickerSelection}
-                      style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: "6px",
-                        padding: "8px 16px",
-                        fontSize: "13px",
-                      }}
-                    >
-                      <FiCheck size={16} />
-                      Xong ({selectedAssetIds.length} đã chọn)
                     </button>
                   )}
                 </div>
@@ -1788,10 +1985,6 @@ export function TransfersPage() {
                       className="transfer-asset-picker-actions"
                       style={{ display: "flex", gap: "8px", alignItems: "center" }}
                     >
-                      <span style={{ fontSize: "13px", color: "#475569" }}>
-                        Đã tick:{" "}
-                        <strong style={{ color: "#2563eb" }}>{pickerTempSelected.size}</strong>
-                      </span>
                       <button
                         type="button"
                         className="asset-add-button"
@@ -1850,7 +2043,7 @@ export function TransfersPage() {
                         placeholder="Tất cả catalog item"
                         onChange={(val) => setPickerCatalogFilter(val)}
                       >
-                        <option value="">-- Tất cả catalog item --</option>
+                        <option value="">Tất cả catalog item</option>
                         {catalogItems.map((c) => (
                           <option key={c.id} value={String(c.id)}>
                             {c.itemCode} · {c.name}
@@ -1872,16 +2065,16 @@ export function TransfersPage() {
                       >
                         Tìm kiếm mã / tên tài sản
                       </label>
-                      <div style={{ position: "relative" }}>
+                      <div >
                         <input
                           type="text"
                           value={pickerSearchQuery}
                           onChange={(e) => setPickerSearchQuery(e.target.value)}
                           placeholder="Nhập mã hoặc tên tài sản..."
-                          style={{
-                            ...formInputStyle,
-                            paddingLeft: "32px",
-                          }}
+                        // style={{
+                        //   ...formInputStyle,
+                        //   paddingLeft: "32px",
+                        // }}
                         />
                         <FiSearch
                           size={14}
@@ -1950,14 +2143,14 @@ export function TransfersPage() {
                       borderRadius: "8px",
                       overflow: "auto",
                       background: "#ffffff",
-                      maxHeight: "360px",
+                      maxHeight: "300px",
                     }}
                   >
                     <table
                       className="transfer-asset-picker-table"
                       style={{
                         width: "100%",
-                        minWidth: "860px",
+                        minWidth: "1180px",
                         tableLayout: "fixed",
                         textAlign: "left",
                         borderCollapse: "collapse",
@@ -2011,7 +2204,7 @@ export function TransfersPage() {
                               fontSize: "12px",
                               fontWeight: 600,
                               borderBottom: "1px solid #cbd5e1",
-                              width: "130px",
+                              width: "170px",
                             }}
                           >
                             Mã tài sản
@@ -2035,7 +2228,7 @@ export function TransfersPage() {
                               fontSize: "12px",
                               fontWeight: 600,
                               borderBottom: "1px solid #cbd5e1",
-                              width: "160px",
+                              width: "300px",
                             }}
                           >
                             Catalog Item
@@ -2047,7 +2240,7 @@ export function TransfersPage() {
                               fontSize: "12px",
                               fontWeight: 600,
                               borderBottom: "1px solid #cbd5e1",
-                              width: "110px",
+                              width: "120px",
                             }}
                           >
                             Trạng thái
@@ -2059,9 +2252,33 @@ export function TransfersPage() {
                               fontSize: "12px",
                               fontWeight: 600,
                               borderBottom: "1px solid #cbd5e1",
+                              width: "170px",
                             }}
                           >
                             Vị trí hiện tại
+                          </th>
+                          <th
+                            style={{
+                              padding: "10px 12px",
+                              color: "#475569",
+                              fontSize: "12px",
+                              fontWeight: 600,
+                              borderBottom: "1px solid #cbd5e1",
+                              width: "150px",
+                            }}
+                          >
+                            Phòng ban
+                          </th>
+                          <th
+                            style={{
+                              padding: "10px 12px",
+                              color: "#475569",
+                              fontSize: "12px",
+                              fontWeight: 600,
+                              borderBottom: "1px solid #cbd5e1",
+                            }}
+                          >
+                            Nhân sự
                           </th>
                         </tr>
                       </thead>
@@ -2069,7 +2286,7 @@ export function TransfersPage() {
                         {filteredPickerAssets.length === 0 ? (
                           <tr>
                             <td
-                              colSpan={7}
+                              colSpan={9}
                               style={{ padding: "30px", textAlign: "center", color: "#94a3b8" }}
                             >
                               Không tìm thấy tài sản phù hợp
@@ -2173,6 +2390,26 @@ export function TransfersPage() {
                                   }}
                                 >
                                   {getAssetLocation(asset)}
+                                </td>
+                                <td
+                                  style={{
+                                    padding: "8px 12px",
+                                    fontSize: "12px",
+                                    color: "#475569",
+                                  }}
+                                >
+                                  {asset.departmentId
+                                    ? departments.find((d) => d.id === asset.departmentId)?.name || "--"
+                                    : "--"}
+                                </td>
+                                <td
+                                  style={{
+                                    padding: "8px 12px",
+                                    fontSize: "12px",
+                                    color: "#475569",
+                                  }}
+                                >
+                                  {asset.assignedEmployeeId ? empLabel(asset.assignedEmployeeId) : "--"}
                                 </td>
                               </tr>
                             );
