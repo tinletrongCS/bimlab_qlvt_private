@@ -118,8 +118,8 @@ const CATALOG_TABLE_STORAGE_KEY = "qlvt.catalogList.tableColumns.v1";
 const CATALOG_TABLE_COLUMNS: CatalogTableColumnConfig[] = [
   { id: "name", label: "Tên danh mục", locked: true, defaultVisible: true },
   { id: "code", label: "Mã danh mục", locked: true, defaultVisible: true },
-  { id: "categoryName", label: "Tên tài sản", locked: true, defaultVisible: true },
-  { id: "categoryCode", label: "Mã tài sản", locked: true, defaultVisible: true },
+  { id: "categoryName", label: "Tên loại", locked: true, defaultVisible: true },
+  { id: "categoryCode", label: "Mã loại", locked: true, defaultVisible: true },
   { id: "type", label: "Kiểu danh mục", defaultVisible: true },
   { id: "unit", label: "Đơn vị tính", defaultVisible: true },
   { id: "assetCount", label: "Số tài sản", defaultVisible: true },
@@ -129,15 +129,17 @@ const CATALOG_TABLE_COLUMN_IDS = CATALOG_TABLE_COLUMNS.map((column) => column.id
 const DEFAULT_CATALOG_TABLE_VISIBLE_COLUMNS = CATALOG_TABLE_COLUMNS.filter(
   (column) => column.defaultVisible || column.locked,
 ).map((column) => column.id);
+const CATALOG_TABLE_STRUCTURAL_WIDTH = 118;
+const CATALOG_TABLE_SELECTION_WIDTH = 36;
 const CATALOG_TABLE_COLUMN_WIDTHS: Record<CatalogTableColumnId, number> = {
-  name: 210,
-  code: 124,
-  categoryName: 220,
-  categoryCode: 170,
-  type: 132,
-  unit: 84,
-  assetCount: 78,
-  status: 98,
+  name: 150,
+  code: 132,
+  categoryName: 140,
+  categoryCode: 150,
+  type: 126,
+  unit: 78,
+  assetCount: 74,
+  status: 96,
 };
 
 function normalizeCatalogColumnOrder(order: CatalogTableColumnId[]) {
@@ -436,13 +438,13 @@ export function AssetCatalogItemsPage() {
     },
     {
       key: "categoryName",
-      title: "Tên tài sản",
+      title: "Tên loại",
       className: "catalog-col-category-name",
       render: (item: AssetCatalogItemListItem) => <CatalogTableText value={item.categoryName} />,
     },
     {
       key: "categoryCode",
-      title: "Mã tài sản",
+      title: "Mã loại",
       className: "catalog-col-category-code",
       render: (item: AssetCatalogItemListItem) => <CatalogTableText value={item.categoryCode} />,
     },
@@ -495,7 +497,7 @@ export function AssetCatalogItemsPage() {
   ];
   const tableMinWidth = configuredColumns.reduce(
     (total, column) => total + CATALOG_TABLE_COLUMN_WIDTHS[column.key as CatalogTableColumnId],
-    118 + (multiSelectMode ? 36 : 0),
+    CATALOG_TABLE_STRUCTURAL_WIDTH + (multiSelectMode ? CATALOG_TABLE_SELECTION_WIDTH : 0),
   );
 
   return (

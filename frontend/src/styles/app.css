@@ -15863,13 +15863,13 @@ button,
 
 #root .catalog-list-panel .table-wrap table {
   table-layout: fixed !important;
-  width: max(100%, var(--qlvt-table-min-width, 100%)) !important;
   min-width: max(100%, var(--qlvt-table-min-width, 100%)) !important;
+  width: max(100%, var(--qlvt-table-min-width, 100%)) !important;
 }
 
 #root .catalog-list-panel .table-wrap.has-row-selection table {
-  width: max(100%, var(--qlvt-table-min-width, 100%)) !important;
   min-width: max(100%, var(--qlvt-table-min-width, 100%)) !important;
+  width: max(100%, var(--qlvt-table-min-width, 100%)) !important;
 }
 
 #root .catalog-list-panel .data-table-select-column {
@@ -15909,38 +15909,43 @@ button,
 }
 
 #root .catalog-list-panel .catalog-col-code {
-  min-width: 124px;
-  width: 124px;
+  min-width: 132px;
+  width: 15%;
 }
 
 #root .catalog-list-panel .catalog-col-name {
-  min-width: 210px;
-  width: 210px;
+  min-width: 150px;
+  width: 22%;
 }
 
-#root .catalog-list-panel .catalog-col-category {
-  min-width: 300px;
-  width: 300px;
+#root .catalog-list-panel .catalog-col-category-name {
+  min-width: 140px;
+  width: 20%;
+}
+
+#root .catalog-list-panel .catalog-col-category-code {
+  min-width: 150px;
+  width: 18%;
 }
 
 #root .catalog-list-panel .catalog-col-type {
-  min-width: 132px;
-  width: 132px;
+  min-width: 126px;
+  width: 13%;
 }
 
 #root .catalog-list-panel .catalog-col-unit {
-  min-width: 84px;
-  width: 84px;
+  min-width: 78px;
+  width: 8%;
 }
 
 #root .catalog-list-panel .catalog-col-asset-count {
-  min-width: 78px;
-  width: 78px;
+  min-width: 74px;
+  width: 7%;
 }
 
 #root .catalog-list-panel .catalog-col-status {
-  min-width: 98px;
-  width: 98px;
+  min-width: 96px;
+  width: 9%;
 }
 
 #root .catalog-list-panel .catalog-col-actions {
