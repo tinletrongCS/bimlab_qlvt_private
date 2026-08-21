@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
-
+    // 404
     @ExceptionHandler(NoSuchElementException.class)
     ResponseEntity<Map<String, String>> notFound(NoSuchElementException e) {
         log.info("404 not found: {}", e.getMessage());
@@ -47,12 +47,14 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(Map.of("message", message, "fields", fields));
     }
 
+    // 400
     @ExceptionHandler(IllegalArgumentException.class)
     ResponseEntity<Map<String, String>> badRequest(IllegalArgumentException e) {
         log.info("400 bad request: {}", e.getMessage());
         return ResponseEntity.badRequest().body(Map.of("message", safeBadRequestMessage(e.getMessage())));
     }
 
+    // 409
     @ExceptionHandler(IllegalStateException.class)
     ResponseEntity<Map<String, String>> conflict(IllegalStateException e) {
         log.info("409 conflict: {}", e.getMessage());
@@ -60,6 +62,7 @@ public class GlobalExceptionHandler {
                 .body(Map.of("message", "Thao tác xung đột với trạng thái hiện tại"));
     }
 
+    // 403
     @ExceptionHandler(AccessDeniedException.class)
     ResponseEntity<Map<String, String>> forbidden(AccessDeniedException e) {
         log.info("403 forbidden: {}", e.getMessage());
@@ -67,7 +70,7 @@ public class GlobalExceptionHandler {
                 .body(Map.of("message", "Không có quyền thực hiện thao tác này"));
     }
 
-    // TOCTOU race on UNIQUE asset columns maps to 409 without exposing schema details.
+    // 409
     @ExceptionHandler(DataIntegrityViolationException.class)
     ResponseEntity<Map<String, String>> dataIntegrity(DataIntegrityViolationException e) {
         log.info("409 data integrity: {}", e.getMessage());
@@ -80,6 +83,7 @@ public class GlobalExceptionHandler {
             return "Yêu cầu không hợp lệ";
         }
 
+        // Không được để lộ thông tin
         String safe = message.lines().findFirst().orElse("").trim()
                 .replaceFirst("(?i)\\s*\\([^)]*(schema|constraint|foreign key|sql|hibernate|jdbc)[^)]*\\)\\s*$", "")
                 .trim();
