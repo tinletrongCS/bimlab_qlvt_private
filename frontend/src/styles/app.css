@@ -11569,7 +11569,7 @@ body,
 }
 
 #root .panel .category-org-card {
-  grid-template-columns: auto minmax(0, max-content) auto !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
   width: fit-content !important;
   min-width: 0 !important;
   max-width: 300px !important;
@@ -11579,15 +11579,17 @@ body,
 
 #root .category-card-copy {
   width: auto !important;
-  max-width: 230px !important;
+  max-width: 200px !important;
 }
 
 #root .category-card-copy strong,
 #root .category-card-copy span {
-  max-width: 230px !important;
+  max-width: 200px !important;
 }
 
 #root .category-card-actions {
+  position: static !important;
+  inset: auto !important;
   gap: 2px !important;
   margin-left: 4px !important;
 }
