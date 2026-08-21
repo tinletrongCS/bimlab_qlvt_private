@@ -138,6 +138,8 @@ const laptopAsset = {
   category: "Laptop",
   serialNumber: "SN001",
   source: "PURCHASE",
+  contractNumber: "H31082026/KHACHHANG-QH2026/HTNT",
+  invoiceNumber: "74",
   vendor,
   assignedEmployeeId: 1,
   departmentId: 1,
@@ -394,11 +396,14 @@ describe("QLVT asset and booking workflow coverage", () => {
 
     expect(await screen.findByRole("heading", { name: "Danh sách tài sản" })).toBeVisible();
     expect(screen.getByText("Laptop Dell Precision")).toBeVisible();
-    expect(screen.getByText("MON-LG-27 - Màn hình LG 27 inch")).toBeVisible();
+    expect(screen.getByText("Màn hình LG 27 inch")).toBeVisible();
+    expect(screen.getByText("MON-LG-27")).toBeVisible();
+    expect(screen.getByText("H31082026/KHACHHANG-QH2026/HTNT")).toBeVisible();
+    expect(screen.getByText("74")).toBeVisible();
     expect(screen.getAllByText("Phòng họp Apollo").length).toBeGreaterThan(0);
 
     await user.type(
-      screen.getByPlaceholderText("Tìm theo mã, tên, serial, nhà cung cấp..."),
+      screen.getByPlaceholderText("Tìm theo mã, tên, serial, hợp đồng, hóa đơn, nhà cung cấp..."),
       "Dell",
     );
     expect(screen.getByRole("button", { name: "Mở thao tác cho TS-001" })).toBeInTheDocument();
@@ -408,7 +413,8 @@ describe("QLVT asset and booking workflow coverage", () => {
 
     await user.click(screen.getByRole("button", { name: "Cấu hình cột" }));
     expect(screen.getByRole("dialog", { name: "Cấu hình cột" })).toBeVisible();
-    expect(screen.getByLabelText("Danh mục")).toBeChecked();
+    expect(screen.getByLabelText("Tên danh mục")).toBeChecked();
+    expect(screen.getByLabelText("Mã danh mục")).toBeChecked();
     fireEvent.click(screen.getByLabelText("Serial/MAC"));
     await user.click(screen.getByRole("button", { name: /Mặc định/i }));
     await user.click(screen.getByRole("button", { name: /Áp dụng/i }));
@@ -429,9 +435,13 @@ describe("QLVT asset and booking workflow coverage", () => {
     expect(
       within(detailModal as HTMLElement).getByLabelText("Phương pháp khấu hao"),
     ).toHaveDisplayValue("Tuyến tính");
+    expect(within(detailModal as HTMLElement).getByLabelText("Số hợp đồng")).toHaveValue(
+      "H31082026/KHACHHANG-QH2026/HTNT",
+    );
+    expect(within(detailModal as HTMLElement).getByLabelText("Số hóa đơn")).toHaveValue("74");
     await waitFor(() => expect(mocks.loadAssetCatalogItems).toHaveBeenCalled());
     const detailCatalog = within(detailModal as HTMLElement).getByLabelText("Danh mục");
-    expect(detailCatalog).toHaveDisplayValue("MON-LG-27 - Laptop - LAP");
+    expect(detailCatalog).toHaveDisplayValue("MON-LG-27 - Laptop");
     const detailCatalogNative = detailCatalog.closest("label")?.querySelector("select");
     expect(detailCatalogNative).not.toBeNull();
     expect(
@@ -441,10 +451,10 @@ describe("QLVT asset and booking workflow coverage", () => {
     ).not.toBeInTheDocument();
     expect(
       within(detailCatalogNative as HTMLSelectElement).queryByRole("option", {
-        name: "ROOM-ALT - Phòng họp - ROOM",
+        name: "ROOM-ALT - Phòng họp",
       }),
     ).not.toBeInTheDocument();
-    chooseSearchableOption(detailCatalog, "LAP-ALT - Laptop - LAP");
+    chooseSearchableOption(detailCatalog, "LAP-ALT - Laptop");
     await user.click(within(detailModal as HTMLElement).getByRole("tab", { name: /Lịch sử/i }));
     expect(await within(detailModal as HTMLElement).findByText("31/07/2026")).toBeVisible();
     expect(
@@ -523,9 +533,9 @@ describe("QLVT asset and booking workflow coverage", () => {
     chooseSearchableOption(bulkActionSelect, "Gán danh mục");
     const catalogModal = screen.getByRole("dialog", { name: "Tạo hoặc gán danh mục" });
     expect(within(catalogModal).getByText("Danh mục hiện tại")).toBeVisible();
-    expect(within(catalogModal).getAllByText("MON-LG-27 - Laptop - LAP").length).toBeGreaterThan(0);
+    expect(within(catalogModal).getAllByText("MON-LG-27 - Laptop").length).toBeGreaterThan(0);
     expect(within(catalogModal).getByLabelText("Danh mục")).toHaveDisplayValue(
-      "MON-LG-27 - Laptop - LAP",
+      "MON-LG-27 - Laptop",
     );
     expect(within(catalogModal).getByRole("tab", { name: "Danh mục có sẵn" })).toHaveAttribute(
       "aria-selected",
@@ -541,7 +551,7 @@ describe("QLVT asset and booking workflow coverage", () => {
     );
     chooseSearchableOption(
       within(catalogModal).getByLabelText("Danh mục khác"),
-      "LAP-ALT - Laptop - LAP",
+      "LAP-ALT - Laptop",
     );
     await user.click(within(catalogModal).getByRole("button", { name: "Đổi danh mục" }));
     await waitFor(() =>
@@ -591,7 +601,7 @@ describe("QLVT asset and booking workflow coverage", () => {
         (row) =>
           row.textContent?.includes("Laptop Dell Precision") &&
           row.textContent?.includes("2") &&
-          row.textContent?.includes("MON-LG-27 - Laptop - LAP"),
+          row.textContent?.includes("MON-LG-27 - Laptop"),
       ),
     ).toBe(true);
     expect(
@@ -604,7 +614,7 @@ describe("QLVT asset and booking workflow coverage", () => {
     ).toBe(true);
     expect(within(catalogModal).getByText("Laptop Dell Precision")).toBeVisible();
     expect(within(catalogModal).getByText("Phòng họp Apollo")).toBeVisible();
-    expect(within(catalogModal).getAllByText("MON-LG-27 - Laptop - LAP").length).toBeGreaterThan(0);
+    expect(within(catalogModal).getAllByText("MON-LG-27 - Laptop").length).toBeGreaterThan(0);
     expect(within(catalogModal).getByText("Chưa gắn danh mục")).toBeVisible();
   });
 
@@ -676,15 +686,15 @@ describe("QLVT asset and booking workflow coverage", () => {
     await user.click(screen.getByRole("button", { name: "Đóng" }));
 
     await user.type(
-      screen.getByPlaceholderText("Tìm theo mã, tên, serial, nhà cung cấp..."),
+      screen.getByPlaceholderText("Tìm theo mã, tên, serial, hợp đồng, hóa đơn, nhà cung cấp..."),
       "Dell",
     );
     chooseSearchableOption(screen.getByLabelText(/Trạng thái/i), "Đã cấp phát");
     chooseSearchableOption(screen.getByLabelText(/Giá trị/i), "10 - 50 triệu");
     await user.click(screen.getByRole("button", { name: "Tất cả" }));
-    expect(screen.getByPlaceholderText("Tìm theo mã, tên, serial, nhà cung cấp...")).toHaveValue(
-      "Dell",
-    );
+    expect(
+      screen.getByPlaceholderText("Tìm theo mã, tên, serial, hợp đồng, hóa đơn, nhà cung cấp..."),
+    ).toHaveValue("Dell");
     expect(screen.getByLabelText(/Trạng thái/i)).toHaveValue("Tất cả trạng thái");
     expect(screen.getByLabelText(/Giá trị/i)).toHaveValue("Tất cả giá trị");
   });

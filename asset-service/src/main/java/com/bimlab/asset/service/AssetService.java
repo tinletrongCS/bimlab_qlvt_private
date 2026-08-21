@@ -680,6 +680,8 @@ public class AssetService {
         if (toolUsageType != null) item.setToolUsageType(toolUsageType);
         item.setSerialNumber(req.serialNumber());
         item.setSource(req.source());
+        item.setContractNumber(req.contractNumber());
+        item.setInvoiceNumber(req.invoiceNumber());
         item.setVendor(req.vendorId() == null ? null : vendorService.getVendor(req.vendorId()));
         item.setAssignedEmployeeId(req.assignedEmployeeId());
         item.setDepartmentId(req.departmentId());

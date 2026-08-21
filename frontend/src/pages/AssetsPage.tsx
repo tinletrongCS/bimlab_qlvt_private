@@ -84,8 +84,11 @@ type CatalogViewFilter = {
 type AssetTableColumnId =
   | "asset"
   | "category"
-  | "catalog"
+  | "catalogName"
+  | "catalogCode"
   | "serialNumber"
+  | "contractNumber"
+  | "invoiceNumber"
   | "status"
   | "purchaseCost"
   | "originalCost"
@@ -516,9 +519,12 @@ const ASSET_TABLE_STORAGE_KEY = "qlvt.assetList.tableColumns.v1";
 const ASSET_TABLE_COLUMNS: AssetTableColumnConfig[] = [
   { id: "asset", label: "Tài sản", locked: true, defaultVisible: true },
   { id: "category", label: "Loại", locked: true, defaultVisible: true },
-  { id: "catalog", label: "Danh mục", defaultVisible: true },
+  { id: "catalogName", label: "Tên danh mục", defaultVisible: true },
+  { id: "catalogCode", label: "Mã danh mục", defaultVisible: true },
   { id: "categoryCode", label: "Mã loại", defaultVisible: false },
   { id: "serialNumber", label: "Serial/MAC", defaultVisible: false },
+  { id: "contractNumber", label: "Số hợp đồng", defaultVisible: true },
+  { id: "invoiceNumber", label: "Số hóa đơn", defaultVisible: true },
   { id: "status", label: "Trạng thái", defaultVisible: true },
   { id: "purchaseCost", label: "Giá trị mua", defaultVisible: true },
   { id: "originalCost", label: "Nguyên giá", defaultVisible: false },
@@ -535,9 +541,12 @@ const ASSET_TABLE_COLUMNS: AssetTableColumnConfig[] = [
 const ASSET_TABLE_COLUMN_WIDTHS: Record<AssetTableColumnId, number> = {
   asset: 190,
   category: 150,
-  catalog: 190,
+  catalogName: 190,
+  catalogCode: 150,
   categoryCode: 150,
   serialNumber: 160,
+  contractNumber: 150,
+  invoiceNumber: 150,
   status: 118,
   purchaseCost: 138,
   originalCost: 138,
@@ -700,6 +709,8 @@ function buildAssetPayload(item: AssetItem): AssetPayload {
     category: item.assetCategory?.name || item.category || "",
     serialNumber: item.serialNumber || "",
     source: item.source || "",
+    contractNumber: item.contractNumber || "",
+    invoiceNumber: item.invoiceNumber || "",
     vendorId: item.vendor?.id ?? null,
     assignedEmployeeId: item.assignedEmployeeId ?? null,
     departmentId: item.departmentId ?? null,
@@ -771,8 +782,7 @@ function catalogAssignmentLabel(
     },
 ) {
   const categoryName = item.categoryName || item.category?.name || item.name || "Chưa có loại";
-  const categoryCode = item.categoryCode || item.category?.code || "Chưa có mã loại";
-  return `${item.itemCode} - ${categoryName} - ${categoryCode}`;
+  return `${item.itemCode} - ${categoryName}`;
 }
 
 function highlightSearchText(value: string, query: string) {
@@ -1784,7 +1794,11 @@ export function AssetsPage() {
         asset.category,
         asset.assetCategory?.name,
         asset.assetCategory?.code,
+        asset.catalogItem?.name,
+        asset.catalogItem?.itemCode,
         asset.serialNumber,
+        asset.contractNumber,
+        asset.invoiceNumber,
         asset.vendor?.name,
         employeeName(asset.assignedEmployeeId),
         departmentName(asset.departmentId),
@@ -2534,12 +2548,14 @@ export function AssetsPage() {
       ),
     },
     {
-      id: "catalog",
-      label: "Danh mục",
-      render: (item) => {
-        const catalog = item.catalogItem;
-        return catalog ? highlightSearchText(`${catalog.itemCode} - ${catalog.name}`, query) : "--";
-      },
+      id: "catalogName",
+      label: "Tên danh mục",
+      render: (item) => highlightSearchText(item.catalogItem?.name || "--", query),
+    },
+    {
+      id: "catalogCode",
+      label: "Mã danh mục",
+      render: (item) => highlightSearchText(item.catalogItem?.itemCode || "--", query),
     },
     {
       id: "categoryCode",
@@ -2550,6 +2566,16 @@ export function AssetsPage() {
       id: "serialNumber",
       label: "Serial/MAC",
       render: (item) => highlightSearchText(item.serialNumber || "--", query),
+    },
+    {
+      id: "contractNumber",
+      label: "Số hợp đồng",
+      render: (item) => highlightSearchText(item.contractNumber || "--", query),
+    },
+    {
+      id: "invoiceNumber",
+      label: "Số hóa đơn",
+      render: (item) => highlightSearchText(item.invoiceNumber || "--", query),
     },
     {
       id: "status",
@@ -2848,7 +2874,7 @@ export function AssetsPage() {
               <input
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                placeholder="Tìm theo mã, tên, serial, nhà cung cấp..."
+                placeholder="Tìm theo mã, tên, serial, hợp đồng, hóa đơn, nhà cung cấp..."
               />
             </label>
             <label className="asset-filter-field">
@@ -3866,6 +3892,22 @@ export function AssetsPage() {
                     <label>
                       <span>Ngày đưa vào sử dụng</span>
                       <input type="date" value={selectedAsset.useDate || ""} disabled />
+                    </label>
+                    <label>
+                      <span>Số hợp đồng</span>
+                      <input
+                        value={assetDraft.contractNumber || ""}
+                        onChange={(event) => updateAssetDraft("contractNumber", event.target.value)}
+                        disabled={!canManage || assetSaving}
+                      />
+                    </label>
+                    <label>
+                      <span>Số hóa đơn</span>
+                      <input
+                        value={assetDraft.invoiceNumber || ""}
+                        onChange={(event) => updateAssetDraft("invoiceNumber", event.target.value)}
+                        disabled={!canManage || assetSaving}
+                      />
                     </label>
                   </div>
                 </section>
