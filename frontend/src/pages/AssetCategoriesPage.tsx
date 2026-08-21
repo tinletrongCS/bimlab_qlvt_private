@@ -48,6 +48,15 @@ const emptyForm: AssetCategoryPayload = {
   active: true,
 };
 
+const SYSTEM_CATEGORY_CODES = new Set([
+  "FIXED_ASSET",
+  "TOOL_EQUIPMENT",
+  "TANGIBLE",
+  "INTANGIBLE",
+  "SINGLE_USE",
+  "MULTI_USE",
+]);
+
 function assetClassLabel(value: string) {
   if (value === "FIXED_ASSET") return "Tài sản cố định";
   if (value === "TOOL_EQUIPMENT") return "Công cụ dụng cụ";
@@ -1049,6 +1058,7 @@ export function AssetCategoriesPage() {
               <input
                 value={form.code}
                 onChange={(event) => setForm((prev) => ({ ...prev, code: event.target.value }))}
+                disabled={editing ? SYSTEM_CATEGORY_CODES.has(editing.code) : false}
                 required
                 maxLength={60}
               />

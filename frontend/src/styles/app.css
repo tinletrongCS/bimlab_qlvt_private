@@ -11569,10 +11569,10 @@ body,
 }
 
 #root .panel .category-org-card {
-  grid-template-columns: auto minmax(120px, max-content) auto !important;
+  grid-template-columns: auto minmax(0, max-content) auto !important;
   width: fit-content !important;
-  min-width: 190px !important;
-  max-width: 340px !important;
+  min-width: 0 !important;
+  max-width: 300px !important;
   min-height: 42px !important;
   padding: 6px 7px !important;
 }

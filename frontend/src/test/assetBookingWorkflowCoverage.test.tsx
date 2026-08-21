@@ -835,8 +835,8 @@ describe("QLVT asset and booking workflow coverage", () => {
         "INV-001",
         "Máy trạm BIM",
         "Máy dựng hình",
-        "Tài sản cố định",
-        "Hữu hình",
+        "Tài sản trọng yếu",
+        "Có hình thái",
         "Laptop (LAP)",
         "WS-01",
         "",
@@ -863,8 +863,8 @@ describe("QLVT asset and booking workflow coverage", () => {
         "",
         "Máy trạm BIM 2",
         "Máy dựng hình phụ",
-        "Tài sản cố định",
-        "Hữu hình",
+        "Tài sản trọng yếu",
+        "Có hình thái",
         "Laptop (LAP)",
         "WS-02",
         "",
@@ -888,6 +888,15 @@ describe("QLVT asset and booking workflow coverage", () => {
     worksheet["!merges"] = [XLSX.utils.decode_range("C5:C6"), XLSX.utils.decode_range("D5:D6")];
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Thiết bị");
+    XLSX.utils.book_append_sheet(
+      workbook,
+      XLSX.utils.aoa_to_sheet([
+        ["Nhóm", "Mã/Giá trị nhập", "Diễn giải", "Loại cha"],
+        ["Phân loại", "FIXED_ASSET", "Tài sản trọng yếu", ""],
+        ["Loại tài sản cố định", "TANGIBLE", "Có hình thái", "FIXED_ASSET"],
+      ]),
+      "Loai_ThamChieu",
+    );
     const bytes = XLSX.write(workbook, { type: "array", bookType: "xlsx" });
     const validation = {
       uploadStatus: "VALID",
@@ -929,8 +938,12 @@ describe("QLVT asset and booking workflow coverage", () => {
       Array.from({ length: 26 }, (_, index) => templateSheet?.getCell(5, index + 1).value),
     ).toEqual(Array(26).fill(null));
     expect(templateSheet?.getCell("G6").dataValidation.formulae).toEqual(["ASSET_CLASSES"]);
-    expect(templateSheet?.getCell("H6").dataValidation.formulae[0]).toContain('="Tài sản cố định"');
-    expect(templateSheet?.getCell("I6").dataValidation.formulae[0]).toContain('="Hữu hình"');
+    expect(templateSheet?.getCell("H6").dataValidation.formulae[0]).toContain(
+      "VLOOKUP($G6,CATEGORY_ROOT_MAP",
+    );
+    expect(templateSheet?.getCell("I6").dataValidation.formulae[0]).toContain(
+      'VLOOKUP($G6&"|"&$H6,CATEGORY_BRANCH_MAP',
+    );
     expect(templateSheet?.getCell("G6").protection.locked).toBe(false);
     expect(templateSheet?.getCell("G6").font).toMatchObject({ name: "Calibri", size: 13 });
     expect(templateSheet?.getCell("P6").numFmt).toBe("dd/mm/yyyy");
@@ -971,6 +984,8 @@ describe("QLVT asset and booking workflow coverage", () => {
           contractNumber: "HD-001",
           invoiceNumber: "INV-001",
           name: "Máy trạm BIM",
+          assetClass: "FIXED_ASSET",
+          classType: "TANGIBLE",
           originalCost: 40_000_000,
           purchaseDate: "2026-07-01",
           usefulLifeMonths: 60,

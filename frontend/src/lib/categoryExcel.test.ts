@@ -94,6 +94,35 @@ describe("category Excel", () => {
           },
         ],
       },
+      {
+        id: 20,
+        code: "TOOL_EQUIPMENT",
+        name: "Công cụ dụng cụ",
+        assetClass: "TOOL_EQUIPMENT",
+        parentId: null,
+        active: true,
+        children: [
+          {
+            id: 21,
+            code: "MULTI_USE",
+            name: "Công cụ nhiều kỳ",
+            assetClass: "TOOL_EQUIPMENT",
+            parentId: 20,
+            active: true,
+            children: [
+              {
+                id: 22,
+                code: "TOOL_MULTI_IT",
+                name: "Thiết bị CNTT",
+                assetClass: "TOOL_EQUIPMENT",
+                parentId: 21,
+                active: true,
+                children: [],
+              },
+            ],
+          },
+        ],
+      },
     ] as any;
     const referenceSheet = addCategoryReferenceSheet(workbook, { categories: hierarchy });
     const treeSheet = addHierarchicalCategorySheet(workbook, hierarchy);
@@ -102,10 +131,16 @@ describe("category Excel", () => {
     addAssetCategoryDropdowns(workbook, sheet, hierarchy, 5, 6);
 
     expect(sheet.getCell("G5").dataValidation.formulae).toEqual(["ASSET_CLASSES"]);
-    expect(sheet.getCell("H5").dataValidation.formulae[0]).toContain('="Tài sản cố định"');
-    expect(sheet.getCell("I6").dataValidation.formulae[0]).toContain('="Hữu hình"');
+    expect(sheet.getCell("H5").dataValidation.formulae[0]).toContain(
+      "VLOOKUP($G5,CATEGORY_ROOT_MAP",
+    );
+    expect(sheet.getCell("I6").dataValidation.formulae[0]).toContain(
+      'VLOOKUP($G6&"|"&$H6,CATEGORY_BRANCH_MAP',
+    );
     expect(workbook.definedNames.getRanges("TANGIBLE").ranges).toEqual(["'Loai_ThamChieu'!$I$2"]);
+    expect(workbook.definedNames.getRanges("MULTI_USE").ranges).toEqual(["'Loai_ThamChieu'!$L$2"]);
     expect(referenceSheet.getCell("I2").value).toBe("Màn hình (TSCD_MONITOR)");
+    expect(referenceSheet.getCell("L2").value).toBe("Thiết bị CNTT (TOOL_MULTI_IT)");
     expect(treeSheet.name).toBe(CATEGORY_TREE_SHEET_NAME);
     expect(treeSheet.getColumn(3).values).toContain("Màn hình");
   });
