@@ -24,6 +24,9 @@ describe("format helpers", () => {
   it("reads API error messages defensively", () => {
     expect(readError({ response: { data: { message: "Sai dữ liệu" } } })).toBe("Sai dữ liệu");
     expect(readError({ response: { data: {} } })).toBe("Không thể xử lý yêu cầu");
+    expect(readError({ response: { data: {} } }, "Không lưu được dữ liệu")).toBe(
+      "Không lưu được dữ liệu",
+    );
     expect(readError(new Error("boom"))).toBe("Không thể xử lý yêu cầu");
   });
 });

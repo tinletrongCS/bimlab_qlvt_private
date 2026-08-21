@@ -9,7 +9,12 @@ const mocks = vi.hoisted(() => ({
   loadDetail: vi.fn(),
   loadItems: vi.fn(),
   loadCategories: vi.fn(),
+  toastError: vi.fn(),
   update: vi.fn(),
+}));
+
+vi.mock("react-hot-toast", () => ({
+  default: { error: mocks.toastError, success: vi.fn() },
 }));
 
 vi.mock("../services/api", () => ({
@@ -137,6 +142,28 @@ describe("AssetCatalogItemsPage", () => {
     await user.click(screen.getByRole("button", { name: "Mở thao tác cho Màn hình LG 27 inch" }));
     await user.click(await screen.findByRole("menuitem", { name: "Ngừng cho phép gán" }));
     await waitFor(() => expect(mocks.deactivate).toHaveBeenCalledWith(1));
+  });
+
+  it("shows the backend message when updating a catalog item fails", async () => {
+    const user = userEvent.setup();
+    mocks.update.mockRejectedValue({
+      response: {
+        data: { message: "Không được thay đổi danh mục do đã có tài sản dùng danh mục này" },
+      },
+    });
+    render(<AssetCatalogItemsPage />);
+    expect(await screen.findByText("MON-LG-27")).toBeVisible();
+
+    await user.click(screen.getByRole("button", { name: "Mở thao tác cho Màn hình LG 27 inch" }));
+    await user.click(await screen.findByRole("menuitem", { name: "Xem chi tiết" }));
+    await user.click(screen.getByRole("button", { name: "Cập nhật" }));
+    await user.click(screen.getByRole("button", { name: "Lưu" }));
+
+    await waitFor(() =>
+      expect(mocks.toastError).toHaveBeenCalledWith(
+        "Không được thay đổi danh mục do đã có tài sản dùng danh mục này",
+      ),
+    );
   });
 
   it("configures columns and deactivates selected active catalogs", async () => {

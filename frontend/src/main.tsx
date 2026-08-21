@@ -19,7 +19,12 @@ if (isSilentRenewIframe) {
 } else {
   createRoot(document.getElementById("root")!).render(
     <StrictMode>
-      <Toaster position="top-right" gutter={8} toastOptions={{ duration: 4000 }}>
+      <Toaster
+        position="top-right"
+        gutter={8}
+        containerStyle={{ zIndex: 20000 }}
+        toastOptions={{ duration: 4000 }}
+      >
         {(t) => (
           <ToastBar
             toast={t}
