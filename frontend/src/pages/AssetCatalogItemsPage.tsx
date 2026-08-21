@@ -32,9 +32,10 @@ type ActiveFilter = "ALL" | "ACTIVE" | "INACTIVE";
 type TypeFilter = "ALL" | AssetCatalogType;
 type CatalogModalMode = "create" | "view" | "edit";
 type CatalogTableColumnId =
-  | "code"
   | "name"
-  | "category"
+  | "code"
+  | "categoryName"
+  | "categoryCode"
   | "type"
   | "unit"
   | "assetCount"
@@ -115,9 +116,10 @@ const UNIT_LABELS: Record<CatalogUnit, string> = {
 
 const CATALOG_TABLE_STORAGE_KEY = "qlvt.catalogList.tableColumns.v1";
 const CATALOG_TABLE_COLUMNS: CatalogTableColumnConfig[] = [
-  { id: "code", label: "Mã danh mục", locked: true, defaultVisible: true },
   { id: "name", label: "Tên danh mục", locked: true, defaultVisible: true },
-  { id: "category", label: "Loại tài sản", locked: true, defaultVisible: true },
+  { id: "code", label: "Mã danh mục", locked: true, defaultVisible: true },
+  { id: "categoryName", label: "Tên tài sản", locked: true, defaultVisible: true },
+  { id: "categoryCode", label: "Mã tài sản", locked: true, defaultVisible: true },
   { id: "type", label: "Kiểu danh mục", defaultVisible: true },
   { id: "unit", label: "Đơn vị tính", defaultVisible: true },
   { id: "assetCount", label: "Số tài sản", defaultVisible: true },
@@ -128,9 +130,10 @@ const DEFAULT_CATALOG_TABLE_VISIBLE_COLUMNS = CATALOG_TABLE_COLUMNS.filter(
   (column) => column.defaultVisible || column.locked,
 ).map((column) => column.id);
 const CATALOG_TABLE_COLUMN_WIDTHS: Record<CatalogTableColumnId, number> = {
-  code: 124,
   name: 210,
-  category: 300,
+  code: 124,
+  categoryName: 220,
+  categoryCode: 170,
   type: 132,
   unit: 84,
   assetCount: 78,
@@ -241,9 +244,9 @@ export function AssetCatalogItemsPage() {
       if (activeFilter === "INACTIVE" && item.active) return false;
       return (
         !keyword ||
-        normalize(`${item.itemCode} ${item.name} ${item.categoryName} ${item.unit || ""}`).includes(
-          keyword,
-        )
+        normalize(
+          `${item.itemCode} ${item.name} ${item.categoryName} ${item.categoryCode} ${item.unit || ""}`,
+        ).includes(keyword)
       );
     });
   }, [activeFilter, categoryFilter, items, query, typeFilter]);
@@ -420,24 +423,28 @@ export function AssetCatalogItemsPage() {
 
   const catalogColumns = [
     {
-      key: "code",
-      title: "Mã danh mục",
-      className: "catalog-col-code",
-      render: (item: AssetCatalogItemListItem) => <CatalogTableText value={item.itemCode} strong />,
-    },
-    {
       key: "name",
       title: "Tên danh mục",
       className: "catalog-col-name",
       render: (item: AssetCatalogItemListItem) => <CatalogTableText value={item.name} strong />,
     },
     {
-      key: "category",
-      title: "Loại tài sản",
-      className: "catalog-col-category",
-      render: (item: AssetCatalogItemListItem) => (
-        <CatalogTableText value={`${item.categoryCode} - ${item.categoryName}`} />
-      ),
+      key: "code",
+      title: "Mã danh mục",
+      className: "catalog-col-code",
+      render: (item: AssetCatalogItemListItem) => <CatalogTableText value={item.itemCode} strong />,
+    },
+    {
+      key: "categoryName",
+      title: "Tên tài sản",
+      className: "catalog-col-category-name",
+      render: (item: AssetCatalogItemListItem) => <CatalogTableText value={item.categoryName} />,
+    },
+    {
+      key: "categoryCode",
+      title: "Mã tài sản",
+      className: "catalog-col-category-code",
+      render: (item: AssetCatalogItemListItem) => <CatalogTableText value={item.categoryCode} />,
     },
     {
       key: "type",
@@ -513,7 +520,7 @@ export function AssetCatalogItemsPage() {
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Tìm theo mã, tên danh mục, loại tài sản..."
+            placeholder="Tìm theo tên/mã danh mục, tên/mã tài sản..."
           />
         </label>
         <FilterSelect

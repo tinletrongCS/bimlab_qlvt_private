@@ -125,13 +125,15 @@ class AssetServiceTest {
                 "NONE", null, null,
                 null, 10L, null, null, null, null, null, null,
                 null, null, null, null, null, null, null, null,
-                null, null, null, null
+                null, null, null, null, "HD-001", "INV-001"
         );
 
         AssetItem saved = service.createAsset(req);
 
         assertEquals("LAP-00003", saved.getAssetCode());
         assertEquals(laptopCategory, saved.getAssetCategory());
+        assertEquals("HD-001", saved.getContractNumber());
+        assertEquals("INV-001", saved.getInvoiceNumber());
         assertEquals(3L, sequence.getCurrentNumber());
     }
 
@@ -633,7 +635,7 @@ class AssetServiceTest {
                 "NONE", null, null,
                 catalogItemId, categoryId, null, null, null, null, null, null,
                 null, null, null, null, null, null, null, null,
-                null, null, null, null
+                null, null, null, null, null, null
         );
     }
 }

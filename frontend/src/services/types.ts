@@ -279,6 +279,8 @@ export interface AssetPayload {
   category: string;
   serialNumber?: string;
   source?: string;
+  contractNumber?: string;
+  invoiceNumber?: string;
   vendorId?: number | null;
   assignedEmployeeId?: number | null;
   departmentId?: number | null;
