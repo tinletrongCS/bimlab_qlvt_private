@@ -15,7 +15,7 @@ import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
 /**
- * Returns static messages to callers and logs raw exception text server-side
+ * Returns safe business messages to callers and logs raw exception text server-side
  * to prevent SQL and Hibernate detail disclosure.
  */
 @RestControllerAdvice
@@ -76,9 +76,18 @@ public class GlobalExceptionHandler {
     }
 
     private String safeBadRequestMessage(String message) {
-        if (message != null && message.matches("^[A-Za-z][A-Za-z0-9_.-]*: .+")) {
-            return message;
+        if (message == null || message.isBlank()) {
+            return "Yêu cầu không hợp lệ";
         }
-        return "Yêu cầu không hợp lệ";
+
+        String safe = message.lines().findFirst().orElse("").trim()
+                .replaceFirst("(?i)\\s*\\([^)]*(schema|constraint|foreign key|sql|hibernate|jdbc)[^)]*\\)\\s*$", "")
+                .trim();
+        if (safe.isBlank()
+                || safe.length() > 300
+                || safe.matches("(?i).*(schema\\s|constraint|foreign key|hibernate|jdbc|org\\.postgresql).*")) {
+            return "Yêu cầu không hợp lệ";
+        }
+        return safe;
     }
 }
