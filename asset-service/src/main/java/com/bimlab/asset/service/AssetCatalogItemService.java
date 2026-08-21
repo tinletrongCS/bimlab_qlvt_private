@@ -72,11 +72,7 @@ public class AssetCatalogItemService {
      */
     @Transactional
     public AssetCatalogItemDetailResponse createCatalogItem(AssetCatalogItemRequest request) {
-        AssetCategory category = categories.findById(request.categoryId())
-                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy loại tài sản hoặc mã loại không hợp lệ"));
-        if (!Boolean.TRUE.equals(category.getActive())) {
-            throw new IllegalArgumentException("Loại tài sản với mã " + category.getCode() + " đã ngừng hoạt động");
-        }
+        AssetCategory category = isValidCategoryId(request.categoryId());
         CatalogType catalogType = requireMatchingCatalogType(category, request.catalogType());
 
         AssetCatalogItem catalogItem = AssetCatalogItem.builder()
@@ -99,16 +95,18 @@ public class AssetCatalogItemService {
         return toDetail(catalogItem);
     }
 
+    /*
+    Truyền vào là cái id của danh mục hiện tại và check payload trong request gửi đi có đúng không
+     */
     @Transactional
     public AssetCatalogItemDetailResponse updateCatalogItem(Long id, AssetCatalogItemRequest request) {
         AssetCatalogItem catalogItem = catalogItems.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Không tìm thấy danh mục với mã " + id));
-
+        // categoryId trong request không khớp với id của bất kỳ id của category nào trong hệ thống
+        AssetCategory category = isValidCategoryId(request.categoryId());
         // lấy mã của loại tài sản mà danh mục này đang thuộc về
         Long currentCategoryId = catalogItem.getCategory() == null ? null : catalogItem.getCategory().getId();
-        // categoryId trong request không khớp với id của bất kỳ id của category nào trong hệ thống
-        AssetCategory category = categories.findById(request.categoryId())
-                .orElseThrow(() -> new NoSuchElementException("Loại tài sản với mã " + request.categoryId() + " không tồn tại hoặc không hợp lệ"));
+
         boolean hasChanged = !Objects.equals(currentCategoryId, request.categoryId());
         if (hasChanged && !Boolean.TRUE.equals(category.getActive())) {
             throw new IllegalArgumentException("Loại tài sản đã ngừng hoạt động");
@@ -167,12 +165,13 @@ public class AssetCatalogItemService {
         );
     }
 
-    private void isValidCategory(AssetCategory category) {
-        categories.findById(category.getId())
-                .orElseThrow(() -> new NoSuchElementException("Loại tài sản với mã " + category.getId() + " không tồn tại hoặc không hợp lệ"));
+    private AssetCategory isValidCategoryId(Long categoryId) {
+        AssetCategory category = categories.findById(categoryId)
+                .orElseThrow(() -> new NoSuchElementException("Loại tài sản không tồn tại hoặc không hợp lệ"));
         if (!Boolean.TRUE.equals(category.getActive())) {
             throw new IllegalArgumentException("Loại tài sản đã ngừng hoạt động");
         }
+        return category;
     }
     private String trimToNull(String value) {
         return value == null || value.isBlank() ? null : value.trim();

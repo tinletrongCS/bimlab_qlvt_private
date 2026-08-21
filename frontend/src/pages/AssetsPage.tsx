@@ -43,6 +43,7 @@ import {
   addAssetCategoryDropdowns,
   addCategoryReferenceSheet,
   addHierarchicalCategorySheet,
+  CATEGORY_REFERENCE_SHEET_NAME,
 } from "../lib/categoryExcel";
 import { employeeLabel, money, projectLabel } from "../lib/format";
 import {
@@ -1042,9 +1043,16 @@ function readDate(row: SheetRow, index: number): string | undefined {
   return value;
 }
 
-function normalizeAssetClass(value: string): string | undefined {
+function normalizeAssetClass(
+  value: string,
+  referenceCodes: Map<string, string> = new Map(),
+): string | undefined {
   const text = normalize(value);
   if (!text) return undefined;
+  const referencedCode = referenceCodes.get(text);
+  if (referencedCode === "FIXED_ASSET" || referencedCode === "TOOL_EQUIPMENT") {
+    return referencedCode;
+  }
   if (text.includes("ccdc") || text.includes("cong cu")) return "TOOL_EQUIPMENT";
   if (text.includes("tscd") || text.includes("tai san co dinh")) return "FIXED_ASSET";
   const upper = value.trim().toUpperCase();
@@ -1053,9 +1061,16 @@ function normalizeAssetClass(value: string): string | undefined {
   return value.trim();
 }
 
-function normalizeClassType(value: string): string | undefined {
+function normalizeClassType(
+  value: string,
+  referenceCodes: Map<string, string> = new Map(),
+): string | undefined {
   const text = normalize(value);
   if (!text) return undefined;
+  const referencedCode = referenceCodes.get(text);
+  if (["TANGIBLE", "INTANGIBLE", "SINGLE_USE", "MULTI_USE"].includes(referencedCode ?? "")) {
+    return referencedCode;
+  }
   if (text.includes("vo hinh") || text.includes("intangible")) return "INTANGIBLE";
   if (text.includes("huu hinh") || text.includes("tangible")) return "TANGIBLE";
   if (text.includes("1 lan") || text.includes("mot lan") || text.includes("single")) {
@@ -1086,6 +1101,33 @@ function extractCategoryCode(value: string): string | undefined {
 async function parseAssetImportFile(file: File): Promise<AssetImportRowPayload[]> {
   const XLSX = await import("xlsx");
   const workbook = XLSX.read(await file.arrayBuffer(), { type: "array", cellDates: false });
+  const referenceCodes = new Map<string, string>();
+  const referenceSheetName = workbook.SheetNames.find(
+    (name) => normalize(name) === normalize(CATEGORY_REFERENCE_SHEET_NAME),
+  );
+  if (referenceSheetName) {
+    const referenceRows = XLSX.utils.sheet_to_json<SheetRow>(workbook.Sheets[referenceSheetName], {
+      header: 1,
+      defval: "",
+      raw: true,
+    });
+    const referenceHeaderIndex = referenceRows.findIndex((row) => {
+      const values = row.map((cell) => normalize(cellText(cell)));
+      return values.some((value) => value.startsWith("ma/gia tri")) && values.includes("dien giai");
+    });
+    if (referenceHeaderIndex >= 0) {
+      const referenceHeaders = referenceRows[referenceHeaderIndex].map((cell) =>
+        normalize(cellText(cell)),
+      );
+      const codeIndex = referenceHeaders.findIndex((header) => header.startsWith("ma/gia tri"));
+      const labelIndex = referenceHeaders.indexOf("dien giai");
+      referenceRows.slice(referenceHeaderIndex + 1).forEach((row) => {
+        const code = readText(row, codeIndex).toUpperCase();
+        const label = normalize(readText(row, labelIndex));
+        if (code && label) referenceCodes.set(label, code);
+      });
+    }
+  }
   const sheetName = workbook.SheetNames.find((name) => normalize(name) === "thiet bi");
   if (!sheetName) throw new Error("Không tìm thấy sheet Thiết bị.");
 
@@ -1150,7 +1192,7 @@ async function parseAssetImportFile(file: File): Promise<AssetImportRowPayload[]
   let lastInvoiceNumber = "";
   for (let index = dataStartIndex; index < rows.length; index += 1) {
     const row = rows[index];
-    const assetClass = normalizeAssetClass(readText(row, assetClassIndex));
+    const assetClass = normalizeAssetClass(readText(row, assetClassIndex), referenceCodes);
     const name = readText(row, nameIndex);
     const categoryCode = extractCategoryCode(readText(row, categoryIndex));
     const model = readText(row, modelIndex);
@@ -1183,7 +1225,7 @@ async function parseAssetImportFile(file: File): Promise<AssetImportRowPayload[]
       invoiceNumber: invoiceNumber || lastInvoiceNumber || undefined,
       name: name || undefined,
       assetClass,
-      classType: normalizeClassType(readText(row, classTypeIndex)),
+      classType: normalizeClassType(readText(row, classTypeIndex), referenceCodes),
       categoryCode,
       departmentName: readText(row, departmentIndex) || undefined,
       siteName: readText(row, siteIndex) || undefined,
