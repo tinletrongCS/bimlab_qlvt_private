@@ -44,7 +44,7 @@ public class AssetCategoryService {
     public List<AssetCategoryResponse> listCategories() {
         return categories.findAllByOrderByNameAsc()
                 .stream()
-                .map(this::modelToDto)
+                .map(this::entityToDto)
                 .toList();
     }
 
@@ -71,7 +71,7 @@ public class AssetCategoryService {
     public AssetCategoryResponse getCategory(Long id) {
         AssetCategory category = categories.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Không tìm thấy danh mục với id:" + id));
-        return modelToDto(category);
+        return entityToDto(category);
     }
 
     @Transactional
@@ -99,7 +99,7 @@ public class AssetCategoryService {
                 .build();
 
         AssetCategory saved = categories.save(category);
-        return modelToDto(saved);
+        return entityToDto(saved);
     }
 
     @Transactional(readOnly = true)
@@ -266,7 +266,7 @@ public class AssetCategoryService {
 
         AssetCategory saved = categories.save(category);
 
-        return modelToDto(saved);
+        return entityToDto(saved);
     }
 
     @Transactional
@@ -290,7 +290,7 @@ public class AssetCategoryService {
     }
 
     // Helper functions
-    private AssetCategoryResponse modelToDto(AssetCategory category) {
+    private AssetCategoryResponse entityToDto(AssetCategory category) {
         return new AssetCategoryResponse(
                 category.getId(),
                 category.getCode(),
