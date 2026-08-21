@@ -781,8 +781,7 @@ function catalogAssignmentLabel(
       category?: { name?: string; code?: string } | null;
     },
 ) {
-  const categoryName = item.categoryName || item.category?.name || item.name || "Chưa có loại";
-  return `${item.itemCode} - ${categoryName}`;
+  return `${item.itemCode} - ${item.name}`;
 }
 
 function highlightSearchText(value: string, query: string) {

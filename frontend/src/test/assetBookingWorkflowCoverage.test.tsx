@@ -441,7 +441,7 @@ describe("QLVT asset and booking workflow coverage", () => {
     expect(within(detailModal as HTMLElement).getByLabelText("Số hóa đơn")).toHaveValue("74");
     await waitFor(() => expect(mocks.loadAssetCatalogItems).toHaveBeenCalled());
     const detailCatalog = within(detailModal as HTMLElement).getByLabelText("Danh mục");
-    expect(detailCatalog).toHaveDisplayValue("MON-LG-27 - Laptop");
+    expect(detailCatalog).toHaveDisplayValue("MON-LG-27 - Màn hình LG 27 inch");
     const detailCatalogNative = detailCatalog.closest("label")?.querySelector("select");
     expect(detailCatalogNative).not.toBeNull();
     expect(
@@ -451,10 +451,10 @@ describe("QLVT asset and booking workflow coverage", () => {
     ).not.toBeInTheDocument();
     expect(
       within(detailCatalogNative as HTMLSelectElement).queryByRole("option", {
-        name: "ROOM-ALT - Phòng họp",
+        name: "ROOM-ALT - Danh mục phòng họp",
       }),
     ).not.toBeInTheDocument();
-    chooseSearchableOption(detailCatalog, "LAP-ALT - Laptop");
+    chooseSearchableOption(detailCatalog, "LAP-ALT - Bộ máy tính thay thế");
     await user.click(within(detailModal as HTMLElement).getByRole("tab", { name: /Lịch sử/i }));
     expect(await within(detailModal as HTMLElement).findByText("31/07/2026")).toBeVisible();
     expect(
@@ -533,9 +533,11 @@ describe("QLVT asset and booking workflow coverage", () => {
     chooseSearchableOption(bulkActionSelect, "Gán danh mục");
     const catalogModal = screen.getByRole("dialog", { name: "Tạo hoặc gán danh mục" });
     expect(within(catalogModal).getByText("Danh mục hiện tại")).toBeVisible();
-    expect(within(catalogModal).getAllByText("MON-LG-27 - Laptop").length).toBeGreaterThan(0);
+    expect(
+      within(catalogModal).getAllByText("MON-LG-27 - Màn hình LG 27 inch").length,
+    ).toBeGreaterThan(0);
     expect(within(catalogModal).getByLabelText("Danh mục")).toHaveDisplayValue(
-      "MON-LG-27 - Laptop",
+      "MON-LG-27 - Màn hình LG 27 inch",
     );
     expect(within(catalogModal).getByRole("tab", { name: "Danh mục có sẵn" })).toHaveAttribute(
       "aria-selected",
@@ -551,7 +553,7 @@ describe("QLVT asset and booking workflow coverage", () => {
     );
     chooseSearchableOption(
       within(catalogModal).getByLabelText("Danh mục khác"),
-      "LAP-ALT - Laptop",
+      "LAP-ALT - Bộ máy tính thay thế",
     );
     await user.click(within(catalogModal).getByRole("button", { name: "Đổi danh mục" }));
     await waitFor(() =>
@@ -601,7 +603,7 @@ describe("QLVT asset and booking workflow coverage", () => {
         (row) =>
           row.textContent?.includes("Laptop Dell Precision") &&
           row.textContent?.includes("2") &&
-          row.textContent?.includes("MON-LG-27 - Laptop"),
+          row.textContent?.includes("MON-LG-27 - Màn hình LG 27 inch"),
       ),
     ).toBe(true);
     expect(
@@ -614,7 +616,9 @@ describe("QLVT asset and booking workflow coverage", () => {
     ).toBe(true);
     expect(within(catalogModal).getByText("Laptop Dell Precision")).toBeVisible();
     expect(within(catalogModal).getByText("Phòng họp Apollo")).toBeVisible();
-    expect(within(catalogModal).getAllByText("MON-LG-27 - Laptop").length).toBeGreaterThan(0);
+    expect(
+      within(catalogModal).getAllByText("MON-LG-27 - Màn hình LG 27 inch").length,
+    ).toBeGreaterThan(0);
     expect(within(catalogModal).getByText("Chưa gắn danh mục")).toBeVisible();
   });
 
