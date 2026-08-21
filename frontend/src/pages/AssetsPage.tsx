@@ -45,7 +45,7 @@ import {
   addHierarchicalCategorySheet,
   CATEGORY_REFERENCE_SHEET_NAME,
 } from "../lib/categoryExcel";
-import { employeeLabel, money, projectLabel } from "../lib/format";
+import { employeeLabel, money, projectLabel, readError } from "../lib/format";
 import {
   assignAssetCatalog,
   commitAssetImport,
@@ -86,6 +86,8 @@ type AssetTableColumnId =
   | "category"
   | "catalog"
   | "serialNumber"
+  | "contractNumber"
+  | "invoiceNumber"
   | "status"
   | "purchaseCost"
   | "originalCost"
@@ -519,6 +521,8 @@ const ASSET_TABLE_COLUMNS: AssetTableColumnConfig[] = [
   { id: "catalog", label: "Danh mục", defaultVisible: true },
   { id: "categoryCode", label: "Mã loại", defaultVisible: false },
   { id: "serialNumber", label: "Serial/MAC", defaultVisible: false },
+  { id: "contractNumber", label: "Số hợp đồng", defaultVisible: true },
+  { id: "invoiceNumber", label: "Số hóa đơn", defaultVisible: true },
   { id: "status", label: "Trạng thái", defaultVisible: true },
   { id: "purchaseCost", label: "Giá trị mua", defaultVisible: true },
   { id: "originalCost", label: "Nguyên giá", defaultVisible: false },
@@ -538,6 +542,8 @@ const ASSET_TABLE_COLUMN_WIDTHS: Record<AssetTableColumnId, number> = {
   catalog: 190,
   categoryCode: 150,
   serialNumber: 160,
+  contractNumber: 150,
+  invoiceNumber: 150,
   status: 118,
   purchaseCost: 138,
   originalCost: 138,
@@ -1562,7 +1568,9 @@ export function AssetsPage() {
   useEffect(() => {
     loadAssetCatalogItems()
       .then(setCatalogItems)
-      .catch(() => toast.error("Không tải được danh sách danh mục tài sản."));
+      .catch((error) =>
+        toast.error(readError(error, "Không tải được danh sách danh mục tài sản.")),
+      );
   }, []);
 
   useEffect(() => {
@@ -1783,6 +1791,8 @@ export function AssetsPage() {
         asset.assetCategory?.name,
         asset.assetCategory?.code,
         asset.serialNumber,
+        asset.contractNumber,
+        asset.invoiceNumber,
         asset.vendor?.name,
         employeeName(asset.assignedEmployeeId),
         departmentName(asset.departmentId),
@@ -2051,8 +2061,8 @@ export function AssetsPage() {
     if (catalogItems !== null) return;
     try {
       setCatalogItems(await loadAssetCatalogItems());
-    } catch {
-      toast.error("Không tải được danh sách danh mục tài sản.");
+    } catch (error) {
+      toast.error(readError(error, "Không tải được danh sách danh mục tài sản."));
     }
   };
 
@@ -2080,8 +2090,8 @@ export function AssetsPage() {
     setAssetHistoryError("");
     try {
       setAssetChangeHistory(await loadAssetChangeHistory(selectedAsset.id));
-    } catch {
-      setAssetHistoryError("Không tải được lịch sử chỉnh sửa của tài sản.");
+    } catch (error) {
+      setAssetHistoryError(readError(error, "Không tải được lịch sử chỉnh sửa của tài sản."));
     } finally {
       setAssetHistoryLoading(false);
     }
@@ -2146,8 +2156,8 @@ export function AssetsPage() {
       await reloadAssetList();
       setSelectedAsset(null);
       setAssetDraft(null);
-    } catch {
-      toast.error("Không cập nhật được tài sản.");
+    } catch (error) {
+      toast.error(readError(error, "Không cập nhật được tài sản."));
     } finally {
       setAssetSaving(false);
     }
@@ -2165,8 +2175,8 @@ export function AssetsPage() {
         return next;
       });
       await reloadAssetList();
-    } catch {
-      toast.error("Không xóa được tài sản.");
+    } catch (error) {
+      toast.error(readError(error, "Không xóa được tài sản."));
     }
   };
 
@@ -2218,8 +2228,8 @@ export function AssetsPage() {
       toast.success(`Đã xóa ${selectedAssets.length} tài sản.`);
       clearSelectedAssets();
       await reloadAssetList();
-    } catch {
-      toast.error("Không xóa được một số tài sản đã chọn.");
+    } catch (error) {
+      toast.error(readError(error, "Không xóa được một số tài sản đã chọn."));
     } finally {
       setBulkActionBusy(false);
     }
@@ -2263,8 +2273,8 @@ export function AssetsPage() {
         });
         return next;
       });
-    } catch {
-      toast.error(`Không cập nhật được ${count} tài sản đã chọn.`);
+    } catch (error) {
+      toast.error(readError(error, `Không cập nhật được ${count} tài sản đã chọn.`));
     } finally {
       setBulkActionBusy(false);
     }
@@ -2306,8 +2316,8 @@ export function AssetsPage() {
       );
       clearSelectedAssets();
       await reloadAssetList();
-    } catch {
-      toast.error("Chưa thể gán danh mục cho các tài sản đã chọn.");
+    } catch (error) {
+      toast.error(readError(error, "Chưa thể gán danh mục cho các tài sản đã chọn."));
     } finally {
       setBulkActionBusy(false);
     }
@@ -2344,8 +2354,8 @@ export function AssetsPage() {
       toast.success(`Đã tạo và gán danh mục cho ${selectedAssets.length} tài sản.`);
       clearSelectedAssets();
       await reloadAssetList();
-    } catch {
-      toast.error("Chưa thể tạo danh mục cho các tài sản đã chọn.");
+    } catch (error) {
+      toast.error(readError(error, "Chưa thể tạo danh mục cho các tài sản đã chọn."));
     } finally {
       setBulkActionBusy(false);
     }
@@ -2417,9 +2427,9 @@ export function AssetsPage() {
       });
       setQrCode(issued);
       setQrSvg(`data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`);
-    } catch {
+    } catch (error) {
       setQrAsset(null);
-      toast.error("Không tạo được mã QR tài sản.");
+      toast.error(readError(error, "Không tạo được mã QR tài sản."));
     } finally {
       setQrBusy(false);
     }
@@ -2444,9 +2454,9 @@ export function AssetsPage() {
       const codes = await issueAssetQrCodes(selectedAssets.map((asset) => asset.id));
       await renderQrPrint(printWindow, codes);
       toast.success(`Đã chuẩn bị ${codes.length} mã QR để in.`);
-    } catch {
+    } catch (error) {
       printWindow.close();
-      toast.error("Không chuẩn bị được danh sách mã QR.");
+      toast.error(readError(error, "Không chuẩn bị được danh sách mã QR."));
     } finally {
       setBulkActionBusy(false);
     }
@@ -2548,6 +2558,16 @@ export function AssetsPage() {
       id: "serialNumber",
       label: "Serial/MAC",
       render: (item) => highlightSearchText(item.serialNumber || "--", query),
+    },
+    {
+      id: "contractNumber",
+      label: "Số hợp đồng",
+      render: (item) => highlightSearchText(item.contractNumber || "--", query),
+    },
+    {
+      id: "invoiceNumber",
+      label: "Số hóa đơn",
+      render: (item) => highlightSearchText(item.invoiceNumber || "--", query),
     },
     {
       id: "status",
@@ -2693,8 +2713,8 @@ export function AssetsPage() {
       } else {
         toast.success("Dữ liệu import hợp lệ.");
       }
-    } catch {
-      toast.error("Backend import đang chờ bạn implement phần validate.");
+    } catch (error) {
+      toast.error(readError(error, "Không kiểm tra được dữ liệu import."));
     } finally {
       setImportBusy(false);
     }
@@ -2719,8 +2739,8 @@ export function AssetsPage() {
       setImportPreviewFilter("ALL");
       toast.success(`Đã import ${result.importedRows} tài sản.`);
       await reloadAssetList();
-    } catch {
-      toast.error("Backend import đang chờ bạn implement phần lưu dữ liệu.");
+    } catch (error) {
+      toast.error(readError(error, "Không lưu được dữ liệu import."));
     } finally {
       setImportBusy(false);
     }
@@ -2733,8 +2753,8 @@ export function AssetsPage() {
       setCategoryTree(latestCategoryTree);
       await downloadAssetImportTemplate(latestCategoryTree);
       toast.success("Đã tải file mẫu Excel.", { id: loadingToast });
-    } catch {
-      toast.error("Không tạo được file mẫu Excel.", { id: loadingToast });
+    } catch (error) {
+      toast.error(readError(error, "Không tạo được file mẫu Excel."), { id: loadingToast });
     }
   };
 
@@ -2846,7 +2866,7 @@ export function AssetsPage() {
               <input
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                placeholder="Tìm theo mã, tên, serial, nhà cung cấp..."
+                placeholder="Tìm theo mã, tên, serial, hợp đồng, hóa đơn, nhà cung cấp..."
               />
             </label>
             <label className="asset-filter-field">

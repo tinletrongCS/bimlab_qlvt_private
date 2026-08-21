@@ -18,6 +18,7 @@ import {
   emptyCategoryImportResult,
   parseCategoryReferenceSheet,
 } from "../lib/categoryExcel";
+import { readError } from "../lib/format";
 import {
   commitAssetCategoryImport,
   createAssetCategory,
@@ -638,8 +639,8 @@ export function AssetCategoriesPage() {
     try {
       const categoryData = await loadAssetCategories();
       setCategories(categoryData);
-    } catch {
-      toast.error("Không tải được phân loại tài sản.");
+    } catch (error) {
+      toast.error(readError(error, "Không tải được phân loại tài sản."));
     } finally {
       setLoading(false);
     }
@@ -720,8 +721,8 @@ export function AssetCategoriesPage() {
       setParentFieldsLocked(false);
       await refresh();
       closeImport();
-    } catch {
-      toast.error("Không lưu được loại tài sản.");
+    } catch (error) {
+      toast.error(readError(error, "Không lưu được loại tài sản."));
     } finally {
       setSubmitting(false);
     }
@@ -745,8 +746,8 @@ export function AssetCategoriesPage() {
       }
       await refresh();
       toast.success("Đã xóa loại tài sản.");
-    } catch {
-      toast.error("Không xóa được loại tài sản.");
+    } catch (error) {
+      toast.error(readError(error, "Không xóa được loại tài sản."));
     } finally {
       setSubmitting(false);
     }
@@ -802,8 +803,8 @@ export function AssetCategoriesPage() {
       setImportPreview(result);
       if (result.errorRows > 0) toast.error("File phân loại còn lỗi cần sửa.");
       else toast.success("Dữ liệu phân loại hợp lệ.");
-    } catch {
-      toast.error("Backend kiểm tra phân loại đang chờ bạn implement phần TODO.");
+    } catch (error) {
+      toast.error(readError(error, "Không kiểm tra được dữ liệu phân loại."));
     } finally {
       setImportBusy(false);
     }
@@ -815,8 +816,8 @@ export function AssetCategoriesPage() {
       const latestTree = await loadAssetCategoryTree();
       await downloadCategoryImportTemplate(latestTree);
       toast.success("Đã tải file mẫu phân loại.", { id: loadingToast });
-    } catch {
-      toast.error("Không tạo được file mẫu phân loại.", { id: loadingToast });
+    } catch (error) {
+      toast.error(readError(error, "Không tạo được file mẫu phân loại."), { id: loadingToast });
     }
   };
 
@@ -836,8 +837,8 @@ export function AssetCategoriesPage() {
       });
       await refresh();
       closeImport();
-    } catch {
-      toast.error("Backend lưu phân loại đang chờ bạn implement phần TODO.");
+    } catch (error) {
+      toast.error(readError(error, "Không lưu được dữ liệu phân loại."));
     } finally {
       setImportBusy(false);
     }

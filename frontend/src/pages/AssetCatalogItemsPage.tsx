@@ -10,6 +10,7 @@ import { SearchableSelect } from "../components/forms/SearchableSelect";
 import { OverflowActions } from "../components/OverflowActions";
 import { StatusBadge } from "../components/StatusBadge";
 import { useAuth } from "../contexts/AuthContext";
+import { readError } from "../lib/format";
 import {
   createAssetCatalogItem,
   deactivateAssetCatalogItem,
@@ -210,7 +211,9 @@ export function AssetCatalogItemsPage() {
         setItems(catalogItems);
         setCategories(assetCategories);
       })
-      .catch(() => toast.error("Không tải được danh sách danh mục tài sản."));
+      .catch((error) =>
+        toast.error(readError(error, "Không tải được danh sách danh mục tài sản.")),
+      );
   }, []);
 
   useEffect(() => {
@@ -273,8 +276,8 @@ export function AssetCatalogItemsPage() {
           : nextForm.catalogType,
       });
       setModalOpen(true);
-    } catch {
-      toast.error("Không tải được chi tiết danh mục.");
+    } catch (error) {
+      toast.error(readError(error, "Không tải được chi tiết danh mục."));
     } finally {
       setBusy(false);
     }
@@ -319,8 +322,8 @@ export function AssetCatalogItemsPage() {
       setItems(await loadAssetCatalogItems());
       setModalOpen(false);
       toast.success(editingId ? "Đã cập nhật danh mục." : "Đã tạo danh mục.");
-    } catch {
-      toast.error("Không lưu được danh mục.");
+    } catch (error) {
+      toast.error(readError(error, "Không lưu được danh mục."));
     } finally {
       setBusy(false);
     }
@@ -333,8 +336,8 @@ export function AssetCatalogItemsPage() {
       await deactivateAssetCatalogItem(item.id);
       setItems(await loadAssetCatalogItems());
       toast.success("Danh mục đã ngừng được phép gán cho tài sản mới.");
-    } catch {
-      toast.error("Không thể cập nhật khả dụng của danh mục.");
+    } catch (error) {
+      toast.error(readError(error, "Không thể cập nhật khả dụng của danh mục."));
     } finally {
       setBusy(false);
     }
@@ -375,8 +378,8 @@ export function AssetCatalogItemsPage() {
       } else {
         toast.error(`Đã cập nhật ${succeededIds.size}/${activeSelectedItems.length} danh mục.`);
       }
-    } catch {
-      toast.error("Không tải lại được danh sách sau khi cập nhật.");
+    } catch (error) {
+      toast.error(readError(error, "Không tải lại được danh sách sau khi cập nhật."));
     } finally {
       setBusy(false);
     }

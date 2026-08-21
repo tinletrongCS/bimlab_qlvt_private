@@ -138,6 +138,8 @@ const laptopAsset = {
   category: "Laptop",
   serialNumber: "SN001",
   source: "PURCHASE",
+  contractNumber: "H31082026/KHACHHANG-QH2026/HTNT",
+  invoiceNumber: "74",
   vendor,
   assignedEmployeeId: 1,
   departmentId: 1,
@@ -395,10 +397,12 @@ describe("QLVT asset and booking workflow coverage", () => {
     expect(await screen.findByRole("heading", { name: "Danh sách tài sản" })).toBeVisible();
     expect(screen.getByText("Laptop Dell Precision")).toBeVisible();
     expect(screen.getByText("MON-LG-27 - Màn hình LG 27 inch")).toBeVisible();
+    expect(screen.getByText("H31082026/KHACHHANG-QH2026/HTNT")).toBeVisible();
+    expect(screen.getByText("74")).toBeVisible();
     expect(screen.getAllByText("Phòng họp Apollo").length).toBeGreaterThan(0);
 
     await user.type(
-      screen.getByPlaceholderText("Tìm theo mã, tên, serial, nhà cung cấp..."),
+      screen.getByPlaceholderText("Tìm theo mã, tên, serial, hợp đồng, hóa đơn, nhà cung cấp..."),
       "Dell",
     );
     expect(screen.getByRole("button", { name: "Mở thao tác cho TS-001" })).toBeInTheDocument();
@@ -676,15 +680,15 @@ describe("QLVT asset and booking workflow coverage", () => {
     await user.click(screen.getByRole("button", { name: "Đóng" }));
 
     await user.type(
-      screen.getByPlaceholderText("Tìm theo mã, tên, serial, nhà cung cấp..."),
+      screen.getByPlaceholderText("Tìm theo mã, tên, serial, hợp đồng, hóa đơn, nhà cung cấp..."),
       "Dell",
     );
     chooseSearchableOption(screen.getByLabelText(/Trạng thái/i), "Đã cấp phát");
     chooseSearchableOption(screen.getByLabelText(/Giá trị/i), "10 - 50 triệu");
     await user.click(screen.getByRole("button", { name: "Tất cả" }));
-    expect(screen.getByPlaceholderText("Tìm theo mã, tên, serial, nhà cung cấp...")).toHaveValue(
-      "Dell",
-    );
+    expect(
+      screen.getByPlaceholderText("Tìm theo mã, tên, serial, hợp đồng, hóa đơn, nhà cung cấp..."),
+    ).toHaveValue("Dell");
     expect(screen.getByLabelText(/Trạng thái/i)).toHaveValue("Tất cả trạng thái");
     expect(screen.getByLabelText(/Giá trị/i)).toHaveValue("Tất cả giá trị");
   });
