@@ -6,10 +6,13 @@ import { AssetCatalogItemsPage } from "./AssetCatalogItemsPage";
 const mocks = vi.hoisted(() => ({
   create: vi.fn(),
   deactivate: vi.fn(),
+  deletePermanent: vi.fn(),
+  loadAssignedAssets: vi.fn(),
   loadDetail: vi.fn(),
   loadItems: vi.fn(),
   loadCategories: vi.fn(),
   toastError: vi.fn(),
+  unassign: vi.fn(),
   update: vi.fn(),
 }));
 
@@ -20,9 +23,12 @@ vi.mock("react-hot-toast", () => ({
 vi.mock("../services/api", () => ({
   createAssetCatalogItem: mocks.create,
   deactivateAssetCatalogItem: mocks.deactivate,
+  deleteAssetCatalogItemPermanently: mocks.deletePermanent,
+  loadAssetsByCatalogItem: mocks.loadAssignedAssets,
   loadAssetCatalogItem: mocks.loadDetail,
   loadAssetCatalogItems: mocks.loadItems,
   loadAssetCategories: mocks.loadCategories,
+  unassignAssetCatalogItems: mocks.unassign,
   updateAssetCatalogItem: mocks.update,
 }));
 
@@ -71,8 +77,11 @@ describe("AssetCatalogItemsPage", () => {
       },
     ]);
     mocks.create.mockResolvedValue({ id: 2 });
+    mocks.deletePermanent.mockResolvedValue(undefined);
     mocks.update.mockResolvedValue({});
     mocks.deactivate.mockResolvedValue(undefined);
+    mocks.loadAssignedAssets.mockResolvedValue([]);
+    mocks.unassign.mockResolvedValue(undefined);
     mocks.loadDetail.mockResolvedValue({
       id: 1,
       itemCode: "MON-LG-27",
@@ -141,6 +150,8 @@ describe("AssetCatalogItemsPage", () => {
 
     await user.click(screen.getByRole("button", { name: "Mở thao tác cho Màn hình LG 27 inch" }));
     await user.click(await screen.findByRole("menuitem", { name: "Ngừng cho phép gán" }));
+    expect(await screen.findByRole("heading", { name: "Tài sản đang gán danh mục" })).toBeVisible();
+    await user.click(screen.getByRole("button", { name: "Ngừng và gỡ tất cả" }));
     await waitFor(() => expect(mocks.deactivate).toHaveBeenCalledWith(1));
   });
 
