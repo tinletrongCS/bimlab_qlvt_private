@@ -1169,7 +1169,7 @@ export function AssetCatalogItemsPage() {
                         </td>
                         <td>{asset.assetCode}</td>
                         <td>{asset.name}</td>
-                        <td>{asset.status}</td>
+                        <td>{assetStatusLabel(asset.status)}</td>
                         <td>{workSiteLabel(asset.siteId, workSiteById)}</td>
                         <td>{departmentLabel(asset.departmentId, departmentById)}</td>
                         <td>{asset.assignedEmployeeId ?? "--"}</td>
@@ -1323,6 +1323,18 @@ function departmentLabel(id: number | undefined, departments: Map<number, Depart
 function workSiteLabel(id: number | undefined, sites: Map<number, WorkSiteLite>): string {
   if (!id) return "--";
   return sites.get(id)?.name || String(id);
+}
+
+function assetStatusLabel(status?: string): string {
+  const labels: Record<string, string> = {
+    IN_STOCK: "Trong kho",
+    ASSIGNED: "Đã cấp phát",
+    MAINTENANCE: "Bảo trì",
+    DISPOSED: "Đã thanh lý",
+    LIQUIDATED: "Đã thanh lý",
+    LOST: "Mất/hỏng",
+  };
+  return status ? labels[status] || status : "--";
 }
 
 function isInteractiveRowClick(target: EventTarget): boolean {
