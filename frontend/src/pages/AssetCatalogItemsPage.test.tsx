@@ -136,6 +136,15 @@ describe("AssetCatalogItemsPage", () => {
         siteId: 7,
         departmentId: 8,
       },
+      {
+        id: 102,
+        assetCode: "CCDC-MON-002",
+        name: "Màn hình lỗi",
+        category: "Màn hình",
+        status: "LOST",
+        siteId: 7,
+        departmentId: 8,
+      },
     ]);
     mocks.loadDepartments.mockResolvedValue([{ id: 8, name: "Phòng Công nghệ" }]);
     mocks.loadWorkSites.mockResolvedValue([{ id: 7, name: "Chi nhánh HCM" }]);
@@ -173,8 +182,12 @@ describe("AssetCatalogItemsPage", () => {
     expect(await screen.findByText("CCDC-MON-001")).toBeVisible();
     expect(screen.getByRole("columnheader", { name: "Chi nhánh" })).toBeVisible();
     expect(screen.getByRole("columnheader", { name: "Phòng ban" })).toBeVisible();
-    expect(screen.getByText("Chi nhánh HCM")).toBeVisible();
-    expect(screen.getByText("Phòng Công nghệ")).toBeVisible();
+    expect(screen.getByText("Trong kho")).toBeVisible();
+    expect(screen.getByText("Mất/hỏng")).toBeVisible();
+    expect(screen.queryByText("IN_STOCK")).not.toBeInTheDocument();
+    expect(screen.queryByText("LOST")).not.toBeInTheDocument();
+    expect(screen.getAllByText("Chi nhánh HCM")).toHaveLength(2);
+    expect(screen.getAllByText("Phòng Công nghệ")).toHaveLength(2);
     await user.click(screen.getByText("CCDC-MON-001"));
     expect(screen.getByRole("button", { name: "Gỡ gán (1)" })).toBeEnabled();
     await user.click(screen.getByRole("button", { name: "Ngừng và gỡ tất cả" }));
