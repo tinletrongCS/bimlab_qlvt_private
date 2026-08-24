@@ -149,6 +149,16 @@ function normalizeRichTextColor(value: string) {
   );
 }
 
+function isInteractiveRowClick(target: EventTarget): boolean {
+  return target instanceof Element
+    ? Boolean(
+        target.closest(
+          "button, a, input, label, select, textarea, [role='button'], [role='menuitem']",
+        ),
+      )
+    : false;
+}
+
 function sanitizeRichText(value: string) {
   const body = new DOMParser().parseFromString(value, "text/html").body;
 
@@ -2194,6 +2204,11 @@ export function AssetsPage() {
     });
   };
 
+  const handleAssetRowClick = (event: MouseEvent<HTMLTableRowElement>, id: number) => {
+    if (!assetMultiSelectMode || isInteractiveRowClick(event.target)) return;
+    toggleAssetSelected(id);
+  };
+
   const toggleCurrentPageSelected = () => {
     setSelectedAssetIds((current) => {
       const next = new Set(current);
@@ -3203,6 +3218,7 @@ export function AssetsPage() {
                       <tr
                         key={item.id}
                         className={selectedAssetIds.has(item.id) ? "is-selected" : undefined}
+                        onClick={(event) => handleAssetRowClick(event, item.id)}
                       >
                         {assetMultiSelectMode && (
                           <td className="asset-table-select-col asset-table-sticky-select">
@@ -3213,6 +3229,7 @@ export function AssetsPage() {
                               <input
                                 type="checkbox"
                                 checked={selectedAssetIds.has(item.id)}
+                                onClick={(event) => event.stopPropagation()}
                                 onChange={() => toggleAssetSelected(item.id)}
                               />
                               <span />

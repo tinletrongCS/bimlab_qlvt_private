@@ -1,4 +1,11 @@
-import { type CSSProperties, type ReactNode, useEffect, useMemo, useState } from "react";
+import {
+  type CSSProperties,
+  type MouseEvent,
+  type ReactNode,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { FiChevronLeft, FiChevronRight, FiChevronsLeft, FiChevronsRight } from "react-icons/fi";
 
 interface Column<T> {
@@ -68,6 +75,19 @@ export function DataTable<T>({
     setPage(1);
   }, [data, pageSize]);
 
+  const toggleSelection = (key: RowKey) => {
+    if (!selection) return;
+    const next = new Set(selection.selectedKeys);
+    if (next.has(key)) next.delete(key);
+    else next.add(key);
+    selection.onChange(next);
+  };
+
+  const handleRowClick = (event: MouseEvent<HTMLTableRowElement>, key: RowKey) => {
+    if (!selection || isInteractiveClick(event.target)) return;
+    toggleSelection(key);
+  };
+
   return (
     <>
       <div
@@ -123,6 +143,7 @@ export function DataTable<T>({
                 <tr
                   key={key}
                   className={selection?.selectedKeys.has(key) ? "is-selected" : undefined}
+                  onClick={(event) => handleRowClick(event, key)}
                 >
                   {selection && (
                     <td className="data-table-select-column">
@@ -133,12 +154,8 @@ export function DataTable<T>({
                         <input
                           type="checkbox"
                           checked={selection.selectedKeys.has(key)}
-                          onChange={() => {
-                            const next = new Set(selection.selectedKeys);
-                            if (next.has(key)) next.delete(key);
-                            else next.add(key);
-                            selection.onChange(next);
-                          }}
+                          onClick={(event) => event.stopPropagation()}
+                          onChange={() => toggleSelection(key)}
                         />
                         <span />
                       </label>
@@ -209,4 +226,14 @@ export function DataTable<T>({
       )}
     </>
   );
+}
+
+function isInteractiveClick(target: EventTarget): boolean {
+  return target instanceof Element
+    ? Boolean(
+        target.closest(
+          "button, a, input, label, select, textarea, [role='button'], [role='menuitem']",
+        ),
+      )
+    : false;
 }

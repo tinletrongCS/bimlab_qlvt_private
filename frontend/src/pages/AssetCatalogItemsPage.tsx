@@ -19,6 +19,8 @@ import {
   loadAssetCatalogItems,
   loadAssetCategories,
   loadAssetsByCatalogItem,
+  loadDepartments,
+  loadWorkSites,
   unassignAssetCatalogItems,
   updateAssetCatalogItem,
 } from "../services/api";
@@ -30,6 +32,8 @@ import type {
   AssetCategory,
   AssetItem,
   CatalogUnit,
+  DepartmentLite,
+  WorkSiteLite,
 } from "../services/types";
 
 type ActiveFilter = "ALL" | "ACTIVE" | "INACTIVE";
@@ -217,6 +221,8 @@ export function AssetCatalogItemsPage() {
   const [selectedAssignedAssetIds, setSelectedAssignedAssetIds] = useState<Set<number>>(
     () => new Set(),
   );
+  const [assignmentDepartments, setAssignmentDepartments] = useState<DepartmentLite[]>([]);
+  const [assignmentWorkSites, setAssignmentWorkSites] = useState<WorkSiteLite[]>([]);
 
   const canManage = hasPermission("asset_manage");
 
@@ -270,6 +276,14 @@ export function AssetCatalogItemsPage() {
   const activeSelectedItems = selectedItems.filter((item) => item.active);
   const allAssignedSelected =
     assignmentAssets.length > 0 && selectedAssignedAssetIds.size === assignmentAssets.length;
+  const departmentById = useMemo(
+    () => new Map(assignmentDepartments.map((department) => [department.id, department])),
+    [assignmentDepartments],
+  );
+  const workSiteById = useMemo(
+    () => new Map(assignmentWorkSites.map((site) => [site.id, site])),
+    [assignmentWorkSites],
+  );
 
   const openCreate = () => {
     setModalMode("create");
@@ -356,7 +370,14 @@ export function AssetCatalogItemsPage() {
     setAssignmentAssets([]);
     setAssignmentLoading(true);
     try {
-      setAssignmentAssets(await loadAssetsByCatalogItem(item.id));
+      const [assets, departments, workSites] = await Promise.all([
+        loadAssetsByCatalogItem(item.id),
+        loadDepartments().catch(() => []),
+        loadWorkSites().catch(() => []),
+      ]);
+      setAssignmentAssets(assets);
+      setAssignmentDepartments(departments);
+      setAssignmentWorkSites(workSites);
     } catch (error) {
       toast.error(readError(error, "Không tải được tài sản đang gán danh mục."));
     } finally {
@@ -367,6 +388,8 @@ export function AssetCatalogItemsPage() {
   const clearAssignmentManager = () => {
     setAssignmentItem(null);
     setAssignmentAssets([]);
+    setAssignmentDepartments([]);
+    setAssignmentWorkSites([]);
     setSelectedAssignedAssetIds(new Set());
   };
 
@@ -453,6 +476,15 @@ export function AssetCatalogItemsPage() {
       setBusy(false);
       setAssignmentLoading(false);
     }
+  };
+
+  const toggleAssignedAssetSelection = (id: number) => {
+    setSelectedAssignedAssetIds((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
   };
 
   const deactivateSelected = async () => {
@@ -1098,40 +1130,48 @@ export function AssetCatalogItemsPage() {
                     <th>Mã tài sản</th>
                     <th>Tên tài sản</th>
                     <th>Trạng thái</th>
+                    <th>Chi nhánh</th>
+                    <th>Phòng ban</th>
                     <th>Nhân sự</th>
                   </tr>
                 </thead>
                 <tbody>
                   {assignmentLoading && assignmentAssets.length === 0 ? (
                     <tr>
-                      <td colSpan={5}>Đang tải...</td>
+                      <td colSpan={7}>Đang tải...</td>
                     </tr>
                   ) : assignmentAssets.length === 0 ? (
                     <tr>
-                      <td colSpan={5}>Không còn tài sản nào đang gán danh mục này.</td>
+                      <td colSpan={7}>Không còn tài sản nào đang gán danh mục này.</td>
                     </tr>
                   ) : (
                     assignmentAssets.map((asset) => (
-                      <tr key={asset.id}>
+                      <tr
+                        key={asset.id}
+                        className={
+                          selectedAssignedAssetIds.has(asset.id) ? "is-selected" : undefined
+                        }
+                        onClick={(event) => {
+                          if (!isInteractiveRowClick(event.target)) {
+                            toggleAssignedAssetSelection(asset.id);
+                          }
+                        }}
+                      >
                         <td className="catalog-assignment-check">
                           <input
                             type="checkbox"
                             aria-label={`Chọn tài sản ${asset.assetCode}`}
                             checked={selectedAssignedAssetIds.has(asset.id)}
                             disabled={assignmentLoading}
-                            onChange={(event) =>
-                              setSelectedAssignedAssetIds((current) => {
-                                const next = new Set(current);
-                                if (event.target.checked) next.add(asset.id);
-                                else next.delete(asset.id);
-                                return next;
-                              })
-                            }
+                            onClick={(event) => event.stopPropagation()}
+                            onChange={() => toggleAssignedAssetSelection(asset.id)}
                           />
                         </td>
                         <td>{asset.assetCode}</td>
                         <td>{asset.name}</td>
                         <td>{asset.status}</td>
+                        <td>{workSiteLabel(asset.siteId, workSiteById)}</td>
+                        <td>{departmentLabel(asset.departmentId, departmentById)}</td>
                         <td>{asset.assignedEmployeeId ?? "--"}</td>
                       </tr>
                     ))
@@ -1273,4 +1313,24 @@ function normalizeUnit(value?: string): CatalogUnit | "" {
 function unitLabel(value?: string): string {
   const unit = normalizeUnit(value);
   return unit ? UNIT_LABELS[unit] : value || "--";
+}
+
+function departmentLabel(id: number | undefined, departments: Map<number, DepartmentLite>): string {
+  if (!id) return "--";
+  return departments.get(id)?.name || String(id);
+}
+
+function workSiteLabel(id: number | undefined, sites: Map<number, WorkSiteLite>): string {
+  if (!id) return "--";
+  return sites.get(id)?.name || String(id);
+}
+
+function isInteractiveRowClick(target: EventTarget): boolean {
+  return target instanceof Element
+    ? Boolean(
+        target.closest(
+          "button, a, input, label, select, textarea, [role='button'], [role='menuitem']",
+        ),
+      )
+    : false;
 }
