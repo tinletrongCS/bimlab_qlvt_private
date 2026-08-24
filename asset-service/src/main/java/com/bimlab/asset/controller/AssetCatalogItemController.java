@@ -1,8 +1,13 @@
 package com.bimlab.asset.controller;
 
 import com.bimlab.asset.dto.request.AssetCatalogItemRequest;
+import com.bimlab.asset.dto.request.AssetCatalogUnassignmentRequest;
 import com.bimlab.asset.dto.response.AssetCatalogItemDetailResponse;
 import com.bimlab.asset.dto.response.AssetCatalogItemListResponse;
+import com.bimlab.asset.dto.response.AssetResponse;
+import com.bimlab.asset.mapper.AssetMapper;
+import com.bimlab.asset.security.AssetAccessService;
+import com.bimlab.asset.security.Permission;
 import com.bimlab.asset.service.AssetCatalogItemService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +34,12 @@ import java.util.List;
 @RequiredArgsConstructor
 public class AssetCatalogItemController {
     private final AssetCatalogItemService service;
+    private final AssetAccessService access;
+    private final AssetMapper mapper;
+
+    private boolean canViewFinance() {
+        return access.hasAnyPermission(Permission.Sets.FINANCE_VIEWERS.toArray(Permission[]::new));
+    }
 
     @GetMapping
     @PreAuthorize("hasAnyAuthority('asset_access','asset_view_self','asset_view_team','asset_view_all','asset_manage','asset_finance_manage','asset_finance_view')")
@@ -55,6 +66,15 @@ public class AssetCatalogItemController {
         return service.getCatalogItem(id);
     }
 
+    @GetMapping("/{id}/assets")
+    @PreAuthorize("hasAnyAuthority('asset_access','asset_view_self','asset_view_team','asset_view_all','asset_manage','asset_finance_manage','asset_finance_view')")
+    public List<AssetResponse> listAssignedAssets(@PathVariable Long id) {
+        boolean finance = canViewFinance();
+        return service.listAssignedAssets(id).stream()
+                .map(asset -> mapper.toResponse(asset, finance))
+                .toList();
+    }
+
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasAuthority('asset_manage')")
@@ -76,5 +96,29 @@ public class AssetCatalogItemController {
     @PreAuthorize("hasAuthority('asset_manage')")
     public void deactivate(@PathVariable Long id) {
         service.deactivateCatalogItem(id);
+    }
+
+    @DeleteMapping("/{id}/assets/{assetId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasAuthority('asset_manage')")
+    public void unassignAsset(@PathVariable Long id, @PathVariable Long assetId) {
+        service.unassignAsset(id, assetId);
+    }
+
+    @PostMapping("/{id}/assets/unassign")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasAuthority('asset_manage')")
+    public void unassignAssets(
+            @PathVariable Long id,
+            @Valid @RequestBody AssetCatalogUnassignmentRequest request
+    ) {
+        service.unassignAssets(id, request);
+    }
+
+    @DeleteMapping("/{id}/permanent")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasAuthority('asset_manage')")
+    public void deletePermanently(@PathVariable Long id) {
+        service.deleteCatalogItem(id);
     }
 }

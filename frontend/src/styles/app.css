@@ -4668,6 +4668,10 @@ button:hover {
   border-collapse: collapse;
 }
 
+.asset-table table.is-multi-select tbody tr {
+  cursor: pointer;
+}
+
 .asset-table th {
   background: #f8fafc;
   color: #111827;
@@ -15810,6 +15814,99 @@ button,
   cursor: default;
 }
 
+#root .catalog-assignment-modal .modal-body {
+  display: block !important;
+}
+
+#root .catalog-assignment-modal {
+  max-height: min(860px, calc(100vh - 56px)) !important;
+  max-width: min(1500px, calc(100vw - 72px)) !important;
+  width: min(1500px, calc(100vw - 72px)) !important;
+}
+
+#root .catalog-assignment-body {
+  display: grid;
+  gap: 14px;
+}
+
+#root .catalog-assignment-summary {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+#root .catalog-assignment-summary strong,
+#root .catalog-assignment-summary span {
+  min-width: 0;
+}
+
+#root .catalog-assignment-summary span {
+  color: #64748b;
+  font-size: 13px;
+}
+
+#root .catalog-assignment-table-wrap {
+  border: 1px solid #e2e8f0;
+  max-height: min(610px, calc(100vh - 300px));
+  overflow: auto;
+}
+
+#root .catalog-assignment-table {
+  border-collapse: collapse;
+  min-width: 1180px;
+  table-layout: fixed;
+  width: 100%;
+}
+
+#root .catalog-assignment-table th,
+#root .catalog-assignment-table td {
+  border-bottom: 1px solid #e2e8f0;
+  color: #334155;
+  font-size: 13px;
+  line-height: 1.35;
+  padding: 10px 12px;
+  text-align: left;
+  word-break: break-word;
+}
+
+#root .catalog-assignment-table th {
+  background: #f8fafc;
+  color: #0f172a;
+  font-weight: 700;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+#root .catalog-assignment-table tr:last-child td {
+  border-bottom: 0;
+}
+
+#root .catalog-assignment-table tbody tr {
+  cursor: pointer;
+}
+
+#root .catalog-assignment-table tbody tr.is-selected td {
+  background: #eff6ff;
+}
+
+#root .catalog-assignment-table tbody tr.is-selected:hover td {
+  background: #e8f2ff;
+}
+
+#root .catalog-assignment-check {
+  text-align: center !important;
+  width: 44px;
+}
+
+#root .catalog-assignment-check input[type="checkbox"] {
+  accent-color: #0f766e;
+  height: 16px;
+  margin: 0;
+  width: 16px;
+}
+
 @media (max-width: 960px) {
   #root .catalog-toolbar {
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
@@ -15832,6 +15929,11 @@ button,
 
   #root .catalog-form-wide {
     grid-column: auto;
+  }
+
+  #root .catalog-assignment-summary {
+    align-items: flex-start;
+    flex-direction: column;
   }
 }
 
@@ -15870,6 +15972,10 @@ button,
 #root .catalog-list-panel .table-wrap.has-row-selection table {
   min-width: max(100%, var(--qlvt-table-min-width, 100%)) !important;
   width: max(100%, var(--qlvt-table-min-width, 100%)) !important;
+}
+
+#root .catalog-list-panel .table-wrap.has-row-selection tbody tr {
+  cursor: pointer;
 }
 
 #root .catalog-list-panel .data-table-select-column {

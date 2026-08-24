@@ -6,10 +6,15 @@ import { AssetCatalogItemsPage } from "./AssetCatalogItemsPage";
 const mocks = vi.hoisted(() => ({
   create: vi.fn(),
   deactivate: vi.fn(),
+  deletePermanent: vi.fn(),
+  loadAssignedAssets: vi.fn(),
+  loadDepartments: vi.fn(),
   loadDetail: vi.fn(),
   loadItems: vi.fn(),
   loadCategories: vi.fn(),
+  loadWorkSites: vi.fn(),
   toastError: vi.fn(),
+  unassign: vi.fn(),
   update: vi.fn(),
 }));
 
@@ -20,9 +25,14 @@ vi.mock("react-hot-toast", () => ({
 vi.mock("../services/api", () => ({
   createAssetCatalogItem: mocks.create,
   deactivateAssetCatalogItem: mocks.deactivate,
+  deleteAssetCatalogItemPermanently: mocks.deletePermanent,
   loadAssetCatalogItem: mocks.loadDetail,
   loadAssetCatalogItems: mocks.loadItems,
   loadAssetCategories: mocks.loadCategories,
+  loadAssetsByCatalogItem: mocks.loadAssignedAssets,
+  loadDepartments: mocks.loadDepartments,
+  loadWorkSites: mocks.loadWorkSites,
+  unassignAssetCatalogItems: mocks.unassign,
   updateAssetCatalogItem: mocks.update,
 }));
 
@@ -71,8 +81,13 @@ describe("AssetCatalogItemsPage", () => {
       },
     ]);
     mocks.create.mockResolvedValue({ id: 2 });
+    mocks.deletePermanent.mockResolvedValue(undefined);
     mocks.update.mockResolvedValue({});
     mocks.deactivate.mockResolvedValue(undefined);
+    mocks.loadAssignedAssets.mockResolvedValue([]);
+    mocks.loadDepartments.mockResolvedValue([]);
+    mocks.loadWorkSites.mockResolvedValue([]);
+    mocks.unassign.mockResolvedValue(undefined);
     mocks.loadDetail.mockResolvedValue({
       id: 1,
       itemCode: "MON-LG-27",
@@ -111,6 +126,19 @@ describe("AssetCatalogItemsPage", () => {
   it("views details before editing and deactivates an existing catalog item", async () => {
     const user = userEvent.setup();
     vi.spyOn(window, "confirm").mockReturnValue(true);
+    mocks.loadAssignedAssets.mockResolvedValue([
+      {
+        id: 101,
+        assetCode: "CCDC-MON-001",
+        name: "Màn hình phòng họp",
+        category: "Màn hình",
+        status: "IN_STOCK",
+        siteId: 7,
+        departmentId: 8,
+      },
+    ]);
+    mocks.loadDepartments.mockResolvedValue([{ id: 8, name: "Phòng Công nghệ" }]);
+    mocks.loadWorkSites.mockResolvedValue([{ id: 7, name: "Chi nhánh HCM" }]);
     render(<AssetCatalogItemsPage />);
     expect(await screen.findByText("MON-LG-27")).toBeVisible();
 
@@ -141,6 +169,15 @@ describe("AssetCatalogItemsPage", () => {
 
     await user.click(screen.getByRole("button", { name: "Mở thao tác cho Màn hình LG 27 inch" }));
     await user.click(await screen.findByRole("menuitem", { name: "Ngừng cho phép gán" }));
+    expect(await screen.findByRole("heading", { name: "Tài sản đang gán danh mục" })).toBeVisible();
+    expect(await screen.findByText("CCDC-MON-001")).toBeVisible();
+    expect(screen.getByRole("columnheader", { name: "Chi nhánh" })).toBeVisible();
+    expect(screen.getByRole("columnheader", { name: "Phòng ban" })).toBeVisible();
+    expect(screen.getByText("Chi nhánh HCM")).toBeVisible();
+    expect(screen.getByText("Phòng Công nghệ")).toBeVisible();
+    await user.click(screen.getByText("CCDC-MON-001"));
+    expect(screen.getByRole("button", { name: "Gỡ gán (1)" })).toBeEnabled();
+    await user.click(screen.getByRole("button", { name: "Ngừng và gỡ tất cả" }));
     await waitFor(() => expect(mocks.deactivate).toHaveBeenCalledWith(1));
   });
 

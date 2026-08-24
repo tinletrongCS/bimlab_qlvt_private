@@ -324,6 +324,10 @@ export interface AssetCatalogAssignmentPayload {
   catalogItemId: number;
 }
 
+export interface AssetCatalogUnassignmentPayload {
+  assetIds: number[];
+}
+
 export interface AssetImportRowPayload {
   rowNumber: number;
   quantity?: number | null;
