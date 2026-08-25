@@ -16,7 +16,10 @@ export type Permission =
   | "asset_report_view"
   | "asset_transfers_view"
   | "asset_transfers_manage"
-  | "asset_transfers_approve";
+  | "asset_transfers_approve"
+  | "sys_roles"
+  | "role_permission_update"
+  | "permission_meta_create";
 
 export interface AuthUser {
   id?: number;
@@ -25,6 +28,35 @@ export interface AuthUser {
   fullName?: string;
   permissions?: Permission[];
   mfaEnabled?: boolean;
+}
+
+export interface AuthAccount {
+  id: number;
+  username: string;
+  role: string;
+  fullName?: string;
+  employeeId?: number;
+  enabled: boolean;
+}
+
+export interface PermissionMeta {
+  key: string;
+  label: string;
+  description?: string;
+  category: string;
+  isSystem: boolean;
+}
+
+export interface AssetUserPermissions {
+  userId: number;
+  username: string;
+  fullName?: string;
+  role: string;
+  inherited: string[];
+  added: string[];
+  removed: string[];
+  effective: string[];
+  version: number;
 }
 
 export interface AuthLoginResponse extends Partial<AuthUser> {

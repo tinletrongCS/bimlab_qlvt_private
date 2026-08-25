@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Supplier;
 import java.util.logging.Logger;
 
 /**
@@ -67,17 +68,32 @@ public class RolePermissionClient implements RolePermissionResolver {
         if (role == null || role.isBlank()) {
             return List.of();
         }
-        Cached cached = cache.get(role);
+        return resolveCached("role:" + role, "role '" + role + "'", () -> fetch(role));
+    }
+
+    @Override
+    public List<String> resolveUser(String username, String role) {
+        if (username == null || username.isBlank()) {
+            return resolve(role);
+        }
+        return resolveCached(
+                "user:" + username,
+                "user '" + username + "'",
+                () -> fetchUser(username));
+    }
+
+    private List<String> resolveCached(String cacheKey, String subject, Supplier<List<String>> fetcher) {
+        Cached cached = cache.get(cacheKey);
         if (cached != null && !cached.isExpired()) {
             return cached.permissions;
         }
         long startedAt = now();
         try {
-            return cacheAndReturn(role, fetch(role));
+            return cacheAndReturn(cacheKey, fetcher.get());
         } catch (RuntimeException e) {
             if (cached != null) {
                 // serve-stale: dùng cache last-known dù đã hết TTL.
-                log.warning("auth-service resolve role '" + role + "' lỗi (" + e.getMessage()
+                log.warning("auth-service resolve " + subject + " lỗi (" + e.getMessage()
                         + ") → serve-stale từ cache");
                 return cached.permissions;
             }
@@ -87,26 +103,26 @@ public class RolePermissionClient implements RolePermissionResolver {
                     break;
                 }
                 try {
-                    List<String> fresh = cacheAndReturn(role, fetch(role));
-                    log.info("auth-service resolve role '" + role + "' OK sau retry");
+                    List<String> fresh = cacheAndReturn(cacheKey, fetcher.get());
+                    log.info("auth-service resolve " + subject + " OK sau retry");
                     return fresh;
                 } catch (RuntimeException retryError) {
                     e = retryError;
                 }
             }
             // cold-miss: fail-closed (rỗng → chỉ ROLE_<role>).
-            log.warning("auth-service resolve role '" + role + "' lỗi (" + e.getMessage()
+            log.warning("auth-service resolve " + subject + " lỗi (" + e.getMessage()
                     + ") + chưa có cache (đã retry " + COLD_MISS_RETRY_DELAYS_MS.length
                     + " lần) → fail-closed (rỗng)");
             return List.of();
         }
     }
 
-    private List<String> cacheAndReturn(String role, List<String> fresh) {
+    private List<String> cacheAndReturn(String cacheKey, List<String> fresh) {
         if (fresh.isEmpty()) {
-            cache.remove(role);
+            cache.remove(cacheKey);
         } else {
-            cache.put(role, new Cached(fresh, now()));
+            cache.put(cacheKey, new Cached(fresh, now()));
         }
         return fresh;
     }
@@ -135,7 +151,7 @@ public class RolePermissionClient implements RolePermissionResolver {
                     if (perms.isEmpty()) {
                         return false;
                     }
-                    cache.put(role, new Cached(perms, now()));
+                    cache.put("role:" + role, new Cached(perms, now()));
                     return true;
                 } catch (RuntimeException e) {
                     return false; // auth-service chưa sẵn sàng → thử lại vòng sau
@@ -180,6 +196,28 @@ public class RolePermissionClient implements RolePermissionResolver {
         // Response sai hình dạng (thiếu 'permissions') → coi là LỖI, ném để vào nhánh serve-stale/
         // cold-miss thay vì trả rỗng âm thầm rồi bị cache như thành công.
         throw new IllegalStateException("auth-service response thiếu 'permissions' (role=" + role + ")");
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<String> fetchUser(String username) {
+        String url = UriComponentsBuilder
+                .fromHttpUrl(authServiceUrl)
+                .path("/internal/v1/users/{username}/permissions")
+                .buildAndExpand(username)
+                .encode()
+                .toUriString();
+        HttpHeaders headers = new HttpHeaders();
+        if (!internalApiKey.isBlank()) {
+            headers.set("X-Internal-Key", internalApiKey);
+        }
+        ResponseEntity<Map> resp = restTemplate.exchange(
+                url, HttpMethod.GET, new HttpEntity<>(headers), Map.class);
+        Object perms = resp.getBody() == null ? null : resp.getBody().get("permissions");
+        if (perms instanceof List<?> list) {
+            return list.stream().map(String::valueOf).toList();
+        }
+        throw new IllegalStateException(
+                "auth-service response thiếu 'permissions' (username=" + username + ")");
     }
 
     // Cho phép test override thời gian; mặc định System.currentTimeMillis.

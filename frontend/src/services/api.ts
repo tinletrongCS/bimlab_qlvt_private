@@ -28,6 +28,8 @@ import type {
   AssetQrCode,
   AssetTransfer,
   AssetTransferPayload,
+  AssetUserPermissions,
+  AuthAccount,
   AuthUser,
   Contract,
   ContractPayload,
@@ -41,6 +43,7 @@ import type {
   MaintenanceRecordPayload,
   PageResponse,
   Permission,
+  PermissionMeta,
   ProjectLite,
   PurchaseRequest,
   PurchaseRequestPayload,
@@ -507,6 +510,53 @@ export async function cancelAssetBooking(
 
 export async function loadEmployees(): Promise<EmployeeLite[]> {
   const response = await api.get<EmployeeLite[]>("/employees", { params: { page: 0, size: 500 } });
+  return response.data;
+}
+
+export async function loadAuthAccounts(): Promise<AuthAccount[]> {
+  const response = await api.get<AuthAccount[]>("/users");
+  return response.data;
+}
+
+export async function loadAssetPermissionMeta(): Promise<PermissionMeta[]> {
+  const response = await api.get<PermissionMeta[]>("/roles/asset-permissions");
+  return response.data;
+}
+
+export async function createAssetPermission(payload: {
+  key: string;
+  label: string;
+  description?: string;
+}): Promise<PermissionMeta> {
+  const response = await api.post<PermissionMeta>("/roles/asset-permissions", payload);
+  return response.data;
+}
+
+export async function loadAssetUserPermissions(userId: number): Promise<AssetUserPermissions> {
+  const response = await api.get<AssetUserPermissions>(`/roles/users/${userId}/asset-permissions`);
+  return response.data;
+}
+
+export async function updateAssetUserPermissions(
+  userId: number,
+  permissions: string[],
+  version: number,
+): Promise<AssetUserPermissions> {
+  const response = await api.put<AssetUserPermissions>(`/roles/users/${userId}/asset-permissions`, {
+    permissions,
+    version,
+  });
+  return response.data;
+}
+
+export async function resetAssetUserPermissions(
+  userId: number,
+  version: number,
+): Promise<AssetUserPermissions> {
+  const response = await api.delete<AssetUserPermissions>(
+    `/roles/users/${userId}/asset-permissions`,
+    { params: { version } },
+  );
   return response.data;
 }
 

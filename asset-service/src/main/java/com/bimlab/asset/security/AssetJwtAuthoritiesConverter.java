@@ -54,7 +54,7 @@ public final class AssetJwtAuthoritiesConverter implements Converter<Jwt, Abstra
             // Keycloak (PA-B): sub là UUID (hoặc vắng) → username lấy từ preferred_username (fallback sub);
             // LUÔN resolve role→permissions; bỏ qua mọi claim permissions có thể có.
             username = firstNonBlank(jwt.getClaimAsString("preferred_username"), jwt.getSubject());
-            permissions = resolver.resolve(role);
+            permissions = resolver.resolveUser(username, role);
         } else {
             // Legacy: sub = username; dùng claim permissions (kể cả [] rỗng); KHÔNG gọi API (authorities y hệt filter cũ).
             username = jwt.getSubject();

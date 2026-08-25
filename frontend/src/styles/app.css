@@ -16679,3 +16679,264 @@ button,
     grid-template-columns: 1fr;
   }
 }
+/* QLVT user permission administration */
+.permission-admin-page {
+  display: grid;
+  gap: 16px;
+}
+
+.permission-admin-workspace {
+  display: grid;
+  grid-template-columns: minmax(240px, 300px) minmax(0, 1fr);
+  min-height: 620px;
+  overflow: hidden;
+  background: #fff;
+  border: 1px solid #d8e0e8;
+  border-radius: 6px;
+}
+
+.permission-user-pane {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  border-right: 1px solid #d8e0e8;
+  background: #f8fafc;
+}
+
+.permission-pane-head,
+.permission-detail-head,
+.permission-list-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.permission-pane-head {
+  padding: 16px;
+  border-bottom: 1px solid #d8e0e8;
+}
+
+.permission-pane-head span {
+  color: #64748b;
+  font-size: 12px;
+}
+
+.permission-user-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 12px;
+  padding: 0 10px;
+  color: #64748b;
+  background: #fff;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+}
+
+.permission-user-search input {
+  width: 100%;
+  height: 38px;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+}
+
+.permission-user-list {
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.permission-user-list > button {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  width: 100%;
+  gap: 10px;
+  padding: 12px 16px;
+  text-align: left;
+  color: #334155;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid #e2e8f0;
+  border-radius: 0;
+}
+
+.permission-user-list > button:hover,
+.permission-user-list > button.active {
+  background: #e8f1f7;
+}
+
+.permission-user-list > button.active {
+  box-shadow: inset 3px 0 #246189;
+}
+
+.permission-user-list > button span {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+
+.permission-user-list strong,
+.permission-user-list small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.permission-user-list small {
+  color: #64748b;
+  font-size: 11px;
+}
+
+.permission-detail-pane {
+  min-width: 0;
+  padding: 20px;
+}
+
+.permission-detail-head {
+  padding-bottom: 16px;
+  border-bottom: 1px solid #d8e0e8;
+}
+
+.permission-detail-head > div:first-child {
+  display: grid;
+  gap: 4px;
+}
+
+.permission-detail-head > div:first-child > strong {
+  color: #172033;
+  font-size: 18px;
+}
+
+.permission-detail-head > div:first-child > span,
+.permission-list-head span {
+  color: #64748b;
+  font-size: 12px;
+}
+
+.permission-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.permission-admin-lock {
+  margin-top: 16px;
+  padding: 10px 12px;
+  color: #7c2d12;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+.permission-list-head {
+  padding: 20px 0 10px;
+}
+
+.permission-check-list {
+  display: grid;
+  border-top: 1px solid #e2e8f0;
+}
+
+.permission-check-list > label {
+  display: grid;
+  grid-template-columns: 20px minmax(180px, 1fr) minmax(150px, auto) 76px;
+  align-items: center;
+  gap: 12px;
+  min-height: 60px;
+  padding: 10px 8px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.permission-check-list > label:hover {
+  background: #f8fafc;
+}
+
+.permission-check-list > label > span {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+
+.permission-check-list small {
+  color: #64748b;
+  line-height: 1.4;
+}
+
+.permission-check-list code {
+  color: #475569;
+  font-size: 11px;
+  overflow-wrap: anywhere;
+}
+
+.permission-check-list em {
+  color: #64748b;
+  font-size: 11px;
+  font-style: normal;
+  text-align: right;
+}
+
+.permission-check-list .permission-added {
+  color: #166534;
+}
+
+.permission-check-list .permission-removed {
+  color: #991b1b;
+}
+
+.permission-empty-state,
+.permission-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 180px;
+  color: #64748b;
+}
+
+.permission-empty-state {
+  min-height: 500px;
+  flex-direction: column;
+  font-size: 14px;
+}
+
+.permission-empty-state svg {
+  width: 30px;
+  height: 30px;
+}
+
+.permission-create-form {
+  display: grid;
+  gap: 14px;
+}
+
+.permission-create-form label {
+  display: grid;
+  gap: 6px;
+}
+
+@media (max-width: 850px) {
+  .permission-admin-workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .permission-user-pane {
+    max-height: 320px;
+    border-right: 0;
+    border-bottom: 1px solid #d8e0e8;
+  }
+
+  .permission-detail-head {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .permission-check-list > label {
+    grid-template-columns: 20px minmax(0, 1fr) 70px;
+  }
+
+  .permission-check-list code {
+    display: none;
+  }
+}

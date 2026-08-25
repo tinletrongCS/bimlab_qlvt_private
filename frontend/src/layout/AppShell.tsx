@@ -18,6 +18,7 @@ import {
   FiRefreshCw,
   FiRepeat,
   FiSearch,
+  FiShield,
   FiShoppingCart,
   FiTool,
   FiX,
@@ -114,6 +115,14 @@ const NAV_GROUPS: NavGroup[] = [
     label: "Gói đăng ký",
     icon: <FiCreditCard />,
     permission: "subscription_manage",
+    children: [],
+  },
+  {
+    key: "system",
+    to: "/asset-permissions",
+    label: "Phân quyền",
+    icon: <FiShield />,
+    permission: "sys_roles",
     children: [],
   },
   {
@@ -218,6 +227,8 @@ export function AppShell() {
     else if (location.pathname.startsWith("/vendors")) title = "Nhà cung cấp | BIMLab QLVT";
     else if (location.pathname.startsWith("/contracts")) title = "Hợp đồng | BIMLab QLVT";
     else if (location.pathname.startsWith("/subscriptions")) title = "Gói đăng ký | BIMLab QLVT";
+    else if (location.pathname.startsWith("/asset-permissions"))
+      title = "Phân quyền QLVT | BIMLab QLVT";
     else if (location.pathname.startsWith("/help")) title = "Hướng dẫn sử dụng | BIMLab QLVT";
     document.title = title;
   }, [location.pathname]);

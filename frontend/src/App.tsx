@@ -7,6 +7,7 @@ import { NavigationGuardProvider } from "./contexts/NavigationGuardContext";
 import { AppShell } from "./layout/AppShell";
 import { AssetCatalogItemsPage } from "./pages/AssetCatalogItemsPage";
 import { AssetCategoriesPage } from "./pages/AssetCategoriesPage";
+import { AssetPermissionsPage } from "./pages/AssetPermissionsPage";
 import { AssetsPage } from "./pages/AssetsPage";
 import { BookingPage } from "./pages/BookingPage";
 import { ContractsPage } from "./pages/ContractsPage";
@@ -131,6 +132,14 @@ function App() {
                     }
                   />
                   <Route path="/help" element={<HelpPage />} />
+                  <Route
+                    path="/asset-permissions"
+                    element={
+                      <ProtectedRoute permission="sys_roles">
+                        <AssetPermissionsPage />
+                      </ProtectedRoute>
+                    }
+                  />
                   <Route path="/" element={<Navigate to="/dashboard" replace />} />
                 </Route>
                 <Route path="*" element={<Navigate to="/dashboard" replace />} />

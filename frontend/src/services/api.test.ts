@@ -207,6 +207,12 @@ describe("asset api client", () => {
       client.checkOutAssetBooking(1, payload),
       client.cancelAssetBooking(1, payload),
       client.loadEmployees(),
+      client.loadAuthAccounts(),
+      client.loadAssetPermissionMeta(),
+      client.createAssetPermission({ key: "asset_export", label: "Xuất tài sản" }),
+      client.loadAssetUserPermissions(7),
+      client.updateAssetUserPermissions(7, ["asset_access"], 2),
+      client.resetAssetUserPermissions(7, 3),
       client.loadDepartments(),
       client.loadWorkSites(),
       client.loadProjects(),
@@ -218,6 +224,11 @@ describe("asset api client", () => {
     expect(mocks.api.post).toHaveBeenCalledWith("/asset/bookings/1/check-in");
     expect(mocks.api.get).toHaveBeenCalledWith("/asset/transfer");
     expect(mocks.api.get).toHaveBeenCalledWith("/asset/catalog-items/1/assets");
+    expect(mocks.api.get).toHaveBeenCalledWith("/roles/users/7/asset-permissions");
+    expect(mocks.api.put).toHaveBeenCalledWith("/roles/users/7/asset-permissions", {
+      permissions: ["asset_access"],
+      version: 2,
+    });
     expect(mocks.api.delete).toHaveBeenCalledWith("/asset/catalog-items/1/assets/2");
     expect(mocks.api.post).toHaveBeenCalledWith("/asset/catalog-items/1/assets/unassign", {
       assetIds: [2, 3],
