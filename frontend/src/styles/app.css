@@ -8877,7 +8877,7 @@ textarea,
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(300px, 360px);
   gap: 6px;
-  align-items: start;
+  align-items: stretch;
 }
 
 #root .dashboard-shortcut-grid {
@@ -16541,6 +16541,141 @@ button,
 
 @media (max-width: 768px) {
   .transfer-asset-picker-filters {
+    grid-template-columns: 1fr;
+  }
+}
+/* Shared footer */
+#root .content,
+#root .login-page {
+  display: flex;
+  flex-direction: column;
+}
+
+#root .login-page {
+  min-height: 100vh;
+}
+
+#root .login-page .login-shell {
+  flex: 1 0 auto;
+  min-height: 560px;
+}
+
+#root .app-content-body {
+  flex: 1 0 auto;
+  min-width: 0;
+}
+
+#root .app-footer {
+  align-items: center;
+  background: #dbe4ea;
+  border-top: 3px solid #94a3b8;
+  color: #334155;
+  display: grid;
+  flex: 0 0 auto;
+  gap: 20px;
+  grid-template-columns: minmax(300px, 1fr) minmax(360px, 1.4fr);
+  isolation: isolate;
+  margin: 24px -10px -12px;
+  padding: 28px 26px;
+}
+
+#root .login-page .app-footer {
+  margin: 0;
+}
+
+#root .app-footer-brand,
+#root .app-footer-contact {
+  align-items: center;
+  display: flex;
+  gap: 6px;
+  min-width: 0;
+}
+
+#root .app-footer-brand-copy {
+  display: grid;
+  gap: 3px;
+}
+
+#root .app-footer-brand strong {
+  color: #243447;
+}
+
+#root .app-footer-brand span,
+#root .app-footer-contact {
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+#root .app-footer-contact {
+  display: grid;
+  font-style: normal;
+  gap: 16px;
+  grid-template-columns: minmax(260px, 1fr) 300px;
+  justify-self: end;
+}
+
+#root .app-footer-contact iframe {
+  border: 1px solid #94a3b8;
+  display: block;
+  height: 150px;
+  max-width: 100%;
+  width: 100%;
+}
+
+#root .app-footer-contact-copy {
+  align-content: center;
+  display: grid;
+  gap: 10px;
+}
+
+#root .app-footer-contact-copy a {
+  align-items: start;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: 18px minmax(0, 1fr);
+}
+
+#root .app-footer-contact a {
+  align-items: start;
+}
+
+#root .app-footer-contact svg {
+  flex: 0 0 auto;
+  justify-self: center;
+  margin-top: 2px;
+}
+
+#root .app-footer-map svg {
+  color: #2563eb;
+  font-size: 17px;
+}
+
+#root .app-footer a {
+  color: #334155;
+  text-decoration: none;
+}
+
+#root .app-footer a:hover {
+  color: #0f172a;
+  text-decoration: underline;
+}
+
+@media (max-width: 900px) {
+  #root .app-footer {
+    grid-template-columns: 1fr;
+    margin-left: -4px;
+    margin-right: -4px;
+    padding: 16px;
+  }
+
+  #root .app-footer-contact {
+    grid-template-columns: minmax(260px, 1fr) 300px;
+    justify-self: stretch;
+  }
+}
+
+@media (max-width: 620px) {
+  #root .app-footer-contact {
     grid-template-columns: 1fr;
   }
 }

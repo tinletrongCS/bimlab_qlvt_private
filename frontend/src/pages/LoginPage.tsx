@@ -4,6 +4,7 @@ import { FiLogIn, FiShield } from "react-icons/fi";
 import { Navigate, useLocation } from "react-router-dom";
 import { LoadingSkeleton } from "../components/LoadingSkeleton";
 import { useAuth } from "../contexts/AuthContext";
+import { AppFooter } from "../layout/AppShell";
 
 interface LocationState {
   from?: { pathname?: string };
@@ -191,50 +192,53 @@ export function LoginPage() {
   }
 
   return (
-    <main className="login-shell">
-      <section className="login-blueprint" ref={loginSceneRef}>
-        <BlueprintGrid />
-        <div className="login-radial" />
-        <FloatingShapes />
-        <div className="scan-line">
-          <div />
-        </div>
-
-        <div className="login-card">
-          <span className="corner corner-tl" />
-          <span className="corner corner-tr" />
-          <span className="corner corner-bl" />
-          <span className="corner corner-br" />
-
-          <div className="login-logo">
-            <img src="/full_dark.png" alt="BIMLab" />
-          </div>
-          <p className="login-subtitle">HỆ THỐNG QUẢN LÝ TÀI SẢN</p>
-
-          {/* Keycloak (SSO): redirect sang trang login Keycloak (Authorization Code + PKCE). */}
-          <div className="login-keycloak">
-            {loginError && <div className="alert login-field">{loginError}</div>}
-            <button
-              className="login-btn login-field"
-              disabled={submitting}
-              type="button"
-              onClick={() => login()}
-            >
-              <FiLogIn /> Đăng nhập bằng SSO (Keycloak)
-            </button>
-          </div>
-          <div className="login-note">
-            <FiShield />
-            <span>Sử dụng tài khoản HRM đã được cung cấp. Phân quyền theo vai trò hiện tại/</span>
+    <div className="login-page">
+      <main className="login-shell">
+        <section className="login-blueprint" ref={loginSceneRef}>
+          <BlueprintGrid />
+          <div className="login-radial" />
+          <FloatingShapes />
+          <div className="scan-line">
+            <div />
           </div>
 
-          <div className="login-footer-line">
-            <span />
-            <small>BIMlab © 2026</small>
-            <span />
+          <div className="login-card">
+            <span className="corner corner-tl" />
+            <span className="corner corner-tr" />
+            <span className="corner corner-bl" />
+            <span className="corner corner-br" />
+
+            <div className="login-logo">
+              <img src="/full_dark.png" alt="BIMLab" />
+            </div>
+            <p className="login-subtitle">HỆ THỐNG QUẢN LÝ TÀI SẢN</p>
+
+            {/* Keycloak (SSO): redirect sang trang login Keycloak (Authorization Code + PKCE). */}
+            <div className="login-keycloak">
+              {loginError && <div className="alert login-field">{loginError}</div>}
+              <button
+                className="login-btn login-field"
+                disabled={submitting}
+                type="button"
+                onClick={() => login()}
+              >
+                <FiLogIn /> Đăng nhập bằng SSO (Keycloak)
+              </button>
+            </div>
+            <div className="login-note">
+              <FiShield />
+              <span>Sử dụng tài khoản HRM đã được cung cấp. Phân quyền theo vai trò hiện tại/</span>
+            </div>
+
+            <div className="login-footer-line">
+              <span />
+              <small>BIMlab © 2026</small>
+              <span />
+            </div>
           </div>
-        </div>
-      </section>
-    </main>
+        </section>
+      </main>
+      <AppFooter />
+    </div>
   );
 }

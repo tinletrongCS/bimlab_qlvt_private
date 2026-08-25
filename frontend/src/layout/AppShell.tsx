@@ -13,6 +13,7 @@ import {
   FiHelpCircle,
   FiLayers,
   FiLogOut,
+  FiMail,
   FiMenu,
   FiRefreshCw,
   FiRepeat,
@@ -21,6 +22,7 @@ import {
   FiTool,
   FiX,
 } from "react-icons/fi";
+import { SiGooglemaps } from "react-icons/si";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { CrudForm } from "../components/forms/CrudForm";
 import { LoadingSkeleton } from "../components/LoadingSkeleton";
@@ -141,6 +143,43 @@ function HighlightedLabel({ label, query }: { label: string; query: string }) {
       <mark>{label.slice(index, index + query.length)}</mark>
       {label.slice(index + query.length)}
     </>
+  );
+}
+
+export function AppFooter() {
+  return (
+    <footer className="app-footer">
+      <div className="app-footer-brand">
+        <div className="app-footer-brand-copy">
+          <strong>Hệ thống quản lý tài sản</strong>
+          <span>© 2026 Bản quyền thuộc về Công ty CP BIMLab Bách Khoa</span>
+        </div>
+      </div>
+      <address className="app-footer-contact">
+        <div className="app-footer-contact-copy">
+          <a
+            className="app-footer-map"
+            href="https://www.google.com/maps/search/?api=1&query=ResGreen+Tower%2C+7A+Tho%E1%BA%A1i+Ng%E1%BB%8Dc+H%E1%BA%A7u%2C+T%C3%A2n+Ph%C3%BA%2C+TP.+H%E1%BB%93+Ch%C3%AD+Minh"
+            target="_blank"
+            rel="noreferrer"
+          >
+            <SiGooglemaps aria-hidden="true" />
+            <span>
+              Một phần tầng 4, ResGreen Tower, 7A Thoại Ngọc Hầu, Phường Tân Phú, TP. Hồ Chí Minh
+            </span>
+          </a>
+          <a href="mailto:bimlab.hcmut@gmail.com">
+            <FiMail aria-hidden="true" /> <span>bimlab.hcmut@gmail.com</span>
+          </a>
+        </div>
+        <iframe
+          title="Bản đồ Công ty CP BIMLab Bách Khoa"
+          src="https://www.google.com/maps?q=ResGreen%20Tower%2C%207A%20Tho%E1%BA%A1i%20Ng%E1%BB%8Dc%20H%E1%BA%A7u%2C%20T%C3%A2n%20Ph%C3%BA%2C%20TP.%20H%E1%BB%93%20Ch%C3%AD%20Minh&output=embed"
+          loading="lazy"
+          referrerPolicy="no-referrer-when-downgrade"
+        />
+      </address>
+    </footer>
   );
 }
 
@@ -499,8 +538,11 @@ export function AppShell() {
             </button>
           </div>
         )}
-        {error && <div className="alert">{error}</div>}
-        {loading ? <LoadingSkeleton variant="content" /> : <Outlet />}
+        <div className="app-content-body">
+          {error && <div className="alert">{error}</div>}
+          {loading ? <LoadingSkeleton variant="content" /> : <Outlet />}
+        </div>
+        <AppFooter />
       </section>
 
       {/* Modal xác nhận thoát khi đang thao tác dở dang (Tối giản, không bo góc) */}
