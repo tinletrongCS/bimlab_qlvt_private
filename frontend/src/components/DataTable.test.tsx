@@ -68,6 +68,8 @@ describe("DataTable", () => {
     expect(selectPage.indeterminate).toBe(true);
     fireEvent.click(screen.getByTitle("Chọn Dòng 2").querySelector("input") as HTMLInputElement);
     expect(onChange).toHaveBeenLastCalledWith(new Set(["Dòng 1", "Dòng 2"]));
+    fireEvent.click(screen.getByText("Dòng 3").closest("tr") as HTMLTableRowElement);
+    expect(onChange).toHaveBeenLastCalledWith(new Set(["Dòng 1", "Dòng 3"]));
 
     fireEvent.click(selectPage);
     const allVisible = onChange.mock.calls.at(-1)?.[0] as Set<string | number>;

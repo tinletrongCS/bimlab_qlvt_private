@@ -10,6 +10,7 @@ import type {
   AssetCatalogItemDetail,
   AssetCatalogItemListItem,
   AssetCatalogItemPayload,
+  AssetCatalogUnassignmentPayload,
   AssetCategory,
   AssetCategoryImportCommitPayload,
   AssetCategoryImportCommitResponse,
@@ -268,6 +269,26 @@ export async function updateAssetCatalogItem(
 
 export async function deactivateAssetCatalogItem(id: number): Promise<void> {
   await api.delete(`/asset/catalog-items/${id}`);
+}
+
+export async function loadAssetsByCatalogItem(id: number): Promise<AssetItem[]> {
+  const response = await api.get<AssetItem[]>(`/asset/catalog-items/${id}/assets`);
+  return response.data;
+}
+
+export async function unassignAssetCatalogItem(id: number, assetId: number): Promise<void> {
+  await api.delete(`/asset/catalog-items/${id}/assets/${assetId}`);
+}
+
+export async function unassignAssetCatalogItems(
+  id: number,
+  payload: AssetCatalogUnassignmentPayload,
+): Promise<void> {
+  await api.post(`/asset/catalog-items/${id}/assets/unassign`, payload);
+}
+
+export async function deleteAssetCatalogItemPermanently(id: number): Promise<void> {
+  await api.delete(`/asset/catalog-items/${id}/permanent`);
 }
 
 export async function loadDepreciation(id: number): Promise<DepreciationSnapshot> {

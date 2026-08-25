@@ -1,6 +1,6 @@
 import { type FormEvent, type MouseEvent, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
-import { FiEdit2, FiPlus, FiRotateCcw, FiSearch, FiSlash, FiX } from "react-icons/fi";
+import { FiEdit2, FiPlus, FiRotateCcw, FiSearch, FiSlash, FiTrash2, FiX } from "react-icons/fi";
 import { CrudModal } from "../components/CrudModal";
 import { DataTable } from "../components/DataTable";
 import { AssetCategoryTreeSelect } from "../components/forms/AssetCategoryTreeSelect";
@@ -14,9 +14,14 @@ import { readError } from "../lib/format";
 import {
   createAssetCatalogItem,
   deactivateAssetCatalogItem,
+  deleteAssetCatalogItemPermanently,
   loadAssetCatalogItem,
   loadAssetCatalogItems,
   loadAssetCategories,
+  loadAssetsByCatalogItem,
+  loadDepartments,
+  loadWorkSites,
+  unassignAssetCatalogItems,
   updateAssetCatalogItem,
 } from "../services/api";
 import type {
@@ -25,7 +30,10 @@ import type {
   AssetCatalogItemPayload,
   AssetCatalogType,
   AssetCategory,
+  AssetItem,
   CatalogUnit,
+  DepartmentLite,
+  WorkSiteLite,
 } from "../services/types";
 
 type ActiveFilter = "ALL" | "ACTIVE" | "INACTIVE";
@@ -207,6 +215,14 @@ export function AssetCatalogItemsPage() {
     () => readCatalogColumnPreferences().visible,
   );
   const [draggedColumn, setDraggedColumn] = useState<CatalogTableColumnId | null>(null);
+  const [assignmentItem, setAssignmentItem] = useState<AssetCatalogItemListItem | null>(null);
+  const [assignmentAssets, setAssignmentAssets] = useState<AssetItem[]>([]);
+  const [assignmentLoading, setAssignmentLoading] = useState(false);
+  const [selectedAssignedAssetIds, setSelectedAssignedAssetIds] = useState<Set<number>>(
+    () => new Set(),
+  );
+  const [assignmentDepartments, setAssignmentDepartments] = useState<DepartmentLite[]>([]);
+  const [assignmentWorkSites, setAssignmentWorkSites] = useState<WorkSiteLite[]>([]);
 
   const canManage = hasPermission("asset_manage");
 
@@ -258,6 +274,16 @@ export function AssetCatalogItemsPage() {
     [items, selectedItemIds],
   );
   const activeSelectedItems = selectedItems.filter((item) => item.active);
+  const allAssignedSelected =
+    assignmentAssets.length > 0 && selectedAssignedAssetIds.size === assignmentAssets.length;
+  const departmentById = useMemo(
+    () => new Map(assignmentDepartments.map((department) => [department.id, department])),
+    [assignmentDepartments],
+  );
+  const workSiteById = useMemo(
+    () => new Map(assignmentWorkSites.map((site) => [site.id, site])),
+    [assignmentWorkSites],
+  );
 
   const openCreate = () => {
     setModalMode("create");
@@ -334,25 +360,138 @@ export function AssetCatalogItemsPage() {
     }
   };
 
+  const refreshCatalogItems = async () => {
+    setItems(await loadAssetCatalogItems());
+  };
+
+  const openAssignmentManager = async (item: AssetCatalogItemListItem) => {
+    setAssignmentItem(item);
+    setSelectedAssignedAssetIds(new Set());
+    setAssignmentAssets([]);
+    setAssignmentLoading(true);
+    try {
+      const [assets, departments, workSites] = await Promise.all([
+        loadAssetsByCatalogItem(item.id),
+        loadDepartments().catch(() => []),
+        loadWorkSites().catch(() => []),
+      ]);
+      setAssignmentAssets(assets);
+      setAssignmentDepartments(departments);
+      setAssignmentWorkSites(workSites);
+    } catch (error) {
+      toast.error(readError(error, "Không tải được tài sản đang gán danh mục."));
+    } finally {
+      setAssignmentLoading(false);
+    }
+  };
+
+  const clearAssignmentManager = () => {
+    setAssignmentItem(null);
+    setAssignmentAssets([]);
+    setAssignmentDepartments([]);
+    setAssignmentWorkSites([]);
+    setSelectedAssignedAssetIds(new Set());
+  };
+
+  const closeAssignmentManager = () => {
+    if (assignmentLoading) return;
+    clearAssignmentManager();
+  };
+
   const deactivate = async (item: AssetCatalogItemListItem) => {
-    if (!window.confirm(`Ngừng cho phép gán danh mục "${item.name}" cho tài sản mới?`)) return;
+    if (
+      !window.confirm(
+        `Ngừng cho phép gán danh mục "${item.name}" và tự động gỡ danh mục này khỏi toàn bộ tài sản đang gán?`,
+      )
+    ) {
+      return;
+    }
+    const isAssignmentModalItem = assignmentItem?.id === item.id;
     setBusy(true);
+    if (isAssignmentModalItem) setAssignmentLoading(true);
     try {
       await deactivateAssetCatalogItem(item.id);
-      setItems(await loadAssetCatalogItems());
-      toast.success("Danh mục đã ngừng được phép gán cho tài sản mới.");
+      const [nextItems, nextAssets] = await Promise.all([
+        loadAssetCatalogItems(),
+        isAssignmentModalItem ? loadAssetsByCatalogItem(item.id) : Promise.resolve(null),
+      ]);
+      setItems(nextItems);
+      toast.success("Đã ngừng cho phép gán và gỡ danh mục khỏi toàn bộ tài sản đang gán.");
+      if (isAssignmentModalItem) {
+        setAssignmentAssets(nextAssets ?? []);
+        setSelectedAssignedAssetIds(new Set());
+        const updatedItem = nextItems.find((nextItem) => nextItem.id === item.id);
+        setAssignmentItem(updatedItem ?? { ...item, active: false, assetCount: 0 });
+      }
     } catch (error) {
       toast.error(readError(error, "Không thể cập nhật khả dụng của danh mục."));
     } finally {
       setBusy(false);
+      if (isAssignmentModalItem) setAssignmentLoading(false);
     }
+  };
+
+  const unassignSelectedAssets = async () => {
+    if (!assignmentItem || selectedAssignedAssetIds.size === 0 || assignmentLoading) return;
+    const assetIds = Array.from(selectedAssignedAssetIds);
+    if (!window.confirm(`Gỡ danh mục khỏi ${assetIds.length} tài sản đã chọn?`)) return;
+
+    setAssignmentLoading(true);
+    try {
+      await unassignAssetCatalogItems(assignmentItem.id, { assetIds });
+      const [nextAssets, nextItems] = await Promise.all([
+        loadAssetsByCatalogItem(assignmentItem.id),
+        loadAssetCatalogItems(),
+      ]);
+      setAssignmentAssets(nextAssets);
+      setItems(nextItems);
+      setSelectedAssignedAssetIds(new Set());
+      const updatedItem = nextItems.find((item) => item.id === assignmentItem.id);
+      if (updatedItem) setAssignmentItem(updatedItem);
+      toast.success(`Đã gỡ danh mục khỏi ${assetIds.length} tài sản.`);
+    } catch (error) {
+      toast.error(readError(error, "Không thể gỡ danh mục khỏi tài sản đã chọn."));
+    } finally {
+      setAssignmentLoading(false);
+    }
+  };
+
+  const deletePermanently = async (item: AssetCatalogItemListItem) => {
+    if ((item.assetCount ?? 0) > 0) {
+      toast.error("Chỉ được xóa danh mục khi không còn tài sản đang gán.");
+      return;
+    }
+    if (!window.confirm(`Xóa hẳn danh mục "${item.name}"?`)) return;
+
+    setBusy(true);
+    setAssignmentLoading(true);
+    try {
+      await deleteAssetCatalogItemPermanently(item.id);
+      await refreshCatalogItems();
+      if (assignmentItem?.id === item.id) clearAssignmentManager();
+      toast.success("Đã xóa danh mục.");
+    } catch (error) {
+      toast.error(readError(error, "Không thể xóa danh mục."));
+    } finally {
+      setBusy(false);
+      setAssignmentLoading(false);
+    }
+  };
+
+  const toggleAssignedAssetSelection = (id: number) => {
+    setSelectedAssignedAssetIds((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
   };
 
   const deactivateSelected = async () => {
     if (activeSelectedItems.length === 0 || busy) return;
     if (
       !window.confirm(
-        `Ngừng cho phép gán ${activeSelectedItems.length} danh mục đã chọn cho tài sản mới?`,
+        `Ngừng cho phép gán ${activeSelectedItems.length} danh mục đã chọn và tự động gỡ khỏi toàn bộ tài sản đang gán?`,
       )
     ) {
       return;
@@ -379,7 +518,7 @@ export function AssetCatalogItemsPage() {
         return next;
       });
       if (succeededIds.size === activeSelectedItems.length) {
-        toast.success(`Đã ngừng cho phép gán ${succeededIds.size} danh mục.`);
+        toast.success(`Đã ngừng cho phép gán và gỡ tài sản khỏi ${succeededIds.size} danh mục.`);
       } else {
         toast.error(`Đã cập nhật ${succeededIds.size}/${activeSelectedItems.length} danh mục.`);
       }
@@ -747,10 +886,15 @@ export function AssetCatalogItemsPage() {
                                 {
                                   label: "Ngừng cho phép gán",
                                   danger: true,
-                                  onClick: () => void deactivate(item),
+                                  onClick: () => void openAssignmentManager(item),
                                 },
                               ]
                             : []),
+                          {
+                            label: "Xóa danh mục",
+                            danger: true,
+                            onClick: () => void deletePermanently(item),
+                          },
                         ]
                       : []),
                   ]}
@@ -905,6 +1049,139 @@ export function AssetCatalogItemsPage() {
           </fieldset>
         </CrudModal>
       )}
+
+      {assignmentItem && (
+        <CrudModal
+          title="Tài sản đang gán danh mục"
+          subtitle={`${assignmentItem.itemCode} - ${assignmentItem.name}`}
+          submitting={assignmentLoading || busy}
+          onClose={closeAssignmentManager}
+          onSubmit={(event) => event.preventDefault()}
+          wide
+          className="catalog-assignment-modal"
+          mode="view"
+          footer={
+            <>
+              <button className="secondary" type="button" onClick={closeAssignmentManager}>
+                Đóng
+              </button>
+              {assignmentItem.active && (
+                <button
+                  className="danger-action"
+                  type="button"
+                  disabled={assignmentLoading || busy}
+                  onClick={() => void deactivate(assignmentItem)}
+                >
+                  <FiSlash /> Ngừng và gỡ tất cả
+                </button>
+              )}
+              <button
+                className="danger-action"
+                type="button"
+                disabled={assignmentLoading || selectedAssignedAssetIds.size === 0}
+                onClick={() => void unassignSelectedAssets()}
+              >
+                <FiX /> Gỡ gán ({selectedAssignedAssetIds.size})
+              </button>
+              <button
+                className="danger-action"
+                type="button"
+                disabled={assignmentLoading || assignmentAssets.length > 0}
+                title={
+                  assignmentAssets.length > 0
+                    ? "Chỉ được phép xóa khi không còn tài sản nào đang được gán danh mục này."
+                    : "Xóa hẳn danh mục"
+                }
+                onClick={() => void deletePermanently(assignmentItem)}
+              >
+                <FiTrash2 /> Xóa danh mục
+              </button>
+            </>
+          }
+        >
+          <div className="catalog-assignment-body">
+            <div className="catalog-assignment-summary">
+              <strong>{assignmentAssets.length} tài sản đang gán</strong>
+              <span>
+                {assignmentAssets.length === 0
+                  ? "Có thể xóa hẳn danh mục này."
+                  : "Chỉ được phép xóa danh mục khi không còn tài sản nào đang được gán."}
+              </span>
+            </div>
+            <div className="catalog-assignment-table-wrap">
+              <table className="catalog-assignment-table">
+                <thead>
+                  <tr>
+                    <th className="catalog-assignment-check">
+                      <input
+                        type="checkbox"
+                        aria-label="Chọn tất cả tài sản"
+                        checked={allAssignedSelected}
+                        disabled={assignmentAssets.length === 0 || assignmentLoading}
+                        onChange={(event) =>
+                          setSelectedAssignedAssetIds(
+                            event.target.checked
+                              ? new Set(assignmentAssets.map((asset) => asset.id))
+                              : new Set(),
+                          )
+                        }
+                      />
+                    </th>
+                    <th>Mã tài sản</th>
+                    <th>Tên tài sản</th>
+                    <th>Trạng thái</th>
+                    <th>Chi nhánh</th>
+                    <th>Phòng ban</th>
+                    <th>Nhân sự</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {assignmentLoading && assignmentAssets.length === 0 ? (
+                    <tr>
+                      <td colSpan={7}>Đang tải...</td>
+                    </tr>
+                  ) : assignmentAssets.length === 0 ? (
+                    <tr>
+                      <td colSpan={7}>Không còn tài sản nào đang gán danh mục này.</td>
+                    </tr>
+                  ) : (
+                    assignmentAssets.map((asset) => (
+                      <tr
+                        key={asset.id}
+                        className={
+                          selectedAssignedAssetIds.has(asset.id) ? "is-selected" : undefined
+                        }
+                        onClick={(event) => {
+                          if (!isInteractiveRowClick(event.target)) {
+                            toggleAssignedAssetSelection(asset.id);
+                          }
+                        }}
+                      >
+                        <td className="catalog-assignment-check">
+                          <input
+                            type="checkbox"
+                            aria-label={`Chọn tài sản ${asset.assetCode}`}
+                            checked={selectedAssignedAssetIds.has(asset.id)}
+                            disabled={assignmentLoading}
+                            onClick={(event) => event.stopPropagation()}
+                            onChange={() => toggleAssignedAssetSelection(asset.id)}
+                          />
+                        </td>
+                        <td>{asset.assetCode}</td>
+                        <td>{asset.name}</td>
+                        <td>{assetStatusLabel(asset.status)}</td>
+                        <td>{workSiteLabel(asset.siteId, workSiteById)}</td>
+                        <td>{departmentLabel(asset.departmentId, departmentById)}</td>
+                        <td>{asset.assignedEmployeeId ?? "--"}</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </CrudModal>
+      )}
     </section>
   );
 }
@@ -1036,4 +1313,36 @@ function normalizeUnit(value?: string): CatalogUnit | "" {
 function unitLabel(value?: string): string {
   const unit = normalizeUnit(value);
   return unit ? UNIT_LABELS[unit] : value || "--";
+}
+
+function departmentLabel(id: number | undefined, departments: Map<number, DepartmentLite>): string {
+  if (!id) return "--";
+  return departments.get(id)?.name || String(id);
+}
+
+function workSiteLabel(id: number | undefined, sites: Map<number, WorkSiteLite>): string {
+  if (!id) return "--";
+  return sites.get(id)?.name || String(id);
+}
+
+function assetStatusLabel(status?: string): string {
+  const labels: Record<string, string> = {
+    IN_STOCK: "Trong kho",
+    ASSIGNED: "Đã cấp phát",
+    MAINTENANCE: "Bảo trì",
+    DISPOSED: "Đã thanh lý",
+    LIQUIDATED: "Đã thanh lý",
+    LOST: "Mất/hỏng",
+  };
+  return status ? labels[status] || status : "--";
+}
+
+function isInteractiveRowClick(target: EventTarget): boolean {
+  return target instanceof Element
+    ? Boolean(
+        target.closest(
+          "button, a, input, label, select, textarea, [role='button'], [role='menuitem']",
+        ),
+      )
+    : false;
 }

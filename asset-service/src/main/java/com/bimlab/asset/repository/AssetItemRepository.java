@@ -24,6 +24,7 @@ public interface AssetItemRepository extends JpaRepository<AssetItem, Long> {
 
     boolean existsByAssetCode(String assetCode);
     boolean existsByCatalogItemId(Long catalogItemId);
+    long countByCatalogItemId(Long catalogItemId);
     List<AssetItem> findByAssetCategoryId(Long categoryId);
     List<AssetItem> findByCatalogItemId(Long catalogItemId);
 

@@ -1,10 +1,12 @@
 package com.bimlab.asset.service;
 
 import com.bimlab.asset.dto.request.AssetCatalogItemRequest;
+import com.bimlab.asset.dto.request.AssetCatalogUnassignmentRequest;
 import com.bimlab.asset.dto.response.AssetCatalogItemDetailResponse;
 import com.bimlab.asset.dto.response.AssetCatalogItemListResponse;
 import com.bimlab.asset.entity.AssetCatalogItem;
 import com.bimlab.asset.entity.AssetCategory;
+import com.bimlab.asset.entity.AssetItem;
 import com.bimlab.asset.entity.status.AssetClass;
 import com.bimlab.asset.entity.status.CatalogType;
 import com.bimlab.asset.repository.AssetCatalogItemRepository;
@@ -139,7 +141,58 @@ public class AssetCatalogItemService {
         AssetCatalogItem catalogItem = catalogItems.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Không tìm thấy danh mục với mã " + id));
         catalogItem.setActive(false);
+        List<AssetItem> assignedAssets = assets.findByCatalogItemId(id);
+        for (AssetItem asset : assignedAssets) {
+            asset.setCatalogItem(null);
+        }
+        if (!assignedAssets.isEmpty()) {
+            assets.saveAll(assignedAssets);
+        }
         catalogItems.save(catalogItem);
+    }
+
+    @Transactional(readOnly = true)
+    public List<AssetItem> listAssignedAssets(Long id) {
+        requireCatalogItem(id);
+        return assets.findByCatalogItemId(id);
+    }
+
+    @Transactional
+    public void unassignAsset(Long id, Long assetId) {
+        requireCatalogItem(id);
+        AssetItem asset = assets.findById(assetId)
+                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy tài sản với id " + assetId));
+        ensureAssetUsesCatalog(asset, id);
+        asset.setCatalogItem(null);
+        assets.save(asset);
+    }
+
+    @Transactional
+    public void unassignAssets(Long id, AssetCatalogUnassignmentRequest request) {
+        requireCatalogItem(id);
+        List<Long> assetIds = request.assetIds().stream().distinct().toList();
+        List<AssetItem> selectedAssets = assets.findAllById(assetIds);
+        if (selectedAssets.size() != assetIds.size()) {
+            throw new NoSuchElementException("Một hoặc nhiều tài sản đã chọn không tồn tại");
+        }
+        for (AssetItem asset : selectedAssets) {
+            ensureAssetUsesCatalog(asset, id);
+            asset.setCatalogItem(null);
+        }
+        assets.saveAll(selectedAssets);
+    }
+
+    @Transactional
+    public void deleteCatalogItem(Long id) {
+        AssetCatalogItem catalogItem = catalogItems.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy danh mục với mã " + id));
+        long assignedAssets = assets.countByCatalogItemId(id);
+        if (assignedAssets > 0) {
+            throw new IllegalArgumentException(
+                    "Không thể xóa danh mục đang được gán cho " + assignedAssets + " tài sản"
+            );
+        }
+        catalogItems.delete(catalogItem);
     }
 
     private AssetCatalogItemDetailResponse toDetail(AssetCatalogItem item) {
@@ -187,5 +240,17 @@ public class AssetCatalogItemService {
             );
         }
         return expectedType;
+    }
+
+    private AssetCatalogItem requireCatalogItem(Long id) {
+        return catalogItems.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy danh mục với mã " + id));
+    }
+
+    private void ensureAssetUsesCatalog(AssetItem asset, Long catalogItemId) {
+        Long currentCatalogItemId = asset.getCatalogItem() == null ? null : asset.getCatalogItem().getId();
+        if (!Objects.equals(currentCatalogItemId, catalogItemId)) {
+            throw new IllegalArgumentException("Tài sản " + asset.getAssetCode() + " không thuộc danh mục đã chọn");
+        }
     }
 }

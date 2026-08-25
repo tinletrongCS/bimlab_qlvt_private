@@ -2,10 +2,14 @@ package com.bimlab.asset.controller;
 
 import com.bimlab.asset.config.TestSecurityConfig;
 import com.bimlab.asset.dto.request.AssetCatalogItemRequest;
+import com.bimlab.asset.dto.request.AssetCatalogUnassignmentRequest;
 import com.bimlab.asset.dto.response.AssetCatalogItemDetailResponse;
 import com.bimlab.asset.dto.response.AssetCatalogItemListResponse;
+import com.bimlab.asset.entity.AssetCatalogItem;
+import com.bimlab.asset.entity.AssetItem;
 import com.bimlab.asset.entity.status.CatalogType;
 import com.bimlab.asset.entity.status.CatalogUnit;
+import com.bimlab.asset.mapper.AssetMapper;
 import com.bimlab.asset.security.AssetAccessService;
 import com.bimlab.asset.service.AssetCatalogItemService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -34,7 +38,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(AssetCatalogItemController.class)
-@Import(TestSecurityConfig.class)
+@Import({TestSecurityConfig.class, AssetMapper.class})
 @AutoConfigureMockMvc(addFilters = false)
 class AssetCatalogItemControllerWebMvcTest {
     @Autowired MockMvc mockMvc;
@@ -97,6 +101,36 @@ class AssetCatalogItemControllerWebMvcTest {
     }
 
     @Test
+    @WithMockUser(authorities = "asset_view_all")
+    void listAssignedAssetsReturnsMappedAssets() throws Exception {
+        when(service.listAssignedAssets(1L)).thenReturn(List.of(asset(7L)));
+
+        mockMvc.perform(get("/api/asset/catalog-items/1/assets"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(7))
+                .andExpect(jsonPath("$[0].assetCode").value("ASSET-7"));
+    }
+
+    @Test
+    @WithMockUser(authorities = "asset_manage")
+    void unassignSingleAndBulkThenPermanentDeleteReturnNoContent() throws Exception {
+        String body = objectMapper.writeValueAsString(new AssetCatalogUnassignmentRequest(List.of(7L, 8L)));
+
+        mockMvc.perform(delete("/api/asset/catalog-items/1/assets/7"))
+                .andExpect(status().isNoContent());
+        mockMvc.perform(post("/api/asset/catalog-items/1/assets/unassign")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isNoContent());
+        mockMvc.perform(delete("/api/asset/catalog-items/1/permanent"))
+                .andExpect(status().isNoContent());
+
+        verify(service).unassignAsset(1L, 7L);
+        verify(service).unassignAssets(eq(1L), any());
+        verify(service).deleteCatalogItem(1L);
+    }
+
+    @Test
     @WithMockUser(authorities = "asset_view_self")
     void createIsForbiddenForReadOnlyUser() throws Exception {
         mockMvc.perform(post("/api/asset/catalog-items")
@@ -125,5 +159,18 @@ class AssetCatalogItemControllerWebMvcTest {
                 10L, "MONITOR", "Màn hình", null, "Cái",
                 null, null, null, null, null, true, null, null
         );
+    }
+
+    private AssetItem asset(Long id) {
+        return AssetItem.builder()
+                .id(id)
+                .assetCode("ASSET-" + id)
+                .name("Màn hình LG")
+                .catalogItem(AssetCatalogItem.builder()
+                        .id(1L)
+                        .itemCode("MON-LG-27")
+                        .name("Màn hình LG 144Hz 27inch")
+                        .build())
+                .build();
     }
 }
