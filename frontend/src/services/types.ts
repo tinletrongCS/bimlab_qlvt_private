@@ -16,7 +16,10 @@ export type Permission =
   | "asset_report_view"
   | "asset_transfers_view"
   | "asset_transfers_manage"
-  | "asset_transfers_approve";
+  | "asset_transfers_approve"
+  | "sys_roles"
+  | "role_permission_update"
+  | "permission_meta_create";
 
 export interface AuthUser {
   id?: number;
@@ -25,6 +28,35 @@ export interface AuthUser {
   fullName?: string;
   permissions?: Permission[];
   mfaEnabled?: boolean;
+}
+
+export interface AuthAccount {
+  id: number;
+  username: string;
+  role: string;
+  fullName?: string;
+  employeeId?: number;
+  enabled: boolean;
+}
+
+export interface PermissionMeta {
+  key: string;
+  label: string;
+  description?: string;
+  category: string;
+  isSystem: boolean;
+}
+
+export interface AssetUserPermissions {
+  userId: number;
+  username: string;
+  fullName?: string;
+  role: string;
+  inherited: string[];
+  added: string[];
+  removed: string[];
+  effective: string[];
+  version: number;
 }
 
 export interface AuthLoginResponse extends Partial<AuthUser> {
@@ -94,6 +126,7 @@ export interface AssetCatalogItemListItem {
   categoryName: string;
   unit?: string;
   active: boolean;
+  assetCount?: number;
 }
 
 export interface AssetCatalogItemDetail extends AssetCatalogItemListItem {
@@ -278,6 +311,8 @@ export interface AssetPayload {
   category: string;
   serialNumber?: string;
   source?: string;
+  contractNumber?: string;
+  invoiceNumber?: string;
   vendorId?: number | null;
   assignedEmployeeId?: number | null;
   departmentId?: number | null;
@@ -319,6 +354,10 @@ export interface AssetPayload {
 export interface AssetCatalogAssignmentPayload {
   assetIds: number[];
   catalogItemId: number;
+}
+
+export interface AssetCatalogUnassignmentPayload {
+  assetIds: number[];
 }
 
 export interface AssetImportRowPayload {

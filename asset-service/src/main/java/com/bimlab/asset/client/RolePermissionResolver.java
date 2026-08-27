@@ -11,4 +11,9 @@ public interface RolePermissionResolver {
 
     /** Trả permission keys của role. KHÔNG bao giờ null (rỗng nếu không resolve được/role trống). */
     List<String> resolve(String role);
+
+    /** Resolve theo user để áp quyền chức vụ/user; implementation cũ vẫn tự rơi về quyền role. */
+    default List<String> resolveUser(String username, String role) {
+        return resolve(role);
+    }
 }

@@ -19,88 +19,107 @@ vi.mock("../lib/categoryExcel", async (importOriginal) => ({
   parseCategoryReferenceSheet: categoryExcelMocks.parse,
 }));
 
-const { asset, categories, categoryTree, employee, permissions, vendor } = vi.hoisted(() => {
-  const permissions = [
-    "asset_access",
-    "asset_manage",
-    "vendor_manage",
-    "subscription_manage",
-    "purchase_request_create",
-    "purchase_request_approve",
-    "contract_manage",
-    "maintenance_manage",
-    "asset_report_view",
-  ] as const;
+const { asset, categories, categoryTree, catalogItems, employee, permissions, vendor } = vi.hoisted(
+  () => {
+    const permissions = [
+      "asset_access",
+      "asset_manage",
+      "vendor_manage",
+      "subscription_manage",
+      "purchase_request_create",
+      "purchase_request_approve",
+      "contract_manage",
+      "maintenance_manage",
+      "asset_report_view",
+    ] as const;
 
-  const vendor = {
-    id: 1,
-    name: "Công ty Thiết bị BIM",
-    taxCode: "0101001001",
-    contactName: "Nguyễn Vendor",
-    email: "vendor@bimlab.test",
-    phone: "0900000001",
-    website: "vendor.bimlab.test",
-    status: "ACTIVE",
-  };
-
-  const asset = {
-    id: 1,
-    assetCode: "TS-001",
-    name: "Laptop Dell Precision",
-    category: "Thiết bị",
-    serialNumber: "SN001",
-    source: "PURCHASE",
-    vendor,
-    assignedEmployeeId: 1,
-    departmentId: 1,
-    siteId: 1,
-    projectId: 1,
-    purchaseCost: 35_000_000,
-    originalCost: 35_000_000,
-    bookValue: 30_000_000,
-    residualValue: 5_000_000,
-    status: "ASSIGNED",
-  };
-
-  const categories = [
-    {
+    const vendor = {
       id: 1,
-      code: "TB",
-      name: "Thiết bị",
-      assetClass: "FIXED_ASSET",
-      parentId: null,
-      description: "Nhóm thiết bị",
-      active: true,
-    },
-    {
-      id: 2,
-      code: "LAP",
-      name: "Laptop",
-      assetClass: "FIXED_ASSET",
-      parentId: 1,
-      description: "Máy tính xách tay",
-      active: true,
-    },
-  ];
+      name: "Công ty Thiết bị BIM",
+      taxCode: "0101001001",
+      contactName: "Nguyễn Vendor",
+      email: "vendor@bimlab.test",
+      phone: "0900000001",
+      website: "vendor.bimlab.test",
+      status: "ACTIVE",
+    };
 
-  const categoryTree = [
-    {
-      ...categories[0],
-      children: [{ ...categories[1], children: [] }],
-    },
-  ];
+    const asset = {
+      id: 1,
+      assetCode: "TS-001",
+      name: "Laptop Dell Precision",
+      category: "Thiết bị",
+      catalogItem: {
+        id: 1,
+        itemCode: "CAT-001",
+        name: "Laptop Dell Precision",
+      },
+      serialNumber: "SN001",
+      source: "PURCHASE",
+      vendor,
+      assignedEmployeeId: 1,
+      departmentId: 1,
+      siteId: 1,
+      projectId: 1,
+      purchaseCost: 35_000_000,
+      originalCost: 35_000_000,
+      bookValue: 30_000_000,
+      residualValue: 5_000_000,
+      status: "ASSIGNED",
+    };
 
-  const employee = {
-    id: 1,
-    fullName: "Nguyễn Văn A",
-    employeeCode: "E001",
-    departmentId: 1,
-    departmentName: "BIM",
-    positionName: "HR",
-  };
+    const catalogItems = [
+      {
+        id: 1,
+        itemCode: "CAT-001",
+        name: "Laptop Dell Precision",
+        catalogType: "ASSET" as const,
+        categoryId: 1,
+        categoryCode: "TB",
+        categoryName: "Thiết bị",
+      },
+    ];
 
-  return { asset, categories, categoryTree, employee, permissions, vendor };
-});
+    const categories = [
+      {
+        id: 1,
+        code: "TB",
+        name: "Thiết bị",
+        assetClass: "FIXED_ASSET",
+        parentId: null,
+        description: "Nhóm thiết bị",
+        active: true,
+      },
+      {
+        id: 2,
+        code: "LAP",
+        name: "Laptop",
+        assetClass: "FIXED_ASSET",
+        parentId: 1,
+        description: "Máy tính xách tay",
+        active: true,
+      },
+    ];
+
+    const categoryTree = [
+      {
+        ...categories[0],
+        children: [{ ...categories[1], children: [] }],
+      },
+    ];
+
+    const employee = {
+      id: 1,
+      fullName: "Nguyễn Văn A",
+      employeeCode: "E001",
+      departmentId: 1,
+      departmentName: "BIM",
+      positionName: "HR",
+    };
+
+    return { asset, categories, categoryTree, catalogItems, employee, permissions, vendor };
+  },
+);
 
 vi.mock("../auth/oidc", () => ({
   consumeLoginReturnUrl: vi.fn(() => null),
@@ -266,6 +285,7 @@ vi.mock("../services/api", () => ({
   ]),
   loadProjects: vi.fn().mockResolvedValue([{ id: 1, name: "Dự án Alpha", code: "ALPHA" }]),
   loadAssetCategories: vi.fn().mockResolvedValue(categories),
+  loadAssetCatalogItems: vi.fn().mockResolvedValue(catalogItems),
   loadAssetCategoryTree: vi.fn().mockResolvedValue(categoryTree),
   loadAssetBookings: vi.fn().mockResolvedValue([
     {
@@ -483,12 +503,21 @@ describe("QLVT pages", () => {
     await user.click(screen.getByLabelText("Chỉ định người xét duyệt"));
     chooseSearchableOption(screen.getByPlaceholderText("Thêm người duyệt..."), /Nguyễn Văn A/);
     expect(screen.getByText("Nguyễn Văn A · HR")).toBeVisible();
-    const assetSelector = screen.getByPlaceholderText("Chọn tài sản để thêm");
-    expect(assetSelector).toHaveValue("");
-    chooseSearchableOption(assetSelector, /TS-001/);
-    expect(
-      assetSelector.closest(".searchable-select-container")?.querySelector('option[value="1"]'),
-    ).toHaveTextContent(/✓ TS-001 .* \(đã chọn\)/);
+
+    // Mở bộ chọn tài sản
+    await user.click(screen.getByRole("button", { name: /Thêm tài sản/ }));
+    expect(await screen.findByText("Bộ chọn tài sản khả dụng")).toBeVisible();
+    expect(screen.getByText("TS-001")).toBeVisible();
+
+    // Chọn tài sản TS-001 và xác nhận
+    const checkboxes = screen.getAllByRole("checkbox");
+    const assetRowCheckbox = checkboxes[checkboxes.length - 1];
+    await user.click(assetRowCheckbox);
+    await user.click(screen.getByRole("button", { name: /Xác nhận chọn/ }));
+
+    // Kiểm tra bảng tài sản đã chọn hiển thị TS-001
+    expect(screen.getByText("TS-001")).toBeVisible();
+
     await waitFor(() => {
       expect(siteSelect).toHaveValue("Văn phòng");
       expect(departmentSelect).toHaveValue("BIM");
@@ -504,6 +533,81 @@ describe("QLVT pages", () => {
         }),
       ),
     );
+  });
+
+  it("filters and multi-selects assets with the asset picker in transfers page", async () => {
+    const user = userEvent.setup();
+    vi.mocked(api.loadTransfers).mockResolvedValueOnce([]);
+    await renderRoute("/transfers", "Danh sách phiếu");
+
+    await user.click(screen.getByRole("button", { name: "Tạo phiếu" }));
+    expect(await screen.findByText("Danh sách tài sản bàn giao/thu hồi")).toBeVisible();
+
+    // Open asset picker
+    await user.click(screen.getByRole("button", { name: /Thêm tài sản/ }));
+    expect(await screen.findByText("Bộ chọn tài sản khả dụng")).toBeVisible();
+
+    // Filter by catalog item
+    chooseSearchableOption(
+      screen.getByPlaceholderText(/Tất cả catalog item/),
+      /CAT-001 · Laptop Dell Precision/,
+    );
+    expect(screen.getByText("TS-001")).toBeVisible();
+
+    // Search filter
+    const searchInput = screen.getByPlaceholderText("Nhập mã hoặc tên tài sản...");
+    await user.type(searchInput, "TS-001");
+    expect(screen.getByText("TS-001")).toBeVisible();
+
+    // Quick select all filtered
+    await user.click(screen.getByRole("button", { name: /Chọn tất cả/ }));
+    expect(screen.getByText(/Đã chọn.*tài sản cho phiếu này/)).toHaveTextContent("1");
+
+    // Deselect
+    await user.click(screen.getByRole("button", { name: "Bỏ chọn" }));
+    expect(screen.getByText(/Đã chọn.*tài sản cho phiếu này/)).toHaveTextContent("0");
+
+    // Select via row checkbox
+    const checkboxes = screen.getAllByRole("checkbox");
+    const assetRowCheckbox = checkboxes[checkboxes.length - 1];
+    await user.click(assetRowCheckbox);
+    expect(screen.getByText(/Đã chọn.*tài sản cho phiếu này/)).toHaveTextContent("1");
+
+    // Test Exit Confirmation Modal when navigating back to list
+    await user.click(screen.getByRole("button", { name: "Danh sách phiếu" }));
+    expect(await screen.findByText("Rời khỏi trang?")).toBeVisible();
+    expect(screen.getByText(/chưa được tạo phiếu/)).toBeVisible();
+
+    // Click "Tiếp tục chỉnh sửa" -> modal closes, remains in create view with selection intact
+    await user.click(screen.getByRole("button", { name: "Tiếp tục chỉnh sửa" }));
+    expect(screen.queryByText("Rời khỏi trang?")).toBeNull();
+    expect(screen.getByText("Bộ chọn tài sản khả dụng")).toBeVisible();
+
+    // Confirm selection
+    await user.click(screen.getByRole("button", { name: /Xác nhận chọn/ }));
+    expect(screen.queryByText("Bộ chọn tài sản khả dụng")).toBeNull();
+
+    // Verify selected asset table
+    expect(screen.getByText("TS-001")).toBeVisible();
+
+    // Test clicking Sidebar menu "Danh mục" with unsaved assets -> AppShell exit modal shows
+    const catalogMenuLinks = screen.getAllByRole("link", { name: /Danh mục/i });
+    if (catalogMenuLinks.length > 0) {
+      await user.click(catalogMenuLinks[0]);
+      expect(await screen.findByText("Rời khỏi trang?")).toBeVisible();
+      // Click "Tiếp tục chỉnh sửa"
+      await user.click(screen.getByRole("button", { name: "Tiếp tục chỉnh sửa" }));
+      expect(screen.queryByText("Rời khỏi trang?")).toBeNull();
+    }
+
+    // Click "Danh sách phiếu" again with selected assets -> modal shows again
+    await user.click(screen.getByRole("button", { name: "Danh sách phiếu" }));
+    expect(await screen.findByText("Rời khỏi trang?")).toBeVisible();
+
+    // Click "Xác nhận thoát" -> modal closes and switches to list view
+    await user.click(screen.getByRole("button", { name: "Xác nhận thoát" }));
+    expect(screen.queryByText("Rời khỏi trang?")).toBeNull();
+    expect(screen.getByText("Danh sách phiếu")).toBeVisible();
   });
 
   it("filters and decides assigned pending transfers", async () => {

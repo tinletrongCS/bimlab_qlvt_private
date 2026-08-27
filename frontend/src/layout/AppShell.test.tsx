@@ -63,6 +63,7 @@ describe("AppShell", () => {
     const user = userEvent.setup();
     renderShell();
     expect(screen.getByText("Asset content")).toBeVisible();
+    expect(screen.getByText(/Bản quyền thuộc về Công ty CP BIMLab Bách Khoa/)).toBeVisible();
 
     await user.type(screen.getByLabelText("Tìm menu chính"), "hợp đồng");
     expect(screen.getByText("Hợp đồng")).toBeVisible();

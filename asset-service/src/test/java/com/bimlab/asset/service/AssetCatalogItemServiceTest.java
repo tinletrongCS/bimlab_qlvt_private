@@ -1,9 +1,11 @@
 package com.bimlab.asset.service;
 
 import com.bimlab.asset.dto.request.AssetCatalogItemRequest;
+import com.bimlab.asset.dto.request.AssetCatalogUnassignmentRequest;
 import com.bimlab.asset.dto.response.AssetCatalogItemDetailResponse;
 import com.bimlab.asset.entity.AssetCatalogItem;
 import com.bimlab.asset.entity.AssetCategory;
+import com.bimlab.asset.entity.AssetItem;
 import com.bimlab.asset.entity.status.AssetClass;
 import com.bimlab.asset.entity.status.CatalogType;
 import com.bimlab.asset.entity.status.CatalogUnit;
@@ -22,10 +24,12 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.never;
 
 @ExtendWith(MockitoExtension.class)
 class AssetCatalogItemServiceTest {
@@ -96,6 +100,93 @@ class AssetCatalogItemServiceTest {
         );
     }
 
+    @Test
+    void deactivateCatalogItemDisablesAndUnassignsAllAssets() {
+        AssetCatalogItem catalogItem = catalogItem(category(true));
+        AssetItem first = asset(7L, catalogItem);
+        AssetItem second = asset(8L, catalogItem);
+        when(catalogItems.findById(1L)).thenReturn(Optional.of(catalogItem));
+        when(assets.findByCatalogItemId(1L)).thenReturn(java.util.List.of(first, second));
+
+        service.deactivateCatalogItem(1L);
+
+        assertEquals(false, catalogItem.getActive());
+        assertNull(first.getCatalogItem());
+        assertNull(second.getCatalogItem());
+        verify(assets).saveAll(java.util.List.of(first, second));
+        verify(catalogItems).save(catalogItem);
+    }
+
+    @Test
+    void listAssignedAssetsRequiresExistingCatalog() {
+        AssetCatalogItem catalogItem = catalogItem(category(true));
+        AssetItem assigned = asset(7L, catalogItem);
+        when(catalogItems.findById(1L)).thenReturn(Optional.of(catalogItem));
+        when(assets.findByCatalogItemId(1L)).thenReturn(java.util.List.of(assigned));
+
+        assertEquals(java.util.List.of(assigned), service.listAssignedAssets(1L));
+    }
+
+    @Test
+    void unassignAssetClearsCatalogWhenAssetBelongsToCatalog() {
+        AssetCatalogItem catalogItem = catalogItem(category(true));
+        AssetItem assigned = asset(7L, catalogItem);
+        when(catalogItems.findById(1L)).thenReturn(Optional.of(catalogItem));
+        when(assets.findById(7L)).thenReturn(Optional.of(assigned));
+
+        service.unassignAsset(1L, 7L);
+
+        assertNull(assigned.getCatalogItem());
+        verify(assets).save(assigned);
+    }
+
+    @Test
+    void unassignAssetRejectsAssetFromAnotherCatalog() {
+        AssetCatalogItem catalogItem = catalogItem(category(true));
+        AssetItem assigned = asset(7L, catalogItem);
+        when(catalogItems.findById(2L)).thenReturn(Optional.of(catalogItem(category(11L, "DISPLAY", true))));
+        when(assets.findById(7L)).thenReturn(Optional.of(assigned));
+
+        assertThrows(IllegalArgumentException.class, () -> service.unassignAsset(2L, 7L));
+        verify(assets, never()).save(any());
+    }
+
+    @Test
+    void unassignAssetsClearsDistinctSelectedAssets() {
+        AssetCatalogItem catalogItem = catalogItem(category(true));
+        AssetItem first = asset(7L, catalogItem);
+        AssetItem second = asset(8L, catalogItem);
+        when(catalogItems.findById(1L)).thenReturn(Optional.of(catalogItem));
+        when(assets.findAllById(java.util.List.of(7L, 8L))).thenReturn(java.util.List.of(first, second));
+
+        service.unassignAssets(1L, new AssetCatalogUnassignmentRequest(java.util.List.of(7L, 8L, 8L)));
+
+        assertNull(first.getCatalogItem());
+        assertNull(second.getCatalogItem());
+        verify(assets).saveAll(java.util.List.of(first, second));
+    }
+
+    @Test
+    void deleteCatalogItemRejectsAssignedCatalog() {
+        AssetCatalogItem catalogItem = catalogItem(category(true));
+        when(catalogItems.findById(1L)).thenReturn(Optional.of(catalogItem));
+        when(assets.countByCatalogItemId(1L)).thenReturn(2L);
+
+        assertThrows(IllegalArgumentException.class, () -> service.deleteCatalogItem(1L));
+        verify(catalogItems, never()).delete(any());
+    }
+
+    @Test
+    void deleteCatalogItemDeletesWhenUnused() {
+        AssetCatalogItem catalogItem = catalogItem(category(true));
+        when(catalogItems.findById(1L)).thenReturn(Optional.of(catalogItem));
+        when(assets.countByCatalogItemId(1L)).thenReturn(0L);
+
+        service.deleteCatalogItem(1L);
+
+        verify(catalogItems).delete(catalogItem);
+    }
+
     private AssetCatalogItemRequest request() {
         return request(10L);
     }
@@ -130,6 +221,16 @@ class AssetCatalogItemServiceTest {
                 .catalogType(CatalogType.ASSET)
                 .unit("Cái")
                 .active(true)
+                .build();
+    }
+
+    private AssetItem asset(Long id, AssetCatalogItem catalogItem) {
+        return AssetItem.builder()
+                .id(id)
+                .assetCode("ASSET-" + id)
+                .name("Màn hình LG")
+                .assetCategory(catalogItem.getCategory())
+                .catalogItem(catalogItem)
                 .build();
     }
 }

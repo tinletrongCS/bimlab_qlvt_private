@@ -43,7 +43,9 @@ public record AssetRequest(
         BigDecimal capacity,
         String capacityUnit,
         BigDecimal realCapacity,
-        String technicalDescription
+        String technicalDescription,
+        String contractNumber,
+        String invoiceNumber
 ) {
     public AssetRequest(
             String assetCode,
@@ -72,7 +74,7 @@ public record AssetRequest(
                 status, depreciationMethod, usefulLifeYears, notes,
                 null, null, null, null, null, null, null, null,
                 null, null, null, null, null, null, null, null,
-                null, null, null, null
+                null, null, null, null, null, null
         );
     }
 

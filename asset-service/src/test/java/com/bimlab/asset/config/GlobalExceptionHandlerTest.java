@@ -29,16 +29,22 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
-    void badRequest_returnsStaticMessage_notRaw() {
+    void badRequest_returnsBusinessMessage_withoutTechnicalDetails() {
         var e = new IllegalArgumentException("Số hợp đồng đã tồn tại: HD-2026-001 (asset.contracts unique constraint uk_contract_number)");
 
         ResponseEntity<Map<String, String>> response = handler.badRequest(e);
 
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
         String body = response.getBody().get("message");
-        assertEquals("Yêu cầu không hợp lệ", body);
+        assertEquals("Số hợp đồng đã tồn tại: HD-2026-001", body);
         assertFalse(body.contains("constraint"));
-        assertFalse(body.contains("HD-2026-001"));
+    }
+
+    @Test
+    void badRequest_returnsSpecificBusinessMessage() {
+        var response = handler.badRequest(new IllegalArgumentException("Loại tài sản đã ngừng hoạt động"));
+
+        assertEquals("Loại tài sản đã ngừng hoạt động", response.getBody().get("message"));
     }
 
     @Test

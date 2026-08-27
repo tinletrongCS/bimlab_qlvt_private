@@ -81,6 +81,18 @@ function leafOptionsByRoot(categories: AssetCategoryTree[], rootCode: string) {
   return leaves.map((code) => `${labels.get(code) ?? code} (${code})`);
 }
 
+function findCategory(
+  categories: AssetCategoryTree[],
+  code: string,
+): AssetCategoryTree | undefined {
+  for (const category of categories) {
+    if (category.code === code) return category;
+    const found = findCategory(category.children, code);
+    if (found) return found;
+  }
+  return undefined;
+}
+
 function normalize(value: string) {
   return value
     .normalize("NFD")
@@ -237,16 +249,57 @@ export function addAssetCategoryDropdowns(
   const referenceSheet = workbook.getWorksheet(CATEGORY_REFERENCE_SHEET_NAME);
   if (!referenceSheet) throw new Error(`Không tìm thấy sheet ${CATEGORY_REFERENCE_SHEET_NAME}.`);
 
-  const lists = [
-    ["ASSET_CLASSES", ["Tài sản cố định", "Công cụ dụng cụ"]],
-    ["FIXED_ASSET", ["Hữu hình", "Vô hình"]],
-    ["TOOL_EQUIPMENT", ["Dùng một lần", "Dùng nhiều lần"]],
-    ["TANGIBLE", leafOptionsByRoot(categories, "TANGIBLE")],
-    ["INTANGIBLE", leafOptionsByRoot(categories, "INTANGIBLE")],
-    ["SINGLE_USE", leafOptionsByRoot(categories, "SINGLE_USE")],
-    ["MULTI_USE", leafOptionsByRoot(categories, "MULTI_USE")],
+  const fallbackLabels = new Map([
+    ["FIXED_ASSET", "Tài sản cố định"],
+    ["TOOL_EQUIPMENT", "Công cụ dụng cụ"],
+  ]);
+  const roots = ["FIXED_ASSET", "TOOL_EQUIPMENT"].map((code) => {
+    const node = findCategory(categories, code);
+    return { code, label: node?.name ?? fallbackLabels.get(code) ?? code };
+  });
+  const rootLabel = (code: string) => roots.find((root) => root.code === code)?.label ?? code;
+  const branchLabel = (canonicalCode: string, fallback: string) =>
+    findCategory(categories, canonicalCode)?.name ?? fallback;
+  const branches = [
+    {
+      rootCode: "FIXED_ASSET",
+      rootLabel: rootLabel("FIXED_ASSET"),
+      code: "TANGIBLE",
+      label: branchLabel("TANGIBLE", "Hữu hình"),
+    },
+    {
+      rootCode: "FIXED_ASSET",
+      rootLabel: rootLabel("FIXED_ASSET"),
+      code: "INTANGIBLE",
+      label: branchLabel("INTANGIBLE", "Vô hình"),
+    },
+    {
+      rootCode: "TOOL_EQUIPMENT",
+      rootLabel: rootLabel("TOOL_EQUIPMENT"),
+      code: "SINGLE_USE",
+      label: branchLabel("SINGLE_USE", "Dùng một lần"),
+    },
+    {
+      rootCode: "TOOL_EQUIPMENT",
+      rootLabel: rootLabel("TOOL_EQUIPMENT"),
+      code: "MULTI_USE",
+      label: branchLabel("MULTI_USE", "Dùng nhiều lần"),
+    },
+  ];
+  const lists: Array<[string, string[]]> = [
+    ["ASSET_CLASSES", roots.map((root) => root.label)],
+    ...roots.map(
+      (root) =>
+        [
+          root.code,
+          branches.filter((branch) => branch.rootCode === root.code).map((branch) => branch.label),
+        ] as [string, string[]],
+    ),
+    ...branches.map(
+      (branch) => [branch.code, leafOptionsByRoot(categories, branch.code)] as [string, string[]],
+    ),
     ["EMPTY_LIST", [""]],
-  ] as const;
+  ];
 
   lists.forEach(([name, values], index) => {
     const column = referenceSheet.getColumn(6 + index);
@@ -258,6 +311,32 @@ export function addAssetCategoryDropdowns(
       name,
     );
   });
+
+  const mapStartColumn = 6 + lists.length;
+  const rootMapLabelColumn = referenceSheet.getColumn(mapStartColumn);
+  const rootMapValueColumn = referenceSheet.getColumn(mapStartColumn + 1);
+  rootMapLabelColumn.hidden = true;
+  rootMapValueColumn.hidden = true;
+  rootMapLabelColumn.values = ["CATEGORY_ROOT_LABEL", ...roots.map((root) => root.label)];
+  rootMapValueColumn.values = ["CATEGORY_ROOT_LIST", ...roots.map((root) => root.code)];
+  workbook.definedNames.add(
+    `'${CATEGORY_REFERENCE_SHEET_NAME}'!$${rootMapLabelColumn.letter}$2:$${rootMapValueColumn.letter}$${roots.length + 1}`,
+    "CATEGORY_ROOT_MAP",
+  );
+
+  const branchMapKeyColumn = referenceSheet.getColumn(mapStartColumn + 2);
+  const branchMapValueColumn = referenceSheet.getColumn(mapStartColumn + 3);
+  branchMapKeyColumn.hidden = true;
+  branchMapValueColumn.hidden = true;
+  branchMapKeyColumn.values = [
+    "CATEGORY_BRANCH_KEY",
+    ...branches.map((branch) => `${branch.rootLabel}|${branch.label}`),
+  ];
+  branchMapValueColumn.values = ["CATEGORY_BRANCH_LIST", ...branches.map((branch) => branch.code)];
+  workbook.definedNames.add(
+    `'${CATEGORY_REFERENCE_SHEET_NAME}'!$${branchMapKeyColumn.letter}$2:$${branchMapValueColumn.letter}$${branches.length + 1}`,
+    "CATEGORY_BRANCH_MAP",
+  );
 
   for (let row = startRow; row <= endRow; row += 1) {
     sheet.getCell(`G${row}`).dataValidation = {
@@ -271,9 +350,7 @@ export function addAssetCategoryDropdowns(
     sheet.getCell(`H${row}`).dataValidation = {
       type: "list",
       allowBlank: false,
-      formulae: [
-        `INDIRECT(IF($G${row}="Tài sản cố định","FIXED_ASSET",IF($G${row}="Công cụ dụng cụ","TOOL_EQUIPMENT","EMPTY_LIST")))`,
-      ],
+      formulae: [`INDIRECT(IFERROR(VLOOKUP($G${row},CATEGORY_ROOT_MAP,2,FALSE),"EMPTY_LIST"))`],
       showErrorMessage: true,
       errorTitle: "Sai phân loại lớp con",
       error: "Chọn lớp con thuộc phân loại đã chọn.",
@@ -282,7 +359,7 @@ export function addAssetCategoryDropdowns(
       type: "list",
       allowBlank: false,
       formulae: [
-        `INDIRECT(IF($H${row}="Hữu hình","TANGIBLE",IF($H${row}="Vô hình","INTANGIBLE",IF($H${row}="Dùng một lần","SINGLE_USE",IF($H${row}="Dùng nhiều lần","MULTI_USE","EMPTY_LIST")))))`,
+        `INDIRECT(IFERROR(VLOOKUP($G${row}&"|"&$H${row},CATEGORY_BRANCH_MAP,2,FALSE),"EMPTY_LIST"))`,
       ],
       showErrorMessage: true,
       errorTitle: "Sai loại tài sản",

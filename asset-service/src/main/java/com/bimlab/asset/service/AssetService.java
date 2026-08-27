@@ -39,6 +39,7 @@ import java.time.Year;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Objects;
@@ -62,7 +63,6 @@ public class AssetService {
     public Page<AssetItem> listAssetsPaged(Pageable pageable) {
         return assets.findAll(pageable);
     }
-
 
     @Transactional(readOnly = true)
     public AssetItem getAssetById(Long id) {
@@ -196,17 +196,27 @@ public class AssetService {
         applyAsset(item, req);
         return assets.save(item);
     }
-
     @Transactional
     public void assignCatalog(AssetCatalogAssignmentRequest request) {
-        // TODO PRACTICE CATALOG 8:
-        // - Tải catalogItem theo request.catalogItemId(), kiểm tra tồn tại và đang hoạt động.
-        // - Tải toàn bộ assets theo request.assetIds(); thiếu bất kỳ id nào thì từ chối toàn bộ.
-        // - Kiểm tra các tài sản có cùng tên sau khi trim và so sánh không phân biệt hoa thường.
-        // - Kiểm tra từng tài sản đã có loại và loại đó trùng category của catalogItem.
-        // - Gán catalogItem cho toàn bộ managed entities trong cùng transaction.
-        // - Không bắt lỗi để lưu một phần: có một dòng không hợp lệ thì rollback toàn bộ.
-        throw new UnsupportedOperationException("TODO: assignCatalog");
+        AssetCatalogItem catalogItem = catalogItems.findById(request.catalogItemId())
+                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy danh mục tài sản"));
+        AssetCategory catalogCategory = requireUsableCatalogCategory(catalogItem);
+
+        List<Long> assetIds = request.assetIds().stream().distinct().toList();
+        List<AssetItem> selectedAssets = assets.findAllById(assetIds);
+        if (selectedAssets.size() != assetIds.size()) {
+            throw new NoSuchElementException("Một hoặc nhiều tài sản đã chọn không tồn tại");
+        }
+
+        String sharedName = normalizeName(selectedAssets.get(0).getName());
+        for (AssetItem asset : selectedAssets) {
+            if (!Objects.equals(sharedName, normalizeName(asset.getName()))) {
+                throw new IllegalArgumentException("Các tài sản đã chọn phải cùng tên để gán chung một danh mục");
+            }
+            validateCatalogCategoryMatch(catalogItem, catalogCategory, asset.getAssetCategory());
+            asset.setCatalogItem(catalogItem);
+        }
+        assets.saveAll(selectedAssets);
     }
 
     @Transactional
@@ -225,7 +235,7 @@ public class AssetService {
             errors.add(message("name", "REQUIRED", "Tên tài sản không được để trống"));
         }
         if (isBlank(row.categoryCode())) {
-            errors.add(message("categoryCode", "REQUIRED", "Mã danh mục không được để trống"));
+            errors.add(message("categoryCode", "REQUIRED", "Mã loại không được để trống"));
         }
         if (isBlank(row.assetClass())) {
             errors.add(message("assetClass", "REQUIRED", "Phân loại tài sản không được để trống"));
@@ -244,13 +254,13 @@ public class AssetService {
         AssetCategory category = resolveCategory(row.categoryCode(), errors);
         if (category != null) {
             if (Boolean.FALSE.equals(category.getActive())) {
-                errors.add(message("categoryCode", "CATEGORY_INACTIVE", "Danh mục tài sản đang ngưng sử dụng"));
+                errors.add(message("categoryCode", "CATEGORY_INACTIVE", "Loại tài sản tài sản đang ngưng sử dụng"));
             }
             if (assetCategories.existsByParentId(category.getId())) {
-                errors.add(message("categoryCode", "CATEGORY_NOT_LEAF", "Chỉ được import vào danh mục cụ thể"));
+                errors.add(message("categoryCode", "CATEGORY_NOT_LEAF", "Cần được gán vào danh mục cấp 4"));
             }
             if (assetClass != null && category.getAssetClass() != assetClass) {
-                errors.add(message("assetClass", "ASSET_CLASS_MISMATCH", "Phân loại tài sản không khớp với danh mục"));
+                errors.add(message("assetClass", "ASSET_CLASS_MISMATCH", "Phân loại tài sản không khớp với phân loại gốc"));
             }
             validateCategoryBranch(row, category, assetClass, errors);
         }
@@ -299,7 +309,7 @@ public class AssetService {
             errors.add(message("classType", "INVALID_FIXED_ASSET_TYPE", "Loại tài sản cố định phải là Hữu hình hoặc Vô hình"));
         }
         if (assetClass == AssetClass.TOOL_EQUIPMENT && parseToolUsageType(row.classType()) == null) {
-            errors.add(message("classType", "INVALID_TOOL_USAGE_TYPE", "Loại công cụ dụng cụ phải là SINGLE_USE hoặc MULTI_USE"));
+            errors.add(message("classType", "INVALID_TOOL_USAGE_TYPE", "Loại công cụ dụng cụ phải là Dùng 1 lần hoặc Dùng nhiều lần"));
         }
     }
 
@@ -338,18 +348,18 @@ public class AssetService {
         if (isBlank(row.catalogItemCode())) return;
         AssetCatalogItem catalogItem = catalogItems.findByItemCode(normalizeCode(row.catalogItemCode())).orElse(null);
         if (catalogItem == null) {
-            errors.add(message("catalogItemCode", "CATALOG_ITEM_NOT_FOUND", "Không tìm thấy mẫu tài sản theo mã đã nhập"));
+            errors.add(message("catalogItemCode", "CATALOG_ITEM_NOT_FOUND", "Không tìm thấy danh mục tài sản theo mã đã nhập"));
             return;
         }
         if (Boolean.FALSE.equals(catalogItem.getActive())) {
-            errors.add(message("catalogItemCode", "CATALOG_ITEM_INACTIVE", "Mẫu tài sản đang ngưng sử dụng"));
+            errors.add(message("catalogItemCode", "CATALOG_ITEM_INACTIVE", "Danh mục tài sản đang ngưng sử dụng"));
         }
         if (category != null && catalogItem.getCategory() != null
                 && !Objects.equals(catalogItem.getCategory().getId(), category.getId())) {
-            errors.add(message("catalogItemCode", "CATALOG_CATEGORY_MISMATCH", "Mẫu tài sản không thuộc danh mục đã chọn"));
+            errors.add(message("catalogItemCode", "CATALOG_CATEGORY_MISMATCH", "Danh mục không khớp với loại tài sản"));
         }
         if (catalogItem.getCategory() == null) {
-            warnings.add(message("catalogItemCode", "CATALOG_WITHOUT_CATEGORY", "Mẫu tài sản chưa gắn danh mục"));
+            warnings.add(message("catalogItemCode", "CATALOG_WITHOUT_CATEGORY", "Danh mục chưa được phân loại tài sản"));
         }
     }
 
@@ -589,11 +599,52 @@ public class AssetService {
                 .toUpperCase();
     }
 
-    private record ImportLookup(AssetCategory category, AssetCatalogItem catalogItem, AssetClass assetClass) {}
+    private String normalizeName(String value) {
+        return trimToNull(value) == null ? "" : value.trim().toLowerCase(Locale.ROOT);
+    }
 
+    private AssetCategory requireUsableCatalogCategory(AssetCatalogItem catalogItem) {
+        if (!Boolean.TRUE.equals(catalogItem.getActive())) {
+            throw new IllegalArgumentException("Danh mục tài sản đã ngừng cho phép gán mới");
+        }
+        return requireCatalogCategory(catalogItem);
+    }
+
+    private AssetCategory requireCatalogCategory(AssetCatalogItem catalogItem) {
+        AssetCategory category = catalogItem.getCategory();
+        if (category == null) {
+            throw new IllegalArgumentException("Danh mục tài sản chưa gắn loại tài sản");
+        }
+        return category;
+    }
+
+    private void validateCatalogCategoryMatch(
+            AssetCatalogItem catalogItem,
+            AssetCategory catalogCategory,
+            AssetCategory assetCategory
+    ) {
+        if (assetCategory == null) {
+            throw new IllegalArgumentException("Tài sản phải có loại tài sản trước khi gán danh mục");
+        }
+        if (!Objects.equals(catalogCategory.getId(), assetCategory.getId())) {
+            throw new IllegalArgumentException(
+                    "Danh mục " + catalogItem.getName() + " phải cùng loại tài sản với tài sản đã chọn"
+            );
+        }
+    }
+
+    private record ImportLookup(AssetCategory category, AssetCatalogItem catalogItem, AssetClass assetClass) {}
+    /*
+    Dùng khi cần cập nhật và áp dụng vào tài sản
+     */
     private void applyAsset(AssetItem item, AssetRequest req) {
         item.setAssetCode(req.assetCode());
         item.setName(req.name());
+        if (item.getCatalogItem() != null && req.catalogItemId() == null) {
+            throw new IllegalArgumentException(
+                    "Tài sản đã có danh mục; chỉ được đổi sang danh mục khác cùng loại tài sản"
+            );
+        }
         AssetCatalogItem catalogItem = req.catalogItemId() == null
                 ? null
                 : catalogItems.findById(req.catalogItemId())
@@ -602,10 +653,18 @@ public class AssetService {
                 ? null
                 : assetCategories.findById(req.categoryId())
                         .orElseThrow(() -> new NoSuchElementException("Nhóm tài sản không tồn tại"));
-        // TODO PRACTICE CATALOG 7:
-        // - Nếu có catalogItem, kiểm tra catalog đang hoạt động và đã được gán category.
-        // - Bảo đảm catalogItem.category.id bằng assetCategory.id trước khi lưu tài sản.
-        // - Có thể lấy category trực tiếp từ catalog để chỉ duy trì một nguồn sự thật.
+        if (catalogItem != null) {
+            boolean keepsExistingCatalog = item.getCatalogItem() != null
+                    && Objects.equals(item.getCatalogItem().getId(), catalogItem.getId());
+            AssetCategory catalogCategory = keepsExistingCatalog
+                    ? requireCatalogCategory(catalogItem)
+                    : requireUsableCatalogCategory(catalogItem);
+            if (assetCategory == null) {
+                assetCategory = catalogCategory;
+            } else {
+                validateCatalogCategoryMatch(catalogItem, catalogCategory, assetCategory);
+            }
+        }
         item.setCatalogItem(catalogItem);
         item.setAssetCategory(assetCategory);
         item.setParentAsset(req.parentAssetId() == null ? null : getAssetById(req.parentAssetId()));
@@ -621,6 +680,8 @@ public class AssetService {
         if (toolUsageType != null) item.setToolUsageType(toolUsageType);
         item.setSerialNumber(req.serialNumber());
         item.setSource(req.source());
+        item.setContractNumber(req.contractNumber());
+        item.setInvoiceNumber(req.invoiceNumber());
         item.setVendor(req.vendorId() == null ? null : vendorService.getVendor(req.vendorId()));
         item.setAssignedEmployeeId(req.assignedEmployeeId());
         item.setDepartmentId(req.departmentId());

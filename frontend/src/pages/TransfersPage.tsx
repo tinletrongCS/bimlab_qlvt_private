@@ -1,20 +1,22 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
-import { FiEye, FiPlus, FiTrash2, FiX } from "react-icons/fi";
+import { FiCheck, FiEye, FiPlus, FiSearch, FiTrash2, FiX } from "react-icons/fi";
 import { SearchableSelect } from "../components/forms/SearchableSelect";
 import { OverflowActions } from "../components/OverflowActions";
 import { useAppData } from "../contexts/AppDataContext";
 import { useAuth } from "../contexts/AuthContext";
+import { useNavigationGuard } from "../contexts/NavigationGuardContext";
 import { readError } from "../lib/format";
 import {
   approveTransfer,
   cancelTransfer,
   createTransfer,
   downloadTransferDocument,
+  loadAssetCatalogItems,
   rejectTransfer,
   uploadTransferDocument,
 } from "../services/api";
-import type { AssetTransfer, EmployeeLite } from "../services/types";
+import type { AssetCatalogItemListItem, AssetTransfer, EmployeeLite } from "../services/types";
 
 const DEFAULT_SITE_VALUE = "BIMLAB";
 
@@ -225,8 +227,18 @@ export function TransfersPage() {
   const [selectedAssetIds, setSelectedAssetIds] = useState<number[]>([]);
   const [assetSelector, setAssetSelector] = useState("");
 
+  // Asset picker state
+  const [showAssetPicker, setShowAssetPicker] = useState(false);
+  const [pickerCatalogFilter, setPickerCatalogFilter] = useState("");
+  const [pickerSearchQuery, setPickerSearchQuery] = useState("");
+  const [pickerTempSelected, setPickerTempSelected] = useState<Set<number>>(new Set());
+  const [pickerPage, setPickerPage] = useState(1);
+  const [pickerPageSize, setPickerPageSize] = useState(10);
+  const [catalogItems, setCatalogItems] = useState<AssetCatalogItemListItem[]>([]);
+
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showExitConfirmModal, setShowExitConfirmModal] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -268,6 +280,67 @@ export function TransfersPage() {
 
   useEffect(() => setAssetPage(1), [selectedAssetIds]);
 
+  useEffect(() => {
+    if (showAssetPicker && catalogItems.length === 0) {
+      loadAssetCatalogItems()
+        .then((items) => setCatalogItems(items))
+        .catch((err) => console.error("Failed to load catalog items:", err));
+    }
+  }, [showAssetPicker, catalogItems.length]);
+
+  const isFormDirty = useMemo(() => {
+    return (
+      selectedAssetIds.length > 0 ||
+      pickerTempSelected.size > 0 ||
+      Boolean(toEmployeeId) ||
+      Boolean(toDepartmentId) ||
+      Boolean(reason.trim()) ||
+      selectedFiles.length > 0 ||
+      approvedByUsers.length > 0
+    );
+  }, [
+    selectedAssetIds.length,
+    pickerTempSelected.size,
+    toEmployeeId,
+    toDepartmentId,
+    reason,
+    selectedFiles.length,
+    approvedByUsers.length,
+  ]);
+
+  const { setGuard } = useNavigationGuard();
+
+  useEffect(() => {
+    if (view === "create" && isFormDirty) {
+      setGuard({
+        isDirty: true,
+        countLabel:
+          selectedAssetIds.length > 0
+            ? `${selectedAssetIds.length} tài sản đã chọn`
+            : pickerTempSelected.size > 0
+              ? `${pickerTempSelected.size} tài sản đang tick`
+              : "thông tin",
+        onConfirm: () => {
+          resetForm();
+        },
+      });
+    } else {
+      setGuard(null);
+    }
+    return () => setGuard(null);
+  }, [view, isFormDirty, selectedAssetIds.length, pickerTempSelected.size, setGuard]);
+
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (view === "create" && isFormDirty) {
+        e.preventDefault();
+        e.returnValue = "";
+      }
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [view, isFormDirty]);
+
   const resetForm = () => {
     setTransferType("Bàn giao");
     setTransferDate(minimumTransferDate());
@@ -279,18 +352,31 @@ export function TransfersPage() {
     setApprovedByUsers([]);
     setSelectedAssetIds([]);
     setSelectedFiles([]);
+    setShowAssetPicker(false);
+    setPickerCatalogFilter("");
+    setPickerSearchQuery("");
+    setPickerTempSelected(new Set());
+    setPickerPage(1);
   };
 
   const handleTabChange = (newView: "list" | "create") => {
-    setView(newView);
-    setSelectedTicket(null);
     if (newView === "create") {
+      setView("create");
+      setSelectedTicket(null);
       resetForm();
       void ensureAssets(false, true);
-    } else {
-      void refresh();
-      setListPage(1);
+      return;
     }
+
+    if (view === "create" && isFormDirty) {
+      setShowExitConfirmModal(true);
+      return;
+    }
+
+    setView("list");
+    setSelectedTicket(null);
+    void refresh();
+    setListPage(1);
   };
 
   const groupedTransfers = useMemo(() => {
@@ -381,6 +467,107 @@ export function TransfersPage() {
     });
     return assets.filter((asset) => !pendingAssetIds.has(asset.id));
   }, [assets, transfers]);
+
+  const filteredPickerAssets = useMemo(() => {
+    return availableAssets.filter((asset) => {
+      // Filter by catalog item
+      if (pickerCatalogFilter) {
+        const catalogId = Number(pickerCatalogFilter);
+        if (asset.catalogItem?.id !== catalogId) return false;
+      }
+      // Filter by search query
+      if (pickerSearchQuery.trim()) {
+        const q = pickerSearchQuery.trim().toLowerCase();
+        const codeMatch = asset.assetCode?.toLowerCase().includes(q);
+        const nameMatch = asset.name?.toLowerCase().includes(q);
+        if (!codeMatch && !nameMatch) return false;
+      }
+      return true;
+    });
+  }, [availableAssets, pickerCatalogFilter, pickerSearchQuery]);
+
+  const pickerPageCount = Math.max(1, Math.ceil(filteredPickerAssets.length / pickerPageSize));
+  const safePickerPage = Math.min(pickerPage, pickerPageCount);
+  const pagedPickerAssets = useMemo(() => {
+    const start = (safePickerPage - 1) * pickerPageSize;
+    return filteredPickerAssets.slice(start, start + pickerPageSize);
+  }, [filteredPickerAssets, safePickerPage, pickerPageSize]);
+
+  useEffect(() => {
+    setPickerPage(1);
+  }, [pickerCatalogFilter, pickerSearchQuery]);
+
+  const isAllCurrentPageSelected =
+    pagedPickerAssets.length > 0 && pagedPickerAssets.every((a) => pickerTempSelected.has(a.id));
+
+  const isSomeCurrentPageSelected =
+    pagedPickerAssets.some((a) => pickerTempSelected.has(a.id)) && !isAllCurrentPageSelected;
+
+  const handleToggleSelectAllPage = () => {
+    setPickerTempSelected((prev) => {
+      const next = new Set(prev);
+      if (isAllCurrentPageSelected) {
+        pagedPickerAssets.forEach((a) => {
+          next.delete(a.id);
+        });
+      } else {
+        pagedPickerAssets.forEach((a) => {
+          next.add(a.id);
+        });
+      }
+      return next;
+    });
+  };
+
+  const handleToggleAsset = (assetId: number) => {
+    setPickerTempSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(assetId)) {
+        next.delete(assetId);
+      } else {
+        next.add(assetId);
+      }
+      return next;
+    });
+  };
+
+  const handleOpenPicker = () => {
+    setPickerTempSelected(new Set(selectedAssetIds));
+    setShowAssetPicker(true);
+    setPickerCatalogFilter("");
+    setPickerSearchQuery("");
+    setPickerPage(1);
+    if (catalogItems.length === 0) {
+      loadAssetCatalogItems()
+        .then((items) => setCatalogItems(items))
+        .catch((err) => console.error("Failed to load catalog items:", err));
+    }
+  };
+
+  const handleConfirmPickerSelection = () => {
+    setSelectedAssetIds(Array.from(pickerTempSelected));
+    setShowAssetPicker(false);
+  };
+
+  const handleSelectAllFiltered = () => {
+    setPickerTempSelected((prev) => {
+      const next = new Set(prev);
+      filteredPickerAssets.forEach((a) => {
+        next.add(a.id);
+      });
+      return next;
+    });
+  };
+
+  const handleDeselectAllFiltered = () => {
+    setPickerTempSelected((prev) => {
+      const next = new Set(prev);
+      filteredPickerAssets.forEach((a) => {
+        next.delete(a.id);
+      });
+      return next;
+    });
+  };
 
   const handleSubmit = async () => {
     if (selectedAssetIds.length === 0) return toast.error("Vui lòng chọn ít nhất 1 tài sản");
@@ -1174,6 +1361,156 @@ export function TransfersPage() {
         </div>
       )}
 
+      {/* Modal xác nhận thoát khi đang tạo phiếu dở dang (Tối giản, không bo góc) */}
+      {showExitConfirmModal && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(15, 23, 42, 0.45)",
+            backdropFilter: "blur(4px)",
+            WebkitBackdropFilter: "blur(4px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "16px",
+            zIndex: 9999,
+          }}
+        >
+          <div
+            style={{
+              background: "#ffffff",
+              borderRadius: "0px",
+              boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)",
+              maxWidth: "420px",
+              width: "100%",
+              overflow: "hidden",
+              border: "1px solid #e2e8f0",
+              animation: "fadeIn 0.15s ease",
+            }}
+          >
+            <div style={{ padding: "32px 28px 24px", textAlign: "center" }}>
+              {/* Icon Cảnh báo Tối giản */}
+              <div
+                style={{
+                  margin: "0 auto 16px",
+                  width: "48px",
+                  height: "48px",
+                  borderRadius: "50%",
+                  background: "#fef2f2",
+                  color: "#dc2626",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  style={{ width: "24px", height: "24px" }}
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                  />
+                </svg>
+              </div>
+
+              {/* Nội dung văn bản */}
+              <h2
+                style={{
+                  fontSize: "18px",
+                  fontWeight: 700,
+                  color: "#0f172a",
+                  margin: "0 0 8px",
+                  letterSpacing: "-0.01em",
+                }}
+              >
+                Rời khỏi trang?
+              </h2>
+              <p
+                style={{
+                  fontSize: "13.5px",
+                  color: "#475569",
+                  lineHeight: "1.6",
+                  margin: 0,
+                }}
+              >
+                Bạn đang có{" "}
+                <span style={{ fontWeight: 600, color: "#2563eb" }}>
+                  {selectedAssetIds.length > 0
+                    ? `${selectedAssetIds.length} tài sản`
+                    : pickerTempSelected.size > 0
+                      ? `${pickerTempSelected.size} tài sản`
+                      : "thông tin"}
+                </span>{" "}
+                đã chọn chưa được tạo phiếu. Mọi thay đổi chưa lưu sẽ bị mất.
+              </p>
+            </div>
+
+            {/* Hành động */}
+            <div
+              style={{
+                display: "flex",
+                gap: "10px",
+                padding: "0 24px 24px",
+              }}
+            >
+              <button
+                type="button"
+                onClick={() => setShowExitConfirmModal(false)}
+                style={{
+                  flex: 1,
+                  padding: "10px 16px",
+                  fontSize: "13.5px",
+                  fontWeight: 500,
+                  color: "#334155",
+                  background: "#ffffff",
+                  border: "1px solid #cbd5e1",
+                  borderRadius: "0px",
+                  cursor: "pointer",
+                  transition: "background-color 0.15s ease",
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = "#f8fafc")}
+                onMouseLeave={(e) => (e.currentTarget.style.background = "#ffffff")}
+              >
+                Tiếp tục chỉnh sửa
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  resetForm();
+                  setView("list");
+                  setShowExitConfirmModal(false);
+                  void refresh();
+                  setListPage(1);
+                }}
+                style={{
+                  flex: 1,
+                  padding: "10px 16px",
+                  fontSize: "13.5px",
+                  fontWeight: 600,
+                  color: "#ffffff",
+                  background: "#dc2626",
+                  border: "1px solid #dc2626",
+                  borderRadius: "0px",
+                  cursor: "pointer",
+                  transition: "background-color 0.15s ease",
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = "#b91c1c")}
+                onMouseLeave={(e) => (e.currentTarget.style.background = "#dc2626")}
+              >
+                Xác nhận thoát
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {view === "create" && (
         <section className="panel transfer-create-form">
           <div
@@ -1573,34 +1910,539 @@ export function TransfersPage() {
                   paddingBottom: "12px",
                 }}
               >
-                <h3 style={{ margin: 0, fontSize: "16px", fontWeight: 600, color: "#0f172a" }}>
-                  Danh sách tài sản bàn giao/thu hồi
-                </h3>
-                <div style={{ width: "320px", display: "flex", gap: "8px" }}>
-                  <div style={{ flex: 1, fontFamily: "inherit" }}>
-                    <SearchableSelect
-                      className="transfer-asset-select"
-                      value={assetSelector}
-                      placeholder="Chọn tài sản để thêm"
-                      onChange={(val) => {
-                        if (val && !selectedAssetIds.includes(Number(val))) {
-                          setSelectedAssetIds((prev) => [...prev, Number(val)]);
-                        }
-                        setAssetSelector("");
+                <div>
+                  <h3 style={{ margin: 0, fontSize: "16px", fontWeight: 600, color: "#0f172a" }}>
+                    Danh sách tài sản bàn giao/thu hồi
+                  </h3>
+                  <p style={{ margin: "4px 0 0", fontSize: "13px", color: "#64748b" }}>
+                    Đã chọn <strong style={{ color: "#2563eb" }}>{pickerTempSelected.size}</strong>{" "}
+                    tài sản cho phiếu này
+                  </p>
+                </div>
+                <div>
+                  {!showAssetPicker && (
+                    <button
+                      type="button"
+                      className="asset-add-button transfer-picker-open-btn"
+                      onClick={handleOpenPicker}
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "6px",
+                        padding: "8px 16px",
+                        fontSize: "13px",
                       }}
                     >
-                      {availableAssets.map((a) => (
-                        <option key={a.id} value={String(a.id)}>
-                          {selectedAssetIds.includes(a.id) ? "✓ " : ""}
-                          {a.assetCode} · {a.name}
-                          {selectedAssetIds.includes(a.id) ? " (đã chọn)" : ""}
-                        </option>
-                      ))}
-                    </SearchableSelect>
-                  </div>
+                      <FiPlus size={16} />
+                      Thêm tài sản ({availableAssets.length} khả dụng)
+                    </button>
+                  )}
                 </div>
               </div>
 
+              {/* Inline Asset Picker Panel */}
+              {showAssetPicker && (
+                <div
+                  className="transfer-asset-picker"
+                  style={{
+                    background: "#f8fafc",
+                    border: "1px solid #cbd5e1",
+                    borderRadius: "10px",
+                    padding: "16px",
+                    marginBottom: "20px",
+                    boxShadow: "0 4px 12px rgba(0, 0, 0, 0.05)",
+                  }}
+                >
+                  <div
+                    className="transfer-asset-picker-header"
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      marginBottom: "12px",
+                      flexWrap: "wrap",
+                      gap: "8px",
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      <span style={{ fontWeight: 700, fontSize: "14px", color: "#1e293b" }}>
+                        Bộ chọn tài sản khả dụng
+                      </span>
+                      <span
+                        style={{
+                          fontSize: "12px",
+                          background: "#e2e8f0",
+                          color: "#334155",
+                          padding: "2px 8px",
+                          borderRadius: "12px",
+                          fontWeight: 600,
+                        }}
+                      >
+                        {filteredPickerAssets.length} tài sản
+                      </span>
+                    </div>
+
+                    <div
+                      className="transfer-asset-picker-actions"
+                      style={{ display: "flex", gap: "8px", alignItems: "center" }}
+                    >
+                      <button
+                        type="button"
+                        className="asset-add-button"
+                        onClick={handleConfirmPickerSelection}
+                        style={{
+                          padding: "6px 16px",
+                          fontSize: "13px",
+                          background: "#2563eb",
+                        }}
+                      >
+                        <FiCheck size={16} />
+                        Xác nhận chọn ({pickerTempSelected.size})
+                      </button>
+                      <button
+                        type="button"
+                        className="secondary"
+                        onClick={() => setShowAssetPicker(false)}
+                        style={{ padding: "6px 12px", fontSize: "13px" }}
+                      >
+                        <FiX size={16} />
+                        Đóng
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Filter bar */}
+                  <div
+                    className="transfer-asset-picker-filters"
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "minmax(220px, 1fr) minmax(240px, 1.2fr) auto",
+                      gap: "12px",
+                      marginBottom: "12px",
+                      background: "#ffffff",
+                      padding: "12px",
+                      borderRadius: "8px",
+                      border: "1px solid #e2e8f0",
+                      alignItems: "flex-end",
+                    }}
+                  >
+                    {/* Catalog item filter */}
+                    <div>
+                      <label
+                        style={{
+                          fontSize: "12px",
+                          fontWeight: 600,
+                          color: "#475569",
+                          marginBottom: "4px",
+                          display: "block",
+                        }}
+                      >
+                        Lọc theo Danh mục (Catalog)
+                      </label>
+                      <SearchableSelect
+                        value={pickerCatalogFilter}
+                        placeholder="Tất cả catalog item"
+                        onChange={(val) => setPickerCatalogFilter(val)}
+                      >
+                        <option value="">Tất cả catalog item</option>
+                        {catalogItems.map((c) => (
+                          <option key={c.id} value={String(c.id)}>
+                            {c.itemCode} · {c.name}
+                          </option>
+                        ))}
+                      </SearchableSelect>
+                    </div>
+
+                    {/* Search keyword */}
+                    <div>
+                      <label
+                        style={{
+                          fontSize: "12px",
+                          fontWeight: 600,
+                          color: "#475569",
+                          marginBottom: "4px",
+                          display: "block",
+                        }}
+                      >
+                        Tìm kiếm mã / tên tài sản
+                      </label>
+                      <div>
+                        <input
+                          type="text"
+                          value={pickerSearchQuery}
+                          onChange={(e) => setPickerSearchQuery(e.target.value)}
+                          placeholder="Nhập mã hoặc tên tài sản..."
+                          // style={{
+                          //   ...formInputStyle,
+                          //   paddingLeft: "32px",
+                          // }}
+                        />
+                        <FiSearch
+                          size={14}
+                          style={{
+                            position: "absolute",
+                            left: "10px",
+                            top: "50%",
+                            transform: "translateY(-50%)",
+                            color: "#94a3b8",
+                          }}
+                        />
+                        {pickerSearchQuery && (
+                          <button
+                            type="button"
+                            onClick={() => setPickerSearchQuery("")}
+                            style={{
+                              position: "absolute",
+                              right: "8px",
+                              top: "50%",
+                              transform: "translateY(-50%)",
+                              background: "transparent",
+                              border: "none",
+                              color: "#94a3b8",
+                              cursor: "pointer",
+                              padding: "2px",
+                              minHeight: "auto",
+                              boxShadow: "none",
+                            }}
+                          >
+                            <FiX size={14} />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Quick selection helpers */}
+                    <div style={{ display: "flex", gap: "6px" }}>
+                      <button
+                        type="button"
+                        className="secondary"
+                        onClick={handleSelectAllFiltered}
+                        disabled={filteredPickerAssets.length === 0}
+                        title="Chọn tất cả kết quả đang lọc"
+                        style={{ padding: "8px 12px", fontSize: "12px", minHeight: "38px" }}
+                      >
+                        Chọn tất cả ({filteredPickerAssets.length})
+                      </button>
+                      <button
+                        type="button"
+                        className="secondary"
+                        onClick={handleDeselectAllFiltered}
+                        disabled={pickerTempSelected.size === 0}
+                        title="Bỏ chọn tất cả"
+                        style={{ padding: "8px 12px", fontSize: "12px", minHeight: "38px" }}
+                      >
+                        Bỏ chọn
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Table of available assets */}
+                  <div
+                    className="table-wrap transfer-asset-picker-table-wrap"
+                    style={{
+                      border: "1px solid #e2e8f0",
+                      borderRadius: "8px",
+                      overflow: "auto",
+                      background: "#ffffff",
+                      maxHeight: "300px",
+                    }}
+                  >
+                    <table
+                      className="transfer-asset-picker-table"
+                      style={{
+                        width: "100%",
+                        minWidth: "1180px",
+                        tableLayout: "fixed",
+                        textAlign: "left",
+                        borderCollapse: "collapse",
+                      }}
+                    >
+                      <thead
+                        style={{ background: "#f1f5f9", position: "sticky", top: 0, zIndex: 2 }}
+                      >
+                        <tr>
+                          <th
+                            style={{
+                              padding: "10px 12px",
+                              color: "#475569",
+                              fontSize: "12px",
+                              fontWeight: 600,
+                              borderBottom: "1px solid #cbd5e1",
+                              width: "48px",
+                              textAlign: "center",
+                            }}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={isAllCurrentPageSelected}
+                              ref={(el) => {
+                                if (el) {
+                                  el.indeterminate = isSomeCurrentPageSelected;
+                                }
+                              }}
+                              onChange={handleToggleSelectAllPage}
+                              style={{ cursor: "pointer", width: "16px", height: "16px" }}
+                              title="Chọn/bỏ chọn tất cả trang này"
+                            />
+                          </th>
+                          <th
+                            style={{
+                              padding: "10px 12px",
+                              color: "#475569",
+                              fontSize: "12px",
+                              fontWeight: 600,
+                              borderBottom: "1px solid #cbd5e1",
+                              width: "48px",
+                              textAlign: "center",
+                            }}
+                          >
+                            STT
+                          </th>
+                          <th
+                            style={{
+                              padding: "10px 12px",
+                              color: "#475569",
+                              fontSize: "12px",
+                              fontWeight: 600,
+                              borderBottom: "1px solid #cbd5e1",
+                              width: "170px",
+                            }}
+                          >
+                            Mã tài sản
+                          </th>
+                          <th
+                            style={{
+                              padding: "10px 12px",
+                              color: "#475569",
+                              fontSize: "12px",
+                              fontWeight: 600,
+                              borderBottom: "1px solid #cbd5e1",
+                              width: "220px",
+                            }}
+                          >
+                            Tên tài sản
+                          </th>
+                          <th
+                            style={{
+                              padding: "10px 12px",
+                              color: "#475569",
+                              fontSize: "12px",
+                              fontWeight: 600,
+                              borderBottom: "1px solid #cbd5e1",
+                              width: "300px",
+                            }}
+                          >
+                            Catalog Item
+                          </th>
+                          <th
+                            style={{
+                              padding: "10px 12px",
+                              color: "#475569",
+                              fontSize: "12px",
+                              fontWeight: 600,
+                              borderBottom: "1px solid #cbd5e1",
+                              width: "120px",
+                            }}
+                          >
+                            Trạng thái
+                          </th>
+                          <th
+                            style={{
+                              padding: "10px 12px",
+                              color: "#475569",
+                              fontSize: "12px",
+                              fontWeight: 600,
+                              borderBottom: "1px solid #cbd5e1",
+                              width: "170px",
+                            }}
+                          >
+                            Vị trí hiện tại
+                          </th>
+                          <th
+                            style={{
+                              padding: "10px 12px",
+                              color: "#475569",
+                              fontSize: "12px",
+                              fontWeight: 600,
+                              borderBottom: "1px solid #cbd5e1",
+                              width: "150px",
+                            }}
+                          >
+                            Phòng ban
+                          </th>
+                          <th
+                            style={{
+                              padding: "10px 12px",
+                              color: "#475569",
+                              fontSize: "12px",
+                              fontWeight: 600,
+                              borderBottom: "1px solid #cbd5e1",
+                            }}
+                          >
+                            Nhân sự
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredPickerAssets.length === 0 ? (
+                          <tr>
+                            <td
+                              colSpan={9}
+                              style={{ padding: "30px", textAlign: "center", color: "#94a3b8" }}
+                            >
+                              Không tìm thấy tài sản phù hợp
+                            </td>
+                          </tr>
+                        ) : (
+                          pagedPickerAssets.map((asset, index) => {
+                            const isSelected = pickerTempSelected.has(asset.id);
+                            return (
+                              <tr
+                                key={asset.id}
+                                onClick={() => handleToggleAsset(asset.id)}
+                                style={{
+                                  cursor: "pointer",
+                                  background: isSelected ? "#eff6ff" : "transparent",
+                                  transition: "background-color 0.15s ease",
+                                  borderBottom: "1px solid #f1f5f9",
+                                }}
+                                onMouseEnter={(e) => {
+                                  if (!isSelected) e.currentTarget.style.background = "#f8fafc";
+                                }}
+                                onMouseLeave={(e) => {
+                                  if (!isSelected) e.currentTarget.style.background = "transparent";
+                                }}
+                              >
+                                <td
+                                  style={{ padding: "8px 12px", textAlign: "center" }}
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={isSelected}
+                                    onChange={() => handleToggleAsset(asset.id)}
+                                    style={{ cursor: "pointer", width: "16px", height: "16px" }}
+                                  />
+                                </td>
+                                <td
+                                  style={{
+                                    padding: "8px 12px",
+                                    textAlign: "center",
+                                    color: "#64748b",
+                                    fontSize: "12px",
+                                  }}
+                                >
+                                  {(safePickerPage - 1) * pickerPageSize + index + 1}
+                                </td>
+                                <td
+                                  style={{
+                                    padding: "8px 12px",
+                                    fontWeight: 600,
+                                    color: "#2563eb",
+                                    fontSize: "12px",
+                                  }}
+                                >
+                                  {highlightTransferText(asset.assetCode, pickerSearchQuery)}
+                                </td>
+                                <td
+                                  style={{
+                                    padding: "8px 12px",
+                                    fontSize: "12px",
+                                    color: "#1e293b",
+                                    fontWeight: 500,
+                                  }}
+                                >
+                                  {highlightTransferText(asset.name, pickerSearchQuery)}
+                                </td>
+                                <td
+                                  style={{
+                                    padding: "8px 12px",
+                                    fontSize: "12px",
+                                    color: "#475569",
+                                  }}
+                                >
+                                  <span
+                                    className="badge"
+                                    style={{
+                                      background: "#f1f5f9",
+                                      color: "#475569",
+                                      border: "1px solid #e2e8f0",
+                                      fontSize: "11px",
+                                    }}
+                                  >
+                                    {asset.catalogItem
+                                      ? `${asset.catalogItem.itemCode} · ${asset.catalogItem.name}`
+                                      : "--"}
+                                  </span>
+                                </td>
+                                <td style={{ padding: "8px 12px", fontSize: "12px" }}>
+                                  <span
+                                    className={`badge badge-${(asset.status || "").toLowerCase()}`}
+                                    style={{ fontSize: "11px" }}
+                                  >
+                                    {translateStatus(asset.status)}
+                                  </span>
+                                </td>
+                                <td
+                                  style={{
+                                    padding: "8px 12px",
+                                    fontSize: "12px",
+                                    color: "#64748b",
+                                  }}
+                                >
+                                  {getAssetLocation(asset)}
+                                </td>
+                                <td
+                                  style={{
+                                    padding: "8px 12px",
+                                    fontSize: "12px",
+                                    color: "#475569",
+                                  }}
+                                >
+                                  {asset.departmentId
+                                    ? departments.find((d) => d.id === asset.departmentId)?.name ||
+                                      "--"
+                                    : "--"}
+                                </td>
+                                <td
+                                  style={{
+                                    padding: "8px 12px",
+                                    fontSize: "12px",
+                                    color: "#475569",
+                                  }}
+                                >
+                                  {asset.assignedEmployeeId
+                                    ? empLabel(asset.assignedEmployeeId)
+                                    : "--"}
+                                </td>
+                              </tr>
+                            );
+                          })
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Picker Pagination */}
+                  {filteredPickerAssets.length > 0 && (
+                    <div style={{ marginTop: "10px" }}>
+                      <TransferListPagination
+                        page={safePickerPage}
+                        pageSize={pickerPageSize}
+                        total={filteredPickerAssets.length}
+                        itemLabel="tài sản khả dụng"
+                        onPageChange={setPickerPage}
+                        onPageSizeChange={(size) => {
+                          setPickerPageSize(size);
+                          setPickerPage(1);
+                        }}
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Bảng tài sản đã chọn */}
               <div
                 className="table-wrap transfer-create-assets-wrap"
                 style={{
@@ -1704,7 +2546,8 @@ export function TransfersPage() {
                           colSpan={6}
                           style={{ padding: "40px", textAlign: "center", color: "#94a3b8" }}
                         >
-                          Chưa có dữ liệu
+                          Chưa có tài sản nào được chọn. Nhấn &ldquo;Thêm tài sản&rdquo; ở trên để
+                          chọn tài sản.
                         </td>
                       </tr>
                     ) : (
@@ -1787,9 +2630,14 @@ export function TransfersPage() {
                             <td style={{ padding: "12px 16px", textAlign: "center" }}>
                               <button
                                 type="button"
-                                onClick={() =>
-                                  setSelectedAssetIds((prev) => prev.filter((x) => x !== id))
-                                }
+                                onClick={() => {
+                                  setSelectedAssetIds((prev) => prev.filter((x) => x !== id));
+                                  setPickerTempSelected((prev) => {
+                                    const next = new Set(prev);
+                                    next.delete(id);
+                                    return next;
+                                  });
+                                }}
                                 style={{
                                   background: "none",
                                   border: "none",

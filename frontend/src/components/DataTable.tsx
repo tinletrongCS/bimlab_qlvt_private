@@ -1,4 +1,11 @@
-import { type CSSProperties, type ReactNode, useEffect, useMemo, useState } from "react";
+import {
+  type CSSProperties,
+  type MouseEvent,
+  type ReactNode,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { FiChevronLeft, FiChevronRight, FiChevronsLeft, FiChevronsRight } from "react-icons/fi";
 
 interface Column<T> {
@@ -6,6 +13,14 @@ interface Column<T> {
   title: string;
   render: (item: T) => ReactNode;
   className?: string;
+}
+
+type RowKey = string | number;
+
+interface DataTableSelection<T> {
+  selectedKeys: ReadonlySet<RowKey>;
+  onChange: (keys: Set<RowKey>) => void;
+  getLabel?: (item: T) => string;
 }
 
 interface DataTableProps<T> {
@@ -17,6 +32,7 @@ interface DataTableProps<T> {
   itemLabel?: string;
   pagination?: boolean;
   tableMinWidth?: number;
+  selection?: DataTableSelection<T>;
 }
 
 export function DataTable<T>({
@@ -28,6 +44,7 @@ export function DataTable<T>({
   itemLabel = "mục",
   pagination = true,
   tableMinWidth,
+  selection,
 }: DataTableProps<T>) {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(pageSizeOptions[0] ?? 10);
@@ -39,15 +56,42 @@ export function DataTable<T>({
     () => (pagination ? data.slice((safePage - 1) * pageSize, safePage * pageSize) : data),
     [data, pageSize, pagination, safePage],
   );
+  const visibleRows = visibleData.map((item, index) => {
+    const absoluteIndex = (safePage - 1) * pageSize + index;
+    return {
+      item,
+      absoluteIndex,
+      key: getRowKey ? getRowKey(item, absoluteIndex) : absoluteIndex,
+    };
+  });
+  const visibleKeys = visibleRows.map((row) => row.key);
+  const selectedVisibleCount = selection
+    ? visibleKeys.filter((key) => selection.selectedKeys.has(key)).length
+    : 0;
+  const allVisibleSelected = visibleKeys.length > 0 && selectedVisibleCount === visibleKeys.length;
+  const someVisibleSelected = selectedVisibleCount > 0 && !allVisibleSelected;
 
   useEffect(() => {
     setPage(1);
   }, [data, pageSize]);
 
+  const toggleSelection = (key: RowKey) => {
+    if (!selection) return;
+    const next = new Set(selection.selectedKeys);
+    if (next.has(key)) next.delete(key);
+    else next.add(key);
+    selection.onChange(next);
+  };
+
+  const handleRowClick = (event: MouseEvent<HTMLTableRowElement>, key: RowKey) => {
+    if (!selection || isInteractiveClick(event.target)) return;
+    toggleSelection(key);
+  };
+
   return (
     <>
       <div
-        className="table-wrap"
+        className={`table-wrap${selection ? " has-row-selection" : ""}`}
         style={
           tableMinWidth
             ? ({ "--qlvt-table-min-width": `${tableMinWidth}px` } as CSSProperties)
@@ -57,6 +101,28 @@ export function DataTable<T>({
         <table>
           <thead>
             <tr>
+              {selection && (
+                <th className="data-table-select-column">
+                  <label className="asset-table-checkbox" title="Chọn các dòng trên trang hiện tại">
+                    <input
+                      type="checkbox"
+                      checked={allVisibleSelected}
+                      ref={(input) => {
+                        if (input) input.indeterminate = someVisibleSelected;
+                      }}
+                      onChange={() => {
+                        const next = new Set(selection.selectedKeys);
+                        visibleKeys.forEach((key) => {
+                          if (allVisibleSelected) next.delete(key);
+                          else next.add(key);
+                        });
+                        selection.onChange(next);
+                      }}
+                    />
+                    <span />
+                  </label>
+                </th>
+              )}
               <th className="table-index-header">STT</th>
               {columns.map((column) => (
                 <th key={column.key} className={column.className}>
@@ -68,14 +134,34 @@ export function DataTable<T>({
           <tbody>
             {data.length === 0 ? (
               <tr>
-                <td className="empty" colSpan={columns.length + 1}>
+                <td className="empty" colSpan={columns.length + 1 + (selection ? 1 : 0)}>
                   {emptyText}
                 </td>
               </tr>
             ) : (
-              visibleData.map((item, index) => (
-                <tr key={getRowKey ? getRowKey(item, (safePage - 1) * pageSize + index) : index}>
-                  <td className="table-index-cell">{(safePage - 1) * pageSize + index + 1}</td>
+              visibleRows.map(({ item, absoluteIndex, key }) => (
+                <tr
+                  key={key}
+                  className={selection?.selectedKeys.has(key) ? "is-selected" : undefined}
+                  onClick={(event) => handleRowClick(event, key)}
+                >
+                  {selection && (
+                    <td className="data-table-select-column">
+                      <label
+                        className="asset-table-checkbox"
+                        title={`Chọn ${selection.getLabel?.(item) || "dòng này"}`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selection.selectedKeys.has(key)}
+                          onClick={(event) => event.stopPropagation()}
+                          onChange={() => toggleSelection(key)}
+                        />
+                        <span />
+                      </label>
+                    </td>
+                  )}
+                  <td className="table-index-cell">{absoluteIndex + 1}</td>
                   {columns.map((column) => (
                     <td key={column.key} className={column.className}>
                       {column.render(item)}
@@ -140,4 +226,14 @@ export function DataTable<T>({
       )}
     </>
   );
+}
+
+function isInteractiveClick(target: EventTarget): boolean {
+  return target instanceof Element
+    ? Boolean(
+        target.closest(
+          "button, a, input, label, select, textarea, [role='button'], [role='menuitem']",
+        ),
+      )
+    : false;
 }

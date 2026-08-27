@@ -1,10 +1,14 @@
 package com.bimlab.asset.service;
 
 import com.bimlab.asset.dto.request.AssetCatalogItemRequest;
+import com.bimlab.asset.dto.request.AssetCatalogUnassignmentRequest;
 import com.bimlab.asset.dto.response.AssetCatalogItemDetailResponse;
 import com.bimlab.asset.dto.response.AssetCatalogItemListResponse;
 import com.bimlab.asset.entity.AssetCatalogItem;
 import com.bimlab.asset.entity.AssetCategory;
+import com.bimlab.asset.entity.AssetItem;
+import com.bimlab.asset.entity.status.AssetClass;
+import com.bimlab.asset.entity.status.CatalogType;
 import com.bimlab.asset.repository.AssetCatalogItemRepository;
 import com.bimlab.asset.repository.AssetCategoryRepository;
 import com.bimlab.asset.repository.AssetItemRepository;
@@ -14,7 +18,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.UUID;
@@ -37,7 +43,19 @@ public class AssetCatalogItemService {
             Pageable pageable
     ) {
         String keyWord = keyword == null ? "" : keyword.trim();
-        return catalogItems.findList(keyWord, categoryId, active, pageable);
+        Page<AssetCatalogItemListResponse> page = catalogItems.findList(keyWord, categoryId, active, pageable);
+        if (page.isEmpty()) {
+            return page;
+        }
+
+        List<Long> catalogItemIds = page.getContent().stream()
+                .map(AssetCatalogItemListResponse::id)
+                .toList();
+        Map<Long, Long> assetCounts = new HashMap<>();
+        for (AssetItemRepository.CatalogAssetCount count : assets.countByCatalogItemIds(catalogItemIds)) {
+            assetCounts.put(count.getCatalogItemId(), count.getAssetCount());
+        }
+        return page.map(item -> item.withAssetCount(assetCounts.getOrDefault(item.id(), 0L)));
     }
 
     @Transactional(readOnly = true)
@@ -56,17 +74,14 @@ public class AssetCatalogItemService {
      */
     @Transactional
     public AssetCatalogItemDetailResponse createCatalogItem(AssetCatalogItemRequest request) {
-        AssetCategory category = categories.findById(request.categoryId())
-                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy loại tài sản hoặc mã loại không hợp lệ"));
-        if (!Boolean.TRUE.equals(category.getActive())) {
-            throw new IllegalArgumentException("Loại tài sản với mã " + category.getCode() + " đã ngừng hoạt động");
-        }
+        AssetCategory category = isValidCategoryId(request.categoryId());
+        CatalogType catalogType = requireMatchingCatalogType(category, request.catalogType());
 
         AssetCatalogItem catalogItem = AssetCatalogItem.builder()
                 .itemCode("TMP-" + UUID.randomUUID())
                 .name(request.name().trim())
                 .category(category)
-                .catalogType(request.catalogType())
+                .catalogType(catalogType)
                 .inventoryGroup(trimToNull(request.inventoryGroup()))
                 .unit(request.unit() == null ? null : request.unit().name())
                 .costValue(request.costValue())
@@ -82,16 +97,18 @@ public class AssetCatalogItemService {
         return toDetail(catalogItem);
     }
 
+    /*
+    Truyền vào là cái id của danh mục hiện tại và check payload trong request gửi đi có đúng không
+     */
     @Transactional
     public AssetCatalogItemDetailResponse updateCatalogItem(Long id, AssetCatalogItemRequest request) {
         AssetCatalogItem catalogItem = catalogItems.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Không tìm thấy danh mục với mã " + id));
-
+        // categoryId trong request không khớp với id của bất kỳ id của category nào trong hệ thống
+        AssetCategory category = isValidCategoryId(request.categoryId());
         // lấy mã của loại tài sản mà danh mục này đang thuộc về
         Long currentCategoryId = catalogItem.getCategory() == null ? null : catalogItem.getCategory().getId();
-        // categoryId trong request không khớp với id của bất kỳ id của category nào trong hệ thống
-        AssetCategory category = categories.findById(request.categoryId())
-                .orElseThrow(() -> new NoSuchElementException("Loại tài sản với mã " + request.categoryId() + " không tồn tại hoặc không hợp lệ"));
+
         boolean hasChanged = !Objects.equals(currentCategoryId, request.categoryId());
         if (hasChanged && !Boolean.TRUE.equals(category.getActive())) {
             throw new IllegalArgumentException("Loại tài sản đã ngừng hoạt động");
@@ -101,9 +118,10 @@ public class AssetCatalogItemService {
         if (hasChanged && assets.existsByCatalogItemId(id)) {
             throw new IllegalArgumentException("Không được thay đổi danh mục do đã có tài sản dùng danh mục này");
         }
+        CatalogType catalogType = requireMatchingCatalogType(category, request.catalogType());
         catalogItem.setName(request.name().trim());
         catalogItem.setCategory(category);
-        catalogItem.setCatalogType(request.catalogType());
+        catalogItem.setCatalogType(catalogType);
         catalogItem.setInventoryGroup(trimToNull(request.inventoryGroup()));
         catalogItem.setUnit(request.unit() == null ? null : request.unit().name());
         catalogItem.setCostValue(request.costValue());
@@ -123,7 +141,58 @@ public class AssetCatalogItemService {
         AssetCatalogItem catalogItem = catalogItems.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Không tìm thấy danh mục với mã " + id));
         catalogItem.setActive(false);
+        List<AssetItem> assignedAssets = assets.findByCatalogItemId(id);
+        for (AssetItem asset : assignedAssets) {
+            asset.setCatalogItem(null);
+        }
+        if (!assignedAssets.isEmpty()) {
+            assets.saveAll(assignedAssets);
+        }
         catalogItems.save(catalogItem);
+    }
+
+    @Transactional(readOnly = true)
+    public List<AssetItem> listAssignedAssets(Long id) {
+        requireCatalogItem(id);
+        return assets.findByCatalogItemId(id);
+    }
+
+    @Transactional
+    public void unassignAsset(Long id, Long assetId) {
+        requireCatalogItem(id);
+        AssetItem asset = assets.findById(assetId)
+                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy tài sản với id " + assetId));
+        ensureAssetUsesCatalog(asset, id);
+        asset.setCatalogItem(null);
+        assets.save(asset);
+    }
+
+    @Transactional
+    public void unassignAssets(Long id, AssetCatalogUnassignmentRequest request) {
+        requireCatalogItem(id);
+        List<Long> assetIds = request.assetIds().stream().distinct().toList();
+        List<AssetItem> selectedAssets = assets.findAllById(assetIds);
+        if (selectedAssets.size() != assetIds.size()) {
+            throw new NoSuchElementException("Một hoặc nhiều tài sản đã chọn không tồn tại");
+        }
+        for (AssetItem asset : selectedAssets) {
+            ensureAssetUsesCatalog(asset, id);
+            asset.setCatalogItem(null);
+        }
+        assets.saveAll(selectedAssets);
+    }
+
+    @Transactional
+    public void deleteCatalogItem(Long id) {
+        AssetCatalogItem catalogItem = catalogItems.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy danh mục với mã " + id));
+        long assignedAssets = assets.countByCatalogItemId(id);
+        if (assignedAssets > 0) {
+            throw new IllegalArgumentException(
+                    "Không thể xóa danh mục đang được gán cho " + assignedAssets + " tài sản"
+            );
+        }
+        catalogItems.delete(catalogItem);
     }
 
     private AssetCatalogItemDetailResponse toDetail(AssetCatalogItem item) {
@@ -149,7 +218,39 @@ public class AssetCatalogItemService {
         );
     }
 
+    private AssetCategory isValidCategoryId(Long categoryId) {
+        AssetCategory category = categories.findById(categoryId)
+                .orElseThrow(() -> new NoSuchElementException("Loại tài sản không tồn tại hoặc không hợp lệ"));
+        if (!Boolean.TRUE.equals(category.getActive())) {
+            throw new IllegalArgumentException("Loại tài sản đã ngừng hoạt động");
+        }
+        return category;
+    }
     private String trimToNull(String value) {
         return value == null || value.isBlank() ? null : value.trim();
+    }
+
+    private CatalogType requireMatchingCatalogType(AssetCategory category, CatalogType requestedType) {
+        CatalogType expectedType = category.getAssetClass() == AssetClass.TOOL_EQUIPMENT
+                ? CatalogType.TOOL
+                : CatalogType.ASSET;
+        if (requestedType != expectedType) {
+            throw new IllegalArgumentException(
+                    "Kiểu danh mục phải phù hợp với nhóm quản lý của loại tài sản"
+            );
+        }
+        return expectedType;
+    }
+
+    private AssetCatalogItem requireCatalogItem(Long id) {
+        return catalogItems.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy danh mục với mã " + id));
+    }
+
+    private void ensureAssetUsesCatalog(AssetItem asset, Long catalogItemId) {
+        Long currentCatalogItemId = asset.getCatalogItem() == null ? null : asset.getCatalogItem().getId();
+        if (!Objects.equals(currentCatalogItemId, catalogItemId)) {
+            throw new IllegalArgumentException("Tài sản " + asset.getAssetCode() + " không thuộc danh mục đã chọn");
+        }
     }
 }

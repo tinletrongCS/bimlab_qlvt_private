@@ -13,6 +13,7 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -120,5 +121,19 @@ class RolePermissionClientTest {
         assertEquals(List.of(), c.resolve(""));
         assertEquals(List.of(), c.resolve(null));
         verify(rt, times(0)).exchange(anyString(), any(HttpMethod.class), any(), any(Class.class));
+    }
+
+    @Test
+    void resolveUser_usesUserPermissionEndpoint() {
+        stubOk(List.of("asset_view_self"));
+        RolePermissionClient c = client();
+
+        assertEquals(List.of("asset_view_self"), c.resolveUser("tin", "EMPLOYEE"));
+
+        verify(rt).exchange(
+                contains("/internal/v1/users/tin/permissions"),
+                eq(HttpMethod.GET),
+                any(HttpEntity.class),
+                eq(Map.class));
     }
 }

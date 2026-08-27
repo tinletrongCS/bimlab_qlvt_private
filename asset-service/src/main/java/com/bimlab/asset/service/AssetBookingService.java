@@ -50,6 +50,7 @@ public class AssetBookingService {
     private final AssetItemRepository assets;
     private final AssetBookingMapper mapper;
     private final AssetAccessService access;
+    private final AssetReferenceLookup references;
 
     @Transactional(readOnly = true)
     public List<AssetBookingResponse> listBookings(Long assetId, String status, LocalDateTime fromTime, LocalDateTime toTime) {
@@ -146,6 +147,9 @@ public class AssetBookingService {
         // để tránh mạo danh + hỏng audit trail. Tài khoản chưa liên kết nhân viên thì không được đặt.
         if (callerEmployeeId == null) {
             throw new AccessDeniedException("Tài khoản chưa liên kết nhân viên nên không thể đặt phòng");
+        }
+        if (req.departmentId() != null && references.departmentName(req.departmentId()) == null) {
+            throw new IllegalArgumentException("Phòng ban đã chọn không tồn tại");
         }
         AssetItem assetItem = findBookableAsset(req.assetCode());
         // Khoá bi quan hàng asset: serialize các lượt tạo booking đồng thời cùng phòng (chống đặt trùng do race).

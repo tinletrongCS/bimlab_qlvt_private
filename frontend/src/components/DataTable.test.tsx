@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { DataTable } from "./DataTable";
 
 const columns = [{ key: "name", title: "Tên", render: (item: { name: string }) => item.name }];
@@ -47,5 +47,48 @@ describe("DataTable", () => {
     render(<DataTable columns={columns} data={[]} emptyText="Trống" pagination={false} />);
     expect(screen.getByText("Trống")).toBeVisible();
     expect(screen.queryByLabelText("Số dòng mỗi trang")).not.toBeInTheDocument();
+  });
+
+  it("selects individual rows and all rows on the current page", () => {
+    const onChange = vi.fn();
+    const selectedKeys = new Set<string | number>(["Dòng 1"]);
+    const { rerender } = render(
+      <DataTable
+        columns={columns}
+        data={rows}
+        emptyText="Trống"
+        getRowKey={(item) => item.name}
+        selection={{ selectedKeys, onChange, getLabel: (item) => item.name }}
+      />,
+    );
+
+    const selectPage = screen
+      .getByTitle("Chọn các dòng trên trang hiện tại")
+      .querySelector("input") as HTMLInputElement;
+    expect(selectPage.indeterminate).toBe(true);
+    fireEvent.click(screen.getByTitle("Chọn Dòng 2").querySelector("input") as HTMLInputElement);
+    expect(onChange).toHaveBeenLastCalledWith(new Set(["Dòng 1", "Dòng 2"]));
+    fireEvent.click(screen.getByText("Dòng 3").closest("tr") as HTMLTableRowElement);
+    expect(onChange).toHaveBeenLastCalledWith(new Set(["Dòng 1", "Dòng 3"]));
+
+    fireEvent.click(selectPage);
+    const allVisible = onChange.mock.calls.at(-1)?.[0] as Set<string | number>;
+    expect(allVisible).toHaveLength(10);
+
+    rerender(
+      <DataTable
+        columns={columns}
+        data={rows}
+        emptyText="Trống"
+        getRowKey={(item) => item.name}
+        selection={{ selectedKeys: allVisible, onChange, getLabel: (item) => item.name }}
+      />,
+    );
+    fireEvent.click(
+      screen
+        .getByTitle("Chọn các dòng trên trang hiện tại")
+        .querySelector("input") as HTMLInputElement,
+    );
+    expect(onChange).toHaveBeenLastCalledWith(new Set());
   });
 });

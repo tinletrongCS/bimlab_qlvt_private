@@ -17,10 +17,10 @@ export function projectLabel(project?: ProjectLite): string {
   return project.code ? `${project.code} · ${project.name}` : project.name;
 }
 
-export function readError(error: unknown): string {
+export function readError(error: unknown, fallback = "Không thể xử lý yêu cầu"): string {
   if (typeof error === "object" && error && "response" in error) {
     const response = (error as { response?: { data?: { message?: string } } }).response;
-    return response?.data?.message || "Không thể xử lý yêu cầu";
+    return response?.data?.message || fallback;
   }
-  return "Không thể xử lý yêu cầu";
+  return fallback;
 }

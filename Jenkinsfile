@@ -190,6 +190,10 @@ BUILD_NUMBER=${env.BUILD_NUMBER ?: ''}
         sh '''
           set -eu
           IMAGE="bimlab-ci/bimlab-asset-service:$IMAGE_TAG"
+          # Cổng đọc từ application.yml — smoke không được tự bịa cổng riêng; đổi server.port
+          # mà quên smoke thì trước đây smoke gọi 8086 cứng, đỏ oan (hoặc xanh oan).
+          APP_PORT=$(awk '/^server:/ { getline; print $2; exit }' asset-service/src/main/resources/application.yml)
+          [ -n "$APP_PORT" ] || { echo "[smoke] khong doc duoc server.port tu application.yml"; exit 1; }
           SUF="$IMAGE_TAG"
           NET="smoke-qlvt-$SUF"; PG="smoke-pg-$SUF"; MINIO="smoke-minio-$SUF"; APP="smoke-app-$SUF"
           CURL="curlimages/curl:latest"
@@ -216,7 +220,7 @@ BUILD_NUMBER=${env.BUILD_NUMBER ?: ''}
           echo "[smoke] poll /actuator/health"
           ok=false
           for i in $(seq 1 40); do
-            body=$(docker run --rm --network "$NET" "$CURL" -sf "http://$APP:8086/actuator/health" 2>/dev/null || true)
+            body=$(docker run --rm --network "$NET" "$CURL" -sf "http://$APP:$APP_PORT/actuator/health" 2>/dev/null || true)
             case "$body" in *'"status":"UP"'*) ok=true; break;; esac
             running=$(docker inspect -f '{{.State.Running}}' "$APP" 2>/dev/null || echo false)
             if [ "$running" != "true" ]; then echo "[smoke] app thoat som:"; docker logs --tail 60 "$APP"; exit 1; fi
@@ -280,9 +284,24 @@ BUILD_NUMBER=${env.BUILD_NUMBER ?: ''}
       }
     }
 
+    stage('Production approval'){
+      when { expression {env.BRANCH_NAME == 'production'} }
+      steps{
+        script {
+          input message: "Deploy QLVT ${env.IMAGE_TAG} to Production?", ok: 'Deploy'
+          env.PRODUCTION_APPROVED = 'true' 
+        }
+      }
+    }
+
     stage('Deploy production (local /opt/bimlab)') {
       when { expression { env.BRANCH_NAME == 'production' } }
       steps {
+        script{
+          if(env.PRODUCTION_APPROVED != 'true'){
+            error('Production deployment requires approval.')
+          }
+        }
         sh '''
           set -eu
           docker run --rm \
@@ -297,15 +316,6 @@ BUILD_NUMBER=${env.BUILD_NUMBER ?: ''}
               sh deploy/ci-deploy.sh /opt/bimlab/qlvt "$PWD"
             '
         '''
-      }
-    }
-
-    stage('Production approval') {
-      when {
-        expression { return params.DEPLOY_TARGET == 'production' }
-      }
-      steps {
-        input message: "Deploy QLVT ${env.IMAGE_TAG} to PRODUCTION?", ok: 'Deploy'
       }
     }
 

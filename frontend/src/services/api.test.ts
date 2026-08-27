@@ -165,6 +165,10 @@ describe("asset api client", () => {
       client.createAssetCatalogItem(payload),
       client.updateAssetCatalogItem(1, payload),
       client.deactivateAssetCatalogItem(1),
+      client.loadAssetsByCatalogItem(1),
+      client.unassignAssetCatalogItem(1, 2),
+      client.unassignAssetCatalogItems(1, { assetIds: [2, 3] }),
+      client.deleteAssetCatalogItemPermanently(1),
       client.loadDepreciation(1),
       client.disposeAsset(1, payload),
       client.loadSubscriptions(),
@@ -203,6 +207,12 @@ describe("asset api client", () => {
       client.checkOutAssetBooking(1, payload),
       client.cancelAssetBooking(1, payload),
       client.loadEmployees(),
+      client.loadAuthAccounts(),
+      client.loadAssetPermissionMeta(),
+      client.createAssetPermission({ key: "asset_export", label: "Xuất tài sản" }),
+      client.loadAssetUserPermissions(7),
+      client.updateAssetUserPermissions(7, ["asset_access"], 2),
+      client.resetAssetUserPermissions(7, 3),
       client.loadDepartments(),
       client.loadWorkSites(),
       client.loadProjects(),
@@ -213,6 +223,17 @@ describe("asset api client", () => {
     });
     expect(mocks.api.post).toHaveBeenCalledWith("/asset/bookings/1/check-in");
     expect(mocks.api.get).toHaveBeenCalledWith("/asset/transfer");
+    expect(mocks.api.get).toHaveBeenCalledWith("/asset/catalog-items/1/assets");
+    expect(mocks.api.get).toHaveBeenCalledWith("/roles/users/7/asset-permissions");
+    expect(mocks.api.put).toHaveBeenCalledWith("/roles/users/7/asset-permissions", {
+      permissions: ["asset_access"],
+      version: 2,
+    });
+    expect(mocks.api.delete).toHaveBeenCalledWith("/asset/catalog-items/1/assets/2");
+    expect(mocks.api.post).toHaveBeenCalledWith("/asset/catalog-items/1/assets/unassign", {
+      assetIds: [2, 3],
+    });
+    expect(mocks.api.delete).toHaveBeenCalledWith("/asset/catalog-items/1/permanent");
     expect(mocks.api.post).toHaveBeenCalledWith("/asset/transfer", payload);
     expect(mocks.api.post).toHaveBeenCalledWith("/asset/transfer/upload", expect.any(FormData), {
       headers: { "Content-Type": "multipart/form-data" },

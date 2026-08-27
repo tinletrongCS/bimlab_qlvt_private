@@ -13,14 +13,17 @@ import {
   FiHelpCircle,
   FiLayers,
   FiLogOut,
+  FiMail,
   FiMenu,
   FiRefreshCw,
   FiRepeat,
   FiSearch,
+  FiShield,
   FiShoppingCart,
   FiTool,
   FiX,
 } from "react-icons/fi";
+import { SiGooglemaps } from "react-icons/si";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { CrudForm } from "../components/forms/CrudForm";
 import { LoadingSkeleton } from "../components/LoadingSkeleton";
@@ -28,6 +31,7 @@ import { UserAvatar } from "../components/UserAvatar";
 import { useActions } from "../contexts/ActionsContext";
 import { useAppData } from "../contexts/AppDataContext";
 import { useAuth } from "../contexts/AuthContext";
+import { useNavigationGuard } from "../contexts/NavigationGuardContext";
 import type { Permission } from "../services/types";
 
 interface NavItem {
@@ -114,6 +118,14 @@ const NAV_GROUPS: NavGroup[] = [
     children: [],
   },
   {
+    key: "system",
+    to: "/asset-permissions",
+    label: "Phân quyền",
+    icon: <FiShield />,
+    permission: "sys_roles",
+    children: [],
+  },
+  {
     key: "help",
     to: "/help",
     label: "Hướng dẫn sử dụng",
@@ -140,6 +152,43 @@ function HighlightedLabel({ label, query }: { label: string; query: string }) {
       <mark>{label.slice(index, index + query.length)}</mark>
       {label.slice(index + query.length)}
     </>
+  );
+}
+
+export function AppFooter() {
+  return (
+    <footer className="app-footer">
+      <div className="app-footer-brand">
+        <div className="app-footer-brand-copy">
+          <strong>Hệ thống quản lý tài sản</strong>
+          <span>© 2026 Bản quyền thuộc về Công ty CP BIMLab Bách Khoa</span>
+        </div>
+      </div>
+      <address className="app-footer-contact">
+        <div className="app-footer-contact-copy">
+          <a
+            className="app-footer-map"
+            href="https://www.google.com/maps/search/?api=1&query=ResGreen+Tower%2C+7A+Tho%E1%BA%A1i+Ng%E1%BB%8Dc+H%E1%BA%A7u%2C+T%C3%A2n+Ph%C3%BA%2C+TP.+H%E1%BB%93+Ch%C3%AD+Minh"
+            target="_blank"
+            rel="noreferrer"
+          >
+            <SiGooglemaps aria-hidden="true" />
+            <span>
+              Một phần tầng 4, ResGreen Tower, 7A Thoại Ngọc Hầu, Phường Tân Phú, TP. Hồ Chí Minh
+            </span>
+          </a>
+          <a href="mailto:bimlab.hcmut@gmail.com">
+            <FiMail aria-hidden="true" /> <span>bimlab.hcmut@gmail.com</span>
+          </a>
+        </div>
+        <iframe
+          title="Bản đồ Công ty CP BIMLab Bách Khoa"
+          src="https://www.google.com/maps?q=ResGreen%20Tower%2C%207A%20Tho%E1%BA%A1i%20Ng%E1%BB%8Dc%20H%E1%BA%A7u%2C%20T%C3%A2n%20Ph%C3%BA%2C%20TP.%20H%E1%BB%93%20Ch%C3%AD%20Minh&output=embed"
+          loading="lazy"
+          referrerPolicy="no-referrer-when-downgrade"
+        />
+      </address>
+    </footer>
   );
 }
 
@@ -178,6 +227,8 @@ export function AppShell() {
     else if (location.pathname.startsWith("/vendors")) title = "Nhà cung cấp | BIMLab QLVT";
     else if (location.pathname.startsWith("/contracts")) title = "Hợp đồng | BIMLab QLVT";
     else if (location.pathname.startsWith("/subscriptions")) title = "Gói đăng ký | BIMLab QLVT";
+    else if (location.pathname.startsWith("/asset-permissions"))
+      title = "Phân quyền QLVT | BIMLab QLVT";
     else if (location.pathname.startsWith("/help")) title = "Hướng dẫn sử dụng | BIMLab QLVT";
     document.title = title;
   }, [location.pathname]);
@@ -247,6 +298,35 @@ export function AppShell() {
 
   const toggleGroup = (key: string) => setOpenGroups((prev) => ({ ...prev, [key]: !prev[key] }));
 
+  const { guard, setGuard } = useNavigationGuard();
+  const [showExitModal, setShowExitModal] = useState(false);
+  const [pendingNavAction, setPendingNavAction] = useState<(() => void) | null>(null);
+
+  const handleGuardedNavigation = (targetUrl: string, event?: React.MouseEvent) => {
+    setMobileOpen(false);
+    if (guard?.isDirty && location.pathname !== targetUrl) {
+      event?.preventDefault();
+      setPendingNavAction(() => () => navigate(targetUrl));
+      setShowExitModal(true);
+      return;
+    }
+  };
+
+  const handleConfirmExit = () => {
+    guard?.onConfirm?.();
+    setGuard(null);
+    setShowExitModal(false);
+    if (pendingNavAction) {
+      pendingNavAction();
+      setPendingNavAction(null);
+    }
+  };
+
+  const handleCancelExit = () => {
+    setShowExitModal(false);
+    setPendingNavAction(null);
+  };
+
   const handleLogout = async () => {
     // Theo HRM: đợi SSO logout xử lý; nếu Keycloak không redirect thì fallback về /login.
     await logout();
@@ -265,7 +345,19 @@ export function AppShell() {
       )}
 
       <aside className={`sidebar ${mobileOpen ? "open" : ""} ${sidebarCompact ? "compact" : ""}`}>
-        <button type="button" className="brand" onClick={() => window.location.reload()}>
+        <button
+          type="button"
+          className="brand"
+          onClick={(e) => {
+            if (guard?.isDirty) {
+              e.preventDefault();
+              setPendingNavAction(() => () => window.location.reload());
+              setShowExitModal(true);
+              return;
+            }
+            window.location.reload();
+          }}
+        >
           {sidebarCompact ? (
             <span className="brand-compact-mark" aria-hidden="true">
               <img src="/simple.png" alt="" />
@@ -315,7 +407,7 @@ export function AppShell() {
                   key={item.key}
                   title={sidebarCompact ? item.label : undefined}
                   className={() => (isGroupActive ? "active" : "")}
-                  onClick={() => setMobileOpen(false)}
+                  onClick={(e) => handleGuardedNavigation(item.to, e)}
                 >
                   {item.icon}
                   {!sidebarCompact && (
@@ -351,7 +443,7 @@ export function AppShell() {
                         to={child.to}
                         end
                         className={({ isActive }) => (isActive ? "active" : "")}
-                        onClick={() => setMobileOpen(false)}
+                        onClick={(e) => handleGuardedNavigation(child.to, e)}
                       >
                         <span>
                           <HighlightedLabel label={child.label} query={normalizedSidebarSearch} />
@@ -391,7 +483,15 @@ export function AppShell() {
           <button
             type="button"
             className="logout-button"
-            onClick={handleLogout}
+            onClick={(e) => {
+              if (guard?.isDirty) {
+                e.preventDefault();
+                setPendingNavAction(() => () => void handleLogout());
+                setShowExitModal(true);
+                return;
+              }
+              void handleLogout();
+            }}
             disabled={authSubmitting}
             title="Đăng xuất"
           >
@@ -430,7 +530,11 @@ export function AppShell() {
             <nav aria-label="Điều hướng nhóm chức năng QLVT">
               <span className="section-tabs-parent">{currentGroup?.label}:</span>
               {subnavItems.map((item) => (
-                <NavLink key={item.to} to={item.to}>
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  onClick={(e) => handleGuardedNavigation(item.to, e)}
+                >
                   {item.label}
                 </NavLink>
               ))}
@@ -445,9 +549,152 @@ export function AppShell() {
             </button>
           </div>
         )}
-        {error && <div className="alert">{error}</div>}
-        {loading ? <LoadingSkeleton variant="content" /> : <Outlet />}
+        <div className="app-content-body">
+          {error && <div className="alert">{error}</div>}
+          {loading ? <LoadingSkeleton variant="content" /> : <Outlet />}
+        </div>
+        <AppFooter />
       </section>
+
+      {/* Modal xác nhận thoát khi đang thao tác dở dang (Tối giản, không bo góc) */}
+      {showExitModal && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(15, 23, 42, 0.45)",
+            backdropFilter: "blur(4px)",
+            WebkitBackdropFilter: "blur(4px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "16px",
+            zIndex: 9999,
+          }}
+        >
+          <div
+            style={{
+              background: "#ffffff",
+              borderRadius: "0px",
+              boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)",
+              maxWidth: "420px",
+              width: "100%",
+              overflow: "hidden",
+              border: "1px solid #e2e8f0",
+              animation: "fadeIn 0.15s ease",
+            }}
+          >
+            <div style={{ padding: "32px 28px 24px", textAlign: "center" }}>
+              {/* Icon Cảnh báo Tối giản */}
+              <div
+                style={{
+                  margin: "0 auto 16px",
+                  width: "48px",
+                  height: "48px",
+                  borderRadius: "50%",
+                  background: "#fef2f2",
+                  color: "#dc2626",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  style={{ width: "24px", height: "24px" }}
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                  />
+                </svg>
+              </div>
+
+              {/* Nội dung văn bản */}
+              <h2
+                style={{
+                  fontSize: "18px",
+                  fontWeight: 700,
+                  color: "#0f172a",
+                  margin: "0 0 8px",
+                  letterSpacing: "-0.01em",
+                }}
+              >
+                Rời khỏi trang?
+              </h2>
+              <p
+                style={{
+                  fontSize: "13.5px",
+                  color: "#475569",
+                  lineHeight: "1.6",
+                  margin: 0,
+                }}
+              >
+                Bạn đang có{" "}
+                <span style={{ fontWeight: 600, color: "#2563eb" }}>
+                  {guard?.countLabel || "thông tin"}
+                </span>{" "}
+                chưa được tạo phiếu. Mọi thay đổi chưa lưu sẽ bị mất.
+              </p>
+            </div>
+
+            {/* Hành động */}
+            <div
+              style={{
+                display: "flex",
+                gap: "10px",
+                padding: "0 24px 24px",
+              }}
+            >
+              <button
+                type="button"
+                onClick={handleCancelExit}
+                style={{
+                  flex: 1,
+                  padding: "10px 16px",
+                  fontSize: "13.5px",
+                  fontWeight: 500,
+                  color: "#334155",
+                  background: "#ffffff",
+                  border: "1px solid #cbd5e1",
+                  borderRadius: "0px",
+                  cursor: "pointer",
+                  transition: "background-color 0.15s ease",
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = "#f8fafc")}
+                onMouseLeave={(e) => (e.currentTarget.style.background = "#ffffff")}
+              >
+                Tiếp tục chỉnh sửa
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmExit}
+                style={{
+                  flex: 1,
+                  padding: "10px 16px",
+                  fontSize: "13.5px",
+                  fontWeight: 600,
+                  color: "#ffffff",
+                  background: "#dc2626",
+                  border: "1px solid #dc2626",
+                  borderRadius: "0px",
+                  cursor: "pointer",
+                  transition: "background-color 0.15s ease",
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = "#b91c1c")}
+                onMouseLeave={(e) => (e.currentTarget.style.background = "#dc2626")}
+              >
+                Xác nhận thoát
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <CrudForm />
     </main>

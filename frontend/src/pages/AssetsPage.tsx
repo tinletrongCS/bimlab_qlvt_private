@@ -2,6 +2,7 @@ import QRCode from "qrcode";
 import {
   type ChangeEvent,
   type CSSProperties,
+  type FocusEvent,
   type MouseEvent,
   type ReactNode,
   useEffect,
@@ -12,15 +13,19 @@ import {
 import toast from "react-hot-toast";
 import {
   FiBold,
+  FiCheckSquare,
   FiChevronLeft,
   FiChevronRight,
   FiChevronsLeft,
   FiChevronsRight,
   FiClock,
   FiDownload,
+  FiEdit2,
   FiEye,
   FiFileText,
+  FiFolderPlus,
   FiGrid,
+  FiPrinter,
   FiRotateCcw,
   FiSearch,
   FiTrash2,
@@ -38,8 +43,9 @@ import {
   addAssetCategoryDropdowns,
   addCategoryReferenceSheet,
   addHierarchicalCategorySheet,
+  CATEGORY_REFERENCE_SHEET_NAME,
 } from "../lib/categoryExcel";
-import { employeeLabel, money, projectLabel } from "../lib/format";
+import { employeeLabel, money, projectLabel, readError } from "../lib/format";
 import {
   assignAssetCatalog,
   commitAssetImport,
@@ -53,6 +59,7 @@ import {
 } from "../services/api";
 import type {
   AssetCatalogItemListItem,
+  AssetCatalogType,
   AssetCategoryTree,
   AssetChangeLog,
   AssetImportCommitPayload,
@@ -69,11 +76,19 @@ type ImportMode = AssetImportCommitPayload["importMode"];
 type ImportPreviewFilter = "ALL" | "VALID" | "INVALID" | "WARNING";
 type AssetBulkAction = "status" | "move" | "assign" | "return" | "catalog" | "qr" | null;
 type AssetDetailView = "details" | "history";
+type BulkCatalogMode = "existing" | "change" | "new";
+type CatalogViewFilter = {
+  id: number | null;
+  name: string;
+};
 type AssetTableColumnId =
   | "asset"
   | "category"
-  | "catalog"
+  | "catalogName"
+  | "catalogCode"
   | "serialNumber"
+  | "contractNumber"
+  | "invoiceNumber"
   | "status"
   | "purchaseCost"
   | "originalCost"
@@ -132,6 +147,16 @@ function normalizeRichTextColor(value: string) {
     RICH_TEXT_COLORS.find((color) => color.value === normalized || color.rgb === normalized)
       ?.value || ""
   );
+}
+
+function isInteractiveRowClick(target: EventTarget): boolean {
+  return target instanceof Element
+    ? Boolean(
+        target.closest(
+          "button, a, input, label, select, textarea, [role='button'], [role='menuitem']",
+        ),
+      )
+    : false;
 }
 
 function sanitizeRichText(value: string) {
@@ -504,9 +529,12 @@ const ASSET_TABLE_STORAGE_KEY = "qlvt.assetList.tableColumns.v1";
 const ASSET_TABLE_COLUMNS: AssetTableColumnConfig[] = [
   { id: "asset", label: "Tài sản", locked: true, defaultVisible: true },
   { id: "category", label: "Loại", locked: true, defaultVisible: true },
-  { id: "catalog", label: "Danh mục", defaultVisible: true },
+  { id: "catalogName", label: "Tên danh mục", defaultVisible: true },
+  { id: "catalogCode", label: "Mã danh mục", defaultVisible: true },
   { id: "categoryCode", label: "Mã loại", defaultVisible: false },
   { id: "serialNumber", label: "Serial/MAC", defaultVisible: false },
+  { id: "contractNumber", label: "Số hợp đồng", defaultVisible: true },
+  { id: "invoiceNumber", label: "Số hóa đơn", defaultVisible: true },
   { id: "status", label: "Trạng thái", defaultVisible: true },
   { id: "purchaseCost", label: "Giá trị mua", defaultVisible: true },
   { id: "originalCost", label: "Nguyên giá", defaultVisible: false },
@@ -523,9 +551,12 @@ const ASSET_TABLE_COLUMNS: AssetTableColumnConfig[] = [
 const ASSET_TABLE_COLUMN_WIDTHS: Record<AssetTableColumnId, number> = {
   asset: 190,
   category: 150,
-  catalog: 190,
+  catalogName: 190,
+  catalogCode: 150,
   categoryCode: 150,
   serialNumber: 160,
+  contractNumber: 150,
+  invoiceNumber: 150,
   status: 118,
   purchaseCost: 138,
   originalCost: 138,
@@ -604,6 +635,24 @@ function readAssetColumnPreferences() {
   }
 }
 
+function readCatalogViewFilter(): CatalogViewFilter {
+  if (typeof window === "undefined") return { id: null, name: "" };
+
+  const params = new URLSearchParams(window.location.search);
+  const parsedId = Number(params.get("catalogItemId"));
+  return {
+    id: Number.isInteger(parsedId) && parsedId > 0 ? parsedId : null,
+    name: params.get("catalogName")?.trim() || "",
+  };
+}
+
+function revealFullFieldValue(event: MouseEvent<HTMLElement> | FocusEvent<HTMLElement>) {
+  const field = event.target;
+  if (field instanceof HTMLInputElement || field instanceof HTMLTextAreaElement) {
+    field.title = field.value;
+  }
+}
+
 function statusLabel(status: string) {
   const labels: Record<string, string> = {
     ALL: "Tất cả trạng thái",
@@ -670,6 +719,8 @@ function buildAssetPayload(item: AssetItem): AssetPayload {
     category: item.assetCategory?.name || item.category || "",
     serialNumber: item.serialNumber || "",
     source: item.source || "",
+    contractNumber: item.contractNumber || "",
+    invoiceNumber: item.invoiceNumber || "",
     vendorId: item.vendor?.id ?? null,
     assignedEmployeeId: item.assignedEmployeeId ?? null,
     departmentId: item.departmentId ?? null,
@@ -728,6 +779,19 @@ function classLabel(value?: string) {
     MULTI_USE: "Dùng nhiều lần",
   };
   return labels[value] || value;
+}
+
+function catalogTypeForAssetClass(assetClass?: string): AssetCatalogType {
+  return assetClass === "TOOL_EQUIPMENT" ? "TOOL" : "ASSET";
+}
+
+function catalogAssignmentLabel(
+  item: Pick<AssetCatalogItemListItem, "itemCode" | "name"> &
+    Partial<Pick<AssetCatalogItemListItem, "categoryName" | "categoryCode">> & {
+      category?: { name?: string; code?: string } | null;
+    },
+) {
+  return `${item.itemCode} - ${item.name}`;
 }
 
 function highlightSearchText(value: string, query: string) {
@@ -998,9 +1062,16 @@ function readDate(row: SheetRow, index: number): string | undefined {
   return value;
 }
 
-function normalizeAssetClass(value: string): string | undefined {
+function normalizeAssetClass(
+  value: string,
+  referenceCodes: Map<string, string> = new Map(),
+): string | undefined {
   const text = normalize(value);
   if (!text) return undefined;
+  const referencedCode = referenceCodes.get(text);
+  if (referencedCode === "FIXED_ASSET" || referencedCode === "TOOL_EQUIPMENT") {
+    return referencedCode;
+  }
   if (text.includes("ccdc") || text.includes("cong cu")) return "TOOL_EQUIPMENT";
   if (text.includes("tscd") || text.includes("tai san co dinh")) return "FIXED_ASSET";
   const upper = value.trim().toUpperCase();
@@ -1009,9 +1080,16 @@ function normalizeAssetClass(value: string): string | undefined {
   return value.trim();
 }
 
-function normalizeClassType(value: string): string | undefined {
+function normalizeClassType(
+  value: string,
+  referenceCodes: Map<string, string> = new Map(),
+): string | undefined {
   const text = normalize(value);
   if (!text) return undefined;
+  const referencedCode = referenceCodes.get(text);
+  if (["TANGIBLE", "INTANGIBLE", "SINGLE_USE", "MULTI_USE"].includes(referencedCode ?? "")) {
+    return referencedCode;
+  }
   if (text.includes("vo hinh") || text.includes("intangible")) return "INTANGIBLE";
   if (text.includes("huu hinh") || text.includes("tangible")) return "TANGIBLE";
   if (text.includes("1 lan") || text.includes("mot lan") || text.includes("single")) {
@@ -1042,6 +1120,33 @@ function extractCategoryCode(value: string): string | undefined {
 async function parseAssetImportFile(file: File): Promise<AssetImportRowPayload[]> {
   const XLSX = await import("xlsx");
   const workbook = XLSX.read(await file.arrayBuffer(), { type: "array", cellDates: false });
+  const referenceCodes = new Map<string, string>();
+  const referenceSheetName = workbook.SheetNames.find(
+    (name) => normalize(name) === normalize(CATEGORY_REFERENCE_SHEET_NAME),
+  );
+  if (referenceSheetName) {
+    const referenceRows = XLSX.utils.sheet_to_json<SheetRow>(workbook.Sheets[referenceSheetName], {
+      header: 1,
+      defval: "",
+      raw: true,
+    });
+    const referenceHeaderIndex = referenceRows.findIndex((row) => {
+      const values = row.map((cell) => normalize(cellText(cell)));
+      return values.some((value) => value.startsWith("ma/gia tri")) && values.includes("dien giai");
+    });
+    if (referenceHeaderIndex >= 0) {
+      const referenceHeaders = referenceRows[referenceHeaderIndex].map((cell) =>
+        normalize(cellText(cell)),
+      );
+      const codeIndex = referenceHeaders.findIndex((header) => header.startsWith("ma/gia tri"));
+      const labelIndex = referenceHeaders.indexOf("dien giai");
+      referenceRows.slice(referenceHeaderIndex + 1).forEach((row) => {
+        const code = readText(row, codeIndex).toUpperCase();
+        const label = normalize(readText(row, labelIndex));
+        if (code && label) referenceCodes.set(label, code);
+      });
+    }
+  }
   const sheetName = workbook.SheetNames.find((name) => normalize(name) === "thiet bi");
   if (!sheetName) throw new Error("Không tìm thấy sheet Thiết bị.");
 
@@ -1106,7 +1211,7 @@ async function parseAssetImportFile(file: File): Promise<AssetImportRowPayload[]
   let lastInvoiceNumber = "";
   for (let index = dataStartIndex; index < rows.length; index += 1) {
     const row = rows[index];
-    const assetClass = normalizeAssetClass(readText(row, assetClassIndex));
+    const assetClass = normalizeAssetClass(readText(row, assetClassIndex), referenceCodes);
     const name = readText(row, nameIndex);
     const categoryCode = extractCategoryCode(readText(row, categoryIndex));
     const model = readText(row, modelIndex);
@@ -1139,7 +1244,7 @@ async function parseAssetImportFile(file: File): Promise<AssetImportRowPayload[]
       invoiceNumber: invoiceNumber || lastInvoiceNumber || undefined,
       name: name || undefined,
       assetClass,
-      classType: normalizeClassType(readText(row, classTypeIndex)),
+      classType: normalizeClassType(readText(row, classTypeIndex), referenceCodes),
       categoryCode,
       departmentName: readText(row, departmentIndex) || undefined,
       siteName: readText(row, siteIndex) || undefined,
@@ -1246,42 +1351,12 @@ async function downloadAssetImportTemplate(categories: AssetCategoryTree[]) {
     "Ghi chú",
     "Đã nhập nhà cung cấp",
   ];
-  const examples = [
-    1,
-    "ASUS-VY279HGR",
-    "HD-2026-001",
-    "0000123",
-    "Màn hình ASUS",
-    "Màn hình 27 inch, Full HD",
-    "Tài sản cố định",
-    "Hữu hình",
-    "",
-    "VY279HGR",
-    "SN-MAC-001",
-    "BIMLab",
-    "CNTT - Marketing",
-    "",
-    "VN",
-    "2026-01-05",
-    2,
-    6000000,
-    12000000,
-    960000,
-    24,
-    3,
-    "Đang sử dụng",
-    "",
-    "",
-    "",
-  ];
-
   sheet.addRow(["DANH MỤC THIẾT BỊ"]);
   sheet.addRow([
     "Mỗi dòng là một nhóm tài sản cùng thông tin; hệ thống chỉ bung theo Số lượng khi xác nhận import và tự sinh mã riêng cho từng tài sản. Cột Nhà cung cấp và Đã nhập nhà cung cấp chỉ để đối chiếu, không được nhập vào hệ thống.",
   ]);
   sheet.addRow([]);
   sheet.addRow(headers);
-  sheet.addRow(examples);
   sheet.addRow([]);
 
   sheet.mergeCells("A1:Z1");
@@ -1310,18 +1385,12 @@ async function downloadAssetImportTemplate(categories: AssetCategoryTree[]) {
     };
   });
 
-  sheet.getRow(5).eachCell((cell) => {
-    cell.font = { name: "Calibri", size: 13, color: { argb: "FF111827" } };
-    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFF8FAFC" } };
-    cell.alignment = { vertical: "middle", wrapText: true };
-  });
-
   const widths = [
     8, 18, 20, 16, 30, 38, 24, 26, 22, 18, 18, 20, 22, 26, 14, 16, 12, 20, 20, 14, 20, 18, 18, 20,
     30, 22,
   ];
   widths.forEach((width, index) => {
-    const longestLine = [headers[index], examples[index]]
+    const longestLine = [headers[index]]
       .flatMap((value) => String(value ?? "").split("\n"))
       .reduce((longest, line) => Math.max(longest, line.length), 0);
     sheet.getColumn(index + 1).width = Math.min(42, Math.max(width, longestLine + 2));
@@ -1406,15 +1475,6 @@ async function downloadAssetImportTemplate(categories: AssetCategoryTree[]) {
   addCategoryReferenceSheet(workbook, { categories });
   addHierarchicalCategorySheet(workbook, categories);
   addAssetCategoryDropdowns(workbook, sheet, categories);
-  await sheet.protect("", {
-    selectLockedCells: true,
-    selectUnlockedCells: true,
-    formatCells: false,
-    formatColumns: false,
-    formatRows: false,
-    sort: true,
-    autoFilter: true,
-  });
 
   const buffer = await workbook.xlsx.writeBuffer();
   const blob = new Blob([buffer], {
@@ -1424,7 +1484,9 @@ async function downloadAssetImportTemplate(categories: AssetCategoryTree[]) {
   const link = document.createElement("a");
   link.href = url;
   link.download = "mau_import_thiet_bi_bimlab_v2.xlsx";
+  document.body.appendChild(link);
   link.click();
+  link.remove();
   URL.revokeObjectURL(url);
 }
 
@@ -1442,6 +1504,8 @@ export function AssetsPage() {
   } = useAppData();
   const { openModal } = useActions();
   const [query, setQuery] = useState("");
+  const [catalogViewFilter, setCatalogViewFilter] =
+    useState<CatalogViewFilter>(readCatalogViewFilter);
   const [statusFilter, setStatusFilter] = useState<AssetStatusFilter>("ALL");
   const [categoryPath, setCategoryPath] = useState<string[]>([]);
   const [expandedAssetCategoryIds, setExpandedAssetCategoryIds] = useState<Set<number>>(
@@ -1468,6 +1532,8 @@ export function AssetsPage() {
   const [bulkDepartmentId, setBulkDepartmentId] = useState("");
   const [bulkEmployeeId, setBulkEmployeeId] = useState("");
   const [bulkCatalogItemId, setBulkCatalogItemId] = useState("");
+  const [bulkNewCatalogName, setBulkNewCatalogName] = useState("");
+  const [bulkCatalogMode, setBulkCatalogMode] = useState<BulkCatalogMode>("existing");
   const [catalogItems, setCatalogItems] = useState<AssetCatalogItemListItem[] | null>(null);
   const [assetColumnOrder, setAssetColumnOrder] = useState<AssetTableColumnId[]>(
     () => readAssetColumnPreferences().order,
@@ -1515,7 +1581,9 @@ export function AssetsPage() {
   useEffect(() => {
     loadAssetCatalogItems()
       .then(setCatalogItems)
-      .catch(() => toast.error("Không tải được danh sách danh mục tài sản."));
+      .catch((error) =>
+        toast.error(readError(error, "Không tải được danh sách danh mục tài sản.")),
+      );
   }, []);
 
   useEffect(() => {
@@ -1586,6 +1654,14 @@ export function AssetsPage() {
     return counts;
   }, [assets, categoryDescendantIds, categoryDescendantCodes, categoryTree]);
 
+  const clearCatalogViewFilter = () => {
+    setCatalogViewFilter({ id: null, name: "" });
+    const url = new URL(window.location.href);
+    url.searchParams.delete("catalogItemId");
+    url.searchParams.delete("catalogName");
+    window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
+  };
+
   const resetAssetFilters = () => {
     setCategoryPath([]);
     setExpandedAssetCategoryIds(new Set());
@@ -1597,6 +1673,7 @@ export function AssetsPage() {
     setUseDateFrom("");
     setUseDateTo("");
     setValueFilter("ALL");
+    clearCatalogViewFilter();
     setAssetPage(1);
   };
 
@@ -1707,6 +1784,8 @@ export function AssetsPage() {
       const matchesEmployee =
         employeeFilter === "ALL" || asset.assignedEmployeeId === Number(employeeFilter);
       const matchesSource = sourceFilter === "ALL" || asset.source?.trim() === sourceFilter;
+      const matchesCatalog =
+        catalogViewFilter.id === null || asset.catalogItem?.id === catalogViewFilter.id;
       const assetUseDate = dateKey(asset.useDate);
       const matchesUseDateFrom = !useDateFrom || (assetUseDate && assetUseDate >= useDateFrom);
       const matchesUseDateTo = !useDateTo || (assetUseDate && assetUseDate <= useDateTo);
@@ -1724,7 +1803,11 @@ export function AssetsPage() {
         asset.category,
         asset.assetCategory?.name,
         asset.assetCategory?.code,
+        asset.catalogItem?.name,
+        asset.catalogItem?.itemCode,
         asset.serialNumber,
+        asset.contractNumber,
+        asset.invoiceNumber,
         asset.vendor?.name,
         employeeName(asset.assignedEmployeeId),
         departmentName(asset.departmentId),
@@ -1744,6 +1827,7 @@ export function AssetsPage() {
         matchesDepartment &&
         matchesEmployee &&
         matchesSource &&
+        matchesCatalog &&
         matchesUseDateFrom &&
         matchesUseDateTo &&
         matchesValue &&
@@ -1754,6 +1838,7 @@ export function AssetsPage() {
     assets,
     categoryDescendantIds,
     categoryDescendantCodes,
+    catalogViewFilter.id,
     departments,
     employees,
     projects,
@@ -1807,15 +1892,87 @@ export function AssetsPage() {
     () => selectedAssets.reduce((sum, asset) => sum + Number(asset.purchaseCost || 0), 0),
     [selectedAssets],
   );
-  const selectedCategoryId = selectedAssets[0]?.assetCategory?.id ?? null;
+  const selectedAssetCategory = selectedAssets[0]?.assetCategory ?? null;
+  const selectedCategoryId = selectedAssetCategory?.id ?? null;
   const selectedAssetsShareName =
     selectedAssets.length > 0 &&
     selectedAssets.every((asset) => normalize(asset.name) === normalize(selectedAssets[0].name));
   const selectedAssetsShareCategory =
     selectedCategoryId !== null &&
     selectedAssets.every((asset) => asset.assetCategory?.id === selectedCategoryId);
+  const catalogAssignmentDisabled = !selectedAssetsShareName || !selectedAssetsShareCategory;
+  const selectedAssetName = normalize(selectedAssets[0]?.name || "");
+  const sameNameCategoryAssets = assets.filter(
+    (asset) =>
+      selectedAssetName !== "" &&
+      normalize(asset.name) === selectedAssetName &&
+      asset.assetCategory?.id === selectedCategoryId,
+  );
+  const canSelectSameNameAssets =
+    !catalogAssignmentDisabled && sameNameCategoryAssets.length > selectedAssets.length;
+  const selectedBulkCatalogType = catalogTypeForAssetClass(selectedAssetCategory?.assetClass);
   const compatibleBulkCatalogItems = (catalogItems || []).filter(
     (item) => item.active && item.categoryId === selectedCategoryId,
+  );
+  const catalogAssignmentLabelById = useMemo(
+    () => new Map((catalogItems || []).map((item) => [item.id, catalogAssignmentLabel(item)])),
+    [catalogItems],
+  );
+  const selectedBulkCatalogIds = new Set(
+    selectedAssets
+      .map((asset) => asset.catalogItem?.id)
+      .filter((id): id is number => typeof id === "number"),
+  );
+  const selectedCurrentBulkCatalogId =
+    selectedBulkCatalogIds.size === 1 ? String(Array.from(selectedBulkCatalogIds)[0]) : "";
+  const selectedAssetsHaveCatalog = selectedBulkCatalogIds.size > 0;
+  const selectedBulkCatalogGroups = useMemo(() => {
+    const groups = new Map<
+      string,
+      {
+        key: string;
+        name: string;
+        count: number;
+        categoryLabel: string;
+        catalogLabels: Set<string>;
+      }
+    >();
+    selectedAssets.forEach((asset) => {
+      const categoryLabel = asset.assetCategory
+        ? `${asset.assetCategory.name} (${asset.assetCategory.code})`
+        : asset.category || "Chưa có loại tài sản";
+      const key = `${normalize(asset.name)}|${asset.assetCategory?.id || asset.category || ""}`;
+      const current = groups.get(key);
+      const catalogLabel = asset.catalogItem
+        ? catalogAssignmentLabelById.get(asset.catalogItem.id) ||
+          catalogAssignmentLabel(asset.catalogItem)
+        : "Chưa gắn danh mục";
+      if (current) {
+        current.count += 1;
+        current.catalogLabels.add(catalogLabel);
+        return;
+      }
+      groups.set(key, {
+        key,
+        name: asset.name || "--",
+        count: 1,
+        categoryLabel,
+        catalogLabels: new Set([catalogLabel]),
+      });
+    });
+    return Array.from(groups.values()).map((group) => ({
+      key: group.key,
+      name: group.name,
+      count: group.count,
+      categoryLabel: group.categoryLabel,
+      catalogLabel:
+        group.catalogLabels.size === 1
+          ? Array.from(group.catalogLabels)[0]
+          : "Nhiều danh mục hiện tại",
+    }));
+  }, [catalogAssignmentLabelById, selectedAssets]);
+  const selectableBulkCatalogItems = compatibleBulkCatalogItems.filter(
+    (item) => !selectedBulkCatalogIds.has(item.id),
   );
 
   useEffect(() => {
@@ -1834,6 +1991,7 @@ export function AssetsPage() {
   useEffect(() => {
     if (selectedAssets.length === 0) {
       setBulkPanelAction(null);
+      setBulkNewCatalogName("");
     }
   }, [selectedAssets.length]);
 
@@ -1918,8 +2076,8 @@ export function AssetsPage() {
     if (catalogItems !== null) return;
     try {
       setCatalogItems(await loadAssetCatalogItems());
-    } catch {
-      toast.error("Không tải được danh sách danh mục tài sản.");
+    } catch (error) {
+      toast.error(readError(error, "Không tải được danh sách danh mục tài sản."));
     }
   };
 
@@ -1947,8 +2105,8 @@ export function AssetsPage() {
     setAssetHistoryError("");
     try {
       setAssetChangeHistory(await loadAssetChangeHistory(selectedAsset.id));
-    } catch {
-      setAssetHistoryError("Không tải được lịch sử chỉnh sửa của tài sản.");
+    } catch (error) {
+      setAssetHistoryError(readError(error, "Không tải được lịch sử chỉnh sửa của tài sản."));
     } finally {
       setAssetHistoryLoading(false);
     }
@@ -2013,8 +2171,8 @@ export function AssetsPage() {
       await reloadAssetList();
       setSelectedAsset(null);
       setAssetDraft(null);
-    } catch {
-      toast.error("Không cập nhật được tài sản.");
+    } catch (error) {
+      toast.error(readError(error, "Không cập nhật được tài sản."));
     } finally {
       setAssetSaving(false);
     }
@@ -2032,8 +2190,8 @@ export function AssetsPage() {
         return next;
       });
       await reloadAssetList();
-    } catch {
-      toast.error("Không xóa được tài sản.");
+    } catch (error) {
+      toast.error(readError(error, "Không xóa được tài sản."));
     }
   };
 
@@ -2044,6 +2202,11 @@ export function AssetsPage() {
       else next.add(id);
       return next;
     });
+  };
+
+  const handleAssetRowClick = (event: MouseEvent<HTMLTableRowElement>, id: number) => {
+    if (!assetMultiSelectMode || isInteractiveRowClick(event.target)) return;
+    toggleAssetSelected(id);
   };
 
   const toggleCurrentPageSelected = () => {
@@ -2067,6 +2230,14 @@ export function AssetsPage() {
     setBulkPanelAction(null);
   };
 
+  const handleSelectSameNameAssets = () => {
+    setSelectedAssetIds(new Set(sameNameCategoryAssets.map((asset) => asset.id)));
+    setBulkPanelAction(null);
+    toast.success(
+      `Đã chọn ${sameNameCategoryAssets.length} tài sản cùng tên và cùng loại trên toàn bộ danh sách.`,
+    );
+  };
+
   const handleBulkDeleteAssets = async () => {
     if (selectedAssets.length === 0 || bulkActionBusy) return;
     const confirmed = window.confirm(`Xóa ${selectedAssets.length} tài sản đã chọn?`);
@@ -2077,8 +2248,8 @@ export function AssetsPage() {
       toast.success(`Đã xóa ${selectedAssets.length} tài sản.`);
       clearSelectedAssets();
       await reloadAssetList();
-    } catch {
-      toast.error("Không xóa được một số tài sản đã chọn.");
+    } catch (error) {
+      toast.error(readError(error, "Không xóa được một số tài sản đã chọn."));
     } finally {
       setBulkActionBusy(false);
     }
@@ -2093,7 +2264,9 @@ export function AssetsPage() {
     }
     setBulkPanelAction((current) => (current === action ? null : action));
     if (action === "catalog") {
-      setBulkCatalogItemId("");
+      setBulkCatalogItemId(selectedCurrentBulkCatalogId);
+      setBulkNewCatalogName(selectedAssets[0]?.name || "");
+      setBulkCatalogMode("existing");
       void ensureCatalogItems();
     }
     if (action === "move" || action === "assign") {
@@ -2120,8 +2293,8 @@ export function AssetsPage() {
         });
         return next;
       });
-    } catch {
-      toast.error(`Không cập nhật được ${count} tài sản đã chọn.`);
+    } catch (error) {
+      toast.error(readError(error, `Không cập nhật được ${count} tài sản đã chọn.`));
     } finally {
       setBulkActionBusy(false);
     }
@@ -2135,18 +2308,74 @@ export function AssetsPage() {
   };
 
   const handleBulkAssignCatalog = async () => {
-    if (!bulkCatalogItemId || !selectedAssetsShareName || !selectedAssetsShareCategory) return;
+    if (!bulkCatalogItemId || catalogAssignmentDisabled) return;
+    if (selectedAssetsHaveCatalog && bulkCatalogMode !== "change") {
+      toast.error("Tài sản đã có danh mục, chỉ được đổi sang danh mục cùng mã loại.");
+      return;
+    }
+    const catalogItemId = Number(bulkCatalogItemId);
+    const selectedCatalogItem = (catalogItems || []).find((item) => item.id === catalogItemId);
+    if (
+      !selectedCatalogItem ||
+      selectedCatalogItem.categoryId !== selectedCategoryId ||
+      selectedCatalogItem.categoryCode !== selectedAssetCategory?.code
+    ) {
+      toast.error("Không thể gán danh mục khác mã loại.");
+      return;
+    }
     setBulkActionBusy(true);
     try {
       await assignAssetCatalog({
         assetIds: selectedAssets.map((asset) => asset.id),
-        catalogItemId: Number(bulkCatalogItemId),
+        catalogItemId,
       });
-      toast.success(`Đã gán danh mục cho ${selectedAssets.length} tài sản.`);
+      toast.success(
+        bulkCatalogMode === "change"
+          ? `Đã đổi danh mục cho ${selectedAssets.length} tài sản.`
+          : `Đã gán danh mục cho ${selectedAssets.length} tài sản.`,
+      );
       clearSelectedAssets();
       await reloadAssetList();
-    } catch {
-      toast.error("Chưa thể gán danh mục cho các tài sản đã chọn.");
+    } catch (error) {
+      toast.error(readError(error, "Chưa thể gán danh mục cho các tài sản đã chọn."));
+    } finally {
+      setBulkActionBusy(false);
+    }
+  };
+
+  const handleBulkCreateAndAssignCatalog = async () => {
+    if (catalogAssignmentDisabled || !selectedAssetCategory) return;
+    if (selectedAssetsHaveCatalog) {
+      toast.error("Tài sản đã có danh mục, chỉ được đổi sang danh mục cùng mã loại.");
+      return;
+    }
+    const name = bulkNewCatalogName.trim();
+    if (!name) {
+      toast.error("Nhập tên danh mục mới.");
+      return;
+    }
+
+    setBulkActionBusy(true);
+    try {
+      const { createAssetCatalogItem } = await import("../services/api");
+      const catalogItem = await createAssetCatalogItem({
+        name,
+        categoryId: selectedAssetCategory.id,
+        catalogType: selectedBulkCatalogType,
+        costValue: selectedAssets[0]?.purchaseCost ?? selectedAssets[0]?.originalCost ?? null,
+        technicalSpec: richTextStorageValue(selectedAssets[0]?.technicalDescription || ""),
+        active: true,
+      });
+      await assignAssetCatalog({
+        assetIds: selectedAssets.map((asset) => asset.id),
+        catalogItemId: catalogItem.id,
+      });
+      setCatalogItems((current) => (current ? [...current, catalogItem] : [catalogItem]));
+      toast.success(`Đã tạo và gán danh mục cho ${selectedAssets.length} tài sản.`);
+      clearSelectedAssets();
+      await reloadAssetList();
+    } catch (error) {
+      toast.error(readError(error, "Chưa thể tạo danh mục cho các tài sản đã chọn."));
     } finally {
       setBulkActionBusy(false);
     }
@@ -2218,9 +2447,9 @@ export function AssetsPage() {
       });
       setQrCode(issued);
       setQrSvg(`data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`);
-    } catch {
+    } catch (error) {
       setQrAsset(null);
-      toast.error("Không tạo được mã QR tài sản.");
+      toast.error(readError(error, "Không tạo được mã QR tài sản."));
     } finally {
       setQrBusy(false);
     }
@@ -2245,9 +2474,9 @@ export function AssetsPage() {
       const codes = await issueAssetQrCodes(selectedAssets.map((asset) => asset.id));
       await renderQrPrint(printWindow, codes);
       toast.success(`Đã chuẩn bị ${codes.length} mã QR để in.`);
-    } catch {
+    } catch (error) {
       printWindow.close();
-      toast.error("Không chuẩn bị được danh sách mã QR.");
+      toast.error(readError(error, "Không chuẩn bị được danh sách mã QR."));
     } finally {
       setBulkActionBusy(false);
     }
@@ -2333,12 +2562,14 @@ export function AssetsPage() {
       ),
     },
     {
-      id: "catalog",
-      label: "Danh mục",
-      render: (item) => {
-        const catalog = item.catalogItem;
-        return catalog ? highlightSearchText(`${catalog.itemCode} - ${catalog.name}`, query) : "--";
-      },
+      id: "catalogName",
+      label: "Tên danh mục",
+      render: (item) => highlightSearchText(item.catalogItem?.name || "--", query),
+    },
+    {
+      id: "catalogCode",
+      label: "Mã danh mục",
+      render: (item) => highlightSearchText(item.catalogItem?.itemCode || "--", query),
     },
     {
       id: "categoryCode",
@@ -2349,6 +2580,16 @@ export function AssetsPage() {
       id: "serialNumber",
       label: "Serial/MAC",
       render: (item) => highlightSearchText(item.serialNumber || "--", query),
+    },
+    {
+      id: "contractNumber",
+      label: "Số hợp đồng",
+      render: (item) => highlightSearchText(item.contractNumber || "--", query),
+    },
+    {
+      id: "invoiceNumber",
+      label: "Số hóa đơn",
+      render: (item) => highlightSearchText(item.invoiceNumber || "--", query),
     },
     {
       id: "status",
@@ -2494,8 +2735,8 @@ export function AssetsPage() {
       } else {
         toast.success("Dữ liệu import hợp lệ.");
       }
-    } catch {
-      toast.error("Backend import đang chờ bạn implement phần validate.");
+    } catch (error) {
+      toast.error(readError(error, "Không kiểm tra được dữ liệu import."));
     } finally {
       setImportBusy(false);
     }
@@ -2520,8 +2761,8 @@ export function AssetsPage() {
       setImportPreviewFilter("ALL");
       toast.success(`Đã import ${result.importedRows} tài sản.`);
       await reloadAssetList();
-    } catch {
-      toast.error("Backend import đang chờ bạn implement phần lưu dữ liệu.");
+    } catch (error) {
+      toast.error(readError(error, "Không lưu được dữ liệu import."));
     } finally {
       setImportBusy(false);
     }
@@ -2534,8 +2775,8 @@ export function AssetsPage() {
       setCategoryTree(latestCategoryTree);
       await downloadAssetImportTemplate(latestCategoryTree);
       toast.success("Đã tải file mẫu Excel.", { id: loadingToast });
-    } catch {
-      toast.error("Không tạo được file mẫu Excel.", { id: loadingToast });
+    } catch (error) {
+      toast.error(readError(error, "Không tạo được file mẫu Excel."), { id: loadingToast });
     }
   };
 
@@ -2647,7 +2888,7 @@ export function AssetsPage() {
               <input
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                placeholder="Tìm theo mã, tên, serial, nhà cung cấp..."
+                placeholder="Tìm theo mã, tên, serial, hợp đồng, hóa đơn, nhà cung cấp..."
               />
             </label>
             <label className="asset-filter-field">
@@ -2718,6 +2959,19 @@ export function AssetsPage() {
                     )}
                   </span>
                 </span>
+                {catalogViewFilter.id !== null && (
+                  <span className="asset-catalog-filter-context">
+                    Danh mục: {catalogViewFilter.name || `#${catalogViewFilter.id}`}
+                    <button
+                      type="button"
+                      onClick={clearCatalogViewFilter}
+                      title="Bỏ lọc danh mục"
+                      aria-label="Bỏ lọc danh mục"
+                    >
+                      <FiX aria-hidden="true" />
+                    </button>
+                  </span>
+                )}
               </div>
               <div className="asset-list-head-actions">
                 <button
@@ -2819,6 +3073,92 @@ export function AssetsPage() {
               </>
             )}
 
+            {canManage && (
+              <div
+                className={`asset-selection-workspace ${
+                  selectedAssets.length > 0 ? "is-active" : "is-empty"
+                }`}
+                role="region"
+                aria-label="Thao tác tài sản đã chọn"
+              >
+                <div className="asset-selection-summary">
+                  <strong>{selectedAssets.length} tài sản đã chọn</strong>
+                  <span>Tổng giá trị: {money.format(selectedAssetsValue)}</span>
+                </div>
+                <div className="asset-selection-actions asset-bulk-desktop-actions">
+                  <button
+                    type="button"
+                    className="primary-action asset-catalog-action asset-bulk-optional-action"
+                    disabled={selectedAssets.length === 0 || bulkActionBusy}
+                    onClick={() => openBulkPanelAction("catalog")}
+                  >
+                    <FiFolderPlus /> Tạo/Gán danh mục
+                  </button>
+                  <button
+                    type="button"
+                    className="secondary asset-select-same-name"
+                    title="Chọn tất cả tài sản cùng tên và cùng loại trên mọi trang"
+                    disabled={bulkActionBusy || !canSelectSameNameAssets}
+                    onClick={handleSelectSameNameAssets}
+                  >
+                    <FiCheckSquare /> Chọn cùng tên ({sameNameCategoryAssets.length})
+                  </button>
+                  <button
+                    type="button"
+                    className="secondary asset-bulk-optional-action"
+                    disabled={selectedAssets.length === 0 || bulkActionBusy}
+                    onClick={() => openBulkPanelAction("status")}
+                  >
+                    <FiEdit2 /> Cập nhật trạng thái
+                  </button>
+                  <button
+                    type="button"
+                    className="secondary asset-bulk-optional-action"
+                    disabled={selectedAssets.length === 0 || bulkActionBusy}
+                    onClick={() => openBulkPanelAction("qr")}
+                  >
+                    <FiPrinter /> In QR
+                  </button>
+                  <button
+                    type="button"
+                    className="danger-action"
+                    disabled={selectedAssets.length === 0 || bulkActionBusy}
+                    onClick={() => void handleBulkDeleteAssets()}
+                  >
+                    <FiTrash2 /> Xóa
+                  </button>
+                  <button
+                    type="button"
+                    className="secondary asset-clear-selection"
+                    disabled={selectedAssets.length === 0 || bulkActionBusy}
+                    onClick={clearSelectedAssets}
+                  >
+                    <FiX /> Bỏ chọn
+                  </button>
+                </div>
+                <label className="asset-bulk-action-select asset-bulk-mobile-actions">
+                  <span>Thao tác</span>
+                  <SearchableSelect
+                    value={bulkPanelAction || ""}
+                    disabled={selectedAssets.length === 0 || bulkActionBusy}
+                    onChange={(val: string) => {
+                      const action = val as Exclude<AssetBulkAction, null> | "";
+                      if (!action) {
+                        setBulkPanelAction(null);
+                        return;
+                      }
+                      openBulkPanelAction(action);
+                    }}
+                  >
+                    <option value="">Chọn thao tác</option>
+                    <option value="status">Cập nhật trạng thái</option>
+                    <option value="catalog">Gán danh mục</option>
+                    <option value="qr">In QR theo nhóm</option>
+                  </SearchableSelect>
+                </label>
+              </div>
+            )}
+
             <div
               className="asset-table"
               style={{ "--qlvt-table-min-width": `${assetTableMinWidth}px` } as CSSProperties}
@@ -2878,6 +3218,7 @@ export function AssetsPage() {
                       <tr
                         key={item.id}
                         className={selectedAssetIds.has(item.id) ? "is-selected" : undefined}
+                        onClick={(event) => handleAssetRowClick(event, item.id)}
                       >
                         {assetMultiSelectMode && (
                           <td className="asset-table-select-col asset-table-sticky-select">
@@ -2888,6 +3229,7 @@ export function AssetsPage() {
                               <input
                                 type="checkbox"
                                 checked={selectedAssetIds.has(item.id)}
+                                onClick={(event) => event.stopPropagation()}
                                 onChange={() => toggleAssetSelected(item.id)}
                               />
                               <span />
@@ -2966,181 +3308,6 @@ export function AssetsPage() {
             )}
           </div>
 
-          {canManage && (
-            <div
-              className={`asset-selection-workspace ${
-                selectedAssets.length > 0 ? "is-active" : ""
-              }`}
-            >
-              <div className="asset-selection-head">
-                <div>
-                  <strong>
-                    {selectedAssets.length > 0
-                      ? `${selectedAssets.length} tài sản đã chọn`
-                      : "Chọn tài sản để thao tác"}
-                  </strong>
-                  <span>
-                    {selectedAssets.length > 0
-                      ? `Tổng giá trị: ${money.format(selectedAssetsValue)}`
-                      : "Tick checkbox trong bảng để mở danh sách thao tác phía dưới."}
-                  </span>
-                </div>
-                <div className="asset-selection-actions">
-                  <label className="asset-bulk-action-select">
-                    <span>Thao tác</span>
-                    <SearchableSelect
-                      value={bulkPanelAction || ""}
-                      disabled={selectedAssets.length === 0 || bulkActionBusy}
-                      onChange={(val: string) => {
-                        const action = val as Exclude<AssetBulkAction, null> | "";
-                        if (!action) {
-                          setBulkPanelAction(null);
-                          return;
-                        }
-                        openBulkPanelAction(action);
-                      }}
-                    >
-                      <option value="">Chọn thao tác</option>
-                      <option value="status">Cập nhật trạng thái</option>
-                      <option value="catalog">Gán danh mục</option>
-                      <option value="qr">In QR theo nhóm</option>
-                    </SearchableSelect>
-                  </label>
-                  <button
-                    type="button"
-                    className="danger-action"
-                    disabled={selectedAssets.length === 0 || bulkActionBusy}
-                    onClick={() => void handleBulkDeleteAssets()}
-                  >
-                    <FiTrash2 /> Xóa
-                  </button>
-                  {selectedAssets.length > 0 && (
-                    <button
-                      type="button"
-                      className="secondary"
-                      disabled={bulkActionBusy}
-                      onClick={clearSelectedAssets}
-                    >
-                      Bỏ chọn
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              {selectedAssets.length > 0 && (
-                <div className="asset-selection-body">
-                  <div
-                    className="asset-selection-stack"
-                    role="list"
-                    aria-label="Danh sách tài sản đã chọn"
-                  >
-                    {selectedAssets.map((asset) => (
-                      <div className="asset-selection-card" key={asset.id}>
-                        <div>
-                          <strong>{asset.name}</strong>
-                          <span>
-                            {asset.assetCode} ·{" "}
-                            {asset.assetCategory?.name || asset.category || "Chưa phân loại"}
-                          </span>
-                        </div>
-                        <StatusBadge value={asset.status} />
-                        <button
-                          type="button"
-                          className="icon-button"
-                          title="Bỏ chọn tài sản này"
-                          onClick={() => toggleAssetSelected(asset.id)}
-                        >
-                          <FiX />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-
-                  {bulkPanelAction && (
-                    <div className={`asset-bulk-panel asset-bulk-panel-${bulkPanelAction}`}>
-                      {bulkPanelAction === "status" && (
-                        <>
-                          <div className="asset-bulk-panel-copy">
-                            <strong>Cập nhật trạng thái</strong>
-                            <span>Áp dụng cùng một trạng thái cho các tài sản đã chọn.</span>
-                          </div>
-                          <div className="asset-bulk-form-row">
-                            <label>
-                              <span>Trạng thái mới</span>
-                              <SearchableSelect
-                                value={bulkStatus}
-                                onChange={(val: string) =>
-                                  setBulkStatus(val as (typeof ASSET_MUTABLE_STATUSES)[number])
-                                }
-                              >
-                                {ASSET_MUTABLE_STATUSES.map((status) => (
-                                  <option key={status} value={status}>
-                                    {statusLabel(status)}
-                                  </option>
-                                ))}
-                              </SearchableSelect>
-                            </label>
-                            <button
-                              type="button"
-                              className="primary-action"
-                              disabled={bulkActionBusy}
-                              onClick={() => void handleBulkUpdateStatus()}
-                            >
-                              Lưu trạng thái
-                            </button>
-                          </div>
-                        </>
-                      )}
-                      {bulkPanelAction === "catalog" && (
-                        <>
-                          <div className="asset-bulk-panel-copy">
-                            <strong>Gán danh mục</strong>
-                            <span>Chỉ áp dụng cho các tài sản cùng tên và cùng loại.</span>
-                          </div>
-                          <div className="asset-bulk-form-row">
-                            <label>
-                              <span>Danh mục</span>
-                              <SearchableSelect
-                                value={bulkCatalogItemId}
-                                onChange={setBulkCatalogItemId}
-                                disabled={!selectedAssetsShareName || !selectedAssetsShareCategory}
-                                options={[
-                                  { value: "", label: "Chọn danh mục" },
-                                  ...compatibleBulkCatalogItems.map((item) => ({
-                                    value: String(item.id),
-                                    label: `${item.itemCode} - ${item.name}`,
-                                  })),
-                                ]}
-                              />
-                            </label>
-                            <button
-                              type="button"
-                              className="primary-action"
-                              disabled={
-                                bulkActionBusy ||
-                                !bulkCatalogItemId ||
-                                !selectedAssetsShareName ||
-                                !selectedAssetsShareCategory
-                              }
-                              onClick={() => void handleBulkAssignCatalog()}
-                            >
-                              Gán danh mục
-                            </button>
-                          </div>
-                          {(!selectedAssetsShareName || !selectedAssetsShareCategory) && (
-                            <span className="asset-bulk-panel-warning">
-                              Các tài sản đã chọn phải cùng tên và cùng loại tài sản.
-                            </span>
-                          )}
-                        </>
-                      )}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-
           <section className="asset-list-insights" aria-label="Thống kê tài sản đang hiển thị">
             <div className="asset-insights-title">
               <div>
@@ -3206,6 +3373,308 @@ export function AssetsPage() {
         </div>
       </div>
 
+      {bulkPanelAction === "status" && selectedAssets.length > 0 && (
+        <div className="modal-backdrop">
+          <div
+            className="crud-modal asset-bulk-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="asset-bulk-status-title"
+          >
+            <div className="modal-head">
+              <div className="modal-title-group">
+                <span className="modal-title-icon edit">
+                  <FiEdit2 />
+                </span>
+                <div>
+                  <h2 id="asset-bulk-status-title">Cập nhật trạng thái</h2>
+                  <p>Áp dụng cho {selectedAssets.length} tài sản đã chọn</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                className="icon-button"
+                aria-label="Đóng"
+                disabled={bulkActionBusy}
+                onClick={() => setBulkPanelAction(null)}
+              >
+                <FiX />
+              </button>
+            </div>
+            <div className="modal-body asset-bulk-modal-body">
+              <label>
+                <span>Trạng thái mới</span>
+                <SearchableSelect
+                  value={bulkStatus}
+                  onChange={(val: string) =>
+                    setBulkStatus(val as (typeof ASSET_MUTABLE_STATUSES)[number])
+                  }
+                >
+                  {ASSET_MUTABLE_STATUSES.map((status) => (
+                    <option key={status} value={status}>
+                      {statusLabel(status)}
+                    </option>
+                  ))}
+                </SearchableSelect>
+              </label>
+            </div>
+            <div className="modal-actions">
+              <button
+                type="button"
+                className="secondary"
+                disabled={bulkActionBusy}
+                onClick={() => setBulkPanelAction(null)}
+              >
+                Hủy
+              </button>
+              <button
+                type="button"
+                className="primary-action"
+                disabled={bulkActionBusy}
+                onClick={() => void handleBulkUpdateStatus()}
+              >
+                Lưu trạng thái
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {bulkPanelAction === "catalog" && selectedAssets.length > 0 && (
+        <div className="modal-backdrop">
+          <div
+            className="crud-modal asset-bulk-modal asset-bulk-catalog-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="asset-bulk-catalog-title"
+          >
+            <div className="modal-head">
+              <div className="modal-title-group">
+                <span className="modal-title-icon create">
+                  <FiFolderPlus />
+                </span>
+                <div>
+                  <h2 id="asset-bulk-catalog-title">Tạo hoặc gán danh mục</h2>
+                  <p>{selectedAssets.length} tài sản đã chọn</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                className="icon-button"
+                aria-label="Đóng"
+                disabled={bulkActionBusy}
+                onClick={() => setBulkPanelAction(null)}
+              >
+                <FiX />
+              </button>
+            </div>
+
+            <div className="modal-body asset-bulk-modal-body">
+              <div className="asset-bulk-context asset-bulk-context-list">
+                <div className="asset-bulk-context-header">
+                  <span>Tài sản</span>
+                  <span>Số lượng</span>
+                  <span>Loại tài sản</span>
+                  <span>Danh mục hiện tại</span>
+                </div>
+                {selectedBulkCatalogGroups.map((group) => (
+                  <div className="asset-bulk-context-row" key={group.key}>
+                    <strong>{group.name}</strong>
+                    <strong>{group.count}</strong>
+                    <strong>{group.categoryLabel}</strong>
+                    <strong>{group.catalogLabel}</strong>
+                  </div>
+                ))}
+              </div>
+
+              {catalogAssignmentDisabled && (
+                <div className="asset-bulk-panel-warning" role="alert">
+                  Các tài sản đã chọn phải cùng tên và cùng loại tài sản.
+                </div>
+              )}
+
+              {selectedAssetsHaveCatalog && !catalogAssignmentDisabled && (
+                <div className="asset-bulk-panel-warning" role="status">
+                  Tài sản đã có danh mục. Chọn đổi danh mục để chuyển sang danh mục khác cùng mã
+                  loại.
+                </div>
+              )}
+
+              <div
+                className={`asset-bulk-mode-tabs ${
+                  selectedAssetsHaveCatalog ? "has-change-mode" : ""
+                }`}
+                role="tablist"
+                aria-label="Cách gán danh mục"
+              >
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={bulkCatalogMode === "existing"}
+                  disabled={catalogAssignmentDisabled || bulkActionBusy}
+                  onClick={() => {
+                    setBulkCatalogItemId(selectedCurrentBulkCatalogId);
+                    setBulkCatalogMode("existing");
+                  }}
+                >
+                  Danh mục có sẵn
+                </button>
+                {selectedAssetsHaveCatalog && (
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={bulkCatalogMode === "change"}
+                    disabled={catalogAssignmentDisabled || bulkActionBusy}
+                    onClick={() => {
+                      setBulkCatalogItemId("");
+                      setBulkCatalogMode("change");
+                    }}
+                  >
+                    Đổi danh mục
+                  </button>
+                )}
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={bulkCatalogMode === "new"}
+                  disabled={
+                    catalogAssignmentDisabled || selectedAssetsHaveCatalog || bulkActionBusy
+                  }
+                  onClick={() => {
+                    setBulkCatalogItemId("");
+                    setBulkCatalogMode("new");
+                  }}
+                >
+                  Tạo danh mục mới
+                </button>
+              </div>
+
+              <div
+                className="asset-bulk-catalog-fields"
+                role="tabpanel"
+                hidden={bulkCatalogMode !== "existing"}
+              >
+                <label>
+                  <span>Danh mục</span>
+                  <SearchableSelect
+                    value={bulkCatalogItemId}
+                    onChange={setBulkCatalogItemId}
+                    disabled={catalogAssignmentDisabled || selectedAssetsHaveCatalog}
+                    options={[
+                      { value: "", label: "Chọn danh mục" },
+                      ...compatibleBulkCatalogItems.map((item) => ({
+                        value: String(item.id),
+                        label: catalogAssignmentLabel(item),
+                      })),
+                    ]}
+                  />
+                </label>
+                {compatibleBulkCatalogItems.length === 0 && (
+                  <span className="asset-bulk-empty-note">
+                    Chưa có danh mục phù hợp với mã loại tài sản này.
+                  </span>
+                )}
+              </div>
+              <div
+                className="asset-bulk-catalog-fields change-catalog"
+                role="tabpanel"
+                hidden={bulkCatalogMode !== "change"}
+              >
+                <label>
+                  <span>Danh mục khác</span>
+                  <SearchableSelect
+                    value={bulkCatalogItemId}
+                    onChange={setBulkCatalogItemId}
+                    disabled={catalogAssignmentDisabled}
+                    options={[
+                      { value: "", label: "Chọn danh mục khác" },
+                      ...selectableBulkCatalogItems.map((item) => ({
+                        value: String(item.id),
+                        label: catalogAssignmentLabel(item),
+                      })),
+                    ]}
+                  />
+                </label>
+                {selectableBulkCatalogItems.length === 0 && (
+                  <span className="asset-bulk-empty-note">
+                    Chưa có danh mục khác cùng mã loại để đổi cho nhóm tài sản này.
+                  </span>
+                )}
+              </div>
+              <div
+                className="asset-bulk-catalog-fields new-catalog"
+                role="tabpanel"
+                hidden={bulkCatalogMode !== "new"}
+              >
+                <label>
+                  <span>Tên danh mục mới</span>
+                  <input
+                    value={bulkNewCatalogName}
+                    onChange={(event) => setBulkNewCatalogName(event.target.value)}
+                    disabled={catalogAssignmentDisabled}
+                  />
+                </label>
+                <label>
+                  <span>Loại tài sản</span>
+                  <input
+                    value={
+                      selectedAssetCategory
+                        ? `${selectedAssetCategory.name} (${selectedAssetCategory.code})`
+                        : "Chưa có loại tài sản"
+                    }
+                    readOnly
+                    disabled
+                  />
+                </label>
+              </div>
+            </div>
+
+            <div className="modal-actions">
+              <button
+                type="button"
+                className="secondary"
+                disabled={bulkActionBusy}
+                onClick={() => setBulkPanelAction(null)}
+              >
+                Hủy
+              </button>
+              <button
+                type="button"
+                className="primary-action"
+                hidden={bulkCatalogMode !== "existing"}
+                disabled={
+                  bulkActionBusy ||
+                  !bulkCatalogItemId ||
+                  catalogAssignmentDisabled ||
+                  selectedAssetsHaveCatalog
+                }
+                onClick={() => void handleBulkAssignCatalog()}
+              >
+                Gán danh mục
+              </button>
+              <button
+                type="button"
+                className="primary-action"
+                hidden={bulkCatalogMode !== "change"}
+                disabled={bulkActionBusy || !bulkCatalogItemId || catalogAssignmentDisabled}
+                onClick={() => void handleBulkAssignCatalog()}
+              >
+                Đổi danh mục
+              </button>
+              <button
+                type="button"
+                className="primary-action"
+                hidden={bulkCatalogMode !== "new"}
+                disabled={bulkActionBusy || !bulkNewCatalogName.trim() || catalogAssignmentDisabled}
+                onClick={() => void handleBulkCreateAndAssignCatalog()}
+              >
+                Tạo và gán danh mục
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {selectedAsset && assetDraft && (
         <div className="modal-backdrop">
           <div className="crud-modal asset-detail-modal">
@@ -3254,6 +3723,8 @@ export function AssetsPage() {
 
             <div
               className={`asset-detail-body ${assetDetailView === "history" ? "is-hidden" : ""}`}
+              onFocus={revealFullFieldValue}
+              onMouseOver={revealFullFieldValue}
             >
               <div className="asset-detail-hero">
                 <div>
@@ -3322,14 +3793,18 @@ export function AssetsPage() {
                           updateAssetDraft("catalogItemId", value ? Number(value) : null)
                         }
                         options={[
-                          { value: "", label: "Chưa gắn danh mục" },
+                          ...(selectedAsset.catalogItem
+                            ? []
+                            : [{ value: "", label: "Chưa gắn danh mục" }]),
                           ...(catalogItems || [])
                             .filter(
-                              (item) => item.active && item.categoryId === assetDraft.categoryId,
+                              (item) =>
+                                item.categoryId === assetDraft.categoryId &&
+                                (item.active || item.id === assetDraft.catalogItemId),
                             )
                             .map((item) => ({
                               value: String(item.id),
-                              label: `${item.itemCode} - ${item.name}`,
+                              label: catalogAssignmentLabel(item),
                             })),
                         ]}
                       />
@@ -3433,6 +3908,22 @@ export function AssetsPage() {
                     <label>
                       <span>Ngày đưa vào sử dụng</span>
                       <input type="date" value={selectedAsset.useDate || ""} disabled />
+                    </label>
+                    <label>
+                      <span>Số hợp đồng</span>
+                      <input
+                        value={assetDraft.contractNumber || ""}
+                        onChange={(event) => updateAssetDraft("contractNumber", event.target.value)}
+                        disabled={!canManage || assetSaving}
+                      />
+                    </label>
+                    <label>
+                      <span>Số hóa đơn</span>
+                      <input
+                        value={assetDraft.invoiceNumber || ""}
+                        onChange={(event) => updateAssetDraft("invoiceNumber", event.target.value)}
+                        disabled={!canManage || assetSaving}
+                      />
                     </label>
                   </div>
                 </section>

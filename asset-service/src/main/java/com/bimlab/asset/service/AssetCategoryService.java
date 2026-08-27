@@ -9,6 +9,8 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
+import com.bimlab.asset.entity.AssetCodeSequence;
+import com.bimlab.asset.repository.AssetCodeSequenceRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,12 +38,13 @@ public class AssetCategoryService {
     private final AssetCategoryRepository categories;
     private final AssetItemRepository assets;
     private final AssetCatalogItemRepository catalogItems;
+    private final AssetCodeSequenceRepository assetCodeSequences;
 
     @Transactional(readOnly = true)
     public List<AssetCategoryResponse> listCategories() {
         return categories.findAllByOrderByNameAsc()
                 .stream()
-                .map(this::modelToDto)
+                .map(this::entityToDto)
                 .toList();
     }
 
@@ -68,7 +71,7 @@ public class AssetCategoryService {
     public AssetCategoryResponse getCategory(Long id) {
         AssetCategory category = categories.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Không tìm thấy danh mục với id:" + id));
-        return modelToDto(category);
+        return entityToDto(category);
     }
 
     @Transactional
@@ -96,7 +99,7 @@ public class AssetCategoryService {
                 .build();
 
         AssetCategory saved = categories.save(category);
-        return modelToDto(saved);
+        return entityToDto(saved);
     }
 
     @Transactional(readOnly = true)
@@ -263,32 +266,31 @@ public class AssetCategoryService {
 
         AssetCategory saved = categories.save(category);
 
-        return modelToDto(saved);
+        return entityToDto(saved);
     }
 
     @Transactional
     public void deleteCategory(Long id) {
         AssetCategory category = categories.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Không tìm thấy danh mục với id: " + id));
-
+        String categoryCodeLabel = category.getCode() + "-" + category.getName();
         if (categories.existsByParentId(id)) {
-            throw new IllegalArgumentException("Không thể xóa danh mục đang có danh mục con.");
+            throw new IllegalArgumentException("categoryId: Không thể xóa danh mục " + categoryCodeLabel + " đang có danh mục con.");
         }
 
         if (!assets.findByAssetCategoryId(id).isEmpty()) {
-            throw new IllegalArgumentException("Không thể xóa danh mục đang được tài sản sử dụng.");
+            throw new IllegalArgumentException("categoryId: Không thể xóa danh mục " + categoryCodeLabel + " đang được tài sản sử dụng.");
         }
 
         if (catalogItems.existsByCategoryId(id)) {
-            throw new IllegalArgumentException("Không thể xóa danh mục đang được danh mục vật tư sử dụng.");
+            throw new IllegalArgumentException("categoryId: Không thể xóa danh mục " + categoryCodeLabel + " đang được danh mục vật tư sử dụng.");
         }
-
+        assetCodeSequences.deleteById(id);
         categories.delete(category);
     }
 
     // Helper functions
-
-    private AssetCategoryResponse modelToDto(AssetCategory category) {
+    private AssetCategoryResponse entityToDto(AssetCategory category) {
         return new AssetCategoryResponse(
                 category.getId(),
                 category.getCode(),
@@ -321,7 +323,6 @@ public class AssetCategoryService {
                 children
         );
     }
-
     private AssetCategoryImportRowResult validateCategoryImportRow(
             AssetCategoryImportRowRequest row,
             Map<String, AssetCategory> dbByCode,
@@ -412,6 +413,7 @@ public class AssetCategoryService {
                 "phanloailopcon",
                 "loaitaisancodinh",
                 "loaicongcudungcu",
+                "loaitaisan",
                 "danhmuc",
                 "danhmuccha",
                 "danhmuctaisan"

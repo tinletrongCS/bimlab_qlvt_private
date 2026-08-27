@@ -92,12 +92,12 @@ const GUIDE_TREE: GuideItem[] = [
             imageCaption: "Kiểm tra dữ liệu: Vị trí nút 'Kiểm tra dữ liệu'",
           },
           {
-            text: "Bước 4: Xem kết quả kiểm tra dữ liệu theo các trạng thái Hợp lệ, Lỗi và Cảnh báo.",
+            text: "Bước 4.1: Xem kết quả kiểm tra dữ liệu theo các trạng thái Hợp lệ, Lỗi và Cảnh báo.",
             image: "/guide/image-Category/image-dm-4.png",
             imageCaption: "Xem lại kết quả kiểm tra dữ liệu.",
           },
           {
-            text: "Bước 5: Chuyển sang tab 'Phân cấp cha con' (Tree view) để xem trực quan cấu trúc phân cấp danh mục trước khi bấm 'Xác nhận nhập'.",
+            text: "Bước 4.2: Chuyển sang tab 'Phân cấp cha con' (Tree view) để xem trực quan cấu trúc phân cấp danh mục trước khi bấm 'Xác nhận nhập'.",
             image: "/guide/image-Category/image-dm-5.jpg",
             imageCaption:
               "Tab Phân cấp cha con: Xem cấu trúc cây danh mục và bấm 'Xác nhận nhập'. Các dòng hợp lệ sẽ được nhập, các dòng lỗi sẽ bị loại bỏ.",
